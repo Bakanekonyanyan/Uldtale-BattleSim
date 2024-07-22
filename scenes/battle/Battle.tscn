@@ -1,0 +1,78 @@
+[gd_scene load_steps=4 format=3 uid="uid://52o8rbghf0jb"]
+
+[ext_resource type="Script" path="res://scenes/battle/Battle.gd" id="1_jr4vv"]
+[ext_resource type="Texture2D" uid="uid://cpndw8q8cse38" path="res://assets/Images/backgrounds/WaveBackground.png" id="2_18p0q"]
+[ext_resource type="Script" path="res://scenes/battle/InventoryMenu.gd" id="2_ng7cs"]
+
+[node name="Battle" type="Node2D"]
+script = ExtResource("1_jr4vv")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(584, 200)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("2_18p0q")
+
+[node name="PlayerInfo" type="Label" parent="."]
+offset_left = 8.0
+offset_top = 64.0
+offset_right = 48.0
+offset_bottom = 87.0
+
+[node name="EnemyInfo" type="Label" parent="."]
+offset_left = 320.0
+offset_top = 64.0
+offset_right = 360.0
+offset_bottom = 87.0
+
+[node name="ActionButtons" type="VBoxContainer" parent="."]
+offset_left = 8.0
+offset_top = 192.0
+offset_right = 48.0
+offset_bottom = 232.0
+
+[node name="InventoryMenu" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_top = 64.0
+offset_right = 40.0
+offset_bottom = 64.0
+script = ExtResource("2_ng7cs")
+
+[node name="ItemList" type="ItemList" parent="InventoryMenu"]
+layout_mode = 0
+offset_left = 256.0
+offset_top = 128.0
+offset_right = 512.0
+offset_bottom = 320.0
+
+[node name="UseButton" type="Button" parent="InventoryMenu"]
+layout_mode = 0
+offset_left = 280.0
+offset_top = 336.0
+offset_right = 317.0
+offset_bottom = 367.0
+text = "Use"
+
+[node name="CancelButton" type="Button" parent="InventoryMenu"]
+layout_mode = 0
+offset_left = 424.0
+offset_top = 336.0
+offset_right = 484.0
+offset_bottom = 367.0
+text = "Cancel"
+
+[node name="CurrencyLabel" type="Label" parent="InventoryMenu"]
+layout_mode = 0
+offset_left = 384.0
+offset_top = 104.0
+offset_right = 459.0
+offset_bottom = 130.0
+text = "Currency:"
+
+[node name="TurnLabel" type="Label" parent="."]
+offset_left = 112.0
+offset_top = 24.0
+offset_right = 152.0
+offset_bottom = 47.0
+
+[connection signal="item_selected" from="InventoryMenu" to="." method="_on_item_used"]

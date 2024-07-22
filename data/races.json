@@ -1,0 +1,13 @@
+{
+  "playable": {
+	"Human": {"vit_mod": 0, "str_mod": 0, "dex_mod": 0, "int_mod": 0, "fai_mod": 0, "mnd_mod": 0, "end_mod": 0, "arc_mod": 0, "agi_mod": 0, "for_mod": 0},
+	"Elf": {"vit_mod": -1, "str_mod": -1, "dex_mod": 2, "int_mod": 2, "fai_mod": 0, "mnd_mod": 1, "end_mod": -1, "arc_mod": 1, "agi_mod": 2, "for_mod": -1},
+	"Dwarf": {"vit_mod": 2, "str_mod": 2, "dex_mod": -1, "int_mod": 0, "fai_mod": 1, "mnd_mod": 0, "end_mod": 2, "arc_mod": -1, "agi_mod": -1, "for_mod": 2},
+	"Orc": {"vit_mod": 3, "str_mod": 3, "dex_mod": -1, "int_mod": -2, "fai_mod": 0, "mnd_mod": -1, "end_mod": 2, "arc_mod": -2, "agi_mod": 0, "for_mod": 3}
+  },
+  "non_playable": {
+	"Goblin": {"vit_mod": -1, "str_mod": 1, "dex_mod": 2, "int_mod": -1, "fai_mod": -1, "mnd_mod": 0, "end_mod": 1, "arc_mod": -1, "agi_mod": 2, "for_mod": 0},
+	"Troll": {"vit_mod": 4, "str_mod": 4, "dex_mod": -2, "int_mod": -3, "fai_mod": -1, "mnd_mod": -2, "end_mod": 3, "arc_mod": -2, "agi_mod": -1, "for_mod": 4},
+	"Fairy": {"vit_mod": -2, "str_mod": -2, "dex_mod": 3, "int_mod": 3, "fai_mod": 2, "mnd_mod": 2, "end_mod": -2, "arc_mod": 3, "agi_mod": 3, "for_mod": -2}
+  }
+}

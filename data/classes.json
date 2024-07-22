@@ -1,0 +1,53 @@
+{
+  "playable": {
+	"Paladin": {
+	  "base_vit": 10, "base_str": 10, "base_dex": 7, "base_int": 5, "base_fai": 5, "base_mnd": 6, "base_end": 8, "base_arc": 4, "base_agi": 6, "base_for": 9,
+	  "attack_power_type": "strength", "spell_power_type": "balanced",
+	  "skills": ["Holy Strike", "Divine Shield", "Lay on Hands"]
+	},
+	"Necromancer": {
+	  "base_vit": 12, "base_str": 5, "base_dex": 7, "base_int": 20, "base_fai": 8, "base_mnd": 20, "base_end": 6, "base_arc": 10, "base_agi": 12, "base_for": 5,
+	  "attack_power_type": "dexterity", "spell_power_type": "intelligence",
+	  "skills": ["Dark Bolt", "Life Tap", "Curse of Weakness"]
+	},
+	"Myrmidon": {
+	  "base_vit": 7, "base_str": 7, "base_dex": 12, "base_int": 8, "base_fai": 5, "base_mnd": 7, "base_end": 8, "base_arc": 6, "base_agi": 10, "base_for": 7,
+	  "attack_power_type": "dexterity", "spell_power_type": "balanced",
+	  "skills": ["Poison Blade", "Backstab", "Evasion"]
+	},
+	"Cleric": {
+	  "base_vit": 9, "base_str": 7, "base_dex": 6, "base_int": 8, "base_fai": 12, "base_mnd": 10, "base_end": 7, "base_arc": 8, "base_agi": 5, "base_for": 8,
+	  "attack_power_type": "strength", "spell_power_type": "arcane",
+	  "skills": ["Smite", "Bless", "Healing Light"]
+	}
+  },
+  "non_playable": {
+	"Minion": {
+	  "base_vit": 6, "base_str": 6, "base_dex": 6, "base_int": 4, "base_fai": 4, "base_mnd": 5, "base_end": 6, "base_arc": 4, "base_agi": 6, "base_for": 6,
+	  "attack_power_type": "strength", "spell_power_type": "balanced",
+	  "skills": ["Bite", "Scratch", "Howl"]
+	},
+	"Brute": {
+	  "base_vit": 9, "base_str": 9, "base_dex": 4, "base_int": 3, "base_fai": 3, "base_mnd": 4, "base_end": 10, "base_arc": 3, "base_agi": 4, "base_for": 11,
+	  "attack_power_type": "strength", "spell_power_type": "balanced",
+	  "skills": ["Smash", "Roar", "Stomp"]
+	},
+	"Shaman": {
+	  "base_vit": 7, "base_str": 4, "base_dex": 5, "base_int": 11, "base_fai": 10, "base_mnd": 9, "base_end": 6, "base_arc": 9, "base_agi": 5, "base_for": 6,
+	  "attack_power_type": "dexterity", "spell_power_type": "arcane",
+	  "skills": ["Lightning Bolt", "Healing Wave", "Totemic Blessing"]
+	},
+	"Mage": {
+	  "base_vit": 7, "base_str": 4, "base_dex": 5, "base_int": 11, "base_fai": 10, "base_mnd": 9, "base_end": 6, "base_arc": 9, "base_agi": 5, "base_for": 6,
+	  "attack_power_type": "dexterity", "spell_power_type": "arcane",
+	  "skills": ["Fireball", "Frost Nova", "Arcane Intellect"]
+	}
+  },
+  "boss": {
+	"King": {
+	  "base_vit": 12, "base_str": 10, "base_dex": 5, "base_int": 8, "base_fai": 8, "base_mnd": 3, "base_end": 10, "base_arc": 3, "base_agi": 5, "base_for": 10,
+	  "attack_power_type": "strength", "spell_power_type": "balanced",
+	  "skills": ["Royal Decree", "Execution", "Crown of Flames"]
+	}
+  }
+}

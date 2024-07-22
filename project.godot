@@ -1,0 +1,33 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Battlsim"
+run/main_scene="res://scenes/main/Main.tscn"
+config/features=PackedStringArray("4.0", "GL Compatibility")
+config/icon="res://icon.svg"
+
+[autoload]
+
+SceneManager="*res://scripts/autoload/SceneManager.gd"
+EnemyFactory="*res://scripts/autoload/EnemyFactory.gd"
+SkillManager="*res://scripts/autoload/SkillManager.gd"
+ItemManager="*res://scripts/autoload/ItemManager.gd"
+BossFactory="*res://scripts/autoload/BossFactory.gd"
+BattleManager="*res://scripts/BattleManager.gd"
+CharacterManager="*res://scripts/autoload/CharacterManager.gd"
+SaveManager="*res://scripts/autoload/SaveManager.gd"
+LootManager="res://scripts/autoload/LootManager.gd"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

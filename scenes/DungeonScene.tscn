@@ -1,0 +1,22 @@
+[gd_scene load_steps=2 format=3 uid="uid://dk1cgspayiajl"]
+
+[ext_resource type="Script" path="res://scenes/DungeonScene.gd" id="1_wqh1j"]
+
+[node name="DungeonScene" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_wqh1j")
+
+[node name="WaveLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 8.0
+offset_right = 59.0
+offset_bottom = 26.0
+text = "Wave: "
+
+[node name="FloorLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 320.0
+offset_right = 413.0
+offset_bottom = 26.0
+text = "Floor Level: "

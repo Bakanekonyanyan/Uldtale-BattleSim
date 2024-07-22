@@ -1,0 +1,24 @@
+{
+  "health_potion": {
+	"name": "Health Potion",
+	"description": "Restores 50 HP",
+	"item_type": "CONSUMABLE",
+	"value": 50,
+	"stackable": true,
+	"max_stack": 99,
+	"consumable_type": "HEAL",
+	"effect_power": 50,
+	"effect_duration": 0
+  },
+  "mana_potion": {
+	"name": "Mana Potion",
+	"description": "Restores 30 MP",
+	"item_type": "CONSUMABLE",
+	"value": 75,
+	"stackable": true,
+	"max_stack": 99,
+	"consumable_type": "RESTORE",
+	"effect_power": 30,
+	"effect_duration": 0
+  }
+}

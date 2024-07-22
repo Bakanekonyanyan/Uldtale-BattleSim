@@ -1,0 +1,61 @@
+[gd_scene load_steps=3 format=3 uid="uid://co1gatdndpacq"]
+
+[ext_resource type="Script" path="res://scenes/EquipmentScene.gd" id="1_igoe4"]
+[ext_resource type="Texture2D" uid="uid://cr2guw71lqnyd" path="res://assets/Images/backgrounds/TownScene.png" id="2_2lbg6"]
+
+[node name="Equipment Scene" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_igoe4")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.501961, 0.423529, 0.423529, 1)
+position = Vector2(608, 480)
+texture = ExtResource("2_2lbg6")
+
+[node name="InventoryList" type="ItemList" parent="."]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 64.0
+offset_right = 176.0
+offset_bottom = 320.0
+
+[node name="EquipmentList" type="ItemList" parent="."]
+layout_mode = 0
+offset_left = 192.0
+offset_top = 64.0
+offset_right = 448.0
+offset_bottom = 320.0
+
+[node name="EquipButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 216.0
+offset_top = 336.0
+offset_right = 268.0
+offset_bottom = 367.0
+text = "Equip"
+
+[node name="UnequipButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 344.0
+offset_top = 336.0
+offset_right = 418.0
+offset_bottom = 367.0
+text = "Unequip"
+
+[node name="ItemInfo" type="Label" parent="."]
+layout_mode = 0
+offset_left = 512.0
+offset_top = 64.0
+offset_right = 552.0
+offset_bottom = 90.0
+text = "Info: "
+
+[node name="ExitButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 512.0
+offset_top = 288.0
+offset_right = 586.0
+offset_bottom = 319.0
+text = "Exit
+"

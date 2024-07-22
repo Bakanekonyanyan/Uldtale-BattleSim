@@ -1,0 +1,18 @@
+{
+  "iron_ore": {
+	"name": "Iron Ore",
+	"description": "Raw iron ore",
+	"item_type": "MATERIAL",
+	"value": 10,
+	"stackable": true,
+	"max_stack": 999
+  },
+  "wood": {
+	"name": "Wood",
+	"description": "A piece of wood",
+	"item_type": "MATERIAL",
+	"value": 5,
+	"stackable": true,
+	"max_stack": 999
+  }
+}

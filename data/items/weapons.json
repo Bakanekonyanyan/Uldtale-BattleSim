@@ -1,0 +1,394 @@
+{
+  "main_hand": {
+    "one_handed": {
+      "short_sword": {
+        "name": "Short Sword",
+        "description": "A versatile one-handed sword with average damage.",
+        "value": 100,
+        "damage": 10,
+        "attribute_target": "strength",
+        "attribute_increase": 2,
+        "type": "one_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": 0,
+          "crit": 0,
+          "armor_penetration": 0
+        }
+      },
+      "longsword": {
+        "name": "Longsword",
+        "description": "A powerful one-handed sword with high damage but decreases dodge.",
+        "value": 150,
+        "damage": 15,
+        "attribute_target": "strength",
+        "attribute_increase": 3,
+        "type": "one_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -5,
+          "crit": 0,
+          "armor_penetration": 0
+        }
+      },
+      "katana": {
+        "name": "Katana",
+        "description": "A swift one-handed sword with average damage and slightly increased crit chance.",
+        "value": 130,
+        "damage": 12,
+        "attribute_target": "dexterity",
+        "attribute_increase": 2,
+        "type": "one_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": 0,
+          "crit": 5,
+          "armor_penetration": 0
+        }
+      },
+      "wakizashi": {
+        "name": "Wakizashi",
+        "description": "A short sword with light damage, high crit chance, and increased dodge.",
+        "value": 110,
+        "damage": 8,
+        "attribute_target": "dexterity",
+        "attribute_increase": 2,
+        "type": "one_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": 5,
+          "crit": 10,
+          "armor_penetration": 0
+        }
+      },
+      "dagger": {
+        "name": "Dagger",
+        "description": "A swift dagger with low damage but high crit chance and potential status effects.",
+        "value": 80,
+        "damage": 6,
+        "attribute_target": "dexterity",
+        "attribute_increase": 1,
+        "type": "one_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": 2,
+          "crit": 15,
+          "status_effect_chance": 10
+        }
+      },
+      "mace": {
+        "name": "Mace",
+        "description": "A heavy mace with average damage that moderately bypasses armor but decreases dodge.",
+        "value": 120,
+        "damage": 11,
+        "attribute_target": "strength",
+        "attribute_increase": 2,
+        "type": "one_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -3,
+          "crit": 0,
+          "armor_penetration": 15
+        }
+      },
+      "axe": {
+        "name": "Axe",
+        "description": "A powerful axe with high damage that lightly bypasses armor but decreases dodge.",
+        "value": 140,
+        "damage": 14,
+        "attribute_target": "strength",
+        "attribute_increase": 3,
+        "type": "one_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -4,
+          "crit": 0,
+          "armor_penetration": 10
+        }
+      },
+      "spear": {
+        "name": "Spear",
+        "description": "A versatile spear with average damage, slightly increased crit chance and dodge.",
+        "value": 110,
+        "damage": 11,
+        "attribute_target": "dexterity",
+        "attribute_increase": 2,
+        "type": "one_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": 3,
+          "crit": 5,
+          "armor_penetration": 0
+        }
+      },
+      "scepter": {
+        "name": "Scepter",
+        "description": "A magical scepter with average damage that increases spell power.",
+        "value": 160,
+        "damage": 9,
+        "attribute_target": "intelligence",
+        "attribute_increase": 3,
+        "type": "one_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": 0,
+          "crit": 0,
+          "spell_power_increase": 10
+        }
+      },
+      "staff": {
+        "name": "Staff",
+        "description": "A magical staff with light damage that greatly increases spell power and crit chance.",
+        "value": 180,
+        "damage": 7,
+        "attribute_target": "intelligence",
+        "attribute_increase": 4,
+        "type": "one_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": 0,
+          "crit": 8,
+          "spell_power_increase": 15
+        }
+      }
+    },
+    "two_handed": {
+      "greatsword": {
+        "name": "Greatsword",
+        "description": "A massive two-handed sword that greatly increases damage but moderately reduces dodge.",
+        "value": 200,
+        "damage": 22,
+        "attribute_target": "strength",
+        "attribute_increase": 5,
+        "type": "two_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -8,
+          "crit": 0,
+          "armor_penetration": 5
+        }
+      },
+      "lance": {
+        "name": "Lance",
+        "description": "A long lance that deals high damage and penetrates armor but reduces dodge.",
+        "value": 190,
+        "damage": 20,
+        "attribute_target": "strength",
+        "attribute_increase": 4,
+        "type": "two_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -7,
+          "crit": 0,
+          "armor_penetration": 20
+        }
+      },
+      "curved_greatsword": {
+        "name": "Curved Greatsword",
+        "description": "A curved two-handed sword that increases dodge and deals high damage with low armor penetration.",
+        "value": 210,
+        "damage": 21,
+        "attribute_target": "dexterity",
+        "attribute_increase": 5,
+        "type": "two_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": 5,
+          "crit": 3,
+          "armor_penetration": 5
+        }
+      },
+      "great_katana": {
+        "name": "Great Katana",
+        "description": "A large two-handed katana that increases crit chance and deals high damage but reduces dodge.",
+        "value": 220,
+        "damage": 20,
+        "attribute_target": "dexterity",
+        "attribute_increase": 5,
+        "type": "two_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -6,
+          "crit": 10,
+          "armor_penetration": 0
+        }
+      },
+      "great_hammer": {
+        "name": "Great Hammer",
+        "description": "A massive hammer that greatly penetrates armor and deals high damage but reduces dodge.",
+        "value": 230,
+        "damage": 23,
+        "attribute_target": "strength",
+        "attribute_increase": 6,
+        "type": "two_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -9,
+          "crit": 0,
+          "armor_penetration": 25
+        }
+      },
+      "great_axe": {
+        "name": "Great Axe",
+        "description": "A large two-handed axe that greatly increases crit chance and deals high damage but reduces dodge.",
+        "value": 225,
+        "damage": 22,
+        "attribute_target": "strength",
+        "attribute_increase": 5,
+        "type": "two_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -8,
+          "crit": 15,
+          "armor_penetration": 10
+        }
+      },
+      "halberd": {
+        "name": "Halberd",
+        "description": "A versatile polearm that penetrates armor, increases crit chance, deals moderate damage but reduces dodge.",
+        "value": 215,
+        "damage": 19,
+        "attribute_target": "strength",
+        "attribute_increase": 4,
+        "type": "two_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -7,
+          "crit": 8,
+          "armor_penetration": 15
+        }
+      },
+      "great_staff": {
+        "name": "Great Staff",
+        "description": "A powerful magical staff that greatly increases spell power and deals high damage but reduces dodge.",
+        "value": 240,
+        "damage": 18,
+        "attribute_target": "intelligence",
+        "attribute_increase": 7,
+        "type": "two_handed",
+        "slot": "main_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -6,
+          "crit": 5,
+          "spell_power_increase": 25
+        }
+      }
+    }
+  },
+  "off_hand": {
+    "shield": {
+      "buckler": {
+        "name": "Buckler",
+        "description": "A small shield that provides light armor with minimal agility reduction.",
+        "value": 50,
+        "armor_value": 5,
+        "attribute_target": "agility",
+        "attribute_increase": 1,
+        "type": "shield",
+        "slot": "off_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -2
+        }
+      },
+      "shield": {
+        "name": "Shield",
+        "description": "A medium shield that provides moderate armor with light agility reduction.",
+        "value": 80,
+        "armor_value": 10,
+        "attribute_target": "strength",
+        "attribute_increase": 2,
+        "type": "shield",
+        "slot": "off_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -4
+        }
+      },
+      "great_shield": {
+        "name": "Great Shield",
+        "description": "A large shield that provides high armor with medium agility reduction.",
+        "value": 120,
+        "armor_value": 15,
+        "attribute_target": "strength",
+        "attribute_increase": 3,
+        "type": "shield",
+        "slot": "off_hand",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -6
+        }
+      }
+    },
+    "source": {
+      "tome": {
+        "name": "Necromantic Tome",
+        "description": "A dark tome that increases spell power, intelligence, and spell ward for Necromancers.",
+        "value": 150,
+        "spell_power_increase": 10,
+        "attribute_target": ["intelligence", "spell_ward"],
+        "attribute_increase": [3, 5],
+        "type": "source",
+        "slot": "off_hand",
+        "class_restriction": ["Necromancer"],
+        "effects": {}
+      },
+      "talisman": {
+        "name": "Elemental Talisman",
+        "description": "A magical talisman that increases spell power, dodge, and spell ward for Elementalists.",
+        "value": 150,
+        "spell_power_increase": 10,
+        "attribute_target": ["agility", "spell_ward"],
+        "attribute_increase": [3, 5],
+        "type": "source",
+        "slot": "off_hand",
+        "class_restriction": ["Elementalist"],
+        "effects": {
+          "dodge": 3
+        }
+      },
+      "fetish": {
+        "name": "Druidic Fetish",
+        "description": "A natural fetish that increases spell power, toughness, and spell ward for Druids.",
+        "value": 150,
+        "spell_power_increase": 10,
+        "attribute_target": ["vitality", "spell_ward"],
+        "attribute_increase": [3, 5],
+        "type": "source",
+        "slot": "off_hand",
+        "class_restriction": ["Druid"],
+        "effects": {}
+      },
+      "relic": {
+        "name": "Holy Relic",
+        "description": "A sacred relic that increases spell power, faith, and spell ward for Clerics.",
+        "value": 150,
+        "spell_power_increase": 10,
+        "attribute_target": ["faith", "spell_ward"],
+        "attribute_increase": [3, 5],
+        "type": "source",
+        "slot": "off_hand",
+        "class_restriction": ["Cleric"],
+        "effects": {}
+      }
+    }
+  }
+}

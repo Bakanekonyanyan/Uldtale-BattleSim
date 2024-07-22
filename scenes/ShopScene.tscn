@@ -1,0 +1,67 @@
+[gd_scene load_steps=4 format=3 uid="uid://gaoox3hxxx11"]
+
+[ext_resource type="Script" path="res://scenes/ShopScene.gd" id="1_0c31w"]
+[ext_resource type="Texture2D" uid="uid://cr2guw71lqnyd" path="res://assets/Images/backgrounds/TownScene.png" id="2_pcdiq"]
+[ext_resource type="Texture2D" uid="uid://mpkhewcv2ely" path="res://assets/Images/shopkeepers/Shopkeep.png" id="3_xobpl"]
+
+[node name="ShopScene" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_0c31w")
+
+[node name="Sprite2D2" type="Sprite2D" parent="."]
+modulate = Color(0.541176, 0.541176, 0.541176, 1)
+position = Vector2(368, 360)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_pcdiq")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(768, 360)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("3_xobpl")
+
+[node name="ItemList" type="ItemList" parent="."]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 200.0
+offset_bottom = 200.0
+
+[node name="SellItemList" type="ItemList" parent="."]
+layout_mode = 0
+offset_left = 384.0
+offset_top = 8.0
+offset_right = 576.0
+offset_bottom = 200.0
+
+[node name="BuyButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 208.0
+offset_right = 54.0
+offset_bottom = 239.0
+text = "Buy"
+
+[node name="ExitButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 152.0
+offset_top = 208.0
+offset_right = 189.0
+offset_bottom = 239.0
+text = "Exit"
+
+[node name="SellButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 392.0
+offset_top = 208.0
+offset_right = 430.0
+offset_bottom = 239.0
+text = "Sell"
+
+[node name="PlayerCurrencyLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 216.0
+offset_top = 8.0
+offset_right = 295.0
+offset_bottom = 34.0
+text = "Currency: "

@@ -1,0 +1,67 @@
+[gd_scene load_steps=3 format=3 uid="uid://bpsdxtedxk5ci"]
+
+[ext_resource type="Script" path="res://scenes/StatusScene.gd" id="1_7td2w"]
+[ext_resource type="Texture2D" uid="uid://c4wcwj7dwjsag" path="res://assets/Images/backgrounds/main menu 2.png" id="2_pq4wy"]
+
+[node name="StatusScene" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_7td2w")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.301961, 0.301961, 0.301961, 1)
+position = Vector2(576, 416)
+scale = Vector2(0.757, 0.757)
+texture = ExtResource("2_pq4wy")
+
+[node name="NameLabel" type="Label" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "Name: "
+
+[node name="ClassLabel" type="Label" parent="."]
+layout_mode = 0
+offset_top = 32.0
+offset_right = 49.0
+offset_bottom = 58.0
+text = "Class: "
+
+[node name="LevelLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 192.0
+offset_right = 241.0
+offset_bottom = 26.0
+text = "Level: "
+
+[node name="PrimaryAttributes" type="Label" parent="."]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 72.0
+offset_right = 160.0
+offset_bottom = 98.0
+text = "Primary Attributes: "
+
+[node name="SecondaryAttributes" type="Label" parent="."]
+layout_mode = 0
+offset_left = 256.0
+offset_top = 72.0
+offset_right = 428.0
+offset_bottom = 98.0
+text = "Secondary Attributes: "
+
+[node name="EquipmentInfo" type="Label" parent="."]
+layout_mode = 0
+offset_left = 576.0
+offset_top = 64.0
+offset_right = 748.0
+offset_bottom = 90.0
+text = "Equipment:"
+
+[node name="ExitButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 520.0
+offset_top = 8.0
+offset_right = 557.0
+offset_bottom = 39.0
+text = "Exit"

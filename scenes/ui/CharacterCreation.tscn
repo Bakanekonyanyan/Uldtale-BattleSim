@@ -1,0 +1,53 @@
+[gd_scene load_steps=3 format=3 uid="uid://danu1ywx2mjvr"]
+
+[ext_resource type="Script" path="res://scenes/ui/CharacterCreation.gd" id="1_eu6pg"]
+[ext_resource type="Texture2D" uid="uid://c4wcwj7dwjsag" path="res://assets/Images/backgrounds/main menu 2.png" id="2_misp4"]
+
+[node name="CharacterCreation" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_eu6pg")
+
+[node name="MainMenu2" type="Sprite2D" parent="."]
+modulate = Color(0.631373, 0.568627, 0.568627, 1)
+position = Vector2(608, 352)
+scale = Vector2(0.822, 0.822)
+texture = ExtResource("2_misp4")
+
+[node name="NameInput" type="LineEdit" parent="."]
+layout_mode = 0
+offset_left = 8.0
+offset_right = 288.0
+offset_bottom = 31.0
+placeholder_text = "Type Name Here..."
+
+[node name="RaceOption" type="OptionButton" parent="."]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 48.0
+offset_right = 22.0
+offset_bottom = 68.0
+tooltip_text = "Race"
+
+[node name="ClassOption" type="OptionButton" parent="."]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 88.0
+offset_right = 22.0
+offset_bottom = 108.0
+tooltip_text = "Class"
+
+[node name="StatsLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 168.0
+offset_top = 48.0
+offset_right = 208.0
+offset_bottom = 71.0
+
+[node name="CreateButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 176.0
+offset_right = 148.0
+offset_bottom = 207.0
+text = "Create Character"

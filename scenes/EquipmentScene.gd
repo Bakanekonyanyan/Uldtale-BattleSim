@@ -1,0 +1,108 @@
+# EquipmentScene.gd
+extends Control
+
+var current_character: CharacterData
+var selected_item: Equipment = null
+
+@onready var inventory_list = $InventoryList
+@onready var equipment_list = $EquipmentList
+@onready var item_info = $ItemInfo
+@onready var equip_button = $EquipButton
+@onready var unequip_button = $UnequipButton
+@onready var exit_button = $ExitButton
+
+func _ready():
+	current_character = CharacterManager.get_current_character()
+	if not current_character:
+		print("Error: No character loaded")
+		return
+	
+	refresh_lists()
+	equip_button.connect("pressed", Callable(self, "_on_equip_pressed"))
+	unequip_button.connect("pressed", Callable(self, "_on_unequip_pressed"))
+	inventory_list.connect("item_selected", Callable(self, "_on_inventory_item_selected"))
+	equipment_list.connect("item_selected", Callable(self, "_on_equipment_item_selected"))
+	exit_button.connect("pressed", Callable(self, "_on_exit_pressed"))
+
+func set_player(character: CharacterData):
+	current_character = character
+
+func refresh_lists():
+	inventory_list.clear()
+	equipment_list.clear()
+	
+	for item_id in current_character.inventory.items:
+		var item_data = current_character.inventory.items[item_id]
+		var item = item_data.item
+		if item is Equipment:
+			inventory_list.add_item(item.name)
+	
+	for slot in current_character.equipment:
+		var item = current_character.equipment[slot]
+		if item:
+			equipment_list.add_item("%s: %s" % [slot, item.name])
+		else:
+			equipment_list.add_item("%s: Empty" % slot)
+
+func _on_inventory_item_selected(index):
+	var equipment_items = []
+	for item_id in current_character.inventory.items:
+		var item = current_character.inventory.items[item_id].item
+		if item is Equipment:
+			equipment_items.append(item)
+	
+	if index >= 0 and index < equipment_items.size():
+		selected_item = equipment_items[index]
+		update_item_info(selected_item)
+		equip_button.disabled = false
+		unequip_button.disabled = true
+	else:
+		selected_item = null
+		update_item_info(null)
+		equip_button.disabled = true
+		unequip_button.disabled = true
+
+func _on_equipment_item_selected(index):
+	var slot = current_character.equipment.keys()[index]
+	selected_item = current_character.equipment[slot]
+	update_item_info(selected_item)
+	equip_button.disabled = true
+	unequip_button.disabled = false if selected_item else true
+
+func update_item_info(item: Equipment):
+	if item:
+		item_info.text = "Name: %s\nType: %s\nSlot: %s\nDamage: %d\nArmor: %d\nEffects: %s" % [
+			item.name, item.type, item.slot, item.damage, item.armor_value, str(item.effects)
+		]
+	else:
+		item_info.text = "No equipment selected"
+
+func _on_equip_pressed():
+	if selected_item:
+		current_character.equip_item(selected_item)
+		refresh_lists()
+		selected_item = null
+		update_item_info(null)
+		equip_button.disabled = true
+
+func _on_unequip_pressed():
+	if selected_item:
+		current_character.unequip_item(selected_item.slot)
+		refresh_lists()
+		selected_item = null
+		update_item_info(null)
+		unequip_button.disabled = true
+		
+func _on_exit_pressed():
+	# Save the character's updated inventory and currency
+	CharacterManager.save_character(current_character)
+	# Return to character selection
+	SceneManager.change_scene("res://scenes/TownScene.tscn")
+	
+func get_equipment_from_inventory() -> Array:
+	var equipment_items = []
+	for item_id in current_character.inventory.items:
+		var item = current_character.inventory.items[item_id].item
+		if item is Equipment:
+			equipment_items.append(item)
+	return equipment_items

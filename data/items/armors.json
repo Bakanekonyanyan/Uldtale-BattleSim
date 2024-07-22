@@ -1,0 +1,335 @@
+{
+  "cloth": {
+    "head": {
+      "cloth_cap": {
+        "name": "Cloth Cap",
+        "description": "A light cloth cap that provides minimal protection without reducing agility.",
+        "value": 20,
+        "armor_value": 2,
+        "attribute_target": "intelligence",
+        "attribute_increase": 1,
+        "type": "cloth",
+        "slot": "head",
+        "class_restriction": [],
+        "effects": {
+          "dodge": 0,
+          "spell_power": 1
+        }
+      }
+    },
+    "chest": {
+      "cloth_robe": {
+        "name": "Cloth Robe",
+        "description": "A light cloth robe that offers minimal protection without hindering movement.",
+        "value": 40,
+        "armor_value": 4,
+        "attribute_target": "intelligence",
+        "attribute_increase": 2,
+        "type": "cloth",
+        "slot": "chest",
+        "class_restriction": [],
+        "effects": {
+          "dodge": 0,
+          "spell_power": 2
+        }
+      }
+    },
+    "hands": {
+      "cloth_gloves": {
+        "name": "Cloth Gloves",
+        "description": "Light cloth gloves that provide minimal protection for the hands.",
+        "value": 15,
+        "armor_value": 1,
+        "attribute_target": "intelligence",
+        "attribute_increase": 1,
+        "type": "cloth",
+        "slot": "hands",
+        "class_restriction": [],
+        "effects": {
+          "dodge": 0,
+          "spell_power": 1
+        }
+      }
+    },
+    "legs": {
+      "cloth_pants": {
+        "name": "Cloth Pants",
+        "description": "Light cloth pants that offer minimal protection for the legs.",
+        "value": 30,
+        "armor_value": 3,
+        "attribute_target": "intelligence",
+        "attribute_increase": 1,
+        "type": "cloth",
+        "slot": "legs",
+        "class_restriction": [],
+        "effects": {
+          "dodge": 0,
+          "spell_power": 1
+        }
+      }
+    },
+    "feet": {
+      "cloth_shoes": {
+        "name": "Cloth Shoes",
+        "description": "Light cloth shoes that provide minimal foot protection without reducing agility.",
+        "value": 15,
+        "armor_value": 1,
+        "attribute_target": "intelligence",
+        "attribute_increase": 1,
+        "type": "cloth",
+        "slot": "feet",
+        "class_restriction": [],
+        "effects": {
+          "dodge": 0,
+          "spell_power": 1
+        }
+      }
+    }
+  },
+  "leather": {
+    "head": {
+      "leather_helm": {
+        "name": "Leather Helm",
+        "description": "A sturdy leather helm that provides light protection with minimal agility reduction.",
+        "value": 40,
+        "armor_value": 4,
+        "attribute_target": "agility",
+        "attribute_increase": 1,
+        "type": "leather",
+        "slot": "head",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -1
+        }
+      }
+    },
+    "chest": {
+      "leather_armor": {
+        "name": "Leather Armor",
+        "description": "Flexible leather armor that offers light protection with minimal movement hindrance.",
+        "value": 80,
+        "armor_value": 8,
+        "attribute_target": "agility",
+        "attribute_increase": 2,
+        "type": "leather",
+        "slot": "chest",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -2
+        }
+      }
+    },
+    "hands": {
+      "leather_gloves": {
+        "name": "Leather Gloves",
+        "description": "Durable leather gloves that provide light hand protection.",
+        "value": 30,
+        "armor_value": 3,
+        "attribute_target": "agility",
+        "attribute_increase": 1,
+        "type": "leather",
+        "slot": "hands",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -1
+        }
+      }
+    },
+    "legs": {
+      "leather_leggings": {
+        "name": "Leather Leggings",
+        "description": "Flexible leather leggings that offer light leg protection.",
+        "value": 60,
+        "armor_value": 6,
+        "attribute_target": "agility",
+        "attribute_increase": 2,
+        "type": "leather",
+        "slot": "legs",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -1
+        }
+      }
+    },
+    "feet": {
+      "leather_boots": {
+        "name": "Leather Boots",
+        "description": "Sturdy leather boots that provide light foot protection with minimal agility reduction.",
+        "value": 30,
+        "armor_value": 3,
+        "attribute_target": "agility",
+        "attribute_increase": 1,
+        "type": "leather",
+        "slot": "feet",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -1
+        }
+      }
+    }
+  },
+  "mail": {
+    "head": {
+      "mail_coif": {
+        "name": "Mail Coif",
+        "description": "A chainmail hood that provides medium protection with light agility reduction.",
+        "value": 80,
+        "armor_value": 8,
+        "attribute_target": "strength",
+        "attribute_increase": 1,
+        "type": "mail",
+        "slot": "head",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -2
+        }
+      }
+    },
+    "chest": {
+      "mail_hauberk": {
+        "name": "Mail Hauberk",
+        "description": "A chainmail shirt that offers medium protection with light movement hindrance.",
+        "value": 160,
+        "armor_value": 16,
+        "attribute_target": "strength",
+        "attribute_increase": 2,
+        "type": "mail",
+        "slot": "chest",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -4
+        }
+      }
+    },
+    "hands": {
+      "mail_gauntlets": {
+        "name": "Mail Gauntlets",
+        "description": "Chainmail gloves that provide medium hand protection.",
+        "value": 60,
+        "armor_value": 6,
+        "attribute_target": "strength",
+        "attribute_increase": 1,
+        "type": "mail",
+        "slot": "hands",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -2
+        }
+      }
+    },
+    "legs": {
+      "mail_chausses": {
+        "name": "Mail Chausses",
+        "description": "Chainmail leggings that offer medium leg protection.",
+        "value": 120,
+        "armor_value": 12,
+        "attribute_target": "strength",
+        "attribute_increase": 2,
+        "type": "mail",
+        "slot": "legs",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -3
+        }
+      }
+    },
+    "feet": {
+      "mail_boots": {
+        "name": "Mail Boots",
+        "description": "Chainmail boots that provide medium foot protection with light agility reduction.",
+        "value": 60,
+        "armor_value": 6,
+        "attribute_target": "strength",
+        "attribute_increase": 1,
+        "type": "mail",
+        "slot": "feet",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -2
+        }
+      }
+    }
+  },
+  "plate": {
+    "head": {
+      "plate_helm": {
+        "name": "Plate Helm",
+        "description": "A full plate helmet that provides high protection with medium agility reduction.",
+        "value": 160,
+        "armor_value": 16,
+        "attribute_target": "strength",
+        "attribute_increase": 2,
+        "type": "plate",
+        "slot": "head",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -4
+        }
+      }
+    },
+    "chest": {
+      "plate_armor": {
+        "name": "Plate Armor",
+        "description": "Full plate chest armor that offers high protection with medium movement hindrance.",
+        "value": 320,
+        "armor_value": 32,
+        "attribute_target": "strength",
+        "attribute_increase": 3,
+        "type": "plate",
+        "slot": "chest",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -8
+        }
+      }
+    },
+    "hands": {
+      "plate_gauntlets": {
+        "name": "Plate Gauntlets",
+        "description": "Full plate gloves that provide high hand protection.",
+        "value": 120,
+        "armor_value": 12,
+        "attribute_target": "strength",
+        "attribute_increase": 2,
+        "type": "plate",
+        "slot": "hands",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -4
+        }
+      }
+    },
+    "legs": {
+      "plate_greaves": {
+        "name": "Plate Greaves",
+        "description": "Full plate leg armor that offers high leg protection.",
+        "value": 240,
+        "armor_value": 24,
+        "attribute_target": "strength",
+        "attribute_increase": 3,
+        "type": "plate",
+        "slot": "legs",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -6
+        }
+      }
+    },
+    "feet": {
+      "plate_sabatons": {
+        "name": "Plate Sabatons",
+        "description": "Full plate boots that provide high foot protection with medium agility reduction.",
+        "value": 120,
+        "armor_value": 12,
+        "attribute_target": "strength",
+        "attribute_increase": 2,
+        "type": "plate",
+        "slot": "feet",
+        "class_restriction": [],
+        "effects": {
+          "dodge": -4
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,47 @@
+[gd_scene load_steps=3 format=3 uid="uid://cf7mw65c8j5ur"]
+
+[ext_resource type="Script" path="res://scenes/ui/CharacterSelection.gd" id="1_e73ia"]
+[ext_resource type="Texture2D" uid="uid://d13rrwwbt1084" path="res://assets/Images/backgrounds/main menu 1.png" id="2_aogts"]
+
+[node name="CharacterSelection" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_e73ia")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.8, 0.8, 0.8, 1)
+position = Vector2(576, 416)
+scale = Vector2(0.757, 0.757)
+texture = ExtResource("2_aogts")
+
+[node name="MainContainer" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 8.0
+offset_right = 187.0
+offset_bottom = 40.0
+
+[node name="ScrollContainer" type="VBoxContainer" parent="MainContainer"]
+layout_mode = 2
+
+[node name="CharacterContainer" type="VBoxContainer" parent="MainContainer/ScrollContainer"]
+layout_mode = 2
+
+[node name="CreateNewButton" type="Button" parent="MainContainer"]
+layout_mode = 2
+text = "Create New Character"
+
+[node name="LoadSavedGameButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 384.0
+offset_top = 64.0
+offset_right = 470.0
+offset_bottom = 95.0
+text = "Load Save"
+
+[node name="StartNewGameButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 384.0
+offset_top = 16.0
+offset_right = 470.0
+offset_bottom = 47.0
+text = "Start New Game"
