@@ -9,6 +9,9 @@ var is_boss_fight: bool = false
 var current_battle: Node = null
 var current_reward_scene = null
 var dungeon_description: String
+var max_floor_reached: int = 1
+var continue_delving: bool = false
+
 
 @onready var wave_label = $WaveLabel
 @onready var floor_label = $FloorLabel

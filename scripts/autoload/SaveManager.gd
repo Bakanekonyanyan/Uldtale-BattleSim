@@ -57,7 +57,11 @@ func save_game(player: CharacterData):
 	save_data["equipment"] = {}
 	for slot in player.equipment:
 		if player.equipment[slot]:
-			save_data["equipment"][slot] = player.equipment[slot].id
+			save_data["equipment"][slot] = {
+				"id": player.equipment[slot].id,
+				"rarity": player.equipment[slot].rarity,
+				"rarity_applied": player.equipment[slot].rarity_applied
+			}
 			
 	var file = FileAccess.open(get_save_file_path(player.name), FileAccess.WRITE)
 	file.store_string(JSON.stringify(save_data))
@@ -127,9 +131,20 @@ func load_game(character_name: String) -> CharacterData:
 	if "equipment" in save_data:
 		for slot in save_data["equipment"]:
 			var item_id = save_data["equipment"][slot]
-			var item = ItemManager.get_item(item_id)
-			if item and item is Equipment:
-				player.equip_item(item)
+			if typeof(item_id) == TYPE_STRING:
+				# If item_id is a string, it's the old format
+				var item = ItemManager.get_item(item_id)
+				if item and item is Equipment:
+					player.equip_item(item)
+			elif typeof(item_id) == TYPE_DICTIONARY:
+				# If item_id is a dictionary, it's the new format
+				var item = ItemManager.get_item(item_id["id"])
+				if item and item is Equipment:
+					item.rarity = item_id.get("rarity", item.rarity)
+					item.rarity_applied = item_id.get("rarity_applied", false)
+					player.equip_item(item)
+			else:
+				print("Warning: Invalid equipment data for slot ", slot)
 	
 	print("Loaded inventory items: ", player.inventory.items)
 	

@@ -83,6 +83,25 @@ func get_item(item_id: String) -> Item:
 	var item = items.get(item_id)
 	if item:
 		print("Item found: ", item_id)
+		if item is Equipment:
+			# Create a new instance with the same data to avoid modifying the original
+			var item_data = {
+				"id": item.id,
+				"name": item.name,
+				"description": item.description,
+				"value": item.value,
+				"damage": item.damage,
+				"armor_value": item.armor_value,
+				"attribute_target": item.attribute_target,
+				"attribute_increase": item.attribute_increase,
+				"type": item.type,
+				"slot": item.slot,
+				"class_restriction": item.class_restriction,
+				"effects": item.effects,
+				"rarity": item.rarity,
+				"rarity_applied": item.rarity_applied
+			}
+			return Equipment.new(item_data)
 		return item
 	else:
 		print("Item not found: ", item_id)

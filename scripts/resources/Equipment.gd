@@ -11,6 +11,7 @@ var slot: String
 var class_restriction: Array
 var effects: Dictionary
 var rarity: String = "common"
+var rarity_applied: bool = false
 
 var rarities: Dictionary = {
 	"common": {"multiplier": 1, "color": "white"},
@@ -35,14 +36,17 @@ func _init(data: Dictionary):
 	slot = data.get("slot", "")
 	class_restriction = data.get("class_restriction", [])
 	effects = data.get("effects", {})
-	# Randomly assign rarity if it's not set
-	if data.get("rarity", "") == "":
-		assign_random_rarity()
+	
+	# Check if rarity is already set in the data
+	if data.has("rarity") and data["rarity"] != "":
+		rarity = data["rarity"]
 	else:
-		rarity = data.get("rarity", "common")
+		assign_random_rarity()
 	
-	apply_rarity_multiplier()
-	
+	# Only apply rarity multiplier if it hasn't been applied before
+	if not data.get("rarity_applied", false):
+		apply_rarity_multiplier()
+		
 func assign_random_rarity():
 	var rarity_roll = randf()
 	if rarity_roll < 0.60:
@@ -63,6 +67,8 @@ func apply_rarity_multiplier():
 	if armor_value > 0:
 		armor_value = int(armor_value * multiplier)
 	value = int(value * multiplier)
+	# Mark that rarity has been applied
+	rarity_applied = true
 
 func get_rarity_color() -> String:
 	return rarities[rarity]["color"]
