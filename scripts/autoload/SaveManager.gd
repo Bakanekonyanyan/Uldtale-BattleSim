@@ -51,7 +51,12 @@ func save_game(player: CharacterData):
 		save_data["inventory"][item_id] = {
 			"quantity": item_data.quantity
 		}
-	
+	# Save equipment
+	save_data["equipment"] = {}
+	for slot in player.equipment:
+		if player.equipment[slot]:
+			save_data["equipment"][slot] = player.equipment[slot].id
+			
 	var file = FileAccess.open(get_save_file_path(player.name), FileAccess.WRITE)
 	file.store_string(JSON.stringify(save_data))
 	file.close()
@@ -113,7 +118,16 @@ func load_game(character_name: String) -> CharacterData:
 				player.inventory.add_item(item, item_data["quantity"])
 			else:
 				print("Warning: Item not found in ItemManager: ", item_id)
+	# Load equipment
+	if "equipment" in save_data:
+		for slot in save_data["equipment"]:
+			var item_id = save_data["equipment"][slot]
+			var item = ItemManager.get_item(item_id)
+			if item and item is Equipment:
+				player.equip_item(item)
+	
 	print("Loaded inventory items: ", player.inventory.items)
+	
 	# Recalculate secondary attributes
 	player.calculate_secondary_attributes()
 

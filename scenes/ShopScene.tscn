@@ -1,8 +1,32 @@
-[gd_scene load_steps=4 format=3 uid="uid://gaoox3hxxx11"]
+[gd_scene load_steps=9 format=3 uid="uid://gaoox3hxxx11"]
 
 [ext_resource type="Script" path="res://scenes/ShopScene.gd" id="1_0c31w"]
 [ext_resource type="Texture2D" uid="uid://cr2guw71lqnyd" path="res://assets/Images/backgrounds/TownScene.png" id="2_pcdiq"]
 [ext_resource type="Texture2D" uid="uid://mpkhewcv2ely" path="res://assets/Images/shopkeepers/Shopkeep.png" id="3_xobpl"]
+[ext_resource type="Script" path="res://scripts/PointLight2D.gd" id="4_4t6n7"]
+
+[sub_resource type="Environment" id="Environment_jmeq7"]
+background_mode = 3
+tonemap_mode = 3
+glow_enabled = true
+glow_normalized = true
+glow_intensity = 1.27
+glow_bloom = 0.15
+glow_blend_mode = 0
+
+[sub_resource type="Gradient" id="Gradient_40hv2"]
+offsets = PackedFloat32Array(0, 0.663366)
+colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_6u54x"]
+gradient = SubResource("Gradient_40hv2")
+fill_from = Vector2(0.5, 0.25)
+fill_to = Vector2(0.5, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_evf1j"]
+gradient = SubResource("Gradient_40hv2")
+fill = 1
+fill_from = Vector2(0.5, 0.5)
 
 [node name="ShopScene" type="Control"]
 layout_mode = 3
@@ -20,22 +44,89 @@ position = Vector2(768, 360)
 scale = Vector2(0.5, 0.5)
 texture = ExtResource("3_xobpl")
 
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_jmeq7")
+
+[node name="DirectionalLight2D" type="DirectionalLight2D" parent="."]
+color = Color(0.541176, 0.541176, 0.541176, 1)
+blend_mode = 2
+
+[node name="PointLight2D6" type="PointLight2D" parent="."]
+position = Vector2(768, 360)
+scale = Vector2(8, 8)
+color = Color(0.933333, 0.72549, 0.658824, 1)
+energy = 0.74
+texture = SubResource("GradientTexture2D_6u54x")
+texture_scale = 1.5
+script = ExtResource("4_4t6n7")
+min_energy = 0.25
+max_energy = 0.75
+base_pulse_duration = 4.0
+randomness = 0.5
+
+[node name="PointLight2D" type="PointLight2D" parent="."]
+position = Vector2(1096, 136)
+color = Color(0.933333, 0.72549, 0.658824, 1)
+energy = 1.5
+texture = SubResource("GradientTexture2D_evf1j")
+texture_scale = 1.5
+script = ExtResource("4_4t6n7")
+
+[node name="PointLight2D2" type="PointLight2D" parent="."]
+position = Vector2(456, 128)
+color = Color(0.933333, 0.72549, 0.658824, 1)
+energy = 1.5
+texture = SubResource("GradientTexture2D_evf1j")
+texture_scale = 1.5
+script = ExtResource("4_4t6n7")
+
+[node name="PointLight2D3" type="PointLight2D" parent="."]
+position = Vector2(1048, 184)
+color = Color(0.933333, 0.72549, 0.658824, 1)
+energy = 0.75
+texture = SubResource("GradientTexture2D_evf1j")
+script = ExtResource("4_4t6n7")
+max_energy = 0.75
+base_pulse_duration = 1.5
+randomness = 0.4
+
+[node name="PointLight2D4" type="PointLight2D" parent="."]
+position = Vector2(552, 208)
+color = Color(0.933333, 0.72549, 0.658824, 1)
+energy = 0.75
+texture = SubResource("GradientTexture2D_evf1j")
+script = ExtResource("4_4t6n7")
+max_energy = 0.75
+base_pulse_duration = 1.5
+randomness = 0.3
+
+[node name="PointLight2D5" type="PointLight2D" parent="."]
+position = Vector2(1000, 224)
+color = Color(0.933333, 0.72549, 0.658824, 1)
+energy = 0.25
+texture = SubResource("GradientTexture2D_evf1j")
+texture_scale = 0.75
+script = ExtResource("4_4t6n7")
+min_energy = 0.25
+max_energy = 0.5
+base_pulse_duration = 1.0
+
 [node name="ItemList" type="ItemList" parent="."]
-layout_mode = 0
+light_mask = 0
 offset_left = 8.0
 offset_top = 8.0
 offset_right = 200.0
 offset_bottom = 200.0
 
 [node name="SellItemList" type="ItemList" parent="."]
-layout_mode = 0
+light_mask = 0
 offset_left = 384.0
 offset_top = 8.0
 offset_right = 576.0
 offset_bottom = 200.0
 
 [node name="BuyButton" type="Button" parent="."]
-layout_mode = 0
+light_mask = 0
 offset_left = 16.0
 offset_top = 208.0
 offset_right = 54.0
@@ -43,7 +134,7 @@ offset_bottom = 239.0
 text = "Buy"
 
 [node name="ExitButton" type="Button" parent="."]
-layout_mode = 0
+light_mask = 0
 offset_left = 152.0
 offset_top = 208.0
 offset_right = 189.0
@@ -51,7 +142,7 @@ offset_bottom = 239.0
 text = "Exit"
 
 [node name="SellButton" type="Button" parent="."]
-layout_mode = 0
+light_mask = 0
 offset_left = 392.0
 offset_top = 208.0
 offset_right = 430.0
@@ -59,9 +150,9 @@ offset_bottom = 239.0
 text = "Sell"
 
 [node name="PlayerCurrencyLabel" type="Label" parent="."]
-layout_mode = 0
-offset_left = 216.0
-offset_top = 8.0
-offset_right = 295.0
-offset_bottom = 34.0
+light_mask = 0
+offset_left = 16.0
+offset_top = 264.0
+offset_right = 95.0
+offset_bottom = 290.0
 text = "Currency: "
