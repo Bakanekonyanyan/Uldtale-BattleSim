@@ -27,12 +27,13 @@ var current_battle: Node = null
 func set_player(character: CharacterData):
 	player_character = character
 
-# In Battle.gd
-
 func set_enemy(new_enemy: CharacterData):
 	enemy_character = new_enemy
-	# Any other setup you need to do with the enemy character
-
+	# Scale enemy based on current floor
+	for _i in range(current_floor - 1):
+		enemy_character.level_up()
+	enemy_character.calculate_secondary_attributes()
+	
 func _ready():
 	print("Battle: _ready called")
 	setup_battle()

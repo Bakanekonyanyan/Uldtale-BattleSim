@@ -23,16 +23,24 @@ offset_bottom = 55.0
 
 [node name="ContinueButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 128.0
-offset_right = 87.0
-offset_bottom = 159.0
+offset_left = 256.0
+offset_top = 32.0
+offset_right = 335.0
+offset_bottom = 63.0
 text = "Continue"
+
+[node name="NextFloorButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 256.0
+offset_top = 80.0
+offset_right = 345.0
+offset_bottom = 111.0
+text = "Next Floor"
 
 [node name="QuitButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 128.0
+offset_left = 256.0
 offset_top = 128.0
-offset_right = 170.0
+offset_right = 298.0
 offset_bottom = 159.0
 text = "Quit"

@@ -10,6 +10,7 @@ var current_battle: Node = null
 var current_reward_scene = null
 var dungeon_description: String
 var max_floor_reached: int = 1
+var max_floor: int = 3  # Set the max number of floors
 var continue_delving: bool = false
 
 
@@ -48,13 +49,8 @@ func next_wave():
 	update_labels()
 	
 	if current_wave > waves_per_floor:
-		if current_floor == 1:  # Only one floor for now
-			is_boss_fight = true
-			start_boss_battle()
-		else:
-			current_floor += 1
-			current_wave = 1
-			update_labels()
+		is_boss_fight = true
+		start_boss_battle()
 	else:
 		is_boss_fight = false
 		start_battle()
@@ -92,6 +88,32 @@ func get_dungeon_description() -> String:
 			return "Glowing lights dance in the air. You've wandered into an enchanted fairy glade."
 	return "You're in a mysterious dungeon."
 	
+func _on_quit_dungeon():
+	print("Quitting dungeon")
+	SaveManager.save_game(player_character)
+	if current_reward_scene:
+		current_reward_scene.queue_free()
+		current_reward_scene = null
+	SceneManager.change_scene("res://scenes/ui/CharacterSelection.tscn")
+
+func calculate_rewards() -> Dictionary:
+	var rewards = {}
+	rewards["currency"] = (50 + (current_wave * 10)) * current_floor
+	
+	var drop_chance_multiplier = 1 + (current_floor * 0.1)
+	
+	if is_boss_fight:
+		rewards["currency"] *= 2
+		add_random_item(rewards, "consumable", 1.0 * drop_chance_multiplier)
+		add_random_item(rewards, "material", 1.0 * drop_chance_multiplier)
+		add_random_item(rewards, "weapon", 0.5 * drop_chance_multiplier)
+		add_random_item(rewards, "armor", 0.5 * drop_chance_multiplier)
+	else:
+		add_random_item(rewards, "consumable", 0.7 * drop_chance_multiplier)
+		add_random_item(rewards, "material", 0.3 * drop_chance_multiplier)
+		add_random_item(rewards, "equipment", 0.1 * drop_chance_multiplier)
+	
+	return rewards
 
 func _on_rewards_accepted():
 	print("Rewards accepted")
@@ -101,18 +123,18 @@ func _on_rewards_accepted():
 		current_reward_scene = null
 	
 	if is_boss_fight:
-		print("Congratulations! You've completed the dungeon!")
-		SceneManager.change_scene("res://scenes/ui/CharacterSelection.tscn")
+		if current_floor < max_floor and continue_delving:
+			print("Moving to next floor")
+			current_floor += 1
+			current_wave = 0
+			is_boss_fight = false
+			EnemyFactory.set_dungeon_race()
+			next_wave()
+		else:
+			print("Dungeon completed or player chose to quit")
+			SceneManager.change_scene("res://scenes/TownScene.tscn")
 	else:
 		next_wave()
-
-func _on_quit_dungeon():
-	print("Quitting dungeon")
-	SaveManager.save_game(player_character)
-	if current_reward_scene:
-		current_reward_scene.queue_free()
-		current_reward_scene = null
-	SceneManager.change_scene("res://scenes/ui/CharacterSelection.tscn")
 
 func show_reward_scene(xp_gained: int):
 	print("Showing reward scene")
@@ -120,17 +142,19 @@ func show_reward_scene(xp_gained: int):
 	var rewards = calculate_rewards()
 	print("Rewards calculated: ", rewards)
 	reward_scene.set_rewards(rewards)
-	reward_scene.set_xp_gained(xp_gained)  # Pass XP to the reward scene
+	reward_scene.set_xp_gained(xp_gained)
 	reward_scene.set_player_character(player_character)
+	reward_scene.set_dungeon_info(is_boss_fight, current_floor, max_floor)
 	reward_scene.connect("rewards_accepted", Callable(self, "_on_rewards_accepted"))
 	reward_scene.connect("quit_dungeon", Callable(self, "_on_quit_dungeon"))
+	reward_scene.connect("next_floor", Callable(self, "_on_next_floor"))
 	add_child(reward_scene)
 	current_reward_scene = reward_scene
 
-func calculate_xp_reward(enemy: CharacterData) -> int:
-	return enemy.level * 10  # You can adjust this formula as needed
+func _on_next_floor():
+	continue_delving = true
+	_on_rewards_accepted()
 
-# DungeonScene.gd
 func _on_battle_completed(player_won: bool) -> void:
 	if player_won:
 		var xp_gained = calculate_xp_reward(current_battle.enemy_character)
@@ -187,64 +211,6 @@ func _setup_level_up_scene(level_up_scene):
 func _on_level_up_complete():
 	print("Level up complete!")
 
-func calculate_rewards() -> Dictionary:
-	print("Calculating rewards. Current wave: ", current_wave, " Is boss fight: ", is_boss_fight)
-	var rewards = {}
-	rewards["currency"] = 50 + (current_wave * 10)
-	print("Base currency reward: ", rewards["currency"])
-	
-	if is_boss_fight:
-		print("Calculating boss rewards")
-		rewards["currency"] += 100
-		add_random_item(rewards, "consumable")
-		add_random_item(rewards, "material")
-		add_random_item(rewards, "weapon")
-		add_random_item(rewards, "armor")
-		
-		if randf() < 0.5:
-			add_random_item(rewards, "consumable")
-		if randf() < 0.3:
-			add_random_item(rewards, "material")
-		if randf() < 0.2:
-			add_random_item(rewards, "equipment")
-	else:
-		print("Calculating regular battle rewards")
-		if randf() < 0.7:
-			add_random_item(rewards, "consumable")
-		elif randf() < 0.3:
-			add_random_item(rewards, "material")
-		
-		if randf() < 0.1:
-			add_random_item(rewards, "equipment")
-	
-	print("Final rewards: ", rewards)
-	return rewards
-
-func add_random_item(rewards: Dictionary, item_type: String):
-	print("Adding random ", item_type)
-	var item_id = ""
-	match item_type:
-		"consumable":
-			item_id = ItemManager.get_random_consumable()
-		"material":
-			item_id = ItemManager.get_random_material()
-		"weapon":
-			item_id = ItemManager.get_random_weapon()
-		"armor":
-			item_id = ItemManager.get_random_armor()
-		"equipment":
-			item_id = ItemManager.get_random_equipment()
-	
-	print("Selected item: ", item_id)
-	if item_id != "":
-		if rewards.has(item_id):
-			rewards[item_id] += 1
-		else:
-			rewards[item_id] = 1
-		print("Added ", item_id, " to rewards")
-	else:
-		print("Warning: No ", item_type, " item selected")
-
 func update_labels():
 	if wave_label:
 		if is_boss_fight:
@@ -260,6 +226,22 @@ func update_labels():
 		print("Warning: floor_label not found")
 
 	print("Labels updated - Wave: %d, Floor: %d" % [current_wave, current_floor])
+
+func add_random_item(rewards: Dictionary, item_type: String, chance: float):
+	if randf() < chance:
+		var item_id = ""
+		match item_type:
+			"consumable": item_id = ItemManager.get_random_consumable()
+			"material": item_id = ItemManager.get_random_material()
+			"weapon": item_id = ItemManager.get_random_weapon()
+			"armor": item_id = ItemManager.get_random_armor()
+			"equipment": item_id = ItemManager.get_random_equipment()
+		
+		if item_id != "":
+			rewards[item_id] = rewards.get(item_id, 0) + 1
+
+func calculate_xp_reward(enemy: CharacterData) -> int:
+	return enemy.level * 10 * current_floor  # Increase XP based on floor
 
 func get_random_item() -> String:
 	var items = ItemManager.get_all_items()
