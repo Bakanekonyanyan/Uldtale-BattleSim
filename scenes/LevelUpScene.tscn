@@ -1,0 +1,52 @@
+[gd_scene load_steps=2 format=3 uid="uid://d1bw14eqynkqy"]
+
+[ext_resource type="Script" path="res://scenes/LevelUpScene.gd" id="1_mxvaw"]
+
+[node name="LevelUpScene" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_top = -8.0
+offset_bottom = -8.0
+script = ExtResource("1_mxvaw")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 1152.0
+offset_bottom = 664.0
+color = Color(0, 0, 0, 0.796078)
+
+[node name="MainContainer" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 120.0
+offset_top = 64.0
+offset_right = 856.0
+offset_bottom = 648.0
+
+[node name="LevelUpLabel" type="Label" parent="MainContainer"]
+layout_mode = 2
+text = "LEVEL UP!"
+horizontal_alignment = 1
+
+[node name="LevelContainer" type="HBoxContainer" parent="MainContainer"]
+layout_mode = 2
+
+[node name="LevelTextLabel" type="Label" parent="MainContainer/LevelContainer"]
+layout_mode = 2
+text = "Level: "
+
+[node name="LevelValueLabel" type="Label" parent="MainContainer/LevelContainer"]
+layout_mode = 2
+
+[node name="PointsLabel" type="Label" parent="MainContainer"]
+layout_mode = 2
+text = "Attribute Points: "
+
+[node name="PointsValueLabel" type="Label" parent="MainContainer"]
+layout_mode = 2
+
+[node name="AttributeGrid" type="GridContainer" parent="MainContainer"]
+layout_mode = 2
+
+[node name="DoneButton" type="Button" parent="MainContainer"]
+layout_mode = 2
+text = "Done"

@@ -51,6 +51,10 @@ var debuffs: Dictionary = {}
 @export var inventory: Inventory
 @export var currency: Currency
 
+@export var xp: int = 0
+@export var attribute_points: int = 0
+@export var is_player: bool = false
+
 # Equipment slots
 var equipment = {
 	"main_hand": null,
@@ -62,6 +66,8 @@ var equipment = {
 	"feet": null
 }
 
+var previous_level: int = 1
+
 func _init(p_name: String = "", p_race: String = "", p_class: String = ""):
 	name = p_name
 	race = p_race
@@ -69,7 +75,6 @@ func _init(p_name: String = "", p_race: String = "", p_class: String = ""):
 	inventory = Inventory.new()
 	currency = Currency.new()
 
-# Add this method to the class
 func add_skills(new_skills: Array):
 	skills.clear()
 	for skill in new_skills:
@@ -82,39 +87,42 @@ func remove_skill(skill_name: String):
 	skills.erase(skill_name)
 
 func calculate_secondary_attributes():
-	max_hp = vitality * 10
+	# Health and Resource Pools
+	max_hp = vitality * 10 + strength * 5
 	current_hp = max_hp
-	max_mp = mind * 5
+	max_mp = mind * 8 + intelligence * 4
 	current_mp = max_mp
-	max_sp = endurance * 5
+	max_sp = endurance * 8 + agility * 4
 	current_sp = max_sp
-	toughness = (vitality + strength) / 5.0
-	
-	dodge = 0.05 + (agility + dexterity) / (400.0)  # Base 5% dodge, max ~30% with very high agility and dexterity
-	
-	spell_ward = arcane + (mind / 2.0)
-	
-	accuracy = 0.7 + (mind + agility + fortitude) / (300.0)  # Base 70% accuracy, max ~90% with very high stats
-	
+
+	# Defensive Stats
+	toughness = (vitality * 0.5 + strength * 0.3 + endurance * 0.2) / 10.0
+	dodge = 0.05 + (agility * 0.6 + dexterity * 0.4) / 200.0  # Base 5% dodge, max ~25% with very high stats
+	spell_ward = (arcane * 0.6 + mind * 0.4) / 10.0
+
+	# Offensive Stats
+	accuracy = 0.75 + (dexterity * 0.4 + agility * 0.3 + mind * 0.3) / 200.0  # Base 75% accuracy, max ~95% with very high stats
+	critical_hit_rate = 0.05 + (dexterity * 0.5 + agility * 0.3 + intelligence * 0.2) / 200.0  # Base 5% crit, max ~25% with very high stats
+
+	# Attack Power
 	match attack_power_type:
 		"strength":
-			attack_power = (strength * 1.5) + (dexterity * 0.5) + (agility * 1.5)
+			attack_power = strength * 2 + dexterity * 0.5 + vitality * 0.5
 		"dexterity":
-			attack_power = (dexterity * 1.5) + (strength * 0.5) + (agility * 1.5)
+			attack_power = dexterity * 2 + strength * 0.5 + agility * 0.5
 		_:
 			print("Invalid attack_power_type")
-	
+
+	# Spell Power
 	match spell_power_type:
 		"balanced":
-			spell_power = (intelligence * 1.5) + (faith * 1.5) + (arcane * 1.5)
+			spell_power = (intelligence * 1.5 + faith * 1.5 + arcane * 1.5) / 2
 		"intelligence":
-			spell_power = (intelligence * 2) + (faith * 1.5) + (arcane * 1.5)
+			spell_power = intelligence * 2 + faith + arcane
 		"arcane":
-			spell_power = (intelligence * 2) + (faith * 1.5) + (arcane * 2)
+			spell_power = arcane * 2 + intelligence + faith
 		_:
 			print("Invalid spell_power_type")
-	
-	critical_hit_rate = dexterity + (agility / 2.0)
 
 func equip_item(item: Equipment) -> Equipment:
 	if not item.can_equip(self):
@@ -395,3 +403,76 @@ func reset_for_new_battle():
 	is_defending = false
 	buffs.clear()
 	debuffs.clear()
+
+# In CharacterData.gd, update the gain_xp function:
+func gain_xp(amount: int):
+	previous_level = level
+	xp += amount
+	print("XP gained. Current XP: ", xp, " Level: ", level)
+	check_level_up()
+
+# In the check_level_up function:
+func check_level_up():
+	var xp_required = LevelSystem.calculate_xp_for_level(level)
+	print("XP required for next level: ", xp_required)
+	while xp >= xp_required:
+		level_up()
+		xp -= xp_required
+		xp_required = LevelSystem.calculate_xp_for_level(level)
+		print("Leveled up! New level: ", level, " Remaining XP: ", xp)
+
+func level_up() -> void:
+	level += 1
+	vitality += 1
+	strength += 1
+	dexterity += 1
+	intelligence += 1
+	faith += 1
+	mind += 1
+	endurance += 1
+	arcane += 1
+	agility += 1
+	fortitude += 1
+	
+	if is_player:
+		attribute_points += 3
+	else:
+		distribute_enemy_points()
+	
+	calculate_secondary_attributes()
+
+func distribute_enemy_points() -> void:
+	for _i in range(3):
+		var random_attr = randi() % 10
+		match random_attr:
+			0: vitality += 1
+			1: strength += 1
+			2: dexterity += 1
+			3: intelligence += 1
+			4: faith += 1
+			5: mind += 1
+			6: endurance += 1
+			7: arcane += 1
+			8: agility += 1
+			9: fortitude += 1
+
+func spend_attribute_point(attribute: String) -> bool:
+	if attribute_points > 0:
+		match attribute:
+			"vitality": vitality += 1
+			"strength": strength += 1
+			"dexterity": dexterity += 1
+			"intelligence": intelligence += 1
+			"faith": faith += 1
+			"mind": mind += 1
+			"endurance": endurance += 1
+			"arcane": arcane += 1
+			"agility": agility += 1
+			"fortitude": fortitude += 1
+			_: return false
+		attribute_points -= 1
+		calculate_secondary_attributes()
+		return true
+	return false
+
+

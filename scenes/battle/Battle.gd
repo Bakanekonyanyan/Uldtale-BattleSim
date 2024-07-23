@@ -1,19 +1,28 @@
 # res://scenes/battle/Battle.gd
 extends Node2D
 
-signal battle_completed(player_won)
+signal battle_completed(player_won, xp_gained)
 
 var player_character: CharacterData
 var enemy_character: CharacterData
 var current_turn: String = "player"  # "player" or "enemy"
 var turn_order: Array = []
 var is_boss_battle: bool = false
+var current_wave: int
+var current_floor: int
+var dungeon_description: String
+var current_battle: Node = null
 
+@onready var wave_label = $WaveLabel
+@onready var floor_label = $FloorLabel
+@onready var dungeon_description_label = $DungeonDescriptionLabel
 @onready var player_info = $PlayerInfo
 @onready var enemy_info = $EnemyInfo
 @onready var action_buttons = $ActionButtons
 @onready var turn_label = $TurnLabel
 @onready var inventory_menu = $InventoryMenu
+@onready var xp_label = $XPLabel
+
 
 func set_player(character: CharacterData):
 	player_character = character
@@ -27,6 +36,21 @@ func set_enemy(new_enemy: CharacterData):
 func _ready():
 	print("Battle: _ready called")
 	setup_battle()
+	update_dungeon_labels()
+
+func set_dungeon_info(wave: int, floor: int, description: String):
+	current_wave = wave
+	current_floor = floor
+	dungeon_description = description
+	update_dungeon_labels()
+
+func update_dungeon_labels():
+	if wave_label:
+		wave_label.text = "Wave: %d" % current_wave
+	if floor_label:
+		floor_label.text = "Floor: %d" % current_floor
+	if dungeon_description_label:
+		dungeon_description_label.text = dungeon_description
 
 func setup_battle():
 	print("Battle: setup_battle called")
@@ -290,6 +314,10 @@ func update_ui():
 			print("player_character is null")
 		if not enemy_character:
 			print("enemy_character is null")
+			
+	if xp_label:
+		xp_label.text = "XP: %d / %d" % [player_character.xp, LevelSystem.calculate_xp_for_level(player_character.level)]
+	
 	var current_scene = get_tree().current_scene
 	if current_scene:
 		print("Current scene: ", current_scene.name)
@@ -311,12 +339,10 @@ func check_battle_end():
 	if enemy_character.current_hp <= 0:
 		print("Battle: Player won")
 		emit_signal("battle_completed", true)
-		queue_free()
 	elif player_character.current_hp <= 0:
 		print("Battle: Player lost")
 		emit_signal("battle_completed", false)
-		queue_free()
-		
+
 func show_reward_scene(player_won: bool):
 	var rewards = calculate_rewards(player_won)
 	emit_signal("battle_completed", player_won)

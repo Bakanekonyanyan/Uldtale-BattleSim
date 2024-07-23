@@ -10,6 +10,7 @@ var player_character: CharacterData
 @onready var reward_label: Label = $RewardLabel
 @onready var continue_button: Button = $ContinueButton
 @onready var quit_button: Button = $QuitButton
+var xp_gained: int = 0
 
 func _ready():
 	setup_ui()
@@ -27,11 +28,15 @@ func set_rewards(new_rewards: Dictionary):
 func set_player_character(character: CharacterData):
 	player_character = character
 
+func set_xp_gained(xp: int):
+	xp_gained = xp
+
 func display_rewards():
 	if not reward_label:
 		return
 
 	var reward_text = "You received:\n"
+	reward_text += "%d XP\n" % xp_gained  # Add XP to the reward text
 	for item_id in rewards:
 		if item_id == "currency":
 			reward_text += "%d Gold\n" % rewards[item_id]

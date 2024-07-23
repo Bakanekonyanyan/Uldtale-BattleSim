@@ -4,6 +4,7 @@ extends Node
 var races = {}
 var classes = {}
 var skills = {}
+var current_dungeon_race: String = ""
 
 func _ready():
 	load_data()
@@ -18,26 +19,45 @@ func load_data():
 	file = FileAccess.open("res://data/skills.json", FileAccess.READ)
 	skills = JSON.parse_string(file.get_as_text())["skills"]
 
-func create_enemy() -> CharacterData:
+func set_dungeon_race():
+	var non_playable_races = races["non_playable"].keys()
+	current_dungeon_race = non_playable_races[randi() % non_playable_races.size()]
+	print("Current dungeon race set to: ", current_dungeon_race)
+
+func create_enemy(level: int = 1) -> CharacterData:
 	var enemy = CharacterData.new()
 	
-	var enemy_classes = ["Minion", "Brute", "Mage", "Shaman"]
+	if current_dungeon_race == "":
+		set_dungeon_race()
+	
+	var enemy_classes = classes["non_playable"].keys()
 	var chosen_class = enemy_classes[randi() % enemy_classes.size()]
 	
-	setup_character(enemy, chosen_class, "non_playable", races["non_playable"]["Goblin"])
+	setup_character(enemy, chosen_class, "non_playable", races["non_playable"][current_dungeon_race])
+	
+	enemy.name = "%s %s" % [current_dungeon_race, chosen_class]
+	
+	enemy.level = level
+	for _i in range(level - 1):
+		enemy.level_up()
+	
+	enemy.is_player = false
 	
 	return enemy
 
 func create_boss() -> CharacterData:
 	var boss = CharacterData.new()
 	
-	setup_character(boss, "King", "boss", races["non_playable"]["Goblin"])
+	setup_character(boss, "King", "boss", races["non_playable"][current_dungeon_race])
+	boss.name = "%s King" % current_dungeon_race
+	
 	# Increase boss stats
 	boss.vitality *= 2
 	boss.strength *= 1.5
 	boss.calculate_secondary_attributes()
 	
 	return boss
+	
 
 func setup_character(character: CharacterData, character_class: String, class_type: String, race_data: Dictionary):
 	var class_data = classes[class_type][character_class]

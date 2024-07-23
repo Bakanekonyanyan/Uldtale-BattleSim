@@ -14,7 +14,8 @@
         "effects": {
           "dodge": 0,
           "spell_power": 1
-        }
+        },
+        "rarity": ""
       }
     },
     "chest": {
@@ -31,7 +32,8 @@
         "effects": {
           "dodge": 0,
           "spell_power": 2
-        }
+        },
+        "rarity": ""
       }
     },
     "hands": {
@@ -48,7 +50,8 @@
         "effects": {
           "dodge": 0,
           "spell_power": 1
-        }
+        },
+        "rarity": ""
       }
     },
     "legs": {
@@ -65,7 +68,8 @@
         "effects": {
           "dodge": 0,
           "spell_power": 1
-        }
+        },
+        "rarity": ""
       }
     },
     "feet": {
@@ -82,7 +86,8 @@
         "effects": {
           "dodge": 0,
           "spell_power": 1
-        }
+        },
+        "rarity": ""
       }
     }
   },
@@ -100,7 +105,8 @@
         "class_restriction": [],
         "effects": {
           "dodge": -1
-        }
+        },
+        "rarity": ""
       }
     },
     "chest": {
@@ -116,7 +122,8 @@
         "class_restriction": [],
         "effects": {
           "dodge": -2
-        }
+        },
+        "rarity": ""
       }
     },
     "hands": {
@@ -132,7 +139,8 @@
         "class_restriction": [],
         "effects": {
           "dodge": -1
-        }
+        },
+        "rarity": ""
       }
     },
     "legs": {
@@ -148,7 +156,8 @@
         "class_restriction": [],
         "effects": {
           "dodge": -1
-        }
+        },
+        "rarity": ""
       }
     },
     "feet": {
@@ -164,7 +173,8 @@
         "class_restriction": [],
         "effects": {
           "dodge": -1
-        }
+        },
+        "rarity": ""
       }
     }
   },
@@ -182,7 +192,8 @@
         "class_restriction": [],
         "effects": {
           "dodge": -2
-        }
+        },
+        "rarity": ""
       }
     },
     "chest": {
@@ -198,7 +209,8 @@
         "class_restriction": [],
         "effects": {
           "dodge": -4
-        }
+        },
+        "rarity": ""
       }
     },
     "hands": {
@@ -214,7 +226,8 @@
         "class_restriction": [],
         "effects": {
           "dodge": -2
-        }
+        },
+        "rarity": ""
       }
     },
     "legs": {
@@ -230,7 +243,8 @@
         "class_restriction": [],
         "effects": {
           "dodge": -3
-        }
+        },
+        "rarity": ""
       }
     },
     "feet": {
@@ -246,7 +260,8 @@
         "class_restriction": [],
         "effects": {
           "dodge": -2
-        }
+        },
+        "rarity": ""
       }
     }
   },
@@ -264,7 +279,8 @@
         "class_restriction": [],
         "effects": {
           "dodge": -4
-        }
+        },
+        "rarity": ""
       }
     },
     "chest": {
@@ -280,7 +296,8 @@
         "class_restriction": [],
         "effects": {
           "dodge": -8
-        }
+        },
+        "rarity": ""
       }
     },
     "hands": {
@@ -296,7 +313,8 @@
         "class_restriction": [],
         "effects": {
           "dodge": -4
-        }
+        },
+        "rarity": ""
       }
     },
     "legs": {
@@ -312,7 +330,8 @@
         "class_restriction": [],
         "effects": {
           "dodge": -6
-        }
+        },
+        "rarity": ""
       }
     },
     "feet": {
@@ -328,7 +347,8 @@
         "class_restriction": [],
         "effects": {
           "dodge": -4
-        }
+        },
+        "rarity": ""
       }
     }
   }

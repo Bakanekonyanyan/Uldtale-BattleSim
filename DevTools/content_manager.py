@@ -10,7 +10,7 @@ class ContentEditor:
         self.root.geometry("800x600")
 
         # Update the content directory path
-        self.content_directory = r"D:\Uldtale Battlsim\data"
+        self.content_directory = r"D:\Uldtale Battlsim\Uldtale-BattleSim\data"
         self.current_file = None
         self.data = {}
 

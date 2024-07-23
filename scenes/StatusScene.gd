@@ -10,6 +10,8 @@ var current_character: CharacterData
 @onready var secondary_attributes = $SecondaryAttributes if has_node("SecondaryAttributes") else null
 @onready var equipment_info = $EquipmentInfo if has_node("EquipmentInfo") else null
 @onready var exit_button = $ExitButton if has_node("ExitButton") else null
+@onready var xp_label = $XPLabel
+
 
 func _ready():
 	print("StatusScene: _ready called")
@@ -100,6 +102,9 @@ func update_status():
 			else:
 				equipment_text += "%s: Empty\n" % slot_name
 		set_label_text(equipment_info, equipment_text)
+	
+	if xp_label:
+		xp_label.text = "XP: %d / %d" % [current_character.xp, LevelSystem.calculate_xp_for_level(current_character.level)]
 	
 	print("StatusScene: update_status completed")
 

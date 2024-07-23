@@ -1,5 +1,6 @@
 # EquipmentScene.gd
 extends Control
+class_name EquipmentScene
 
 var current_character: CharacterData
 var selected_item: Equipment = null
@@ -70,12 +71,31 @@ func _on_equipment_item_selected(index):
 	unequip_button.disabled = false if selected_item else true
 
 func update_item_info(item: Equipment):
+	# First, let's clear out all the existing children of ItemInfo
+	for child in $ItemInfo.get_children():
+		child.queue_free()
+	
+	# Clear the text
+	$ItemInfo.text = ""
+
 	if item:
-		item_info.text = "Name: %s\nType: %s\nSlot: %s\nDamage: %d\nArmor: %d\nEffects: %s" % [
-			item.name, item.type, item.slot, item.damage, item.armor_value, str(item.effects)
+		# Create a new label for the item name
+		var item_name_label = Label.new()
+		item_name_label.text = item.name
+		
+		# Set the color based on rarity
+		var rarity_color = Color(item.get_rarity_color())
+		item_name_label.add_theme_color_override("font_color", rarity_color)
+		
+		# Add the label to your scene
+		$ItemInfo.add_child(item_name_label)
+		
+		# Now add the rest of the item info
+		$ItemInfo.text = "\nType: %s\nSlot: %s\nDamage: %d\nArmor: %d\nEffects: %s\nRarity: %s" % [
+			item.type, item.slot, item.damage, item.armor_value, str(item.effects), item.rarity.capitalize()
 		]
 	else:
-		item_info.text = "No equipment selected"
+		$ItemInfo.text = "No equipment selected"
 
 func _on_equip_pressed():
 	if selected_item:

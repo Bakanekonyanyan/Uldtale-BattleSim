@@ -26,6 +26,7 @@ BattleManager="*res://scripts/BattleManager.gd"
 CharacterManager="*res://scripts/autoload/CharacterManager.gd"
 SaveManager="*res://scripts/autoload/SaveManager.gd"
 LootManager="res://scripts/autoload/LootManager.gd"
+LevelSystem="*res://scripts/LevelSystem.gd"
 
 [rendering]
 

@@ -8,34 +8,35 @@
 script = ExtResource("1_jr4vv")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(584, 200)
+position = Vector2(576, 200)
 scale = Vector2(0.75, 0.75)
 texture = ExtResource("2_18p0q")
 
 [node name="PlayerInfo" type="Label" parent="."]
-offset_left = 8.0
-offset_top = 64.0
-offset_right = 48.0
-offset_bottom = 87.0
+offset_left = 16.0
+offset_top = 104.0
+offset_right = 56.0
+offset_bottom = 127.0
 
 [node name="EnemyInfo" type="Label" parent="."]
 offset_left = 320.0
-offset_top = 64.0
+offset_top = 104.0
 offset_right = 360.0
-offset_bottom = 87.0
+offset_bottom = 127.0
 
 [node name="ActionButtons" type="VBoxContainer" parent="."]
-offset_left = 8.0
-offset_top = 192.0
-offset_right = 48.0
-offset_bottom = 232.0
+offset_left = 24.0
+offset_top = 256.0
+offset_right = 64.0
+offset_bottom = 296.0
 
 [node name="InventoryMenu" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
-offset_top = 64.0
-offset_right = 40.0
-offset_bottom = 64.0
+offset_left = 64.0
+offset_top = 128.0
+offset_right = 104.0
+offset_bottom = 128.0
 script = ExtResource("2_ng7cs")
 
 [node name="ItemList" type="ItemList" parent="InventoryMenu"]
@@ -70,9 +71,34 @@ offset_bottom = 130.0
 text = "Currency:"
 
 [node name="TurnLabel" type="Label" parent="."]
-offset_left = 112.0
-offset_top = 24.0
-offset_right = 152.0
-offset_bottom = 47.0
+offset_left = 128.0
+offset_top = 16.0
+offset_right = 168.0
+offset_bottom = 39.0
+
+[node name="WaveLabel" type="Label" parent="."]
+offset_left = 8.0
+offset_right = 59.0
+offset_bottom = 26.0
+text = "Wave: "
+
+[node name="FloorLabel" type="Label" parent="."]
+offset_left = 320.0
+offset_right = 413.0
+offset_bottom = 26.0
+text = "Floor Level: "
+
+[node name="DungeonDescriptionLabel" type="Label" parent="."]
+offset_left = 8.0
+offset_top = 40.0
+offset_right = 48.0
+offset_bottom = 63.0
+
+[node name="XPLabel" type="Label" parent="."]
+offset_left = 16.0
+offset_top = 208.0
+offset_right = 56.0
+offset_bottom = 234.0
+text = "XP:"
 
 [connection signal="item_selected" from="InventoryMenu" to="." method="_on_item_used"]

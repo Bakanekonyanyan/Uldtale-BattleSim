@@ -42,7 +42,9 @@ func save_game(player: CharacterData):
 		"spell_power_type": player.spell_power_type,
 		"skills": player.skills,
 		"inventory": {},
-		"equipment": {}
+		"equipment": {},
+		"xp": player.xp,
+		"attribute_points": player.attribute_points
 	}
 	
 	# Save inventory
@@ -102,6 +104,9 @@ func load_game(character_name: String) -> CharacterData:
 	player.currency.copper = save_data.get("currency", 0)
 	player.attack_power_type = save_data.get("attack_power_type", "strength")
 	player.spell_power_type = save_data.get("spell_power_type", "intelligence")
+	player.xp = save_data.get("xp", 0)
+	player.attribute_points = save_data.get("attribute_points", 0)
+	player.is_player = true
 	
 	# Handle skills separately
 	if "skills" in save_data and save_data["skills"] is Array:

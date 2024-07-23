@@ -6,7 +6,7 @@
 	  "skills": ["Holy Strike", "Divine Shield", "Lay on Hands"]
 	},
 	"Necromancer": {
-	  "base_vit": 12, "base_str": 5, "base_dex": 7, "base_int": 20, "base_fai": 8, "base_mnd": 20, "base_end": 6, "base_arc": 10, "base_agi": 12, "base_for": 5,
+	  "base_vit": 6, "base_str": 5, "base_dex": 7, "base_int": 12, "base_fai": 8, "base_mnd": 10, "base_end": 6, "base_arc": 10, "base_agi": 6, "base_for": 5,
 	  "attack_power_type": "dexterity", "spell_power_type": "intelligence",
 	  "skills": ["Dark Bolt", "Life Tap", "Curse of Weakness"]
 	},

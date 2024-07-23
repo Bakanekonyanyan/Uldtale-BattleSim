@@ -41,15 +41,20 @@ func load_weapons():
 	var json = JSON.parse_string(file.get_as_text())
 	file.close()
 	
-	for category in json:
-		for subcategory in json[category]:
-			for weapon_id in json[category][subcategory]:
-				var weapon_data = json[category][subcategory][weapon_id]
-				weapon_data["id"] = weapon_id  # Make sure this line is here
-				var weapon = Equipment.new(weapon_data)
-				weapon.id = weapon_id  # Explicitly set the id
-				weapons[weapon_id] = weapon
-				items[weapon_id] = weapon
+	for hand_type in json:
+		for weapon_category in json[hand_type]:
+			for weapon_id in json[hand_type][weapon_category]:
+				if weapon_id != "rarity":  # Skip the rarity field if it's at this level
+					var weapon_data = json[hand_type][weapon_category][weapon_id]
+					if typeof(weapon_data) == TYPE_DICTIONARY:
+						weapon_data["id"] = weapon_id  # Add the id to the weapon data
+						var weapon = Equipment.new(weapon_data)
+						weapons[weapon_id] = weapon
+						items[weapon_id] = weapon
+					else:
+						print("Warning: Invalid weapon data for ", weapon_id)
+
+	print("Loaded weapons: ", weapons.keys())
 
 func load_armors():
 	var file = FileAccess.open("res://data/items/armors.json", FileAccess.READ)

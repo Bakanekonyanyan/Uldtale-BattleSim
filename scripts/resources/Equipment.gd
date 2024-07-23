@@ -4,15 +4,25 @@ class_name Equipment
 
 var damage: int = 0
 var armor_value: int = 0
-var attribute_target: Variant  # Can be String or Array
-var attribute_increase: Variant  # Can be int or Array
+var attribute_target: Variant
+var attribute_increase: Variant
 var type: String
 var slot: String
 var class_restriction: Array
 var effects: Dictionary
+var rarity: String = "common"
+
+var rarities: Dictionary = {
+	"common": {"multiplier": 1, "color": "white"},
+	"uncommon": {"multiplier": 2, "color": "blue"},
+	"magic": {"multiplier": 2.5, "color": "yellow"},
+	"epic": {"multiplier": 3, "color": "purple"},
+	"legendary": {"multiplier": 5, "color": "orange"}
+}
 
 func _init(data: Dictionary):
 	super._init()
+	load_rarities()
 	id = data.get("id", "")
 	name = data.get("name", "")
 	description = data.get("description", "")
@@ -25,6 +35,42 @@ func _init(data: Dictionary):
 	slot = data.get("slot", "")
 	class_restriction = data.get("class_restriction", [])
 	effects = data.get("effects", {})
+	# Randomly assign rarity if it's not set
+	if data.get("rarity", "") == "":
+		assign_random_rarity()
+	else:
+		rarity = data.get("rarity", "common")
+	
+	apply_rarity_multiplier()
+	
+func assign_random_rarity():
+	var rarity_roll = randf()
+	if rarity_roll < 0.60:
+		rarity = "common"
+	elif rarity_roll < 0.85:
+		rarity = "uncommon"
+	elif rarity_roll < 0.95:
+		rarity = "magic"
+	elif rarity_roll < 0.99:
+		rarity = "epic"
+	else:
+		rarity = "legendary"
+
+func apply_rarity_multiplier():
+	var multiplier = rarities[rarity]["multiplier"]
+	if damage > 0:
+		damage = int(damage * multiplier)
+	if armor_value > 0:
+		armor_value = int(armor_value * multiplier)
+	value = int(value * multiplier)
+
+func get_rarity_color() -> String:
+	return rarities[rarity]["color"]
+	
+func load_rarities():
+	var file = FileAccess.open("res://data/rarities.json", FileAccess.READ)
+	rarities = JSON.parse_string(file.get_as_text())
+	file.close()
 
 func is_equippable() -> bool:
 	return true

@@ -1,0 +1,22 @@
+{
+  "common": {
+    "multiplier": 1,
+    "color": "white"
+  },
+  "uncommon": {
+    "multiplier": 2,
+    "color": "blue"
+  },
+  "magic": {
+    "multiplier": 2.5,
+    "color": "yellow"
+  },
+  "epic": {
+    "multiplier": 3,
+    "color": "purple"
+  },
+  "legendary": {
+    "multiplier": 5,
+    "color": "orange"
+  }
+}
