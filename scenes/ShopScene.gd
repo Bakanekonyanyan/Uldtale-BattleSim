@@ -8,37 +8,37 @@ var shop_inventory: Dictionary = {
 	# Add more items as needed
 }
 
-@onready var item_list = $ItemList if has_node("ItemList") else null
-@onready var sell_item_list = $SellItemList if has_node("SellItemList") else null
-@onready var buy_button = $BuyButton if has_node("BuyButton") else null
-@onready var sell_button = $SellButton if has_node("SellButton") else null
-@onready var exit_button = $ExitButton if has_node("ExitButton") else null
-@onready var player_currency_label = $PlayerCurrencyLabel if has_node("PlayerCurrencyLabel") else null
+@onready var item_list = $UI/ItemList if has_node("ItemList") else null
+@onready var sell_item_list = $UI/SellItemList if has_node("SellItemList") else null
+@onready var buy_button = $UI/BuyButton if has_node("BuyButton") else null
+@onready var sell_button = $UI/SellButton if has_node("SellButton") else null
+@onready var exit_button = $UI/ExitButton if has_node("ExitButton") else null
+@onready var player_currency_label = $UI/PlayerCurrencyLabel if has_node("PlayerCurrencyLabel") else null
 
 func _ready():
 	print("ShopScene: _ready called")
 	
-	if not item_list:
+	if not $UI/ItemList:
 		print("Error: ItemList node not found")
-	if not sell_item_list:
+	if not $UI/SellItemList:
 		print("Error: SellItemList node not found")
-	if not buy_button:
+	if not $UI/BuyButton:
 		print("Error: BuyButton node not found")
-	if not sell_button:
+	if not $UI/SellButton:
 		print("Error: SellButton node not found")
-	if not exit_button:
+	if not $UI/ExitButton:
 		print("Error: ExitButton node not found")
-	if not player_currency_label:
+	if not $UI/PlayerCurrencyLabel:
 		print("Error: PlayerCurrencyLabel node not found")
 
-	if buy_button:
-		buy_button.connect("pressed", Callable(self, "_on_buy_pressed"))
-	if exit_button:
-		exit_button.connect("pressed", Callable(self, "_on_exit_pressed"))
-	if item_list:
-		item_list.connect("item_selected", Callable(self, "_on_item_selected"))
-	if sell_button:
-		sell_button.connect("pressed", Callable(self, "_on_sell_pressed"))
+	if $UI/BuyButton:
+		$UI/BuyButton.connect("pressed", Callable(self, "_on_buy_pressed"))
+	if $UI/ExitButton:
+		$UI/ExitButton.connect("pressed", Callable(self, "_on_exit_pressed"))
+	if $UI/ItemList:
+		$UI/ItemList.connect("item_selected", Callable(self, "_on_item_selected"))
+	if $UI/SellButton:
+		$UI/SellButton.connect("pressed", Callable(self, "_on_sell_pressed"))
 	
 	# Load items
 	for item_id in shop_inventory:
@@ -60,24 +60,24 @@ func set_player(character: CharacterData):
 
 func refresh_shop_display():
 	print("ShopScene: refresh_shop_display called")
-	if item_list:
-		item_list.clear()
+	if $UI/ItemList:
+		$UI/ItemList.clear()
 		for item_id in shop_inventory:
 			var item_data = shop_inventory[item_id]
 			if item_data.item != null:
-				item_list.add_item("%s - %d gold" % [item_data.item.name, item_data.price])
+				$UI/ItemList.add_item("%s - %d gold" % [item_data.item.name, item_data.price])
 			else:
 				print("Warning: Item not found in ItemManager: ", item_id)
 	else:
 		print("Error: ItemList is null in refresh_shop_display")
 	
-	if player_currency_label and player_character:
-		player_currency_label.text = "Your Gold: %s" % player_character.currency.get_formatted()
+	if $UI/PlayerCurrencyLabel and player_character:
+		$UI/PlayerCurrencyLabel.text = "Your Gold: %s" % player_character.currency.get_formatted()
 	else:
 		print("Error: player_currency_label or player_character is null")
 		
 func _on_buy_pressed():
-	var selected_items = item_list.get_selected_items()
+	var selected_items = $UI/ItemList.get_selected_items()
 	if selected_items.size() > 0:
 		var item_index = selected_items[0]
 		var item_id = shop_inventory.keys()[item_index]
@@ -92,18 +92,18 @@ func _on_buy_pressed():
 			print("Not enough gold!")
 
 func refresh_sell_items():
-	if sell_item_list:
-		sell_item_list.clear()
+	if $UI/SellItemList:
+		$UI/SellItemList.clear()
 		for item_id in player_character.inventory.items:
 			var item_data = player_character.inventory.items[item_id]
 			var item = item_data.item
 			if item:
-				sell_item_list.add_item("%s (x%d) - %d gold" % [item.name, item_data.quantity, item.value / 2])
+				$UI/SellItemList.add_item("%s (x%d) - %d gold" % [item.name, item_data.quantity, item.value / 2])
 	else:
 		print("Error: sell_item_list is null")
 
 func _on_sell_pressed():
-	var selected_items = sell_item_list.get_selected_items()
+	var selected_items = $UI/SellItemList.get_selected_items()
 	if selected_items.size() > 0:
 		var item_index = selected_items[0]
 		var item_id = player_character.inventory.items.keys()[item_index]
@@ -123,6 +123,6 @@ func _on_exit_pressed():
 	SceneManager.change_scene("res://scenes/TownScene.tscn")
 
 func _on_item_selected(_index):
-	buy_button.disabled = false
+	$UI/BuyButton.disabled = false
 	
 

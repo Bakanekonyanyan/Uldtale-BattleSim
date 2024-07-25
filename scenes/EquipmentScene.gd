@@ -115,9 +115,10 @@ func _on_unequip_pressed():
 		
 func _on_exit_pressed():
 	# Save the character's updated inventory and currency
+	print(SceneManager.town_scene_active)
 	CharacterManager.save_character(current_character)
-	# Return to character selection
-	SceneManager.change_scene("res://scenes/TownScene.tscn")
+	# Return to the previous scene (which should be the RewardScene)
+	SceneManager.return_to_previous_scene()
 	
 func get_equipment_from_inventory() -> Array:
 	var equipment_items = []

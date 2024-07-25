@@ -14,17 +14,17 @@ glow_intensity = 1.27
 glow_bloom = 0.15
 glow_blend_mode = 0
 
-[sub_resource type="Gradient" id="Gradient_40hv2"]
+[sub_resource type="Gradient" id="Gradient_yjlva"]
 offsets = PackedFloat32Array(0, 0.663366)
 colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 1)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_6u54x"]
-gradient = SubResource("Gradient_40hv2")
+gradient = SubResource("Gradient_yjlva")
 fill_from = Vector2(0.5, 0.25)
 fill_to = Vector2(0.5, 1)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_evf1j"]
-gradient = SubResource("Gradient_40hv2")
+gradient = SubResource("Gradient_yjlva")
 fill = 1
 fill_from = Vector2(0.5, 0.5)
 
@@ -111,21 +111,23 @@ min_energy = 0.25
 max_energy = 0.5
 base_pulse_duration = 1.0
 
-[node name="ItemList" type="ItemList" parent="."]
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="ItemList" type="ItemList" parent="UI"]
 light_mask = 0
 offset_left = 8.0
 offset_top = 8.0
 offset_right = 200.0
 offset_bottom = 200.0
 
-[node name="SellItemList" type="ItemList" parent="."]
+[node name="SellItemList" type="ItemList" parent="UI"]
 light_mask = 0
 offset_left = 384.0
 offset_top = 8.0
 offset_right = 576.0
 offset_bottom = 200.0
 
-[node name="BuyButton" type="Button" parent="."]
+[node name="BuyButton" type="Button" parent="UI"]
 light_mask = 0
 offset_left = 16.0
 offset_top = 208.0
@@ -133,7 +135,7 @@ offset_right = 54.0
 offset_bottom = 239.0
 text = "Buy"
 
-[node name="ExitButton" type="Button" parent="."]
+[node name="ExitButton" type="Button" parent="UI"]
 light_mask = 0
 offset_left = 152.0
 offset_top = 208.0
@@ -141,7 +143,7 @@ offset_right = 189.0
 offset_bottom = 239.0
 text = "Exit"
 
-[node name="SellButton" type="Button" parent="."]
+[node name="SellButton" type="Button" parent="UI"]
 light_mask = 0
 offset_left = 392.0
 offset_top = 208.0
@@ -149,7 +151,7 @@ offset_right = 430.0
 offset_bottom = 239.0
 text = "Sell"
 
-[node name="PlayerCurrencyLabel" type="Label" parent="."]
+[node name="PlayerCurrencyLabel" type="Label" parent="UI"]
 light_mask = 0
 offset_left = 16.0
 offset_top = 264.0

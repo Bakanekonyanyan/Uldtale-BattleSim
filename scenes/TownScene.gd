@@ -8,6 +8,8 @@ var current_character: CharacterData
 @onready var dungeon_button = $DungeonButton
 @onready var equipment_button = $EquipmentButton
 @onready var status_button = $StatusButton
+@onready var inventory_button = $InventoryButton
+@onready var stash_button = $StashButton
 
 func _ready():
 	if shop_button:
@@ -18,7 +20,11 @@ func _ready():
 		equipment_button.connect("pressed", Callable(self, "_on_equipment_pressed"))
 	if status_button:
 		status_button.connect("pressed", Callable(self, "_on_status_pressed"))
-		
+	if inventory_button:
+		inventory_button.connect("pressed", Callable(self, "_on_inventory_pressed"))
+	if stash_button:
+		stash_button.connect("pressed", Callable(self, "_on_stash_pressed"))
+
 	update_ui()
 
 func set_player(character: CharacterData):
@@ -28,11 +34,11 @@ func set_player(character: CharacterData):
 	update_ui()
 
 func update_ui():
-	if name_label:
+	if $NameLabel:
 		if current_character:
-			name_label.text = "Character: " + current_character.name
+			$NameLabel.text = "Character: " + current_character.name
 		else:
-			name_label.text = "No character loaded"
+			$NameLabel.text = "No character loaded"
 	else:
 		print(current_character.name)
 		print("Warning: CharacterNameLabel not found in TownScene")
@@ -48,3 +54,9 @@ func _on_equipment_pressed():
 
 func _on_status_pressed():
 	SceneManager.change_to_status(current_character)
+
+func _on_inventory_pressed():
+	SceneManager.change_to_inventory(current_character)
+
+func _on_stash_pressed():
+	SceneManager.change_to_stash(current_character)

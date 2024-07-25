@@ -44,3 +44,19 @@ offset_top = 128.0
 offset_right = 298.0
 offset_bottom = 159.0
 text = "Quit"
+
+[node name="EquipmentButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 448.0
+offset_top = 80.0
+offset_right = 541.0
+offset_bottom = 111.0
+text = "Equipment"
+
+[node name="InventoryButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 448.0
+offset_top = 32.0
+offset_right = 531.0
+offset_bottom = 63.0
+text = "Inventory"

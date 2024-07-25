@@ -5,13 +5,11 @@ signal battle_completed(player_won, xp_gained)
 
 var player_character: CharacterData
 var enemy_character: CharacterData
-var current_turn: String = "player"  # "player" or "enemy"
-var turn_order: Array = []
+var current_turn: String = "player"
 var is_boss_battle: bool = false
 var current_wave: int
 var current_floor: int
 var dungeon_description: String
-var current_battle: Node = null
 
 @onready var wave_label = $WaveLabel
 @onready var floor_label = $FloorLabel
@@ -23,95 +21,69 @@ var current_battle: Node = null
 @onready var inventory_menu = $InventoryMenu
 @onready var xp_label = $XPLabel
 
-
-func set_player(character: CharacterData):
-	player_character = character
-
-func set_enemy(new_enemy: CharacterData):
-	enemy_character = new_enemy
-	# Scale enemy based on current floor
-	for _i in range(current_floor - 1):
-		enemy_character.level_up()
-	enemy_character.calculate_secondary_attributes()
-	
 func _ready():
-	print("Battle: _ready called")
 	setup_battle()
 	update_dungeon_labels()
 
+# Sets up the player character for the battle
+func set_player(character: CharacterData):
+	player_character = character
+
+# Creates and scales the enemy character based on the current floor
+func set_enemy(new_enemy: CharacterData):
+	enemy_character = new_enemy
+	for _i in range(current_floor - 1):
+		enemy_character.level_up()
+	enemy_character.calculate_secondary_attributes()
+
+# Sets up the dungeon info and updates labels
 func set_dungeon_info(wave: int, floor: int, description: String):
 	current_wave = wave
 	current_floor = floor
 	dungeon_description = description
 	update_dungeon_labels()
 
+# Updates the dungeon labels with current info
 func update_dungeon_labels():
-	if wave_label:
-		wave_label.text = "Wave: %d" % current_wave
-	if floor_label:
-		floor_label.text = "Floor: %d" % current_floor
-	if dungeon_description_label:
-		dungeon_description_label.text = dungeon_description
+	$WaveLabel.text = "Wave: %d" % current_wave
+	$FloorLabel.text = "Wave: %d" % current_floor
+	$DungeonDescriptionLabel.text = dungeon_description
 
+# Sets up the battle, including characters and UI
 func setup_battle():
-	print("Battle: setup_battle called")
+	player_character = player_character if player_character else CharacterManager.get_current_character()
+	enemy_character = enemy_character if enemy_character else EnemyFactory.create_enemy()
 	
-	if not player_character:
-		player_character = CharacterManager.get_current_character()
-	
-	if player_character == null:
-		print("Battle: Error - Failed to load player character")
+	if not player_character or not enemy_character:
+		print("Battle: Error - Failed to load characters")
 		SceneManager.change_scene("res://scenes/ui/MainMenu.tscn")
 		return
 	
-	print("Battle: Player character loaded: ", player_character.name)
-	
-	if inventory_menu:
-		inventory_menu.show_inventory(player_character.inventory, player_character.currency)
-		inventory_menu.hide()
-	else:
-		print("Battle: Warning - inventory_menu not found")
-	
-	if not enemy_character:
-		enemy_character = EnemyFactory.create_enemy()
-	
-	if enemy_character == null:
-		print("Battle: Error - Failed to create enemy character")
-		SceneManager.change_scene("res://scenes/ui/MainMenu.tscn")
-		return
-	
-	print("Battle: Enemy character created: ", enemy_character.name)
+	inventory_menu.show_inventory(player_character.inventory, player_character.currency)
+	inventory_menu.hide()
 	
 	update_ui()
 	setup_action_buttons()
 	start_battle()
 
+# Starts the battle, setting the first turn
 func start_battle():
-	print("start_battle called")
 	current_turn = "player"
 	update_turn_label("Battle starts! It's your turn.")
 	enable_player_actions(true)
-	print("Player actions enabled")
 
+# Updates the turn label with the given text
 func update_turn_label(text: String):
-	print("Updating turn label: ", text)
-	if turn_label:
-		turn_label.text = text
-	else:
-		print("Error: turn_label not found!")
+	turn_label.text = text
 
+# Enables or disables player action buttons
 func enable_player_actions(enabled: bool):
-	print("enable_player_actions called with: ", enabled)
-	if action_buttons:
-		for button in action_buttons.get_children():
-			if button is Button:
-				button.disabled = !enabled
-				print("Button ", button.name, " disabled set to ", !enabled)
-	else:
-		print("Error: action_buttons not found!")
+	for button in action_buttons.get_children():
+		if button is Button:
+			button.disabled = !enabled
 
+# Sets up the action buttons, including skill buttons
 func setup_action_buttons():
-	print("Setting up action buttons")
 	for child in action_buttons.get_children():
 		child.queue_free()
 	
@@ -121,8 +93,7 @@ func setup_action_buttons():
 		button.text = button_name
 		button.connect("pressed", Callable(self, "_on_" + button_name.to_lower() + "_pressed"))
 		action_buttons.add_child(button)
-		print("Added button: ", button_name)
-
+	
 	if player_character:
 		for skill_name in player_character.skills:
 			var skill = SkillManager.get_skill(skill_name)
@@ -131,76 +102,48 @@ func setup_action_buttons():
 				skill_button.text = skill.name
 				skill_button.connect("pressed", Callable(self, "_on_skill_used").bind(skill))
 				action_buttons.add_child(skill_button)
-				print("Added skill button: ", skill.name)
-	else:
-		print("Error: player_character is null, cannot set up skill buttons")
-	
-	print("Action buttons setup complete. Total buttons: ", action_buttons.get_child_count())
 
+# Handles player attack action
 func _on_attack_pressed():
-	print("Attack button pressed")
 	var result = player_character.attack(enemy_character)
 	update_turn_label(result)
-	print("Calling update_ui from [func on_attack_pressed]")
 	update_ui()
 	check_battle_end()
 	if enemy_character.current_hp > 0:
 		end_turn()
 
+# Handles player defend action
 func _on_defend_pressed():
-	print("Defend button pressed")
 	var result = player_character.defend()
 	update_turn_label(result)
-	print("Calling update_ui from [func on_defend_pressed]")
 	update_ui()
 	end_turn()
 
+# Handles player items action
 func _on_items_pressed():
-	print("Items button pressed")
 	inventory_menu.show_inventory(player_character.inventory, player_character.currency)
 
+# Handles player skill usage
 func _on_skill_used(skill: Skill):
-	print("Skill used: ", skill.name)
 	if player_character.current_mp < skill.mp_cost:
 		update_turn_label("Not enough MP to use this skill")
 		return
 	
 	player_character.current_mp -= skill.mp_cost
 	var targets = [enemy_character]  # For now, we'll just target the enemy
-	if skill.target == Skill.TargetType.ALL_ENEMIES:
-		targets = [enemy_character]  # In a real battle, this would be all enemies
-	elif skill.target == Skill.TargetType.SELF:
-		targets = [player_character]
-	elif skill.target == Skill.TargetType.ALLY or skill.target == Skill.TargetType.ALL_ALLIES:
-		targets = [player_character]  # In a real battle, this would be all allies or a chosen ally
-	
 	var result = skill.use(player_character, targets)
 	update_turn_label(result)
-	print("Calling update_ui from [func on_skill_used]")
 	update_ui()
 	check_battle_end()
 	if enemy_character.current_hp > 0:
 		end_turn()
 
+# Handles item usage
 func _on_item_used(item: Item):
-	print("Item used: ", item.name)
-	print("Inventory before use: ", player_character.inventory.items)
-	var targets = [player_character]  # For healing items, target the player
 	if item.item_type == Item.ItemType.CONSUMABLE:
-		print("Using item: ", item.name, " (ID: ", item.id, ")")
-		var result = item.use(player_character, targets)
+		var result = item.use(player_character, [player_character])
 		update_turn_label(result)
-		
-		# Here's where we remove the item from inventory using its ID
-		var removed = player_character.inventory.remove_item(item.id, 1)
-		if removed:
-			print("Successfully removed item from inventory")
-		else:
-			print("Failed to remove item from inventory")
-		
-		print("Item use result: ", result)
-		print("Inventory after use: ", player_character.inventory.items)
-		print("Calling update_ui from [func on_item_used]")
+		player_character.inventory.remove_item(item.id, 1)
 		update_ui()
 		check_battle_end()
 		if enemy_character.current_hp > 0:
@@ -208,8 +151,8 @@ func _on_item_used(item: Item):
 	else:
 		update_turn_label("This item cannot be used in battle.")
 
+# Executes a turn for the given character
 func execute_turn(character: CharacterData):
-	print("Executing turn for: ", character.name)
 	var status_message = character.update_status_effects()
 	if status_message:
 		update_turn_label(status_message)
@@ -228,12 +171,11 @@ func execute_turn(character: CharacterData):
 	else:
 		execute_enemy_turn()
 
+# Executes the enemy's turn
 func execute_enemy_turn():
-	print("Executing enemy turn")
 	update_turn_label("Enemy's turn")
 	await get_tree().create_timer(1.0).timeout
 
-	# Simple AI: 60% chance to attack, 20% chance to defend, 20% chance to use a skill
 	var action = randf()
 	var result = ""
 	
@@ -243,15 +185,9 @@ func execute_enemy_turn():
 		result = enemy_character.defend()
 	else:
 		if enemy_character.skills.size() > 0:
-			var skill_name = enemy_character.skills[randi() % enemy_character.skills.size()]
-			var skill = SkillManager.get_skill(skill_name)
+			var skill = SkillManager.get_skill(enemy_character.skills[randi() % enemy_character.skills.size()])
 			if skill:
-				var targets = []
-				match skill.target:
-					Skill.TargetType.ENEMY, Skill.TargetType.ALL_ENEMIES:
-						targets = [player_character]
-					Skill.TargetType.SELF, Skill.TargetType.ALLY, Skill.TargetType.ALL_ALLIES:
-						targets = [enemy_character]
+				var targets = [player_character] if skill.target in [Skill.TargetType.ENEMY, Skill.TargetType.ALL_ENEMIES] else [enemy_character]
 				result = skill.use(enemy_character, targets)
 			else:
 				result = "Enemy tried to use an unknown skill"
@@ -259,7 +195,6 @@ func execute_enemy_turn():
 			result = enemy_character.attack(player_character)
 	
 	update_turn_label(result)
-	print("Calling update_ui from [func execute_enemy_turn]")
 	update_ui()
 	await get_tree().create_timer(2.0).timeout
 
@@ -267,29 +202,25 @@ func execute_enemy_turn():
 	if player_character.current_hp > 0:
 		end_turn()
 
+# Ends the current turn and starts the next
 func end_turn():
-	print("Ending turn")
 	if current_turn == "player":
 		current_turn = "enemy"
-		enemy_character.reset_defense()  # Reset defense at the end of player's turn
+		enemy_character.reset_defense()
 		enable_player_actions(false)
 		await get_tree().create_timer(1.0).timeout
 		execute_turn(enemy_character)
 	else:
 		current_turn = "player"
-		player_character.reset_defense()  # Reset defense at the end of enemy's turn
+		player_character.reset_defense()
 		execute_turn(player_character)
 	update_turn_label("It's %s's turn" % current_turn)
 
+# Updates the UI with current character info
 func update_ui():
-	print("update_ui function called")
 	if player_info and enemy_info and player_character and enemy_character:
-		print("Accessing player_character.name")
-		var player_name = player_character.name
-		print("Accessing enemy_character.name")
-		var enemy_name = enemy_character.name
 		player_info.text = "Player: %s\nHP: %d/%d\nMP: %d/%d\nStatus: %s" % [
-			player_name, 
+			player_character.name, 
 			player_character.current_hp, 
 			player_character.max_hp,
 			player_character.current_mp, 
@@ -297,124 +228,35 @@ func update_ui():
 			player_character.get_status_effects_string()
 		]
 		enemy_info.text = "Enemy: %s\nHP: %d/%d\nMP: %d/%d\nStatus: %s" % [
-			enemy_name, 
+			enemy_character.name, 
 			enemy_character.current_hp, 
 			enemy_character.max_hp,
 			enemy_character.current_mp, 
 			enemy_character.max_mp,
 			enemy_character.get_status_effects_string()
 		]
-		print("UI updated successfully")
-	else:
-		print("Error: Unable to update UI. Missing UI elements or character data.")
-		if not player_info:
-			print("player_info is null")
-		if not enemy_info:
-			print("enemy_info is null")
-		if not player_character:
-			print("player_character is null")
-		if not enemy_character:
-			print("enemy_character is null")
-			
+	
 	if xp_label:
 		xp_label.text = "XP: %d / %d" % [player_character.xp, LevelSystem.calculate_xp_for_level(player_character.level)]
-	
-	var current_scene = get_tree().current_scene
-	if current_scene:
-		print("Current scene: ", current_scene.name)
-	else:
-		print("Warning: current_scene is null")
-	
-	print("Visible UI elements:")
-	print_visible_ui()
 
-func print_visible_ui():
-	var ui_elements = [player_info, enemy_info, action_buttons, turn_label]
-	for element in ui_elements:
-		if element:
-			print(element.name, " visible: ", element.visible, " position: ", element.position)
-		else:
-			print("Element not found: ", element)
-
+# Checks if the battle has ended
 func check_battle_end():
 	if enemy_character.current_hp <= 0:
-		print("Battle: Player won")
 		emit_signal("battle_completed", true)
 	elif player_character.current_hp <= 0:
-		print("Battle: Player lost")
 		emit_signal("battle_completed", false)
 
-func show_reward_scene(player_won: bool):
-	var rewards = calculate_rewards(player_won)
-	emit_signal("battle_completed", player_won)
-
+# Calculates rewards for the battle
 func calculate_rewards(player_won: bool) -> Dictionary:
 	var rewards = {}
 	if player_won:
-		var base_reward = 100
-		if is_boss_battle:
-			base_reward *= 3  # Triple rewards for boss battles
+		var base_reward = 100 * (3 if is_boss_battle else 1)
 		rewards["currency"] = base_reward
-		rewards["health_potion"] = 1 if randf() < 0.5 else 0  # 50% chance of health potion
+		rewards["health_potion"] = 1 if randf() < 0.5 else 0
 	return rewards
 
-func position_ui_elements():
-	print("Positioning UI elements")
-	var viewport_size = get_viewport_rect().size
-	print("Viewport size: ", viewport_size)
-	
-	if player_info:
-		player_info.position = Vector2(50, 50)
-		print("player_info positioned at: ", player_info.position)
-	else:
-		print("player_info not found")
-	
-	if enemy_info:
-		enemy_info.position = Vector2(viewport_size.x - 250, 50)
-		print("enemy_info positioned at: ", enemy_info.position)
-	else:
-		print("enemy_info not found")
-	
-	if action_buttons:
-		action_buttons.position = Vector2(50, viewport_size.y - 150)
-		action_buttons.size = Vector2(viewport_size.x - 100, 100)
-		print("action_buttons positioned at: ", action_buttons.position, " with size: ", action_buttons.size)
-	else:
-		print("action_buttons not found")
-	
-	if turn_label:
-		turn_label.position = Vector2(viewport_size.x / 2 - 150, 20)
-		turn_label.size = Vector2(300, 60)
-		print("turn_label positioned at: ", turn_label.position, " with size: ", turn_label.size)
-	else:
-		print("turn_label not found")
-	
-
-func force_update_ui():
-	print("Force updating UI")
-	if player_info and enemy_info and player_character and enemy_character:
-		player_info.text = "Player: %s\nHP: %d/%d\nMP: %d/%d" % [
-			player_character.name, 
-			player_character.current_hp, 
-			player_character.max_hp,
-			player_character.current_mp, 
-			player_character.max_mp
-		]
-		enemy_info.text = "Enemy: %s\nHP: %d/%d\nMP: %d/%d" % [
-			enemy_character.name, 
-			enemy_character.current_hp, 
-			enemy_character.max_hp,
-			enemy_character.current_mp, 
-			enemy_character.max_mp
-		]
-		print("UI force update complete")
-	else:
-		print("Error: Unable to force update UI. Missing UI elements or character data.")
-		if not player_info:
-			print("player_info is null")
-		if not enemy_info:
-			print("enemy_info is null")
-		if not player_character:
-			print("player_character is null")
-		if not enemy_character:
-			print("enemy_character is null")
+# The following functions have been commented out as they seem to be unused or for debugging purposes:
+# func show_reward_scene(player_won: bool):
+# func position_ui_elements():
+# func print_visible_ui():
+# func force_update_ui():

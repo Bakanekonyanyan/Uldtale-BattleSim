@@ -5,6 +5,7 @@ var races = {}
 var classes = {}
 var skills = {}
 var current_dungeon_race: String = ""
+var dungeon_race: String = ""
 
 func _ready():
 	load_data()
@@ -19,16 +20,21 @@ func load_data():
 	file = FileAccess.open("res://data/skills.json", FileAccess.READ)
 	skills = JSON.parse_string(file.get_as_text())["skills"]
 
+func get_dungeon_race():
+	print(dungeon_race)
+	current_dungeon_race = dungeon_race
+	if current_dungeon_race == "":
+		set_dungeon_race()
+
 func set_dungeon_race():
 	var non_playable_races = races["non_playable"].keys()
-	current_dungeon_race = non_playable_races[randi() % non_playable_races.size()]
+	dungeon_race = non_playable_races[randi() % non_playable_races.size()]
 	print("Current dungeon race set to: ", current_dungeon_race)
+
 
 func create_enemy(level: int = 1) -> CharacterData:
 	var enemy = CharacterData.new()
-	
-	if current_dungeon_race == "":
-		set_dungeon_race()
+	get_dungeon_race()
 	
 	var enemy_classes = classes["non_playable"].keys()
 	var chosen_class = enemy_classes[randi() % enemy_classes.size()]

@@ -50,6 +50,7 @@ var buffs: Dictionary = {}
 var debuffs: Dictionary = {}
 @export var inventory: Inventory
 @export var currency: Currency
+@export var stash: Inventory 
 
 @export var xp: int = 0
 @export var attribute_points: int = 0
@@ -74,6 +75,7 @@ func _init(p_name: String = "", p_race: String = "", p_class: String = ""):
 	character_class = p_class
 	inventory = Inventory.new()
 	currency = Currency.new()
+	stash = Inventory.new()	
 
 func add_skills(new_skills: Array):
 	skills.clear()

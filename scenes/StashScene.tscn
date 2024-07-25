@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3 uid="uid://bbl0mp62ossrm"]
+
+[ext_resource type="Script" path="res://scenes/StashScene.gd" id="1_hrntj"]
+
+[node name="StashScene" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_hrntj")
+
+[node name="InventoryList" type="ItemList" parent="."]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 32.0
+offset_right = 232.0
+offset_bottom = 232.0
+
+[node name="StashList" type="ItemList" parent="."]
+layout_mode = 0
+offset_left = 256.0
+offset_top = 32.0
+offset_right = 472.0
+offset_bottom = 232.0
+
+[node name="MoveToStashButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 256.0
+offset_right = 184.0
+offset_bottom = 287.0
+text = "Move To Stash"
+
+[node name="MoveToInventoryButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 288.0
+offset_top = 256.0
+offset_right = 441.0
+offset_bottom = 287.0
+text = "Move To Inventory"
+
+[node name="BackButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 224.0
+offset_top = 320.0
+offset_right = 269.0
+offset_bottom = 351.0
+text = "Back"
