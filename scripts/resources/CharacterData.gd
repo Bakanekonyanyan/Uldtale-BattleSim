@@ -266,63 +266,6 @@ func reset_for_new_game():
 	level = 1
 	# ... any other resets needed
 
-func apply_status_effect(effect: Skill.StatusEffect, duration: int) -> String:
-	if effect not in status_effects:
-		status_effects[effect] = duration
-		apply_status_effect_modifiers(effect)
-		return "%s is now affected by %s for %d turns" % [name, Skill.StatusEffect.keys()[effect], duration]
-	else:
-		status_effects[effect] = max(status_effects[effect], duration)  # Refresh duration if already present
-		return "%s's %s effect refreshed for %d turns" % [name, Skill.StatusEffect.keys()[effect], duration]
-
-func remove_status_effect(effect: Skill.StatusEffect) -> String:
-	if effect in status_effects:
-		apply_status_effect_modifiers(effect)
-		status_effects.erase(effect)
-		return "%s is no longer affected by %s\n" % [name, Skill.StatusEffect.keys()[effect]]
-	return ""
-
-func apply_status_effect_damage(effect: Skill.StatusEffect) -> String:
-	var message = ""
-	match effect:
-		Skill.StatusEffect.POISON:
-			var damage = max_hp / 10
-			take_damage(damage)
-			message = "%s took %d poison damage\n" % [name, damage]
-		Skill.StatusEffect.BURN:
-			var damage = max_hp / 20
-			take_damage(damage)
-			message = "%s took %d burn damage\n" % [name, damage]
-		Skill.StatusEffect.SHOCK:
-			var damage = max_hp / 15
-			take_damage(damage)
-			message = "%s took %d shock damage\n" % [name, damage]
-			if randf() < 0.2:
-				is_stunned = true
-				message += "%s is stunned for this turn!\n" % name
-		Skill.StatusEffect.FREEZE:
-			# Freeze doesn't deal damage, but reduces defense
-			message = "%s is frozen, reducing their defense\n" % name
-	return message
-
-func apply_status_effect_modifiers(effect: Skill.StatusEffect):
-	match effect:
-		Skill.StatusEffect.BURN:
-			modify_attribute(Skill.AttributeTarget.STRENGTH, -2, effect in status_effects)
-		Skill.StatusEffect.FREEZE:
-			modify_attribute(Skill.AttributeTarget.VITALITY, -2, effect in status_effects)
-			modify_attribute(Skill.AttributeTarget.AGILITY, -2, effect in status_effects)
-			modify_attribute(Skill.AttributeTarget.ARCANE, -2, effect in status_effects)
-			
-func modify_attribute(attribute: Skill.AttributeTarget, value: int, apply: bool):
-	var mod_value = value if apply else -value
-	if apply:
-		# Use a default duration if the status effect is not in the dictionary
-		var duration = status_effects.get(attribute, 1)  # Default to 1 if not found
-		debuffs[attribute] = {"value": mod_value, "duration": duration}
-	else:
-		debuffs.erase(attribute)
-
 func get_attribute_with_effects(attribute: Skill.AttributeTarget) -> int:
 	var base_value = get(Skill.AttributeTarget.keys()[attribute].to_lower())
 	var buff_value = buffs.get(attribute, {"value": 0})["value"]
@@ -371,24 +314,6 @@ func get_attribute_with_buffs_and_debuffs(attribute: Skill.AttributeTarget) -> i
 	var buff_value = buffs.get(attribute, {"value": 0})["value"]
 	var debuff_value = debuffs.get(attribute, {"value": 0})["value"]
 	return base_value + buff_value - debuff_value
-
-func update_status_effects() -> String:
-	var message = ""
-	var effects_to_remove = []
-	
-	for effect in status_effects.keys():
-		status_effects[effect] -= 1
-		if status_effects[effect] <= 0:
-			effects_to_remove.append(effect)
-		else:
-			message += apply_status_effect_damage(effect)
-	
-	for effect in effects_to_remove:
-		message += remove_status_effect(effect)
-	
-	update_buffs_and_debuffs()
-	
-	return message
 
 func defend() -> String:
 	is_defending = true
@@ -476,3 +401,161 @@ func spend_attribute_point(attribute: String) -> bool:
 		calculate_secondary_attributes()
 		return true
 	return false
+
+# Applies or refreshes a status effect (keeps enum-based keys as before)
+func apply_status_effect(effect: Skill.StatusEffect, duration: int) -> String:
+	var effect_name = Skill.StatusEffect.keys()[effect]
+	# Try to fetch data from the autoload; if not present, we'll still set the effect and use fallback logic
+	var data = {}
+	if Engine.has_singleton("StatusEffects"):
+		data = StatusEffects.get_effect_data(effect_name)
+	
+	if effect not in status_effects:
+		status_effects[effect] = duration
+		# Apply stat modifiers (apply = true)
+		apply_status_effect_modifiers(effect, true)
+		if data and data.has("message"):
+			return "%s for %d turns" % [effect_name, duration]  # The battle log will show more detailed messages per tick
+		return "%s is now affected by %s for %d turns" % [name, effect_name, duration]
+	else:
+		status_effects[effect] = max(status_effects[effect], duration)
+		return "%s's %s effect refreshed for %d turns" % [name, effect_name, duration]
+
+
+# Removes a status effect and reverses its modifiers
+func remove_status_effect(effect: Skill.StatusEffect) -> String:
+	if effect in status_effects:
+		# Reverse stat modifiers (apply = false)
+		apply_status_effect_modifiers(effect, false)
+		status_effects.erase(effect)
+		return "%s is no longer affected by %s\n" % [name, Skill.StatusEffect.keys()[effect]]
+	return ""
+
+
+# Handles the per-turn behavior (damage, stun, messages) for a single effect.
+# Uses StatusEffects autoload data when available; otherwise falls back to the old hardcoded behavior
+func apply_status_effect_damage(effect: Skill.StatusEffect) -> String:
+	var message = ""
+	var effect_name = Skill.StatusEffect.keys()[effect]
+	var data = {}
+	if Engine.has_singleton("StatusEffects"):
+		data = StatusEffects.get_effect_data(effect_name)
+
+	# If we have data from JSON, use it
+	if typeof(data) == TYPE_DICTIONARY and not data.is_empty():
+		# damage_type: "hp_percent", "flat", or "none"
+		if data.has("damage_type"):
+			var dtype = data.damage_type
+			if dtype == "hp_percent" and data.has("damage_value"):
+				var dmg = int(max_hp * float(data.damage_value))
+				take_damage(dmg)
+				message += "%s took %d %s damage\n" % [name, dmg, effect_name.to_lower()]
+			elif dtype == "flat" and data.has("damage_value"):
+				var dmg2 = int(data.damage_value)
+				take_damage(dmg2)
+				message += "%s took %d %s damage\n" % [name, dmg2, effect_name.to_lower()]
+			# else no damage
+
+		# stun chance
+		if data.has("stun_chance"):
+			var sc = float(data.stun_chance)
+			if randf() < sc:
+				is_stunned = true
+				message += "%s is stunned for this turn!\n" % name
+
+		# message template fallback
+		if data.has("message"):
+			# If message contains {damage} it won't be replaced here — we already appended a plain message above.
+			# Keep the JSON message as supplemental if needed.
+			# message += data.message.format({"name": name, "damage": dmg}) + "\n"
+			pass
+
+		return message
+
+	# Fallback to original hardcoded behavior if no JSON data present
+	match effect:
+		Skill.StatusEffect.POISON:
+			var damage = max_hp / 10
+			take_damage(damage)
+			message = "%s took %d poison damage\n" % [name, damage]
+		Skill.StatusEffect.BURN:
+			var damage = max_hp / 20
+			take_damage(damage)
+			message = "%s took %d burn damage\n" % [name, damage]
+		Skill.StatusEffect.SHOCK:
+			var damage = max_hp / 15
+			take_damage(damage)
+			message = "%s took %d shock damage\n" % [name, damage]
+			if randf() < 0.2:
+				is_stunned = true
+				message += "%s is stunned for this turn!\n" % name
+		Skill.StatusEffect.FREEZE:
+			message = "%s is frozen, reducing their defense\n" % name
+	return message
+
+
+# Apply or remove stat modifiers for an effect.
+# New signature: apply_status_effect_modifiers(effect, apply: bool)
+# If autoload JSON contains stat_modifiers uses them; otherwise uses original BURN/FREEZE logic as fallback.
+func apply_status_effect_modifiers(effect: Skill.StatusEffect, apply: bool = true) -> void:
+	var effect_name = Skill.StatusEffect.keys()[effect]
+	var data = {}
+	if Engine.has_singleton("StatusEffects"):
+		data = StatusEffects.get_effect_data(effect_name)
+
+	if typeof(data) == TYPE_DICTIONARY and not data.is_empty() and data.has("stat_modifiers"):
+		for stat_name in data.stat_modifiers.keys():
+			var value = int(data.stat_modifiers[stat_name])
+			# convert stat_name (string like "strength") to AttributeTarget enum if possible
+			var attr_enum_val = null
+			if Skill.AttributeTarget.has(stat_name.to_upper()):
+				attr_enum_val = Skill.AttributeTarget[stat_name.to_upper()]
+				modify_attribute(attr_enum_val, value, apply, status_effects.get(effect, 1))
+			else:
+				# If JSON uses plain attribute names that don't match, attempt sensible fallbacks (ignore if not found)
+				# No-op
+				pass
+		return
+
+	# Fallback to previous hard-coded behavior (only for the effects we had)
+	match effect:
+		Skill.StatusEffect.BURN:
+			# apply -2 to strength while burning
+			modify_attribute(Skill.AttributeTarget.STRENGTH, -2, apply, status_effects.get(effect, 1))
+		Skill.StatusEffect.FREEZE:
+			modify_attribute(Skill.AttributeTarget.VITALITY, -2, apply, status_effects.get(effect, 1))
+			modify_attribute(Skill.AttributeTarget.AGILITY, -2, apply, status_effects.get(effect, 1))
+			modify_attribute(Skill.AttributeTarget.ARCANE, -2, apply, status_effects.get(effect, 1))
+
+
+# Modified modify_attribute to accept an explicit duration when applying, and to properly remove on unapply.
+# attribute: Skill.AttributeTarget (enum), value: int, apply: bool, duration: int
+func modify_attribute(attribute: Skill.AttributeTarget, value: int, apply: bool, duration: int = 1) -> void:
+	if apply:
+		# store as a debuff entry (keeps your original debuffs dict shape)
+		debuffs[attribute] = {"value": value, "duration": duration}
+	else:
+		# remove the debuff (or buff) for this attribute
+		if attribute in debuffs:
+			debuffs.erase(attribute)
+
+
+# Update all status effects each turn (keeps original outer logic but uses new apply_status_effect_damage/remove_status_effect)
+func update_status_effects() -> String:
+	var message = ""
+	var effects_to_remove: Array = []
+
+	for effect in status_effects.keys():
+		# decrement duration first: original code decremented then checked >0 to apply damage; preserve same rhythm
+		status_effects[effect] -= 1
+		if status_effects[effect] <= 0:
+			effects_to_remove.append(effect)
+		else:
+			message += apply_status_effect_damage(effect)
+
+	for effect in effects_to_remove:
+		message += remove_status_effect(effect)
+
+	update_buffs_and_debuffs()
+
+	return message

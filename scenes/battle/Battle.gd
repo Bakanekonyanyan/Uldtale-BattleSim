@@ -35,6 +35,8 @@ func set_enemy(new_enemy: CharacterData):
 	for _i in range(current_floor - 1):
 		enemy_character.level_up()
 	enemy_character.calculate_secondary_attributes()
+	print("Enemy loaded:", enemy_character.name)
+	print("Enemy skills:", enemy_character.skills)
 
 # Sets up the dungeon info and updates labels
 func set_dungeon_info(wave: int, floor: int, description: String):
@@ -179,21 +181,33 @@ func execute_enemy_turn():
 	var action = randf()
 	var result = ""
 	
-	if action < 0.6:
+	print("Enemy Turn Debug:")
+	print("- Current MP:", enemy_character.current_mp)
+	print("- Skills:", enemy_character.skills)
+
+	if action < 0.2:
 		result = enemy_character.attack(player_character)
-	elif action < 0.8:
+	elif action < 0.3:
 		result = enemy_character.defend()
 	else:
 		if enemy_character.skills.size() > 0:
-			var skill = SkillManager.get_skill(enemy_character.skills[randi() % enemy_character.skills.size()])
-			if skill:
+			var skill_name = enemy_character.skills[randi() % enemy_character.skills.size()]
+			var skill = SkillManager.get_skill(skill_name)
+			if not skill:
+				result = "Enemy tried to use an unknown skill: %s" % skill_name
+			elif enemy_character.current_mp < skill.mp_cost:
+				result = "Enemy tried to use %s but didn't have enough MP" % skill.name
+				print("Enemy MP too low for skill:", skill.name, "| MP:", enemy_character.current_mp, "/", skill.mp_cost)
+				# fallback to a normal attack if not enough MP
+				result = enemy_character.attack(player_character)
+			else:
+				# use skill
+				enemy_character.current_mp -= skill.mp_cost
 				var targets = [player_character] if skill.target in [Skill.TargetType.ENEMY, Skill.TargetType.ALL_ENEMIES] else [enemy_character]
 				result = skill.use(enemy_character, targets)
-			else:
-				result = "Enemy tried to use an unknown skill"
+				print("Enemy used skill:", skill.name, "| Remaining MP:", enemy_character.current_mp)
 		else:
-			result = enemy_character.attack(player_character)
-	
+				result = enemy_character.attack(player_character)
 	update_turn_label(result)
 	update_ui()
 	await get_tree().create_timer(2.0).timeout

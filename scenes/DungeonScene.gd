@@ -215,11 +215,11 @@ func next_wave():
 		is_boss_fight = false
 		start_battle()
 
-func show_reward_scene(xp_gained: int):
+func show_reward_scene(xp_gained):
 	var rewards = calculate_rewards()
 	var reward_data = {
 		"rewards": rewards,
-		"xp_gained": xp_gained,
+		"xp_gained": self.xp_gained,
 		"player_character": player_character,
 		"is_boss_fight": is_boss_fight,
 		"current_floor": current_floor,

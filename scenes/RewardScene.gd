@@ -2,6 +2,7 @@
 extends Control
 
 signal rewards_accepted
+signal next_wave
 signal next_floor
 signal quit_dungeon
 
@@ -19,6 +20,7 @@ var reward_accepted = false
 @onready var next_floor_button: Button = $UI/NextFloorButton
 @onready var equip_button = $UI/EquipmentButton
 @onready var use_consumable_button = $UI/InventoryButton
+@onready var accept_reward_button = $UI/AcceptRewardButton
 var xp_gained: int = 0
 
 # RewardScene.gd
@@ -45,7 +47,29 @@ func setup_ui():
 		equip_button.connect("pressed", Callable(self, "_on_equip_pressed"))
 	if use_consumable_button:
 		use_consumable_button.connect("pressed", Callable(self, "_on_use_consumable_pressed"))
-
+	if accept_reward_button:
+		accept_reward_button.connect("pressed", Callable(self, "_on_accept_reward_pressed"))
+		
+		
+func _on_accept_reward_pressed():
+	print("Accepting rewards: ", rewards)
+	for item_id in rewards:
+		if item_id == "currency":
+			player_character.currency.add(rewards[item_id])
+			print("Added ", rewards[item_id], " currency to player")
+		elif item_id != "xp":
+			var item = ItemManager.get_item(item_id)
+			if item:
+				print("Adding item to inventory: ", item.name, " x", rewards[item_id])
+				player_character.inventory.add_item(item, rewards[item_id])
+			else:
+				print("Warning: Failed to add item to inventory: ", item_id)
+	reward_label.text = ""
+	accept_reward_button.visible = false
+	rewards.clear()
+	reward_accepted = false
+	
+	
 func _on_equip_pressed():
 	SceneManager.change_scene_with_return("res://scenes/EquipmentScene.tscn", player_character)
 
@@ -63,19 +87,6 @@ func _on_continue_pressed():
 	if player_character == null:
 		print("Error: Player character is null in RewardScene")
 		return
-
-	print("Accepting rewards: ", rewards)
-	for item_id in rewards:
-		if item_id == "currency":
-			player_character.currency.add(rewards[item_id])
-			print("Added ", rewards[item_id], " currency to player")
-		elif item_id != "xp":
-			var item = ItemManager.get_item(item_id)
-			if item:
-				print("Adding item to inventory: ", item.name, " x", rewards[item_id])
-				player_character.inventory.add_item(item, rewards[item_id])
-			else:
-				print("Warning: Failed to add item to inventory: ", item_id)
 	SaveManager.save_game(player_character)
 	print("Character saved after receiving rewards")
 	emit_signal("rewards_accepted")

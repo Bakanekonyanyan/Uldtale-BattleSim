@@ -15,8 +15,8 @@ func _ready():
 	print("LevelUpScene: _ready called")
 	done_button.connect("pressed", Callable(self, "_on_done_pressed"))
 
-func setup(char: CharacterData):
-	character = char
+func setup(char1: CharacterData):
+	character = char1
 	initial_attributes = {
 		"vitality": character.vitality,
 		"strength": character.strength,
