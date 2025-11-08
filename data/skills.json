@@ -2,14 +2,14 @@
 	"skills": {
 		"Holy Strike": {
 			"name": "Holy Strike",
-			"description": "Strikes the enemy with holy power, dealing damage.",
+			"description": "Strikes the enemy with holy fire, dealing damage and striking fear in the hearts of evil.",
 			"ability_type": "MAGICAL",
 			"type": "DAMAGE",
 			"target": "ENEMY",
 			"attribute_target": "NONE",
-			"status_effect": "NONE",
-			"power": 15,
-			"duration": 0,
+			"status_effect": "BURN",
+			"power": 18,
+			"duration": 3,
 			"mp_cost": 8,
 			"cooldown": 3
 		},
@@ -346,9 +346,9 @@
 			"target": "ENEMY",
 			"attribute_target": "NONE",
 			"status_effect": "BURN",
-			"power": 5,
+			"power": 10,
 			"duration": 5,
-			"mp_cost": 10,
+			"mp_cost": 12,
 			"cooldown": 5
 		}
 	}

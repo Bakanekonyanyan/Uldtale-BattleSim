@@ -32,11 +32,20 @@ func refresh_lists():
 	inventory_list.clear()
 	equipment_list.clear()
 	
+	var index = 0
 	for item_id in current_character.inventory.items:
 		var item_data = current_character.inventory.items[item_id]
 		var item = item_data.item
 		if item is Equipment:
-			inventory_list.add_item(item.name)
+			# Add the item with its name and rarity
+			var display_name = "%s [%s]" % [item.name, item.rarity.capitalize()]
+			inventory_list.add_item(display_name)
+			
+			# Set the color based on rarity
+			var rarity_color_name = item.get_rarity_color()
+			var rarity_color = Color(rarity_color_name)
+			inventory_list.set_item_custom_fg_color(index, rarity_color)
+			index += 1
 	
 	for slot in current_character.equipment:
 		var item = current_character.equipment[slot]

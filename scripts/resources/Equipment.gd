@@ -12,6 +12,7 @@ var class_restriction: Array
 var effects: Dictionary
 var rarity: String = "common"
 var rarity_applied: bool = false
+var inventory_key: String = ""  # Stores the unique inventory key for this instance
 
 var rarities: Dictionary = {
 	"common": {"multiplier": 1, "color": "white"},
@@ -36,6 +37,15 @@ func _init(data: Dictionary):
 	slot = data.get("slot", "")
 	class_restriction = data.get("class_restriction", [])
 	effects = data.get("effects", {})
+	
+	# Set the proper item_type based on whether it's a weapon or armor
+	if type == "weapon":
+		item_type = Item.ItemType.WEAPON
+	elif type == "armor":
+		item_type = Item.ItemType.ARMOR
+	else:
+		# Default to weapon if not specified (shouldn't happen)
+		item_type = Item.ItemType.WEAPON
 	
 	# Check if rarity is already set in the data
 	if data.has("rarity") and data["rarity"] != "":
@@ -100,11 +110,9 @@ func apply_effects(character: CharacterData):
 			"crit":
 				character.critical_hit_rate += effects[effect]
 			"armor_penetration":
-				# You might need to add this property to CharacterData
 				character.armor_penetration += effects[effect]
 			"spell_power":
 				character.spell_power += effects[effect]
-			# Add more effects as needed
 
 func remove_effects(character: CharacterData):
 	if attribute_target is String:
@@ -123,4 +131,3 @@ func remove_effects(character: CharacterData):
 				character.armor_penetration -= effects[effect]
 			"spell_power":
 				character.spell_power -= effects[effect]
-			# Add more effects as needed

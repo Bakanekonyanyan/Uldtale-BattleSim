@@ -136,7 +136,14 @@ func equip_item(item: Equipment) -> Equipment:
 	
 	equipment[item.slot] = item
 	item.apply_effects(self)
-	inventory.remove_item(item.id, 1)
+	
+	# Remove from inventory using the unique key if it exists
+	if item is Equipment and item.inventory_key != "":
+		inventory.remove_item(item.inventory_key, 1)
+	else:
+		# Fallback to base id for non-equipment or old saves
+		inventory.remove_item(item.id, 1)
+	
 	calculate_secondary_attributes()
 	return old_item
 

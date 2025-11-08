@@ -6,6 +6,25 @@ extends Resource
 @export var capacity: int = 20
 
 func add_item(item: Item, quantity: int = 1) -> bool:
+	# Equipment should never stack - each piece is unique with its own rarity
+	if item is Equipment:
+		# Generate a unique key for this equipment piece
+		var unique_key = "%s_%d" % [item.id, Time.get_ticks_msec()]
+		
+		# Store the key in the equipment so we can remove it later
+		item.inventory_key = unique_key
+		
+		# Make sure we don't exceed capacity
+		if items.size() >= capacity:
+			print("Inventory is full, can't add ", item.name)
+			return false
+		
+		# Add as unique item with quantity 1
+		items[unique_key] = {"item": item, "quantity": 1}
+		print("Added unique equipment: ", item.name, " (", item.rarity, ") with key: ", unique_key)
+		return true
+	
+	# Regular items can stack
 	if items.size() >= capacity and item.id not in items:
 		print("Inventory is full, can't add ", item.name)
 		return false

@@ -26,11 +26,15 @@ func refresh_item_list():
 	item_list.clear()
 	for item_id in current_inventory.items:
 		var item_data = current_inventory.items[item_id]
-		var item_name = item_data.item.name if item_data.item else "Unknown Item"
-		var quantity = item_data.quantity
-		var display_text = "%s (x%d)" % [item_name, quantity]
-		item_list.add_item(display_text)
-		print("Added to item list: %s" % display_text)
+		var item = item_data.item
+		
+		# Only show consumables in battle inventory
+		if item and item.item_type == Item.ItemType.CONSUMABLE:
+			var item_name = item.name
+			var quantity = item_data.quantity
+			var display_text = "%s (x%d)" % [item_name, quantity]
+			item_list.add_item(display_text)
+			print("Added to item list: %s" % display_text)
 
 func update_currency_display(currency: Currency):
 	currency_label.text = "Currency: %s" % currency.get_formatted()
@@ -39,10 +43,19 @@ func _on_use_pressed():
 	var selected_items = item_list.get_selected_items()
 	if selected_items.size() > 0:
 		var item_index = selected_items[0]
-		var item_name = current_inventory.items.keys()[item_index]
-		var item = current_inventory.items[item_name].item
-		emit_signal("item_selected", item)
-		hide()
+		
+		# Build a list of consumable items in the same order as displayed
+		var consumable_items = []
+		for item_id in current_inventory.items:
+			var item = current_inventory.items[item_id].item
+			if item and item.item_type == Item.ItemType.CONSUMABLE:
+				consumable_items.append(item)
+		
+		# Get the selected consumable based on the index
+		if item_index < consumable_items.size():
+			var selected_item = consumable_items[item_index]
+			emit_signal("item_selected", selected_item)
+			hide()
 
 func _on_cancel_pressed():
 	hide()
