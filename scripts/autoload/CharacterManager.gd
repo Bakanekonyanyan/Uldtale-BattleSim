@@ -79,4 +79,3 @@ func get_all_characters() -> Array:
 					characters.append(character)
 			file_name = dir.get_next()
 	return characters
-

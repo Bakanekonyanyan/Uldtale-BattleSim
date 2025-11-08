@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://tirv5e2symrb"]
 
-[ext_resource type="Script" path="res://scenes/WaveBattle.gd" id="1_p3txs"]
+[ext_resource type="Script" uid="uid://c5q645bbtedr2" path="res://scenes/WaveBattle.gd" id="1_p3txs"]
 
 [node name="WaveBattle" type="Node"]
 script = ExtResource("1_p3txs")

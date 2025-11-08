@@ -1,8 +1,8 @@
 [gd_scene load_steps=8 format=3 uid="uid://qjlelc1u2own"]
 
-[ext_resource type="Script" path="res://scenes/InventoryScene.gd" id="1_ekuo7"]
+[ext_resource type="Script" uid="uid://cguasixo5ibfu" path="res://scenes/InventoryScene.gd" id="1_ekuo7"]
 [ext_resource type="Texture2D" uid="uid://cr2guw71lqnyd" path="res://assets/Images/backgrounds/TownScene.png" id="2_2e5of"]
-[ext_resource type="Script" path="res://scripts/PointLight2D.gd" id="3_rpxgx"]
+[ext_resource type="Script" uid="uid://41clvjbu24gn" path="res://scripts/PointLight2D.gd" id="3_rpxgx"]
 
 [sub_resource type="Environment" id="Environment_avafh"]
 background_mode = 3
@@ -13,17 +13,17 @@ glow_intensity = 1.27
 glow_bloom = 0.15
 glow_blend_mode = 0
 
-[sub_resource type="Gradient" id="Gradient_40hv2"]
+[sub_resource type="Gradient" id="Gradient_18mi8"]
 offsets = PackedFloat32Array(0, 0.663366)
 colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 1)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_qi7gr"]
-gradient = SubResource("Gradient_40hv2")
+gradient = SubResource("Gradient_18mi8")
 fill_from = Vector2(0.5, 0.25)
 fill_to = Vector2(0.5, 1)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_rgay6"]
-gradient = SubResource("Gradient_40hv2")
+gradient = SubResource("Gradient_18mi8")
 fill = 1
 fill_from = Vector2(0.5, 0.5)
 
@@ -34,7 +34,7 @@ script = ExtResource("1_ekuo7")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 modulate = Color(0.501961, 0.423529, 0.423529, 1)
-position = Vector2(568, 312)
+position = Vector2(576, 288)
 scale = Vector2(0.75, 0.75)
 texture = ExtResource("2_2e5of")
 

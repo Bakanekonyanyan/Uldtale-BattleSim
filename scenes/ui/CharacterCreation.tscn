@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://danu1ywx2mjvr"]
 
-[ext_resource type="Script" path="res://scenes/ui/CharacterCreation.gd" id="1_eu6pg"]
+[ext_resource type="Script" uid="uid://fp07hnhgv1cj" path="res://scenes/ui/CharacterCreation.gd" id="1_eu6pg"]
 [ext_resource type="Texture2D" uid="uid://c4wcwj7dwjsag" path="res://assets/Images/backgrounds/main menu 2.png" id="2_misp4"]
 
 [node name="CharacterCreation" type="Control"]

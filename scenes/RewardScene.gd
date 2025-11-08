@@ -13,12 +13,12 @@ var max_floor: int = 3
 var setup_complete = false
 var reward_accepted = false
 
-@onready var reward_label: Label = $RewardLabel
-@onready var continue_button: Button = $ContinueButton
-@onready var quit_button: Button = $QuitButton
-@onready var next_floor_button: Button = $NextFloorButton
-@onready var equip_button = $EquipmentButton
-@onready var use_consumable_button = $InventoryButton
+@onready var reward_label: Label = $UI/RewardLabel
+@onready var continue_button: Button = $UI/ContinueButton
+@onready var quit_button: Button = $UI/QuitButton
+@onready var next_floor_button: Button = $UI/NextFloorButton
+@onready var equip_button = $UI/EquipmentButton
+@onready var use_consumable_button = $UI/InventoryButton
 var xp_gained: int = 0
 
 # RewardScene.gd

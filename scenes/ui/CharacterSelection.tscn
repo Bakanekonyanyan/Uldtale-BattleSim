@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://cf7mw65c8j5ur"]
 
-[ext_resource type="Script" path="res://scenes/ui/CharacterSelection.gd" id="1_e73ia"]
+[ext_resource type="Script" uid="uid://t8lqhxmpj2tx" path="res://scenes/ui/CharacterSelection.gd" id="1_e73ia"]
 [ext_resource type="Texture2D" uid="uid://d13rrwwbt1084" path="res://assets/Images/backgrounds/main menu 1.png" id="2_aogts"]
 
 [node name="CharacterSelection" type="Control"]

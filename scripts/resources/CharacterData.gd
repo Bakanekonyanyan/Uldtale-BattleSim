@@ -476,5 +476,3 @@ func spend_attribute_point(attribute: String) -> bool:
 		calculate_secondary_attributes()
 		return true
 	return false
-
-

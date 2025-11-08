@@ -1,21 +1,102 @@
-[gd_scene load_steps=4 format=3 uid="uid://c4fqlgafbbai2"]
+[gd_scene load_steps=12 format=3 uid="uid://c4fqlgafbbai2"]
 
-[ext_resource type="Script" path="res://scenes/ui/MainMenu.gd" id="1_ck6n6"]
+[ext_resource type="Script" uid="uid://6w74dt4h8l4h" path="res://scenes/ui/MainMenu.gd" id="1_ck6n6"]
 [ext_resource type="Texture2D" uid="uid://c4wcwj7dwjsag" path="res://assets/Images/backgrounds/main menu 2.png" id="2_nbk2r"]
+[ext_resource type="Script" uid="uid://41clvjbu24gn" path="res://scripts/PointLight2D.gd" id="3_xfmpr"]
 [ext_resource type="Texture2D" uid="uid://bfye3dufpe1ke" path="res://assets/Images/backgrounds/Main Menu Logo.png" id="3_xupg8"]
+
+[sub_resource type="Environment" id="Environment_a4jwj"]
+background_mode = 3
+tonemap_mode = 3
+glow_enabled = true
+glow_normalized = true
+glow_intensity = 1.27
+glow_bloom = 0.15
+glow_blend_mode = 0
+
+[sub_resource type="Gradient" id="Gradient_mavs8"]
+offsets = PackedFloat32Array(0, 0.663366)
+colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_vqqh6"]
+gradient = SubResource("Gradient_mavs8")
+fill_from = Vector2(0.5, 0.567073)
+fill_to = Vector2(0.5, 1)
+
+[sub_resource type="Gradient" id="Gradient_xob1w"]
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_krv05"]
+gradient = SubResource("Gradient_xob1w")
+fill_from = Vector2(0.5, 0.310976)
+fill_to = Vector2(0.512195, 1)
+
+[sub_resource type="Gradient" id="Gradient_8kgx3"]
+offsets = PackedFloat32Array(0, 0.653465)
+colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_ih6ml"]
+gradient = SubResource("Gradient_8kgx3")
+fill = 1
+fill_from = Vector2(0.47561, 0.5)
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1_ck6n6")
 
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_a4jwj")
+
+[node name="DirectionalLight2D" type="DirectionalLight2D" parent="."]
+position = Vector2(568, -8)
+color = Color(0.541176, 0.541176, 0.541176, 1)
+energy = 0.75
+blend_mode = 2
+range_z_min = -1028
+shadow_enabled = true
+
 [node name="MainMenu2" type="Sprite2D" parent="."]
-position = Vector2(608, 352)
+position = Vector2(592, 336)
 scale = Vector2(0.822, 0.822)
 texture = ExtResource("2_nbk2r")
 
+[node name="PointLight2D6" type="PointLight2D" parent="."]
+position = Vector2(576, 7.62939e-06)
+scale = Vector2(12, 6.25)
+color = Color(0.603922, 0.317647, 0.227451, 0.733333)
+energy = 0.74
+texture = SubResource("GradientTexture2D_vqqh6")
+texture_scale = 1.5
+script = ExtResource("3_xfmpr")
+min_energy = 0.25
+max_energy = 1.0
+base_pulse_duration = 4.0
+randomness = 0.5
+
+[node name="PointLight2D" type="PointLight2D" parent="."]
+position = Vector2(584, 648)
+scale = Vector2(19.75, 5.4375)
+color = Color(1, 0.713726, 0.478431, 0.635294)
+texture = SubResource("GradientTexture2D_krv05")
+script = ExtResource("3_xfmpr")
+min_energy = 0.25
+max_energy = 1.0
+base_pulse_duration = 4.0
+randomness = 0.5
+
+[node name="PointLight2D2" type="PointLight2D" parent="."]
+position = Vector2(592, 336)
+scale = Vector2(15.375, 6.5)
+texture = SubResource("GradientTexture2D_ih6ml")
+script = ExtResource("3_xfmpr")
+min_energy = 0.25
+max_energy = 0.75
+base_pulse_duration = 4.0
+randomness = 0.0
+
 [node name="Sprite2D2" type="Sprite2D" parent="."]
-position = Vector2(-576, 400)
+self_modulate = Color(1, 0.8, 0.8, 1)
+position = Vector2(-584, 296)
 scale = Vector2(1.5, 1.5)
 texture = ExtResource("3_xupg8")
 offset = Vector2(767, 0)

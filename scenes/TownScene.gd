@@ -3,13 +3,13 @@ extends Node2D
 
 var current_character: CharacterData
 
-@onready var name_label = $NameLabel
-@onready var shop_button = $ShopButton
-@onready var dungeon_button = $DungeonButton
-@onready var equipment_button = $EquipmentButton
-@onready var status_button = $StatusButton
-@onready var inventory_button = $InventoryButton
-@onready var stash_button = $StashButton
+@onready var name_label = $UI/NameLabel
+@onready var shop_button = $UI/ShopButton
+@onready var dungeon_button = $UI/DungeonButton
+@onready var equipment_button = $UI/EquipmentButton
+@onready var status_button = $UI/StatusButton
+@onready var inventory_button = $UI/InventoryButton
+@onready var stash_button = $UI/StashButton
 
 func _ready():
 	if shop_button:
@@ -34,11 +34,11 @@ func set_player(character: CharacterData):
 	update_ui()
 
 func update_ui():
-	if $NameLabel:
+	if name_label:
 		if current_character:
-			$NameLabel.text = "Character: " + current_character.name
+			name_label.text = "Character: " + current_character.name
 		else:
-			$NameLabel.text = "No character loaded"
+			name_label.text = "No character loaded"
 	else:
 		print(current_character.name)
 		print("Warning: CharacterNameLabel not found in TownScene")

@@ -1,7 +1,27 @@
-[gd_scene load_steps=3 format=3 uid="uid://c2a5c1vvpan58"]
+[gd_scene load_steps=7 format=3 uid="uid://c2a5c1vvpan58"]
 
-[ext_resource type="Script" path="res://scenes/RewardScene.gd" id="1_sfmy3"]
+[ext_resource type="Script" uid="uid://blxyq88ayam1o" path="res://scenes/RewardScene.gd" id="1_sfmy3"]
+[ext_resource type="Script" uid="uid://41clvjbu24gn" path="res://scripts/PointLight2D.gd" id="2_1to6c"]
 [ext_resource type="Texture2D" uid="uid://cfl1xtx1uttvn" path="res://assets/Images/backgrounds/RewardsBackground.png" id="2_ytqvo"]
+
+[sub_resource type="Environment" id="Environment_w228b"]
+background_mode = 3
+tonemap_mode = 3
+glow_enabled = true
+glow_normalized = true
+glow_intensity = 1.27
+glow_bloom = 0.15
+glow_blend_mode = 0
+
+[sub_resource type="Gradient" id="Gradient_ddmpt"]
+offsets = PackedFloat32Array(0, 0.663366)
+colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_hoyal"]
+gradient = SubResource("Gradient_ddmpt")
+fill = 1
+fill_from = Vector2(0.5, 0.567073)
+fill_to = Vector2(0.5, 1)
 
 [node name="RewardScene" type="Control"]
 layout_mode = 3
@@ -14,47 +34,77 @@ position = Vector2(568, 304)
 scale = Vector2(0.755, 0.755)
 texture = ExtResource("2_ytqvo")
 
-[node name="RewardLabel" type="Label" parent="."]
-layout_mode = 0
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_w228b")
+
+[node name="DirectionalLight2D" type="DirectionalLight2D" parent="."]
+position = Vector2(528, 3.05176e-05)
+color = Color(0.541176, 0.541176, 0.541176, 1)
+blend_mode = 2
+
+[node name="PointLight2D6" type="PointLight2D" parent="."]
+position = Vector2(560, 344)
+scale = Vector2(12, 7.16667)
+color = Color(0.933333, 0.72549, 0.658824, 1)
+energy = 0.74
+texture = SubResource("GradientTexture2D_hoyal")
+texture_scale = 1.5
+script = ExtResource("2_1to6c")
+min_energy = 0.25
+max_energy = 1.0
+base_pulse_duration = 4.0
+randomness = 0.5
+
+[node name="PointLight2D7" type="PointLight2D" parent="."]
+position = Vector2(560, 344)
+scale = Vector2(12, 7.16667)
+color = Color(0.933333, 0.72549, 0.658824, 1)
+energy = 0.74
+texture = SubResource("GradientTexture2D_hoyal")
+texture_scale = 1.5
+script = ExtResource("2_1to6c")
+min_energy = 0.24
+max_energy = 1.25
+base_pulse_duration = 1.5
+randomness = 0.9
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="RewardLabel" type="Label" parent="UI"]
 offset_left = 8.0
 offset_top = 32.0
 offset_right = 48.0
 offset_bottom = 55.0
 
-[node name="ContinueButton" type="Button" parent="."]
-layout_mode = 0
+[node name="ContinueButton" type="Button" parent="UI"]
 offset_left = 256.0
 offset_top = 32.0
 offset_right = 335.0
 offset_bottom = 63.0
 text = "Continue"
 
-[node name="NextFloorButton" type="Button" parent="."]
-layout_mode = 0
+[node name="NextFloorButton" type="Button" parent="UI"]
 offset_left = 256.0
 offset_top = 80.0
 offset_right = 345.0
 offset_bottom = 111.0
 text = "Next Floor"
 
-[node name="QuitButton" type="Button" parent="."]
-layout_mode = 0
+[node name="QuitButton" type="Button" parent="UI"]
 offset_left = 256.0
 offset_top = 128.0
 offset_right = 298.0
 offset_bottom = 159.0
 text = "Quit"
 
-[node name="EquipmentButton" type="Button" parent="."]
-layout_mode = 0
+[node name="EquipmentButton" type="Button" parent="UI"]
 offset_left = 448.0
 offset_top = 80.0
 offset_right = 541.0
 offset_bottom = 111.0
 text = "Equipment"
 
-[node name="InventoryButton" type="Button" parent="."]
-layout_mode = 0
+[node name="InventoryButton" type="Button" parent="UI"]
 offset_left = 448.0
 offset_top = 32.0
 offset_right = 531.0

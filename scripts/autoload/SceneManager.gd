@@ -152,6 +152,7 @@ func setup_reward_scene():
 	if current_scene.has_method("display_rewards"):
 		current_scene.display_rewards()
 	current_scene.connect("rewards_accepted", Callable(self, "_on_rewards_accepted"))
+	current_scene.connect("next_floor", Callable(self, "_on_next_floor"))
 
 func show_reward_scene(dungeon: Node, new_reward_data: Dictionary) -> void:
 	print("SceneManager: Preparing to show reward scene")
@@ -182,3 +183,18 @@ func _on_rewards_accepted():
 	else:
 		print("Error: No dungeon info to return to")
 	reward_data.clear()  # Clear reward data after accepting
+
+func _on_next_floor():
+	print("SceneManager: Next floor requested")
+	reward_scene_active = false
+	if not dungeon_info.is_empty():
+		dungeon_info["current_floor"] += 1
+		dungeon_info["current_wave"] = 0
+		dungeon_info["is_boss_fight"] = false
+		print("SceneManager: Moving to floor ", dungeon_info["current_floor"])
+		_change_scene_internal(dungeon_info["path"], dungeon_info["player_character"])
+	if current_scene.has_method("start_dungeon"):
+			current_scene.call_deferred("start_dungeon", dungeon_info)
+	else:
+		print("Error: No dungeon info to return to")
+	reward_data.clear()

@@ -1,9 +1,9 @@
 [gd_scene load_steps=9 format=3 uid="uid://gaoox3hxxx11"]
 
-[ext_resource type="Script" path="res://scenes/ShopScene.gd" id="1_0c31w"]
+[ext_resource type="Script" uid="uid://b316g386hs3t2" path="res://scenes/ShopScene.gd" id="1_0c31w"]
 [ext_resource type="Texture2D" uid="uid://cr2guw71lqnyd" path="res://assets/Images/backgrounds/TownScene.png" id="2_pcdiq"]
 [ext_resource type="Texture2D" uid="uid://mpkhewcv2ely" path="res://assets/Images/shopkeepers/Shopkeep.png" id="3_xobpl"]
-[ext_resource type="Script" path="res://scripts/PointLight2D.gd" id="4_4t6n7"]
+[ext_resource type="Script" uid="uid://41clvjbu24gn" path="res://scripts/PointLight2D.gd" id="4_4t6n7"]
 
 [sub_resource type="Environment" id="Environment_jmeq7"]
 background_mode = 3

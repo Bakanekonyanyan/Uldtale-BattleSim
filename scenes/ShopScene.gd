@@ -125,4 +125,3 @@ func _on_exit_pressed():
 func _on_item_selected(_index):
 	$UI/BuyButton.disabled = false
 	
-

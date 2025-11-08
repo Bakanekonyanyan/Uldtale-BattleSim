@@ -1,8 +1,8 @@
-[gd_scene load_steps=8 format=3 uid="uid://bflegc6q84fpo"]
+[gd_scene load_steps=9 format=3 uid="uid://bflegc6q84fpo"]
 
-[ext_resource type="Script" path="res://scenes/TownScene.gd" id="1_lgvuw"]
+[ext_resource type="Script" uid="uid://bsgtluyyx1wcw" path="res://scenes/TownScene.gd" id="1_lgvuw"]
 [ext_resource type="Texture2D" uid="uid://cr2guw71lqnyd" path="res://assets/Images/backgrounds/TownScene.png" id="2_1e24h"]
-[ext_resource type="Script" path="res://scripts/PointLight2D.gd" id="3_ncvtu"]
+[ext_resource type="Script" uid="uid://41clvjbu24gn" path="res://scripts/PointLight2D.gd" id="3_ncvtu"]
 
 [sub_resource type="Environment" id="Environment_r0kjw"]
 background_mode = 3
@@ -13,17 +13,21 @@ glow_intensity = 1.27
 glow_bloom = 0.15
 glow_blend_mode = 0
 
-[sub_resource type="Gradient" id="Gradient_bb138"]
+[sub_resource type="Gradient" id="Gradient_vdgia"]
 offsets = PackedFloat32Array(0, 0.663366)
 colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 1)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_n5kah"]
-gradient = SubResource("Gradient_bb138")
+gradient = SubResource("Gradient_vdgia")
 fill_from = Vector2(0.5, 0.25)
 fill_to = Vector2(0.5, 1)
 
+[sub_resource type="Gradient" id="Gradient_mavs8"]
+offsets = PackedFloat32Array(0, 0.663366)
+colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 1)
+
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_1meal"]
-gradient = SubResource("Gradient_bb138")
+gradient = SubResource("Gradient_mavs8")
 fill = 1
 fill_from = Vector2(0.5, 0.5)
 
@@ -31,7 +35,7 @@ fill_from = Vector2(0.5, 0.5)
 script = ExtResource("1_lgvuw")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(576, 288)
+position = Vector2(576, 272)
 scale = Vector2(0.75, 0.75)
 texture = ExtResource("2_1e24h")
 
@@ -44,7 +48,7 @@ color = Color(0.541176, 0.541176, 0.541176, 1)
 blend_mode = 2
 
 [node name="PointLight2D6" type="PointLight2D" parent="."]
-position = Vector2(560, 344)
+position = Vector2(568, 344)
 scale = Vector2(12, 7.16667)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.74
@@ -123,44 +127,44 @@ min_energy = 0.25
 max_energy = 0.5
 base_pulse_duration = 1.0
 
-[node name="Background" type="CanvasLayer" parent="."]
+[node name="UI" type="CanvasLayer" parent="."]
 
-[node name="NameLabel" type="Label" parent="."]
+[node name="NameLabel" type="Label" parent="UI"]
 offset_left = 16.0
 offset_top = 8.0
 offset_right = 71.0
 offset_bottom = 34.0
 text = "Name: "
 
-[node name="ShopButton" type="Button" parent="."]
+[node name="ShopButton" type="Button" parent="UI"]
 offset_left = 8.0
 offset_top = 64.0
 offset_right = 104.0
 offset_bottom = 95.0
 text = "Shop"
 
-[node name="DungeonButton" type="Button" parent="."]
+[node name="DungeonButton" type="Button" parent="UI"]
 offset_left = 112.0
 offset_top = 64.0
 offset_right = 208.0
 offset_bottom = 95.0
 text = "Dungeon"
 
-[node name="EquipmentButton" type="Button" parent="."]
+[node name="EquipmentButton" type="Button" parent="UI"]
 offset_left = 8.0
 offset_top = 112.0
 offset_right = 104.0
 offset_bottom = 143.0
 text = "Equipment"
 
-[node name="StatusButton" type="Button" parent="."]
+[node name="StatusButton" type="Button" parent="UI"]
 offset_left = 112.0
 offset_top = 112.0
 offset_right = 208.0
 offset_bottom = 143.0
 text = "Status"
 
-[node name="InventoryButton" type="Button" parent="."]
+[node name="InventoryButton" type="Button" parent="UI"]
 offset_left = 8.0
 offset_top = 160.0
 offset_right = 104.0
@@ -168,7 +172,7 @@ offset_bottom = 191.0
 text = "Inventory
 "
 
-[node name="StashButton" type="Button" parent="."]
+[node name="StashButton" type="Button" parent="UI"]
 offset_left = 112.0
 offset_top = 160.0
 offset_right = 208.0

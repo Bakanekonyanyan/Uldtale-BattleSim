@@ -22,7 +22,7 @@ var rarities: Dictionary = {
 }
 
 func _init(data: Dictionary):
-	super._init()
+	
 	load_rarities()
 	id = data.get("id", "")
 	name = data.get("name", "")

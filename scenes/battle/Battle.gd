@@ -46,7 +46,7 @@ func set_dungeon_info(wave: int, floor: int, description: String):
 # Updates the dungeon labels with current info
 func update_dungeon_labels():
 	$WaveLabel.text = "Wave: %d" % current_wave
-	$FloorLabel.text = "Wave: %d" % current_floor
+	$FloorLabel.text = "Floor: %d" % current_floor
 	$DungeonDescriptionLabel.text = dungeon_description
 
 # Sets up the battle, including characters and UI
