@@ -2,7 +2,8 @@
 extends Node
 
 const SAVE_DIR = "user://saves/"
-const SAVE_FILE_EXTENSION = ".tres"
+# FIXED: Changed extension to .json since we're saving JSON files
+const SAVE_FILE_EXTENSION = ".json"
 
 func _ready():
 	create_save_directory()
@@ -66,6 +67,7 @@ func save_game(player: CharacterData):
 	var file = FileAccess.open(get_save_file_path(player.name), FileAccess.WRITE)
 	file.store_string(JSON.stringify(save_data))
 	file.close()
+	print("Character saved: ", player.name)
 
 func load_game(character_name: String) -> CharacterData:
 	var save_file = get_save_file_path(character_name)
@@ -168,7 +170,8 @@ func get_all_characters() -> Array:
 	return characters
 	
 func delete_character(character_name: String):
-	var file_name = SAVE_DIR + character_name + SAVE_FILE_EXTENSION
+	# FIXED: Use .json extension instead of SAVE_FILE_EXTENSION (.tres)
+	var file_name = SAVE_DIR + character_name + ".json"
 	if FileAccess.file_exists(file_name):
 		var dir = DirAccess.open(SAVE_DIR)
 		if dir:

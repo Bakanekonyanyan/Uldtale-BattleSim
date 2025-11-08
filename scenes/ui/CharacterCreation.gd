@@ -57,8 +57,6 @@ func update_stats():
 		vitality, strength, dexterity, intelligence, faith, mind, endurance, arcane, agility, fortitude
 	]
 
-# CharacterCreation.gd
-
 func _on_create_pressed():
 	if name_input.text.strip_edges().is_empty():
 		print("Please enter a character name")
@@ -95,7 +93,8 @@ func _on_create_pressed():
 	
 	new_character.calculate_secondary_attributes()
 	
-	CharacterManager.save_character(new_character)
+	# FIXED: Use SaveManager.save_game() instead of CharacterManager.save_character()
+	SaveManager.save_game(new_character)
 	print("Character created: ", new_character.name)
 	print("Skills for new character: ", new_character.skills)
 	

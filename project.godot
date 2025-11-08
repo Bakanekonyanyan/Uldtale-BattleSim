@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Battlsim"
-run/main_scene="res://scenes/main/Main.tscn"
+run/main_scene="uid://cnb6kqb10ei67"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 config/icon="res://icon.svg"
 
@@ -33,3 +33,4 @@ StatusEffects="*res://scripts/autoload/StatusEffectData.gd"
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true

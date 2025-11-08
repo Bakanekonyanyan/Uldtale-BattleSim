@@ -50,7 +50,8 @@ func _on_start_new_game_pressed():
 		print("Starting new game with character: ", selected_character.name)
 		# Reset character to initial state if needed
 		selected_character.reset_for_new_game()
-		CharacterManager.save_character(selected_character)
+		# FIXED: Use SaveManager.save_game() instead of CharacterManager.save_character()
+		SaveManager.save_game(selected_character)
 		SceneManager.change_to_town(selected_character)
 	else:
 		print("No character selected")
@@ -72,7 +73,8 @@ func _on_create_new_pressed():
 	SceneManager.change_scene("res://scenes/ui/CharacterCreation.tscn")
 
 func load_characters():
-	character_list = CharacterManager.get_all_characters()
+	# FIXED: Use SaveManager.get_all_characters() instead of CharacterManager.get_all_characters()
+	character_list = SaveManager.get_all_characters()
 
 func setup_ui():
 	# Clear existing children
@@ -103,6 +105,7 @@ func _on_delete_pressed(character):
 	dialog.popup_centered()
 
 func _delete_character(character):
-	CharacterManager.delete_character(character.name)
+	# FIXED: Use SaveManager.delete_character() instead of CharacterManager.delete_character()
+	SaveManager.delete_character(character.name)
 	load_characters()
 	setup_ui()
