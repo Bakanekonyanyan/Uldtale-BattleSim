@@ -10,6 +10,7 @@ var current_character: CharacterData
 @onready var status_button = $UI/StatusButton
 @onready var inventory_button = $UI/InventoryButton
 @onready var stash_button = $UI/StashButton
+@onready var quit_button = $UI/QuitButton
 
 func _ready():
 	if shop_button:
@@ -24,7 +25,9 @@ func _ready():
 		inventory_button.connect("pressed", Callable(self, "_on_inventory_pressed"))
 	if stash_button:
 		stash_button.connect("pressed", Callable(self, "_on_stash_pressed"))
-
+	if quit_button:
+		quit_button.connect("pressed", Callable(self, "_on_quit_pressed"))
+		
 	update_ui()
 
 func set_player(character: CharacterData):
@@ -60,3 +63,6 @@ func _on_inventory_pressed():
 
 func _on_stash_pressed():
 	SceneManager.change_to_stash(current_character)
+	
+func _on_quit_pressed():
+	get_tree().quit()

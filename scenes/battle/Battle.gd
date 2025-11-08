@@ -6,21 +6,11 @@ signal battle_completed(player_won, xp_gained)
 var player_character: CharacterData
 var enemy_character: CharacterData
 var current_turn: String = "player"
+var turn_number: int = 0  # Global turn counter for the entire battle
 var is_boss_battle: bool = false
 var current_wave: int
 var current_floor: int
 var dungeon_description: String
-
-# Combat log
-var combat_log: Array[String] = []
-const MAX_LOG_ENTRIES = 20
-
-# Debug window
-var debug_enabled: bool = false
-
-# Skill cooldowns
-var player_skill_cooldowns: Dictionary = {}  # skill_name: turns_remaining
-var enemy_skill_cooldowns: Dictionary = {}
 
 @onready var wave_label = $WaveLabel
 @onready var floor_label = $FloorLabel
@@ -31,38 +21,24 @@ var enemy_skill_cooldowns: Dictionary = {}
 @onready var turn_label = $TurnLabel
 @onready var inventory_menu = $InventoryMenu
 @onready var xp_label = $XPLabel
-
-# Combat log
-@onready var combat_log_label = $CombatLog
-
-# Debug window
-@onready var debug_window = $DebugWindow
-@onready var debug_toggle_button = $DebugToggleButton
-@onready var debug_text = $DebugWindow/DebugText
+@onready var combat_log = $CombatLog
+@onready var debug_log = $DebugWindow/DebugText
 
 func _ready():
 	setup_battle()
 	update_dungeon_labels()
-	
-	# Setup debug toggle button
-	if debug_toggle_button:
-		debug_toggle_button.connect("pressed", Callable(self, "toggle_debug_window"))
-	
-	# Initialize combat log
-	add_to_combat_log("Battle begins!")
 
 # Sets up the player character for the battle
 func set_player(character: CharacterData):
 	player_character = character
 
-# Creates and scales the enemy character based on the current floor
+# Sets up the enemy character for battle (scaling is now done in EnemyFactory)
 func set_enemy(new_enemy: CharacterData):
 	enemy_character = new_enemy
-	for _i in range(current_floor - 1):
-		enemy_character.level_up()
 	enemy_character.calculate_secondary_attributes()
 	print("Enemy loaded:", enemy_character.name)
 	print("Enemy skills:", enemy_character.skills)
+	print("Enemy HP: %d/%d | Attack: %.1f | Defense: %.1f" % [enemy_character.current_hp, enemy_character.max_hp, enemy_character.attack_power, enemy_character.toughness])
 
 # Sets up the dungeon info and updates labels
 func set_dungeon_info(wave: int, floor: int, description: String):
@@ -127,25 +103,21 @@ func setup_action_buttons():
 			var skill = SkillManager.get_skill(skill_name)
 			if skill:
 				var skill_button = Button.new()
-				
-				# Show cooldown in button text
-				if player_skill_cooldowns.has(skill.name) and player_skill_cooldowns[skill.name] > 0:
-					skill_button.text = "%s (%d)" % [skill.name, player_skill_cooldowns[skill.name]]
+				var cd = player_character.get_skill_cooldown(skill_name)
+				if cd > 0:
+					skill_button.text = "%s (CD: %d)" % [skill.name, cd]
 					skill_button.disabled = true
 				else:
 					skill_button.text = skill.name
-					skill_button.disabled = false
-				
 				skill_button.connect("pressed", Callable(self, "_on_skill_used").bind(skill))
 				action_buttons.add_child(skill_button)
 
 # Handles player attack action
 func _on_attack_pressed():
 	var result = player_character.attack(enemy_character)
-	add_to_combat_log("[color=cyan]Player:[/color] " + result)
 	update_turn_label(result)
+	add_to_combat_log("[color=yellow]Player:[/color] " + result)
 	update_ui()
-	update_debug_window()
 	check_battle_end()
 	if enemy_character.current_hp > 0:
 		end_turn()
@@ -153,10 +125,9 @@ func _on_attack_pressed():
 # Handles player defend action
 func _on_defend_pressed():
 	var result = player_character.defend()
-	add_to_combat_log("[color=cyan]Player:[/color] " + result)
 	update_turn_label(result)
+	add_to_combat_log("[color=yellow]Player:[/color] " + result)
 	update_ui()
-	update_debug_window()
 	end_turn()
 
 # Handles player items action
@@ -165,167 +136,247 @@ func _on_items_pressed():
 
 # Handles player skill usage
 func _on_skill_used(skill: Skill):
-	# Check cooldown first
-	if not can_use_skill(skill, true):
-		var turns_left = player_skill_cooldowns[skill.name]
-		var msg = "%s is on cooldown (%d turns remaining)" % [skill.name, turns_left]
-		update_turn_label(msg)
-		add_to_combat_log("[color=orange]" + msg + "[/color]")
+	# Check if skill is on cooldown
+	if not player_character.is_skill_ready(skill.name):
+		var cd_remaining = player_character.get_skill_cooldown(skill.name)
+		update_turn_label("%s is on cooldown for %d more turn(s)" % [skill.name, cd_remaining])
 		return
 	
 	if player_character.current_mp < skill.mp_cost:
-		var msg = "Not enough MP to use %s" % skill.name
-		update_turn_label(msg)
-		add_to_combat_log("[color=orange]" + msg + "[/color]")
+		update_turn_label("Not enough MP to use this skill")
 		return
 	
 	player_character.current_mp -= skill.mp_cost
 	
-	# Determine targets based on skill's target type
+	# Determine targets based on skill target type
 	var targets = []
 	match skill.target:
-		Skill.TargetType.SELF, Skill.TargetType.ALLY:
+		Skill.TargetType.SELF:
 			targets = [player_character]
+		Skill.TargetType.ALLY:
+			targets = [player_character]  # In 1v1, ally = self
+		Skill.TargetType.ALL_ALLIES:
+			targets = [player_character]  # In 1v1, all allies = self
 		Skill.TargetType.ENEMY:
 			targets = [enemy_character]
-		Skill.TargetType.ALL_ALLIES:
-			targets = [player_character]
 		Skill.TargetType.ALL_ENEMIES:
-			targets = [enemy_character]
+			targets = [enemy_character]  # In 1v1, all enemies = enemy
 	
 	var result = skill.use(player_character, targets)
 	
-	# Add to combat log
-	add_to_combat_log("[color=cyan]Player used %s:[/color] %s" % [skill.name, result])
-	
-	# Start cooldown
-	use_skill_with_cooldown(skill, true)
+	# Set skill on cooldown
+	player_character.use_skill_cooldown(skill.name, skill.cooldown)
 	
 	update_turn_label(result)
+	add_to_combat_log("[color=cyan]Player used %s:[/color] %s" % [skill.name, result])
 	update_ui()
-	update_debug_window()
 	check_battle_end()
 	if enemy_character.current_hp > 0:
 		end_turn()
 
 # Handles item usage
 func _on_item_used(item: Item):
-	# Check if item is actually a consumable before proceeding
-	if item.item_type != Item.ItemType.CONSUMABLE:
+	if item.item_type == Item.ItemType.CONSUMABLE:
+		var result = item.use(player_character, [player_character])
+		update_turn_label(result)
+		add_to_combat_log("[color=lime]Player used %s:[/color] %s" % [item.name, result])
+		player_character.inventory.remove_item(item.id, 1)
+		update_ui()
+		check_battle_end()
+		if enemy_character.current_hp > 0:
+			end_turn()
+	else:
 		update_turn_label("This item cannot be used in battle.")
-		return
-	
-	# Use the consumable
-	var result = item.use(player_character, [player_character])
-	add_to_combat_log("[color=cyan]Player used %s:[/color] %s" % [item.name, result])
-	update_turn_label(result)
-	update_ui()
-	update_debug_window()
-	check_battle_end()
-	if enemy_character.current_hp > 0:
-		end_turn()
 
 # Executes a turn for the given character
 func execute_turn(character: CharacterData):
+	# Reduce cooldowns at the START of this character's turn
+	character.reduce_cooldowns()
+	
 	var status_message = character.update_status_effects()
 	if status_message:
-		add_to_combat_log(status_message)
 		update_turn_label(status_message)
+		add_to_combat_log("[color=purple]Status Effect:[/color] " + status_message)
 		update_ui()
 		await get_tree().create_timer(1.0).timeout
 	
 	if character.is_stunned:
 		var stun_msg = "%s is stunned and loses their turn!" % character.name
-		add_to_combat_log("[color=purple]" + stun_msg + "[/color]")
 		update_turn_label(stun_msg)
+		add_to_combat_log("[color=purple]" + stun_msg + "[/color]")
 		character.is_stunned = false
 		await get_tree().create_timer(1.0).timeout
 		end_turn()
 		return
 	
 	if character == player_character:
+		setup_action_buttons()  # Refresh buttons to show updated cooldowns
 		enable_player_actions(true)
 	else:
 		execute_enemy_turn()
 
-# Executes the enemy's turn
+# Battle.gd - Smart Enemy AI Update
+# Add this new function to replace execute_enemy_turn()
+
 func execute_enemy_turn():
 	update_turn_label("Enemy's turn")
 	await get_tree().create_timer(1.0).timeout
 
-	var action = randf()
+	var action = decide_enemy_action()
 	var result = ""
 	
-	print("Enemy Turn Debug:")
-	print("- Current MP:", enemy_character.current_mp)
-	print("- Skills:", enemy_character.skills)
-
-	if action < 0.2:
-		result = enemy_character.attack(player_character)
-		add_to_combat_log("[color=red]Enemy:[/color] " + result)
-	elif action < 0.3:
-		result = enemy_character.defend()
-		add_to_combat_log("[color=red]Enemy:[/color] " + result)
-	else:
-		if enemy_character.skills.size() > 0:
-			var skill_name = enemy_character.skills[randi() % enemy_character.skills.size()]
-			var skill = SkillManager.get_skill(skill_name)
-			if not skill:
-				result = "Enemy tried to use an unknown skill: %s" % skill_name
-				add_to_combat_log("[color=red]" + result + "[/color]")
-			elif enemy_character.current_mp < skill.mp_cost:
-				result = "Enemy tried to use %s but didn't have enough MP" % skill.name
-				print("Enemy MP too low for skill:", skill.name, "| MP:", enemy_character.current_mp, "/", skill.mp_cost)
-				# fallback to a normal attack if not enough MP
-				result = enemy_character.attack(player_character)
-				add_to_combat_log("[color=red]Enemy:[/color] " + result)
-			else:
-				# Check cooldown
-				if not can_use_skill(skill, false):
-					# Skill on cooldown, use attack instead
-					result = enemy_character.attack(player_character)
-					add_to_combat_log("[color=red]Enemy:[/color] " + result)
-				else:
-					# use skill
-					enemy_character.current_mp -= skill.mp_cost
-					use_skill_with_cooldown(skill, false)
-					var targets = [player_character] if skill.target in [Skill.TargetType.ENEMY, Skill.TargetType.ALL_ENEMIES] else [enemy_character]
-					result = skill.use(enemy_character, targets)
-					add_to_combat_log("[color=red]Enemy used %s:[/color] %s" % [skill.name, result])
-					print("Enemy used skill:", skill.name, "| Remaining MP:", enemy_character.current_mp)
-		else:
+	match action.type:
+		"attack":
 			result = enemy_character.attack(player_character)
 			add_to_combat_log("[color=red]Enemy:[/color] " + result)
+		"defend":
+			result = enemy_character.defend()
+			add_to_combat_log("[color=red]Enemy:[/color] " + result)
+		"skill":
+			var skill = action.skill
+			enemy_character.current_mp -= skill.mp_cost
+			
+			var targets = get_skill_targets(skill, enemy_character, player_character)
+			result = skill.use(enemy_character, targets)
+			add_to_combat_log("[color=orange]Enemy used %s:[/color] %s" % [skill.name, result])
+			
+			enemy_character.use_skill_cooldown(skill.name, skill.cooldown)
+			print("Enemy used skill:", skill.name, "| Remaining MP:", enemy_character.current_mp)
 	
 	update_turn_label(result)
 	update_ui()
-	update_debug_window()
 	await get_tree().create_timer(2.0).timeout
 
 	check_battle_end()
 	if player_character.current_hp > 0:
 		end_turn()
 
+# New AI decision-making function
+func decide_enemy_action() -> Dictionary:
+	var available_actions = []
+	
+	# Evaluate HP situation
+	var enemy_hp_percent = float(enemy_character.current_hp) / float(enemy_character.max_hp)
+	var player_hp_percent = float(player_character.current_hp) / float(player_character.max_hp)
+	
+	# Check available skills
+	var available_skills = []
+	for skill_name in enemy_character.skills:
+		var skill = SkillManager.get_skill(skill_name)
+		if skill and enemy_character.is_skill_ready(skill_name) and enemy_character.current_mp >= skill.mp_cost:
+			available_skills.append(skill)
+	
+	# PRIORITY 1: Self-preservation (Heal if low HP and has heal skill)
+	if enemy_hp_percent < 0.3:
+		for skill in available_skills:
+			if skill.type == Skill.SkillType.HEAL:
+				print("AI: Low HP detected (%.1f%%), using heal skill" % (enemy_hp_percent * 100))
+				return {"type": "skill", "skill": skill, "priority": 10}
+	
+	# PRIORITY 2: Finish off low HP player
+	if player_hp_percent < 0.25:
+		# Look for high damage skills
+		for skill in available_skills:
+			if skill.type == Skill.SkillType.DAMAGE:
+				print("AI: Player low HP (%.1f%%), going for kill" % (player_hp_percent * 100))
+				return {"type": "skill", "skill": skill, "priority": 9}
+		# If no damage skill, attack
+		print("AI: Player low HP, attacking for kill")
+		return {"type": "attack", "priority": 9}
+	
+	# PRIORITY 3: Apply debuffs if player has none
+	if player_character.debuffs.size() == 0 and player_character.status_effects.size() == 0:
+		for skill in available_skills:
+			if skill.type == Skill.SkillType.DEBUFF or skill.type == Skill.SkillType.INFLICT_STATUS:
+				print("AI: Applying debuff to weaken player")
+				return {"type": "skill", "skill": skill, "priority": 8}
+	
+	# PRIORITY 4: Buff self if no buffs active and HP is healthy
+	if enemy_character.buffs.size() == 0 and enemy_hp_percent > 0.5:
+		for skill in available_skills:
+			if skill.type == Skill.SkillType.BUFF:
+				print("AI: Buffing self for advantage")
+				return {"type": "skill", "skill": skill, "priority": 7}
+	
+	# PRIORITY 5: Use powerful damage skills when MP is high
+	var mp_percent = float(enemy_character.current_mp) / float(enemy_character.max_mp)
+	if mp_percent > 0.6:
+		# Find highest power damage skill
+		var best_damage_skill = null
+		var highest_power = 0
+		for skill in available_skills:
+			if skill.type == Skill.SkillType.DAMAGE and skill.power > highest_power:
+				best_damage_skill = skill
+				highest_power = skill.power
+		
+		if best_damage_skill:
+			print("AI: MP high (%.1f%%), using powerful damage skill" % (mp_percent * 100))
+			return {"type": "skill", "skill": best_damage_skill, "priority": 6}
+	
+	# PRIORITY 6: Defend if low HP and no heal available
+	if enemy_hp_percent < 0.35:
+		print("AI: Low HP and no heal, defending")
+		return {"type": "defend", "priority": 5}
+	
+	# PRIORITY 7: Use any available damage skill
+	for skill in available_skills:
+		if skill.type == Skill.SkillType.DAMAGE:
+			print("AI: Using available damage skill")
+			return {"type": "skill", "skill": skill, "priority": 4}
+	
+	# PRIORITY 8: Use restore skills if MP is low
+	if mp_percent < 0.3:
+		for skill in available_skills:
+			if skill.type == Skill.SkillType.RESTORE:
+				print("AI: MP low, using restore skill")
+				return {"type": "skill", "skill": skill, "priority": 3}
+	
+	# PRIORITY 9: Random behavior for variety (20% chance)
+	if randf() < 0.2:
+		var random_action = randf()
+		if random_action < 0.5 and available_skills.size() > 0:
+			print("AI: Random skill use")
+			return {"type": "skill", "skill": available_skills[randi() % available_skills.size()], "priority": 2}
+		elif random_action < 0.7:
+			print("AI: Random defend")
+			return {"type": "defend", "priority": 2}
+	
+	# DEFAULT: Basic attack
+	print("AI: Default attack")
+	return {"type": "attack", "priority": 1}
+
+# Helper function to get correct targets for a skill
+func get_skill_targets(skill: Skill, caster: CharacterData, opponent: CharacterData) -> Array:
+	var targets = []
+	match skill.target:
+		Skill.TargetType.SELF:
+			targets = [caster]
+		Skill.TargetType.ALLY:
+			targets = [caster]  # In 1v1, ally = self
+		Skill.TargetType.ALL_ALLIES:
+			targets = [caster]  # In 1v1, all allies = self
+		Skill.TargetType.ENEMY:
+			targets = [opponent]
+		Skill.TargetType.ALL_ENEMIES:
+			targets = [opponent]  # In 1v1, all enemies = opponent
+	return targets
+	
 # Ends the current turn and starts the next
 func end_turn():
-	# Update cooldowns at end of turn
-	update_cooldowns()
+	turn_number += 1
+	print("\n=== Turn %d Complete ===" % turn_number)
 	
 	if current_turn == "player":
 		current_turn = "enemy"
 		enemy_character.reset_defense()
 		enable_player_actions(false)
-		add_to_combat_log("--- [color=red]Enemy Turn[/color] ---")
 		await get_tree().create_timer(1.0).timeout
 		execute_turn(enemy_character)
 	else:
 		current_turn = "player"
 		player_character.reset_defense()
-		add_to_combat_log("--- [color=cyan]Player Turn[/color] ---")
 		execute_turn(player_character)
-	
-	update_turn_label("It's %s's turn" % current_turn)
-	update_debug_window()
+	update_turn_label("Turn %d - %s's turn" % [turn_number + 1, current_turn.capitalize()])
 
 # Updates the UI with current character info
 func update_ui():
@@ -349,14 +400,16 @@ func update_ui():
 	
 	if xp_label:
 		xp_label.text = "XP: %d / %d" % [player_character.xp, LevelSystem.calculate_xp_for_level(player_character.level)]
+	
+	# Update debug log with secondary stats
+	if debug_log:
+		update_debug_log()
 
 # Checks if the battle has ended
 func check_battle_end():
 	if enemy_character.current_hp <= 0:
-		add_to_combat_log("[color=green]Victory! Enemy defeated![/color]")
 		emit_signal("battle_completed", true)
 	elif player_character.current_hp <= 0:
-		add_to_combat_log("[color=red]Defeat! Player has fallen![/color]")
 		emit_signal("battle_completed", false)
 
 # Calculates rewards for the battle
@@ -368,177 +421,81 @@ func calculate_rewards(player_won: bool) -> Dictionary:
 		rewards["health_potion"] = 1 if randf() < 0.5 else 0
 	return rewards
 
-# ============================================
-# COMBAT LOG FUNCTIONS
-# ============================================
-
+# Adds a message to the combat log (player-facing)
 func add_to_combat_log(message: String):
-	var timestamp = "[Turn %d]" % (get_total_turns() + 1)
-	combat_log.append("%s %s" % [timestamp, message])
-	if combat_log.size() > MAX_LOG_ENTRIES:
-		combat_log.pop_front()
-	update_combat_log_display()
+	if combat_log:
+		combat_log.append_text(message + "\n")
 
-func update_combat_log_display():
-	if not combat_log_label:
+# Updates the debug log with secondary stats for monitoring
+func update_debug_log():
+	if not debug_log:
 		return
 	
-	combat_log_label.clear()
-	for entry in combat_log:
-		combat_log_label.append_text(entry + "\n")
+	debug_log.clear()
+	debug_log.append_text("[b][color=cyan]PLAYER STATS[/color][/b]\n")
+	debug_log.append_text("ATK Power: %.1f | Spell Power: %.1f\n" % [player_character.attack_power, player_character.spell_power])
+	debug_log.append_text("Toughness: %.1f | Spell Ward: %.1f\n" % [player_character.toughness, player_character.spell_ward])
+	debug_log.append_text("Accuracy: %.2f%% | Dodge: %.2f%% | Crit: %.2f%%\n" % [player_character.accuracy * 100, player_character.dodge * 100, player_character.critical_hit_rate * 100])
 	
-	# Auto-scroll to bottom
-	await get_tree().process_frame
-	combat_log_label.scroll_to_line(combat_log.size())
+	# Show active buffs
+	if player_character.buffs.size() > 0:
+		debug_log.append_text("[color=green]Buffs:[/color] ")
+		for attr in player_character.buffs:
+			debug_log.append_text("%s +%d (%d turns) " % [Skill.AttributeTarget.keys()[attr], player_character.buffs[attr].value, player_character.buffs[attr].duration])
+		debug_log.append_text("\n")
+	
+	# Show active debuffs (FIXED: minus sign for debuffs)
+	if player_character.debuffs.size() > 0:
+		debug_log.append_text("[color=red]Debuffs:[/color] ")
+		for attr in player_character.debuffs:
+			debug_log.append_text("%s -%d (%d turns) " % [Skill.AttributeTarget.keys()[attr], player_character.debuffs[attr].value, player_character.debuffs[attr].duration])
+		debug_log.append_text("\n")
+	
+	debug_log.append_text("\n[b][color=orange]ENEMY STATS[/color][/b]\n")
+	debug_log.append_text("ATK Power: %.1f | Spell Power: %.1f\n" % [enemy_character.attack_power, enemy_character.spell_power])
+	debug_log.append_text("Toughness: %.1f | Spell Ward: %.1f\n" % [enemy_character.toughness, enemy_character.spell_ward])
+	debug_log.append_text("Accuracy: %.2f%% | Dodge: %.2f%% | Crit: %.2f%%\n" % [enemy_character.accuracy * 100, enemy_character.dodge * 100, enemy_character.critical_hit_rate * 100])
+	
+	# Show active buffs
+	if enemy_character.buffs.size() > 0:
+		debug_log.append_text("[color=green]Buffs:[/color] ")
+		for attr in enemy_character.buffs:
+			debug_log.append_text("%s +%d (%d turns) " % [Skill.AttributeTarget.keys()[attr], enemy_character.buffs[attr].value, enemy_character.buffs[attr].duration])
+		debug_log.append_text("\n")
+	
+	# Show active debuffs (FIXED: minus sign for debuffs)
+	if enemy_character.debuffs.size() > 0:
+		debug_log.append_text("[color=red]Debuffs:[/color] ")
+		for attr in enemy_character.debuffs:
+			debug_log.append_text("%s -%d (%d turns) " % [Skill.AttributeTarget.keys()[attr], enemy_character.debuffs[attr].value, enemy_character.debuffs[attr].duration])
+		debug_log.append_text("\n")
 
-func get_total_turns() -> int:
-	# Simple turn counter based on log entries
-	return combat_log.size()
-
-# ============================================
-# DEBUG WINDOW FUNCTIONS
-# ============================================
-
-func toggle_debug_window():
-	debug_enabled = !debug_enabled
-	if debug_window:
-		debug_window.visible = debug_enabled
-	if debug_enabled:
-		update_debug_window()
-
-func update_debug_window():
-	if not debug_enabled or not debug_text or not player_character or not enemy_character:
-		return
+# Add this test function to Battle.gd to verify rarity distribution:
+func test_rarity_distribution():
+	var rarity_counts = {
+		"common": 0,
+		"uncommon": 0,
+		"magic": 0,
+		"epic": 0,
+		"legendary": 0
+	}
 	
-	var debug_info = ""
+	# Generate 1000 random items
+	for i in range(1000):
+		var weapon = ItemManager.get_random_weapon()
+		if weapon:
+			var weapon_item = ItemManager.get_item(weapon)
+			if weapon_item and weapon_item is Equipment:
+				rarity_counts[weapon_item.rarity] += 1
 	
-	# Player stats
-	debug_info += "[b]=== PLAYER ===[/b]\n"
-	debug_info += format_character_debug(player_character)
+	print("\n=== RARITY DISTRIBUTION TEST (1000 items) ===")
+	for rarity in rarity_counts:
+		var percent = (float(rarity_counts[rarity]) / 1000.0) * 100.0
+		print("%s: %d (%.1f%%)" % [rarity.capitalize(), rarity_counts[rarity], percent])
+	print("===========================================\n")
 	
-	debug_info += "\n[b]=== ENEMY ===[/b]\n"
-	debug_info += format_character_debug(enemy_character)
-	
-	debug_info += "\n[b]=== COOLDOWNS ===[/b]\n"
-	if player_skill_cooldowns.size() > 0:
-		debug_info += "[color=cyan]Player:[/color]\n"
-		for skill_name in player_skill_cooldowns:
-			if player_skill_cooldowns[skill_name] > 0:
-				debug_info += "  %s: %d turns\n" % [skill_name, player_skill_cooldowns[skill_name]]
-	else:
-		debug_info += "Player: No skills on cooldown\n"
-	
-	if enemy_skill_cooldowns.size() > 0:
-		debug_info += "[color=red]Enemy:[/color]\n"
-		for skill_name in enemy_skill_cooldowns:
-			if enemy_skill_cooldowns[skill_name] > 0:
-				debug_info += "  %s: %d turns\n" % [skill_name, enemy_skill_cooldowns[skill_name]]
-	
-	debug_text.text = debug_info
-
-func format_character_debug(character: CharacterData) -> String:
-	var text = ""
-	text += "[color=yellow]HP:[/color] %d/%d | [color=cyan]MP:[/color] %d/%d\n" % [
-		character.current_hp, character.max_hp, 
-		character.current_mp, character.max_mp
-	]
-	
-	# Primary attributes with modifiers
-	text += "\n[u]Primary Attributes:[/u]\n"
-	var attrs = [
-		Skill.AttributeTarget.VITALITY,
-		Skill.AttributeTarget.STRENGTH, 
-		Skill.AttributeTarget.DEXTERITY,
-		Skill.AttributeTarget.INTELLIGENCE,
-		Skill.AttributeTarget.FAITH,
-		Skill.AttributeTarget.AGILITY,
-		Skill.AttributeTarget.FORTITUDE
-	]
-	
-	for attr in attrs:
-		var attr_name = Skill.AttributeTarget.keys()[attr]
-		var base_val = character.get(attr_name.to_lower())
-		var modified_val = character.get_attribute_with_buffs_and_debuffs(attr)
-		var modifier = modified_val - base_val
-		
-		if modifier > 0:
-			text += "  %s: %d [color=green](+%d)[/color]\n" % [attr_name, modified_val, modifier]
-		elif modifier < 0:
-			text += "  %s: %d [color=red](%d)[/color]\n" % [attr_name, modified_val, modifier]
-		else:
-			text += "  %s: %d\n" % [attr_name, base_val]
-	
-	# Secondary attributes
-	text += "\n[u]Secondary Attributes:[/u]\n"
-	text += "  Attack Power: %.1f\n" % character.get_attack_power()
-	text += "  Spell Power: %.1f\n" % character.spell_power
-	text += "  Defense: %d\n" % character.get_defense()
-	text += "  Dodge: %.1f%%\n" % (character.dodge * 100)
-	text += "  Crit Rate: %.1f%%\n" % (character.critical_hit_rate * 100)
-	text += "  Accuracy: %.1f%%\n" % (character.accuracy * 100)
-	
-	# Active effects
-	text += "\n[u]Active Effects:[/u]\n"
-	var has_effects = false
-	
-	if character.status_effects.size() > 0:
-		has_effects = true
-		for effect in character.status_effects:
-			var effect_name = Skill.StatusEffect.keys()[effect]
-			text += "  [color=purple]%s[/color] (%d turns)\n" % [effect_name, character.status_effects[effect]]
-	
-	if character.buffs.size() > 0:
-		has_effects = true
-		for attr in character.buffs:
-			var attr_name = Skill.AttributeTarget.keys()[attr]
-			text += "  [color=green]Buff %s[/color]: +%d (%d turns)\n" % [
-				attr_name, 
-				character.buffs[attr].value, 
-				character.buffs[attr].duration
-			]
-	
-	if character.debuffs.size() > 0:
-		has_effects = true
-		for attr in character.debuffs:
-			var attr_name = Skill.AttributeTarget.keys()[attr]
-			# Debuff values are stored as positive, but represent reduction
-			text += "  [color=red]Debuff %s[/color]: -%d (%d turns)\n" % [
-				attr_name, 
-				abs(character.debuffs[attr].value),  # Use abs() to ensure positive display
-				character.debuffs[attr].duration
-			]
-	
-	if not has_effects:
-		text += "  None\n"
-	
-	return text
-
-# ============================================
-# COOLDOWN FUNCTIONS
-# ============================================
-
-func update_cooldowns():
-	# Decrement player cooldowns
-	for skill_name in player_skill_cooldowns.keys():
-		player_skill_cooldowns[skill_name] -= 1
-		if player_skill_cooldowns[skill_name] <= 0:
-			add_to_combat_log("[color=cyan]%s ready![/color]" % skill_name)
-			player_skill_cooldowns.erase(skill_name)
-	
-	# Decrement enemy cooldowns
-	for skill_name in enemy_skill_cooldowns.keys():
-		enemy_skill_cooldowns[skill_name] -= 1
-		if enemy_skill_cooldowns[skill_name] <= 0:
-			enemy_skill_cooldowns.erase(skill_name)
-	
-	# Refresh action buttons to update cooldown display
-	setup_action_buttons()
-
-func can_use_skill(skill: Skill, is_player: bool) -> bool:
-	var cooldowns = player_skill_cooldowns if is_player else enemy_skill_cooldowns
-	return not cooldowns.has(skill.name) or cooldowns[skill.name] <= 0
-
-func use_skill_with_cooldown(skill: Skill, is_player: bool):
-	var cooldowns = player_skill_cooldowns if is_player else enemy_skill_cooldowns
-	if skill.cooldown > 0:
-		cooldowns[skill.name] = skill.cooldown
+# The following functions have been commented out as they seem to be unused or for debugging purposes:
+# func show_reward_scene(player_won: bool):
+# func position_ui_elements():
+# func print_visible_ui():
+# func force_update_ui():

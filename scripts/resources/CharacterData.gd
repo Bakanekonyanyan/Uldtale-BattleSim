@@ -43,6 +43,7 @@ var spell_power_type: String = "intelligence"
 
 # Skills and Status
 @export var skills: Array[String] = []
+var skill_cooldowns: Dictionary = {}  # Maps skill_name -> turns_remaining
 var status_effects: Dictionary = {}  # Will store {StatusEffect: remaining_duration}
 var is_defending: bool = false
 var is_stunned: bool = false
@@ -88,44 +89,54 @@ func add_skills(new_skills: Array):
 func remove_skill(skill_name: String):
 	skills.erase(skill_name)
 
+# Update calculate_secondary_attributes to use buffed/debuffed stats:
 func calculate_secondary_attributes():
-	# Health and Resource Pools
+	# Get buffed/debuffed primary attributes
+	var effective_vit = get_attribute_with_buffs_and_debuffs(Skill.AttributeTarget.VITALITY) if Skill.AttributeTarget.has("VITALITY") else vitality
+	var effective_str = get_attribute_with_buffs_and_debuffs(Skill.AttributeTarget.STRENGTH) if Skill.AttributeTarget.has("STRENGTH") else strength
+	var effective_dex = get_attribute_with_buffs_and_debuffs(Skill.AttributeTarget.DEXTERITY) if Skill.AttributeTarget.has("DEXTERITY") else dexterity
+	var effective_int = get_attribute_with_buffs_and_debuffs(Skill.AttributeTarget.INTELLIGENCE) if Skill.AttributeTarget.has("INTELLIGENCE") else intelligence
+	var effective_fai = get_attribute_with_buffs_and_debuffs(Skill.AttributeTarget.FAITH) if Skill.AttributeTarget.has("FAITH") else faith
+	var effective_mnd = get_attribute_with_buffs_and_debuffs(Skill.AttributeTarget.MIND) if Skill.AttributeTarget.has("MIND") else mind
+	var effective_end = get_attribute_with_buffs_and_debuffs(Skill.AttributeTarget.ENDURANCE) if Skill.AttributeTarget.has("ENDURANCE") else endurance
+	var effective_arc = get_attribute_with_buffs_and_debuffs(Skill.AttributeTarget.ARCANE) if Skill.AttributeTarget.has("ARCANE") else arcane
+	var effective_agi = get_attribute_with_buffs_and_debuffs(Skill.AttributeTarget.AGILITY) if Skill.AttributeTarget.has("AGILITY") else agility
+	var effective_for = get_attribute_with_buffs_and_debuffs(Skill.AttributeTarget.FORTITUDE) if Skill.AttributeTarget.has("FORTITUDE") else fortitude
+
+	# Health and Resource Pools - use base stats (don't want max HP/MP changing mid-combat)
 	max_hp = vitality * 10 + strength * 5
-	current_hp = max_hp
 	max_mp = mind * 8 + intelligence * 4
-	current_mp = max_mp
 	max_sp = endurance * 8 + agility * 4
-	current_sp = max_sp
 
-	# Defensive Stats
-	toughness = (vitality * 0.5 + strength * 0.3 + endurance * 0.2) / 10.0
-	dodge = 0.05 + (agility * 0.6 + dexterity * 0.4) / 200.0  # Base 5% dodge, max ~25% with very high stats
-	spell_ward = (arcane * 0.6 + mind * 0.4) / 10.0
+	# Defensive Stats - use effective stats
+	toughness = (effective_vit * 0.45 + effective_str * 0.25 + effective_end * 0.15 + effective_for * 0.15) / 10.0
+	dodge = 0.05 + (effective_agi * 0.55 + effective_dex * 0.35 + effective_for * 0.10) / 200.0
+	spell_ward = (effective_for * 0.5) * (0.6 * effective_arc + 0.3 * effective_mnd + 0.1 * effective_fai) / 10.0
 
-	# Offensive Stats
-	accuracy = 0.75 + (dexterity * 0.4 + agility * 0.3 + mind * 0.3) / 200.0  # Base 75% accuracy, max ~95% with very high stats
-	critical_hit_rate = 0.05 + (dexterity * 0.5 + agility * 0.3 + intelligence * 0.2) / 200.0  # Base 5% crit, max ~25% with very high stats
+	# Offensive Stats - use effective stats
+	accuracy = 0.75 + (effective_dex * 0.35 + effective_agi * 0.25 + effective_mnd * 0.25 + effective_for * 0.15) / 200.0
+	critical_hit_rate = 0.05 + (effective_dex * 0.4 + effective_agi * 0.25 + effective_int * 0.2 + effective_for * 0.15) / 200.0
 
-	# Attack Power
+	# Attack Power - use effective stats
 	match attack_power_type:
 		"strength":
-			attack_power = strength * 2 + dexterity * 0.5 + vitality * 0.5
+			attack_power = effective_str * 2 + effective_dex * 0.5 + effective_vit * 0.5
 		"dexterity":
-			attack_power = dexterity * 2 + strength * 0.5 + agility * 0.5
+			attack_power = effective_dex * 2 + effective_str * 0.5 + effective_agi * 0.5
 		_:
 			print("Invalid attack_power_type")
 
-	# Spell Power
+	# Spell Power - use effective stats
 	match spell_power_type:
 		"balanced":
-			spell_power = (intelligence * 1.5 + faith * 1.5 + arcane * 1.5) / 2
+			spell_power = (effective_int * 1.5 + effective_fai * 1.5 + effective_arc * 1.5) / 2
 		"intelligence":
-			spell_power = intelligence * 2 + faith + arcane
+			spell_power = effective_int * 2 + effective_fai + effective_arc
 		"arcane":
-			spell_power = arcane * 2 + intelligence + faith
+			spell_power = effective_arc * 2 + effective_int + effective_fai
 		_:
 			print("Invalid spell_power_type")
-
+	
 func equip_item(item: Equipment) -> Equipment:
 	if not item.can_equip(self):
 		return null
@@ -279,6 +290,7 @@ func get_attribute_with_effects(attribute: Skill.AttributeTarget) -> int:
 	var debuff_value = debuffs.get(attribute, {"value": 0})["value"]
 	return base_value + buff_value - debuff_value
 
+# Update apply_buff to ensure it recalculates stats:
 func apply_buff(attribute: Skill.AttributeTarget, value: int, duration: int):
 	if attribute not in buffs:
 		buffs[attribute] = {"value": value, "duration": duration}
@@ -287,10 +299,11 @@ func apply_buff(attribute: Skill.AttributeTarget, value: int, duration: int):
 		if value > buffs[attribute].value:
 			buffs[attribute] = {"value": value, "duration": duration}
 		elif value == buffs[attribute].value:
-			# If the values are equal, take the longer duration
 			buffs[attribute].duration = max(buffs[attribute].duration, duration)
-	print("%s received a buff to %s of %d for %d turns" % [name, Skill.AttributeTarget.keys()[attribute], value, duration])
+	print("%s received a buff to %s of +%d for %d turns" % [name, Skill.AttributeTarget.keys()[attribute], value, duration])
+	calculate_secondary_attributes()  # Recalculate with new buff
 
+# Update apply_debuff to ensure it recalculates stats:
 func apply_debuff(attribute: Skill.AttributeTarget, value: int, duration: int):
 	if attribute not in debuffs:
 		debuffs[attribute] = {"value": value, "duration": duration}
@@ -299,29 +312,78 @@ func apply_debuff(attribute: Skill.AttributeTarget, value: int, duration: int):
 		if value > debuffs[attribute].value:
 			debuffs[attribute] = {"value": value, "duration": duration}
 		elif value == debuffs[attribute].value:
-			# If the values are equal, take the longer duration
 			debuffs[attribute].duration = max(debuffs[attribute].duration, duration)
-	print("%s received a debuff to %s of %d for %d turns" % [name, Skill.AttributeTarget.keys()[attribute], value, duration])
+	print("%s received a debuff to %s of -%d for %d turns" % [name, Skill.AttributeTarget.keys()[attribute], value, duration])
+	calculate_secondary_attributes()  # Recalculate with new debuff
 
+# Update update_buffs_and_debuffs:
 func update_buffs_and_debuffs():
+	var stats_changed = false
+	
 	for attribute in buffs.keys():
 		buffs[attribute].duration -= 1
 		if buffs[attribute].duration <= 0:
 			print("%s's buff to %s has expired" % [name, Skill.AttributeTarget.keys()[attribute]])
 			buffs.erase(attribute)
+			stats_changed = true
 	
 	for attribute in debuffs.keys():
 		debuffs[attribute].duration -= 1
 		if debuffs[attribute].duration <= 0:
 			print("%s's debuff to %s has expired" % [name, Skill.AttributeTarget.keys()[attribute]])
 			debuffs.erase(attribute)
+			stats_changed = true
+	
+	# Recalculate stats if any buffs/debuffs expired
+	if stats_changed:
+		calculate_secondary_attributes()
+
+# Cooldown Management Functions
+func use_skill_cooldown(skill_name: String, cooldown_turns: int):
+	"""Sets a skill on cooldown after use"""
+	if cooldown_turns > 0:
+		skill_cooldowns[skill_name] = cooldown_turns
+		print("%s's %s is on cooldown for %d turns" % [name, skill_name, cooldown_turns])
+
+func is_skill_ready(skill_name: String) -> bool:
+	"""Check if a skill is off cooldown and ready to use"""
+	return not skill_cooldowns.has(skill_name) or skill_cooldowns[skill_name] <= 0
+
+func get_skill_cooldown(skill_name: String) -> int:
+	"""Get remaining cooldown turns for a skill"""
+	return skill_cooldowns.get(skill_name, 0)
+
+func reduce_cooldowns():
+	"""Reduce all skill cooldowns by 1 turn - called at start of this character's turn"""
+	var skills_ready: Array = []
+	for skill_name in skill_cooldowns.keys():
+		skill_cooldowns[skill_name] -= 1
+		if skill_cooldowns[skill_name] <= 0:
+			skills_ready.append(skill_name)
+			skill_cooldowns.erase(skill_name)
+	
+	if skills_ready.size() > 0:
+		print("%s: Skills ready: %s" % [name, ", ".join(skills_ready)])
 
 func get_attribute_with_buffs_and_debuffs(attribute: Skill.AttributeTarget) -> int:
 	var base_value = get(Skill.AttributeTarget.keys()[attribute].to_lower())
 	var buff_value = buffs.get(attribute, {"value": 0})["value"]
 	var debuff_value = debuffs.get(attribute, {"value": 0})["value"]
-	return base_value + buff_value - debuff_value
-
+	var final_value = base_value + buff_value - debuff_value
+	
+	# Debug output
+	if buff_value != 0 or debuff_value != 0:
+		print("%s %s: base=%d, buff=+%d, debuff=-%d, final=%d" % [
+			name, 
+			Skill.AttributeTarget.keys()[attribute], 
+			base_value, 
+			buff_value, 
+			debuff_value, 
+			final_value
+		])
+	
+	return final_value
+	
 func defend() -> String:
 	is_defending = true
 	return "%s takes a defensive stance" % name
@@ -333,6 +395,7 @@ func reset_for_new_battle():
 	current_hp = max_hp
 	current_mp = max_mp
 	status_effects.clear()
+	skill_cooldowns.clear()
 	is_stunned = false
 	is_defending = false
 	buffs.clear()
@@ -472,7 +535,7 @@ func apply_status_effect_damage(effect: Skill.StatusEffect) -> String:
 
 		# message template fallback
 		if data.has("message"):
-			# If message contains {damage} it won't be replaced here — we already appended a plain message above.
+			# If message contains {damage} it won't be replaced here â€” we already appended a plain message above.
 			# Keep the JSON message as supplemental if needed.
 			# message += data.message.format({"name": name, "damage": dmg}) + "\n"
 			pass

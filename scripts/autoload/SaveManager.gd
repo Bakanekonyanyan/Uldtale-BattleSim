@@ -2,7 +2,6 @@
 extends Node
 
 const SAVE_DIR = "user://saves/"
-# FIXED: Changed extension to .json since we're saving JSON files
 const SAVE_FILE_EXTENSION = ".json"
 
 func _ready():
@@ -43,25 +42,67 @@ func save_game(player: CharacterData):
 		"spell_power_type": player.spell_power_type,
 		"skills": player.skills,
 		"inventory": {},
+		"stash": {},
 		"equipment": {},
 		"xp": player.xp,
 		"attribute_points": player.attribute_points
 	}
 	
-	# Save inventory
-	for item_id in player.inventory.items:
-		var item_data = player.inventory.items[item_id]
-		save_data["inventory"][item_id] = {
-			"quantity": item_data.quantity
-		}
+	# Save inventory - now including equipment data
+	for item_key in player.inventory.items:
+		var item_data = player.inventory.items[item_key]
+		var item = item_data.item
+		
+		if item is Equipment:
+			# Save full equipment data for equipment items
+			save_data["inventory"][item_key] = {
+				"quantity": item_data.quantity,
+				"is_equipment": true,
+				"base_id": item.id,
+				"rarity": item.rarity,
+				"rarity_applied": item.rarity_applied,
+				"damage": item.damage,
+				"armor_value": item.armor_value
+			}
+		else:
+			# Regular items just need the ID
+			save_data["inventory"][item_key] = {
+				"quantity": item_data.quantity,
+				"is_equipment": false
+			}
+	
+	# Save stash - same approach
+	for item_key in player.stash.items:
+		var item_data = player.stash.items[item_key]
+		var item = item_data.item
+		
+		if item is Equipment:
+			save_data["stash"][item_key] = {
+				"quantity": item_data.quantity,
+				"is_equipment": true,
+				"base_id": item.id,
+				"rarity": item.rarity,
+				"rarity_applied": item.rarity_applied,
+				"damage": item.damage,
+				"armor_value": item.armor_value
+			}
+		else:
+			save_data["stash"][item_key] = {
+				"quantity": item_data.quantity,
+				"is_equipment": false
+			}
+	
 	# Save equipment
 	save_data["equipment"] = {}
 	for slot in player.equipment:
 		if player.equipment[slot]:
+			var equipped_item = player.equipment[slot]
 			save_data["equipment"][slot] = {
-				"id": player.equipment[slot].id,
-				"rarity": player.equipment[slot].rarity,
-				"rarity_applied": player.equipment[slot].rarity_applied
+				"id": equipped_item.id,
+				"rarity": equipped_item.rarity,
+				"rarity_applied": equipped_item.rarity_applied,
+				"damage": equipped_item.damage,
+				"armor_value": equipped_item.armor_value
 			}
 			
 	var file = FileAccess.open(get_save_file_path(player.name), FileAccess.WRITE)
@@ -122,33 +163,82 @@ func load_game(character_name: String) -> CharacterData:
 
 	# Load inventory
 	if "inventory" in save_data:
-		for item_id in save_data["inventory"]:
-			var item_data = save_data["inventory"][item_id]
-			var item = ItemManager.get_item(item_id)
-			if item:
-				player.inventory.add_item(item, item_data["quantity"])
+		for item_key in save_data["inventory"]:
+			var item_data = save_data["inventory"][item_key]
+			
+			if item_data.get("is_equipment", false):
+				# Recreate equipment with saved stats
+				var base_item = ItemManager.get_item(item_data["base_id"])
+				if base_item and base_item is Equipment:
+					# Apply the saved rarity and stats
+					base_item.rarity = item_data.get("rarity", base_item.rarity)
+					base_item.rarity_applied = item_data.get("rarity_applied", false)
+					base_item.damage = item_data.get("damage", base_item.damage)
+					base_item.armor_value = item_data.get("armor_value", base_item.armor_value)
+					base_item.inventory_key = item_key  # Restore the unique key
+					
+					# Add directly to inventory with the saved key
+					player.inventory.items[item_key] = {
+						"item": base_item,
+						"quantity": item_data["quantity"]
+					}
+					print("Loaded equipment to inventory: ", base_item.name, " with key: ", item_key)
 			else:
-				print("Warning: Item not found in ItemManager: ", item_id)
+				# Regular item
+				var item = ItemManager.get_item(item_key)
+				if item:
+					player.inventory.add_item(item, item_data["quantity"])
+				else:
+					print("Warning: Item not found in ItemManager: ", item_key)
+	
+	# Load stash
+	if "stash" in save_data:
+		for item_key in save_data["stash"]:
+			var item_data = save_data["stash"][item_key]
+			
+			if item_data.get("is_equipment", false):
+				# Recreate equipment with saved stats
+				var base_item = ItemManager.get_item(item_data["base_id"])
+				if base_item and base_item is Equipment:
+					# Apply the saved rarity and stats
+					base_item.rarity = item_data.get("rarity", base_item.rarity)
+					base_item.rarity_applied = item_data.get("rarity_applied", false)
+					base_item.damage = item_data.get("damage", base_item.damage)
+					base_item.armor_value = item_data.get("armor_value", base_item.armor_value)
+					base_item.inventory_key = item_key  # Restore the unique key
+					
+					# Add directly to stash with the saved key
+					player.stash.items[item_key] = {
+						"item": base_item,
+						"quantity": item_data["quantity"]
+					}
+					print("Loaded equipment to stash: ", base_item.name, " with key: ", item_key)
+			else:
+				# Regular item
+				var item = ItemManager.get_item(item_key)
+				if item:
+					player.stash.add_item(item, item_data["quantity"])
+				else:
+					print("Warning: Stash item not found in ItemManager: ", item_key)
+	
 	# Load equipment
 	if "equipment" in save_data:
 		for slot in save_data["equipment"]:
-			var item_id = save_data["equipment"][slot]
-			if typeof(item_id) == TYPE_STRING:
-				# If item_id is a string, it's the old format
-				var item = ItemManager.get_item(item_id)
+			var equip_data = save_data["equipment"][slot]
+			if typeof(equip_data) == TYPE_DICTIONARY:
+				var item = ItemManager.get_item(equip_data["id"])
 				if item and item is Equipment:
+					item.rarity = equip_data.get("rarity", item.rarity)
+					item.rarity_applied = equip_data.get("rarity_applied", false)
+					item.damage = equip_data.get("damage", item.damage)
+					item.armor_value = equip_data.get("armor_value", item.armor_value)
 					player.equip_item(item)
-			elif typeof(item_id) == TYPE_DICTIONARY:
-				# If item_id is a dictionary, it's the new format
-				var item = ItemManager.get_item(item_id["id"])
-				if item and item is Equipment:
-					item.rarity = item_id.get("rarity", item.rarity)
-					item.rarity_applied = item_id.get("rarity_applied", false)
-					player.equip_item(item)
+					print("Loaded equipped item: ", item.name, " to slot: ", slot)
 			else:
 				print("Warning: Invalid equipment data for slot ", slot)
 	
-	print("Loaded inventory items: ", player.inventory.items)
+	print("Loaded inventory items: ", player.inventory.items.keys())
+	print("Loaded stash items: ", player.stash.items.keys())
 	
 	# Recalculate secondary attributes
 	player.calculate_secondary_attributes()
@@ -170,7 +260,6 @@ func get_all_characters() -> Array:
 	return characters
 	
 func delete_character(character_name: String):
-	# FIXED: Use .json extension instead of SAVE_FILE_EXTENSION (.tres)
 	var file_name = SAVE_DIR + character_name + ".json"
 	if FileAccess.file_exists(file_name):
 		var dir = DirAccess.open(SAVE_DIR)

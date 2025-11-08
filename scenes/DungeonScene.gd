@@ -8,7 +8,7 @@ var waves_per_floor: int = 5
 var is_boss_fight: bool = false
 var current_battle: Node = null
 var current_reward_scene = null
-var max_floor: int = 3
+var max_floor: int = 10  # Increased floor cap to 10
 var continue_delving: bool = false
 var xp_gained: int
 
@@ -70,7 +70,7 @@ func start_battle():
 	
 	current_battle = preload("res://scenes/battle/Battle.tscn").instantiate()
 	EnemyFactory.get_dungeon_race()
-	setup_battle(EnemyFactory.create_enemy())
+	setup_battle(EnemyFactory.create_enemy(1, current_floor, current_wave))
 
 # Start a boss battle
 func start_boss_battle():
@@ -78,7 +78,7 @@ func start_boss_battle():
 		current_battle.queue_free()
 	
 	current_battle = preload("res://scenes/battle/Battle.tscn").instantiate()
-	setup_battle(EnemyFactory.create_boss(), true)
+	setup_battle(EnemyFactory.create_boss(current_floor, current_wave), true)
 
 # Set up the battle scene
 func setup_battle(enemy: CharacterData, is_boss: bool = false):

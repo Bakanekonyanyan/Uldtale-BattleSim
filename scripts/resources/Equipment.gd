@@ -23,7 +23,6 @@ var rarities: Dictionary = {
 }
 
 func _init(data: Dictionary):
-	
 	load_rarities()
 	id = data.get("id", "")
 	name = data.get("name", "")
@@ -44,31 +43,33 @@ func _init(data: Dictionary):
 	elif type == "armor":
 		item_type = Item.ItemType.ARMOR
 	else:
-		# Default to weapon if not specified (shouldn't happen)
 		item_type = Item.ItemType.WEAPON
 	
-	# Check if rarity is already set in the data
+	# Check if rarity is already set in the data (for loading saves)
 	if data.has("rarity") and data["rarity"] != "":
 		rarity = data["rarity"]
+		rarity_applied = data.get("rarity_applied", false)
+		print("Equipment loaded with existing rarity: %s (%s)" % [name, rarity])
 	else:
+		# Only assign and apply rarity for NEW items
 		assign_random_rarity()
-	
-	# Only apply rarity multiplier if it hasn't been applied before
-	if not data.get("rarity_applied", false):
 		apply_rarity_multiplier()
-		
+		print("New equipment created: %s with rarity %s (damage: %d, armor: %d)" % [name, rarity, damage, armor_value])
+
+# Update assign_random_rarity with better distribution:
 func assign_random_rarity():
 	var rarity_roll = randf()
-	if rarity_roll < 0.60:
+	if rarity_roll < 0.50:  # 50% common
 		rarity = "common"
-	elif rarity_roll < 0.85:
+	elif rarity_roll < 0.75:  # 25% uncommon
 		rarity = "uncommon"
-	elif rarity_roll < 0.95:
+	elif rarity_roll < 0.90:  # 15% magic
 		rarity = "magic"
-	elif rarity_roll < 0.99:
+	elif rarity_roll < 0.97:  # 7% epic
 		rarity = "epic"
-	else:
+	else:  # 3% legendary
 		rarity = "legendary"
+	print("Assigned rarity: %s (roll: %.3f)" % [rarity, rarity_roll])
 
 func apply_rarity_multiplier():
 	var multiplier = rarities[rarity]["multiplier"]
@@ -131,3 +132,16 @@ func remove_effects(character: CharacterData):
 				character.armor_penetration -= effects[effect]
 			"spell_power":
 				character.spell_power -= effects[effect]
+
+func apply_rarity(rarity_name: String) -> void:
+	# Prevent duplicate application
+	if rarity_applied:
+		return
+
+	# Validate rarity exists
+	if not rarities.has(rarity_name):
+		push_warning("Invalid rarity '%s' for equipment: %s" % [rarity_name, name])
+		return
+
+	rarity = rarity_name
+	apply_rarity_multiplier()

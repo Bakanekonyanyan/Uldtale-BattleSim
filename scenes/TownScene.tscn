@@ -179,3 +179,10 @@ offset_right = 208.0
 offset_bottom = 191.0
 text = "Stash
 "
+
+[node name="QuitButton" type="Button" parent="UI"]
+offset_left = 8.0
+offset_top = 376.0
+offset_right = 124.0
+offset_bottom = 430.0
+text = "Save and Quit"
