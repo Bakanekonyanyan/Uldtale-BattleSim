@@ -42,17 +42,23 @@ func refresh_lists():
 			inventory_list.add_item(display_name)
 			
 			# Set the color based on rarity
-			var rarity_color_name = item.get_rarity_color()
-			var rarity_color = Color(rarity_color_name)
-			inventory_list.set_item_custom_fg_color(index, rarity_color)
+			var rarity_color = item.get_rarity_color()
+			if rarity_color != "":
+				inventory_list.set_item_custom_fg_color(index, Color(rarity_color))
 			index += 1
 	
+	index = 0
 	for slot in current_character.equipment:
 		var item = current_character.equipment[slot]
 		if item:
-			equipment_list.add_item("%s: %s" % [slot, item.name])
+			equipment_list.add_item("%s: %s [%s]" % [slot, item.name, item.rarity.capitalize()])
+			# Set the color based on rarity
+			var rarity_color = item.get_rarity_color()
+			if rarity_color != "":
+				equipment_list.set_item_custom_fg_color(index, Color(rarity_color))
 		else:
 			equipment_list.add_item("%s: Empty" % slot)
+		index += 1
 
 func _on_inventory_item_selected(index):
 	var equipment_items = []
@@ -88,21 +94,22 @@ func update_item_info(item: Equipment):
 	$ItemInfo.text = ""
 
 	if item:
-		# Create a new label for the item name
-		var item_name_label = Label.new()
-		item_name_label.text = item.name
+		# Use the get_full_description() method which includes all modifiers
+		var full_desc = item.get_full_description()
 		
-		# Set the color based on rarity
-		var rarity_color = Color(item.get_rarity_color())
-		item_name_label.add_theme_color_override("font_color", rarity_color)
-		
-		# Add the label to your scene
-		$ItemInfo.add_child(item_name_label)
-		
-		# Now add the rest of the item info
-		$ItemInfo.text = "\nType: %s\nSlot: %s\nDamage: %d\nArmor: %d\nEffects: %s\nRarity: %s" % [
-			item.type, item.slot, item.damage, item.armor_value, str(item.effects), item.rarity.capitalize()
-		]
+		# If ItemInfo is a RichTextLabel, we can use BBCode directly
+		if $ItemInfo is RichTextLabel:
+			$ItemInfo.bbcode_enabled = true
+			$ItemInfo.text = full_desc
+		else:
+			# If it's a regular Label, we need to strip BBCode tags
+			# But ideally, ItemInfo should be a RichTextLabel to show colors and formatting
+			var stripped_desc = full_desc
+			# Basic BBCode stripping regex (simplified)
+			var regex = RegEx.new()
+			regex.compile("\\[.*?\\]")
+			stripped_desc = regex.sub(stripped_desc, "", true)
+			$ItemInfo.text = stripped_desc
 	else:
 		$ItemInfo.text = "No equipment selected"
 

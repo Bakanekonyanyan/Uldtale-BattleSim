@@ -53,8 +53,9 @@ func start_dungeon(info: Dictionary = {}):
 		is_boss_fight = false
 		max_floor = 3  # Or whatever your default max_floor is
 		print("DungeonScene: Starting new dungeon")
+		# Set the race for floor 1
+		EnemyFactory.set_dungeon_race(current_floor)
 
-	EnemyFactory.set_dungeon_race()
 	update_labels()
 	if not info.is_empty():
 		print("DungeonScene: Continuing from previous state")
@@ -199,7 +200,9 @@ func continue_dungeon():
 		current_floor += 1
 		current_wave = 0
 		is_boss_fight = false
-		print("DungeonScene: Moving to next floor: ", current_floor)
+		# Set new race for the new floor
+		EnemyFactory.set_dungeon_race(current_floor)
+		print("DungeonScene: Moving to next floor: ", current_floor, " with new race")
 	next_wave()
 
 func next_wave():

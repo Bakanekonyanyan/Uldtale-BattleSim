@@ -10,7 +10,7 @@ var rewards: Dictionary = {}
 var player_character: CharacterData
 var is_boss_fight: bool = false
 var current_floor: int = 1
-var max_floor: int = 3
+var max_floor: int = 10
 var setup_complete = false
 var reward_accepted = false
 

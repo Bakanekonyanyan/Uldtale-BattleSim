@@ -98,9 +98,9 @@ offset_bottom = 31.0
 
 [node name="XPLabel" type="Label" parent="."]
 offset_left = 16.0
-offset_top = 248.0
+offset_top = 264.0
 offset_right = 56.0
-offset_bottom = 274.0
+offset_bottom = 290.0
 text = "XP:"
 
 [node name="DebugToggleButton" type="Button" parent="."]

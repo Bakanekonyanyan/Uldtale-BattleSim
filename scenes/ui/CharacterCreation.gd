@@ -93,6 +93,11 @@ func _on_create_pressed():
 	
 	new_character.calculate_secondary_attributes()
 	
+	# Initialize current values to max
+	new_character.current_hp = new_character.max_hp
+	new_character.current_mp = new_character.max_mp
+	new_character.current_sp = new_character.max_sp
+	
 	# FIXED: Use SaveManager.save_game() instead of CharacterManager.save_character()
 	SaveManager.save_game(new_character)
 	print("Character created: ", new_character.name)

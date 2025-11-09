@@ -170,13 +170,33 @@ offset_right = 428.0
 offset_bottom = 98.0
 text = "Secondary Attributes: "
 
-[node name="EquipmentInfo" type="Label" parent="."]
+[node name="EquipmentInfo3" type="Label" parent="."]
 layout_mode = 0
 offset_left = 576.0
 offset_top = 64.0
 offset_right = 748.0
 offset_bottom = 90.0
 text = "Equipment:"
+
+[node name="EquipmentInfo" type="RichTextLabel" parent="."]
+layout_mode = 0
+offset_left = 576.0
+offset_top = 64.0
+offset_right = 926.0
+offset_bottom = 90.0
+bbcode_enabled = true
+text = "Equipment:"
+fit_content = true
+
+[node name="SkillsInfo" type="RichTextLabel" parent="."]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 384.0
+offset_right = 548.0
+offset_bottom = 624.0
+bbcode_enabled = true
+text = "Skills:"
+scroll_following = true
 
 [node name="ExitButton" type="Button" parent="."]
 layout_mode = 0

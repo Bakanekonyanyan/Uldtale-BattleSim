@@ -41,6 +41,7 @@ func save_game(player: CharacterData):
 		"attack_power_type": player.attack_power_type,
 		"spell_power_type": player.spell_power_type,
 		"skills": player.skills,
+		"skill_levels": player.skill_levels,  # ADD THIS LINE
 		"inventory": {},
 		"stash": {},
 		"equipment": {},
@@ -55,15 +56,32 @@ func save_game(player: CharacterData):
 		
 		if item is Equipment:
 			# Save full equipment data for equipment items
-			save_data["inventory"][item_key] = {
+			var equip_save_data = {
 				"quantity": item_data.quantity,
 				"is_equipment": true,
 				"base_id": item.id,
+				"name": item.name,  # CRITICAL: Save the actual name
 				"rarity": item.rarity,
 				"rarity_applied": item.rarity_applied,
 				"damage": item.damage,
 				"armor_value": item.armor_value
 			}
+			# Add new rarity system properties
+			if  "stat_modifiers" in item:
+				equip_save_data["stat_modifiers"] = item.stat_modifiers
+			if  "status_effect_chance" in item:
+				equip_save_data["status_effect_chance"] = item.status_effect_chance
+			if  "status_effect_type" in item:
+				equip_save_data["status_effect_type"] = item.status_effect_type
+			if  "bonus_damage" in item:
+				equip_save_data["bonus_damage"] = item.bonus_damage
+			if  "item_prefix" in item:
+				equip_save_data["item_prefix"] = item.item_prefix
+			if  "item_suffix" in item:
+				equip_save_data["item_suffix"] = item.item_suffix
+			if  "flavor_text" in item:
+				equip_save_data["flavor_text"] = item.flavor_text
+			save_data["inventory"][item_key] = equip_save_data
 		else:
 			# Regular items just need the ID
 			save_data["inventory"][item_key] = {
@@ -77,15 +95,32 @@ func save_game(player: CharacterData):
 		var item = item_data.item
 		
 		if item is Equipment:
-			save_data["stash"][item_key] = {
+			var equip_save_data = {
 				"quantity": item_data.quantity,
 				"is_equipment": true,
 				"base_id": item.id,
+				"name": item.name,  # CRITICAL: Save the actual name
 				"rarity": item.rarity,
 				"rarity_applied": item.rarity_applied,
 				"damage": item.damage,
 				"armor_value": item.armor_value
 			}
+			# Add new rarity system properties
+			if "stat_modifiers" in item:
+				equip_save_data["stat_modifiers"] = item.stat_modifiers
+			if "status_effect_chance" in item:
+				equip_save_data["status_effect_chance"] = item.status_effect_chance
+			if "status_effect_type" in item:
+				equip_save_data["status_effect_type"] = item.status_effect_type
+			if "bonus_damage" in item:
+				equip_save_data["bonus_damage"] = item.bonus_damage
+			if "item_prefix" in item:
+				equip_save_data["item_prefix"] = item.item_prefix
+			if "item_suffix" in item:
+				equip_save_data["item_suffix"] = item.item_suffix
+			if "flavor_text" in item:
+				equip_save_data["flavor_text"] = item.flavor_text
+			save_data["stash"][item_key] = equip_save_data
 		else:
 			save_data["stash"][item_key] = {
 				"quantity": item_data.quantity,
@@ -97,13 +132,30 @@ func save_game(player: CharacterData):
 	for slot in player.equipment:
 		if player.equipment[slot]:
 			var equipped_item = player.equipment[slot]
-			save_data["equipment"][slot] = {
+			var equip_data = {
 				"id": equipped_item.id,
+				"name": equipped_item.name,  # CRITICAL: Save the actual name
 				"rarity": equipped_item.rarity,
 				"rarity_applied": equipped_item.rarity_applied,
 				"damage": equipped_item.damage,
 				"armor_value": equipped_item.armor_value
 			}
+			# Add new rarity system properties
+			if "stat_modifiers" in equipped_item:
+				equip_data["stat_modifiers"] = equipped_item.stat_modifiers
+			if "status_effect_chance" in equipped_item:
+				equip_data["status_effect_chance"] = equipped_item.status_effect_chance
+			if "status_effect_type" in equipped_item:
+				equip_data["status_effect_type"] = equipped_item.status_effect_type
+			if "bonus_damage" in equipped_item:
+				equip_data["bonus_damage"] = equipped_item.bonus_damage
+			if "item_prefix" in equipped_item:
+				equip_data["item_prefix"] = equipped_item.item_prefix
+			if "item_suffix" in equipped_item:
+				equip_data["item_suffix"] = equipped_item.item_suffix
+			if "flavor_text" in equipped_item:
+				equip_data["flavor_text"] = equipped_item.flavor_text
+			save_data["equipment"][slot] = equip_data
 			
 	var file = FileAccess.open(get_save_file_path(player.name), FileAccess.WRITE)
 	file.store_string(JSON.stringify(save_data))
@@ -160,6 +212,17 @@ func load_game(character_name: String) -> CharacterData:
 		player.add_skills(save_data["skills"])
 	else:
 		print("Warning: Skills data not found or invalid for character: ", character_name)
+	
+	# ADD THIS: Restore skill levels BEFORE adding skills
+	if "skill_levels" in save_data and typeof(save_data["skill_levels"]) == TYPE_DICTIONARY:
+		player.skill_levels = save_data["skill_levels"]
+		print("Loaded skill levels: ", player.skill_levels)
+	
+	# Handle skills separately - this will now use the loaded skill_levels
+	if "skills" in save_data and save_data["skills"] is Array:
+		player.add_skills(save_data["skills"])
+	else:
+		print("Warning: Skills data not found or invalid for character: ", character_name)
 
 	# Load inventory
 	if "inventory" in save_data:
@@ -176,6 +239,26 @@ func load_game(character_name: String) -> CharacterData:
 					base_item.damage = item_data.get("damage", base_item.damage)
 					base_item.armor_value = item_data.get("armor_value", base_item.armor_value)
 					base_item.inventory_key = item_key  # Restore the unique key
+					
+					# Restore new rarity system properties
+					if "stat_modifiers" in item_data:
+						base_item.stat_modifiers = item_data["stat_modifiers"]
+					if "status_effect_chance" in item_data:
+						base_item.status_effect_chance = item_data["status_effect_chance"]
+					if "status_effect_type" in item_data:
+						base_item.status_effect_type = item_data["status_effect_type"]
+					if "bonus_damage" in item_data:
+						base_item.bonus_damage = item_data["bonus_damage"]
+					if "item_prefix" in item_data:
+						base_item.item_prefix = item_data["item_prefix"]
+					if "item_suffix" in item_data:
+						base_item.item_suffix = item_data["item_suffix"]
+					if "flavor_text" in item_data:
+						base_item.flavor_text = item_data["flavor_text"]
+					
+					# CRITICAL: Restore the actual name (not just prefix/suffix)
+					if "name" in item_data:
+						base_item.name = item_data["name"]
 					
 					# Add directly to inventory with the saved key
 					player.inventory.items[item_key] = {
@@ -207,6 +290,26 @@ func load_game(character_name: String) -> CharacterData:
 					base_item.armor_value = item_data.get("armor_value", base_item.armor_value)
 					base_item.inventory_key = item_key  # Restore the unique key
 					
+					# Restore new rarity system properties
+					if "stat_modifiers" in item_data:
+						base_item.stat_modifiers = item_data["stat_modifiers"]
+					if "status_effect_chance" in item_data:
+						base_item.status_effect_chance = item_data["status_effect_chance"]
+					if "status_effect_type" in item_data:
+						base_item.status_effect_type = item_data["status_effect_type"]
+					if "bonus_damage" in item_data:
+						base_item.bonus_damage = item_data["bonus_damage"]
+					if "item_prefix" in item_data:
+						base_item.item_prefix = item_data["item_prefix"]
+					if "item_suffix" in item_data:
+						base_item.item_suffix = item_data["item_suffix"]
+					if "flavor_text" in item_data:
+						base_item.flavor_text = item_data["flavor_text"]
+					
+					# CRITICAL: Restore the actual name (not just prefix/suffix)
+					if "name" in item_data:
+						base_item.name = item_data["name"]
+					
 					# Add directly to stash with the saved key
 					player.stash.items[item_key] = {
 						"item": base_item,
@@ -232,6 +335,27 @@ func load_game(character_name: String) -> CharacterData:
 					item.rarity_applied = equip_data.get("rarity_applied", false)
 					item.damage = equip_data.get("damage", item.damage)
 					item.armor_value = equip_data.get("armor_value", item.armor_value)
+					
+					# Restore new rarity system properties
+					if  "stat_modifiers" in equip_data:
+						item.stat_modifiers = equip_data["stat_modifiers"]
+					if  "status_effect_chance" in equip_data:
+						item.status_effect_chance = equip_data["status_effect_chance"]
+					if  "status_effect_type" in equip_data:
+						item.status_effect_type = equip_data["status_effect_type"]
+					if  "bonus_damage" in equip_data:
+						item.bonus_damage = equip_data["bonus_damage"]
+					if  "item_prefix" in equip_data:
+						item.item_prefix = equip_data["item_prefix"]
+					if  "item_suffix" in equip_data:
+						item.item_suffix = equip_data["item_suffix"]
+					if  "flavor_text" in equip_data:
+						item.flavor_text = equip_data["flavor_text"]
+					
+					# CRITICAL: Restore the actual name (not just prefix/suffix)
+					if "name" in equip_data:
+						item.name = equip_data["name"]
+					
 					player.equip_item(item)
 					print("Loaded equipped item: ", item.name, " to slot: ", slot)
 			else:

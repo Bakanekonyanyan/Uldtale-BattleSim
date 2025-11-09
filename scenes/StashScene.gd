@@ -25,13 +25,31 @@ func refresh_lists():
 	inventory_list.clear()
 	stash_list.clear()
 	
+	var inv_index = 0
 	for item_id in player_character.inventory.items:
 		var item_data = player_character.inventory.items[item_id]
-		inventory_list.add_item("%s (x%d)" % [item_data.item.name, item_data.quantity])
+		var item = item_data.item
+		if item is Equipment:
+			var display_name = "%s (x%d) [%s]" % [item.name, item_data.quantity, item.rarity.capitalize()]
+			inventory_list.add_item(display_name)
+			var rarity_color = Color(item.get_rarity_color())
+			inventory_list.set_item_custom_fg_color(inv_index, rarity_color)
+		else:
+			inventory_list.add_item("%s (x%d)" % [item.name, item_data.quantity])
+		inv_index += 1
 	
+	var stash_index = 0
 	for item_id in player_character.stash.items:
 		var item_data = player_character.stash.items[item_id]
-		stash_list.add_item("%s (x%d)" % [item_data.item.name, item_data.quantity])
+		var item = item_data.item
+		if item is Equipment:
+			var display_name = "%s (x%d) [%s]" % [item.name, item_data.quantity, item.rarity.capitalize()]
+			stash_list.add_item(display_name)
+			var rarity_color = Color(item.get_rarity_color())
+			stash_list.set_item_custom_fg_color(stash_index, rarity_color)
+		else:
+			stash_list.add_item("%s (x%d)" % [item.name, item_data.quantity])
+		stash_index += 1
 
 func _on_move_to_stash_pressed():
 	var selected_items = inventory_list.get_selected_items()

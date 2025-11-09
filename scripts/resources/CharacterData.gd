@@ -44,6 +44,8 @@ var spell_power_type: String = "intelligence"
 # Skills and Status
 @export var skills: Array[String] = []
 var skill_cooldowns: Dictionary = {}  # Maps skill_name -> turns_remaining
+var skill_levels: Dictionary = {}  # Maps skill_name -> {level: int, uses: int}
+var skill_instances: Dictionary = {}  # Maps skill_name -> Skill instance
 var status_effects: Dictionary = {}  # Will store {StatusEffect: remaining_duration}
 var is_defending: bool = false
 var is_stunned: bool = false
@@ -83,8 +85,51 @@ func add_skills(new_skills: Array):
 	for skill in new_skills:
 		if skill is String:
 			skills.append(skill)
+			# Initialize skill tracking if not exists
+			if not skill_levels.has(skill):
+				skill_levels[skill] = {"level": 1, "uses": 0}
+			# Create and store skill instance
+			var skill_data = SkillManager.get_skill(skill)
+			if skill_data:
+				var skill_instance = skill_data.duplicate()
+				skill_instance.level = skill_levels[skill]["level"]
+				skill_instance.uses = skill_levels[skill]["uses"]
+				skill_instance.calculate_level_bonuses()
+				skill_instances[skill] = skill_instance
 		else:
 			print("Warning: Invalid skill type encountered: ", skill)
+
+func get_skill_instance(skill_name: String) -> Skill:
+	if skill_instances.has(skill_name):
+		return skill_instances[skill_name]
+	# Create instance if not exists
+	var skill_data = SkillManager.get_skill(skill_name)
+	if skill_data:
+		var skill_instance = skill_data.duplicate()
+		if skill_levels.has(skill_name):
+			skill_instance.level = skill_levels[skill_name]["level"]
+			skill_instance.uses = skill_levels[skill_name]["uses"]
+			skill_instance.calculate_level_bonuses()
+		skill_instances[skill_name] = skill_instance
+		return skill_instance
+	return null
+
+func use_skill(skill_name: String):
+	# Track skill usage
+	if not skill_levels.has(skill_name):
+		skill_levels[skill_name] = {"level": 1, "uses": 0}
+	
+	skill_levels[skill_name]["uses"] += 1
+	
+	# Update skill instance
+	var skill_instance = get_skill_instance(skill_name)
+	if skill_instance:
+		skill_instance.uses = skill_levels[skill_name]["uses"]
+		var level_up_msg = skill_instance.on_skill_used()
+		if level_up_msg != "":
+			skill_levels[skill_name]["level"] = skill_instance.level
+			return level_up_msg
+	return ""
 
 func remove_skill(skill_name: String):
 	skills.erase(skill_name)
@@ -107,7 +152,13 @@ func calculate_secondary_attributes():
 	max_hp = vitality * 10 + strength * 5
 	max_mp = mind * 8 + intelligence * 4
 	max_sp = endurance * 8 + agility * 4
-
+	# CRITICAL FIX: Initialize current values if they're 0 or unset
+	if current_hp == 0 or current_hp > max_hp:
+		current_hp = max_hp
+	if current_mp == 0 or current_mp > max_mp:
+		current_mp = max_mp
+	if current_sp == 0 or current_sp > max_sp:
+		current_sp = max_sp
 	# Defensive Stats - use effective stats
 	toughness = (effective_vit * 0.45 + effective_str * 0.25 + effective_end * 0.15 + effective_for * 0.15) / 10.0
 	dodge = 0.05 + (effective_agi * 0.55 + effective_dex * 0.35 + effective_for * 0.10) / 200.0
@@ -148,6 +199,10 @@ func equip_item(item: Equipment) -> Equipment:
 	equipment[item.slot] = item
 	item.apply_effects(self)
 	
+	# Apply stat modifiers from the new rarity system
+	if item.has_method("apply_stat_modifiers"):
+		item.apply_stat_modifiers(self)
+	
 	# Remove from inventory using the unique key if it exists
 	if item is Equipment and item.inventory_key != "":
 		inventory.remove_item(item.inventory_key, 1)
@@ -162,6 +217,11 @@ func unequip_item(slot: String) -> Equipment:
 	var item = equipment[slot]
 	if item:
 		item.remove_effects(self)
+		
+		# Remove stat modifiers from the new rarity system
+		if item.has_method("remove_stat_modifiers"):
+			item.remove_stat_modifiers(self)
+		
 		equipment[slot] = null
 		inventory.add_item(item, 1)
 		calculate_secondary_attributes()
@@ -171,6 +231,9 @@ func get_attack_power() -> int:
 	var base_power = attack_power
 	if equipment["main_hand"]:
 		base_power += equipment["main_hand"].damage
+		# Add bonus damage from legendary items - use property check
+		if "bonus_damage" in equipment["main_hand"]:
+			base_power += equipment["main_hand"].bonus_damage
 	return int(base_power)
 
 func get_defense() -> int:
@@ -181,6 +244,21 @@ func get_defense() -> int:
 	return total_defense
 
 func attack(target: CharacterData) -> String:
+	# Validate target exists and has required properties
+	if not target or not is_instance_valid(target):
+		push_error("Attack failed: Invalid target")
+		return "%s's attack failed - no valid target!" % name
+	
+	# Ensure target has required properties initialized (use 'in' operator for Resources)
+	if not ("dodge" in target) or not ("toughness" in target):
+		push_error("Attack failed: Target missing required properties")
+		return "%s's attack failed - target not properly initialized!" % name
+	
+	# Validate target's numeric properties are valid
+	if typeof(target.dodge) != TYPE_FLOAT and typeof(target.dodge) != TYPE_INT:
+		push_error("Attack failed: Target dodge is not a valid number")
+		return "%s's attack failed - target stats invalid!" % name
+	
 	var base_damage = get_attack_power() * 0.5
 	var resistance = target.get_defense()
 	var accuracy_check = randf() < accuracy
@@ -199,14 +277,27 @@ func attack(target: CharacterData) -> String:
 		damage *= 1.5 + randf() * 0.5  # Random between 1.5x and 2x
 		print("Critical hit!")
 	
-	damage = round(damage)  # Round the damage to the nearest integer
+	damage = round(damage)
 	target.take_damage(damage)
 	
-	# Restore MP
-	var mp_restore = int(max_mp * 0.025)  # Restore 2.5% of max MP
-	restore_mp(mp_restore)
+	# Try to apply weapon status effect - use 'in' operator for Resources
+	var status_msg = ""
+	if equipment["main_hand"] and equipment["main_hand"] is Equipment:
+		var weapon = equipment["main_hand"]
+		# Check if weapon has status effect properties set
+		if "status_effect_type" in weapon and "status_effect_chance" in weapon:
+			if weapon.status_effect_type != Skill.StatusEffect.NONE:
+				if weapon.has_method("try_apply_status_effect"):
+					if weapon.try_apply_status_effect(target):
+						status_msg = " and applied %s" % Skill.StatusEffect.keys()[weapon.status_effect_type]
 	
-	var result = "%s attacks %s for %d damage and restores %d MP" % [name, target.name, damage, mp_restore]
+	# Restore MP and SP
+	var mp_restore = int(max_mp * 0.025)
+	var sp_restore = int(max_sp * 0.025)
+	restore_mp(mp_restore)
+	restore_sp(sp_restore)
+	
+	var result = "%s attacks %s for %d damage and restores %d MP, %d SP%s" % [name, target.name, damage, mp_restore, sp_restore, status_msg]
 	if crit_check:
 		result = "Critical hit! " + result
 	return result
@@ -262,30 +353,41 @@ func get_status_effects_string() -> String:
 	
 	return ", ".join(effects)
 
+# Also update the reset_for_new_battle function:
+func reset_for_new_battle():
+	current_hp = max_hp
+	current_mp = max_mp
+	current_sp = max_sp  # ADD THIS LINE
+	status_effects.clear()
+	skill_cooldowns.clear()
+	is_stunned = false
+	is_defending = false
+	buffs.clear()
+	debuffs.clear()
+
+# Update the reset_for_new_game function:
 func reset_for_new_game():
-	# Reset HP, MP, etc. to initial values
 	calculate_secondary_attributes()
 	current_hp = max_hp
 	current_mp = max_mp
-	current_sp = max_sp
+	current_sp = max_sp  # ADD THIS LINE
 	
-	# Clear inventory except for starting items
 	inventory.clear()
-	# Add starting items here if needed
+	currency.copper = 0
 	
-	# Reset currency
-	currency.copper = 0  # Or whatever starting amount you want
-	
-	# Clear equipment
 	for slot in equipment:
 		equipment[slot] = null
 	
-	# Reset any other properties that should be set to initial values for a new game
 	level = 1
-	# ... any other resets needed
 
 func get_attribute_with_effects(attribute: Skill.AttributeTarget) -> int:
-	var base_value = get(Skill.AttributeTarget.keys()[attribute].to_lower())
+	var attribute_name = Skill.AttributeTarget.keys()[attribute].to_lower()
+	# Use 'in' operator for Resources instead of has()
+	if not (attribute_name in self):
+		push_error("Character missing attribute: %s" % attribute_name)
+		return 0
+	
+	var base_value = get(attribute_name)
 	var buff_value = buffs.get(attribute, {"value": 0})["value"]
 	var debuff_value = debuffs.get(attribute, {"value": 0})["value"]
 	return base_value + buff_value - debuff_value
@@ -366,7 +468,13 @@ func reduce_cooldowns():
 		print("%s: Skills ready: %s" % [name, ", ".join(skills_ready)])
 
 func get_attribute_with_buffs_and_debuffs(attribute: Skill.AttributeTarget) -> int:
-	var base_value = get(Skill.AttributeTarget.keys()[attribute].to_lower())
+	var attribute_name = Skill.AttributeTarget.keys()[attribute].to_lower()
+	# Use 'in' operator for Resources instead of has()
+	if not (attribute_name in self):
+		push_error("Character missing attribute: %s" % attribute_name)
+		return 0
+	
+	var base_value = get(attribute_name)
 	var buff_value = buffs.get(attribute, {"value": 0})["value"]
 	var debuff_value = debuffs.get(attribute, {"value": 0})["value"]
 	var final_value = base_value + buff_value - debuff_value
@@ -390,16 +498,6 @@ func defend() -> String:
 
 func reset_defense():
 	is_defending = false
-
-func reset_for_new_battle():
-	current_hp = max_hp
-	current_mp = max_mp
-	status_effects.clear()
-	skill_cooldowns.clear()
-	is_stunned = false
-	is_defending = false
-	buffs.clear()
-	debuffs.clear()
 
 # In CharacterData.gd, update the gain_xp function:
 func gain_xp(amount: int):
@@ -535,7 +633,7 @@ func apply_status_effect_damage(effect: Skill.StatusEffect) -> String:
 
 		# message template fallback
 		if data.has("message"):
-			# If message contains {damage} it won't be replaced here â€” we already appended a plain message above.
+			# If message contains {damage} it won't be replaced here â€“ we already appended a plain message above.
 			# Keep the JSON message as supplemental if needed.
 			# message += data.message.format({"name": name, "damage": dmg}) + "\n"
 			pass

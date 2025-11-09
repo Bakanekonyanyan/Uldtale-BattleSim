@@ -24,17 +24,24 @@ func load_data():
 
 func get_dungeon_race():
 	if current_dungeon_race == "":
-		set_dungeon_race()
+		print("Warning: Dungeon race not set yet! Call set_dungeon_race(floor) first.")
 	else:
 		print("Current dungeon race:", current_dungeon_race)
+	return current_dungeon_race
 
 
-func set_dungeon_race():
-	var non_playable_races = races["non_playable"].keys()
-	dungeon_race = non_playable_races[randi() % non_playable_races.size()]
-	current_dungeon_race = dungeon_race
-	print("Current dungeon race set to:", current_dungeon_race)
+var current_floor: int = 0  # Add this at the top with other variables
 
+func set_dungeon_race(floor: int):
+	# Only set a new race if we're on a different floor
+	if floor != current_floor:
+		current_floor = floor
+		var non_playable_races = races["non_playable"].keys()
+		dungeon_race = non_playable_races[randi() % non_playable_races.size()]
+		current_dungeon_race = dungeon_race
+		print("Floor %d - Current dungeon race set to: %s" % [floor, current_dungeon_race])
+	else:
+		print("Floor %d - Keeping current dungeon race: %s" % [floor, current_dungeon_race])
 
 func create_enemy(level: int = 1, floor: int = 1, wave: int = 1) -> CharacterData:
 	var enemy = CharacterData.new()
@@ -57,10 +64,14 @@ func create_enemy(level: int = 1, floor: int = 1, wave: int = 1) -> CharacterDat
 	if floor >= 2:
 		give_enemy_equipment(enemy, floor)
 	
+	# Give consumable items to enemies
+	give_enemy_items(enemy, floor)
+	
 	enemy.is_player = false
 	enemy.calculate_secondary_attributes()
-	enemy.current_hp = enemy.max_hp  # Add this line
-	enemy.current_mp = enemy.max_mp  # Add this line
+	enemy.current_hp = enemy.max_hp
+	enemy.current_mp = enemy.max_mp
+	enemy.current_sp = enemy.max_sp  # Initialize SP
 
 	return enemy
 
@@ -116,14 +127,14 @@ func create_boss(floor: int = 1, wave: int = 1) -> CharacterData:
 		if skills.has(skill_name):
 			combined_skills.append(skill_name)
 		else:
-			print("⚠️ Warning: King skill not found:", skill_name)
+			print("Ã¢Å¡Â Ã¯Â¸Â Warning: King skill not found:", skill_name)
 	
 	# Add minion skills
 	for skill_name in minion_data.skills:
 		if skills.has(skill_name) and skill_name not in combined_skills:
 			combined_skills.append(skill_name)
 		elif not skills.has(skill_name):
-			print("⚠️ Warning: Minion skill not found:", skill_name)
+			print("Ã¢Å¡Â Ã¯Â¸Â Warning: Minion skill not found:", skill_name)
 	
 	if combined_skills.size() > 0:
 		boss.add_skills(combined_skills)
@@ -139,8 +150,9 @@ func create_boss(floor: int = 1, wave: int = 1) -> CharacterData:
 	
 	boss.is_player = false
 	boss.calculate_secondary_attributes()
-	boss.current_hp = boss.max_hp  # Add this line
+	boss.current_hp = boss.max_hp
 	boss.current_mp = boss.max_mp
+	boss.current_sp = boss.max_sp  # Initialize SP
 	
 	return boss
 
@@ -174,7 +186,7 @@ func setup_character(character: CharacterData, character_class: String, class_ty
 		if skills.has(skill_name):
 			valid_skills.append(skill_name)
 		else:
-			print("⚠️ Warning: Skill not found in skills.json:", skill_name)
+			print("Ã¢Å¡Â Ã¯Â¸Â Warning: Skill not found in skills.json:", skill_name)
 
 	if valid_skills.size() > 0:
 		character.add_skills(valid_skills)
@@ -219,7 +231,8 @@ func apply_enemy_scaling(enemy: CharacterData, floor: int, wave: int, is_boss: b
 
 # Give enemy equipment based on floor and chance
 func give_enemy_equipment(enemy: CharacterData, floor: int, is_boss: bool = false):
-	var equipment_chance = 0.3 if not is_boss else 1.0  # 30% chance for normal enemies, 100% for bosses
+	# Normal enemies: 30% chance, Bosses: 0% (they're already strong)
+	var equipment_chance = 0.3 if not is_boss else 0.0
 	
 	if randf() < equipment_chance:
 		# Give weapon
@@ -227,9 +240,9 @@ func give_enemy_equipment(enemy: CharacterData, floor: int, is_boss: bool = fals
 		if weapon:
 			var weapon_item = ItemManager.get_item(weapon)
 			if weapon_item and weapon_item is Equipment:
-				weapon_item.apply_rarity_multiplier()
+				# Rarity is automatically applied in Equipment._init()
 				enemy.equip_item(weapon_item)
-				print("%s equipped weapon: %s" % [enemy.name, weapon_item.name])
+				print("%s equipped weapon: %s (rarity: %s)" % [enemy.name, weapon_item.name, weapon_item.rarity])
 	
 	if randf() < equipment_chance:
 		# Give armor (random slot)
@@ -237,6 +250,33 @@ func give_enemy_equipment(enemy: CharacterData, floor: int, is_boss: bool = fals
 		if armor:
 			var armor_item = ItemManager.get_item(armor)
 			if armor_item and armor_item is Equipment:
-				armor_item.apply_rarity_multiplier()
+				# Rarity is automatically applied in Equipment._init()
 				enemy.equip_item(armor_item)
+				print("%s equipped armor: %s (rarity: %s)" % [enemy.name, armor_item.name, armor_item.rarity])
 				print("%s equipped armor: %s" % [enemy.name, armor_item.name])
+
+# Give enemy consumable items
+func give_enemy_items(enemy: CharacterData, floor: int, is_boss: bool = false):
+	# Don't give items to bosses
+	if is_boss:
+		return
+	
+	# 40% chance for enemies to have items
+	if randf() < 0.4:
+		# List of combat consumables enemies can use
+		var combat_items = [
+			"flame_flask", "frost_crystal", "thunder_orb", 
+			"venom_vial", "stone_shard", "rotten_dung",
+			"health_potion", "smoke_bomb"
+		]
+		
+		# Give 1-3 random items
+		var num_items = randi_range(1, 3)
+		for i in num_items:
+			var item_id = combat_items[randi() % combat_items.size()]
+			var item = ItemManager.get_item(item_id)
+			if item:
+				# Give 1-3 of each item
+				var quantity = randi_range(1, 3)
+				enemy.inventory.add_item(item, quantity)
+				print("%s received %d x %s" % [enemy.name, quantity, item.name])

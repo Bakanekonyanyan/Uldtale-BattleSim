@@ -9,6 +9,7 @@ var current_character: CharacterData
 @onready var primary_attributes = $PrimaryAttributes if has_node("PrimaryAttributes") else null
 @onready var secondary_attributes = $SecondaryAttributes if has_node("SecondaryAttributes") else null
 @onready var equipment_info = $EquipmentInfo if has_node("EquipmentInfo") else null
+@onready var skills_info = $SkillsInfo if has_node("SkillsInfo") else null
 @onready var exit_button = $ExitButton if has_node("ExitButton") else null
 @onready var xp_label = $XPLabel
 
@@ -98,13 +99,61 @@ func update_status():
 			var item = current_character.equipment[slot]
 			var slot_name = slot.capitalize().replace("_", " ")
 			if item:
-				equipment_text += "%s: %s\n" % [slot_name, item.name]
+				# Use BBCode for colored text
+				var color = item.get_rarity_color()
+				equipment_text += "%s: [color=%s]%s[/color] [%s]\n" % [slot_name, color, item.name, item.rarity.capitalize()]
 			else:
 				equipment_text += "%s: Empty\n" % slot_name
-		set_label_text(equipment_info, equipment_text)
+		
+		# Enable BBCode for RichTextLabel or create a RichTextLabel if it's a Label
+		if equipment_info is RichTextLabel:
+			equipment_info.bbcode_enabled = true
+			equipment_info.text = equipment_text
+		else:
+			# If it's a Label, we need to convert the scene to use RichTextLabel
+			# For now, just set the text without colors
+			equipment_info.text = equipment_text
 	
 	if xp_label:
 		xp_label.text = "XP: %d / %d" % [current_character.xp, LevelSystem.calculate_xp_for_level(current_character.level)]
+	
+	# Display skills with levels and progress
+	if skills_info:
+		var skills_text = "[b]Skills:[/b]\n"
+		for skill_name in current_character.skills:
+			var skill = current_character.get_skill_instance(skill_name)
+			if skill:
+				var level_str = skill.get_level_string()
+				var progress_text = ""
+				if skill.level < 6:
+					var next_threshold = skill.LEVEL_THRESHOLDS[skill.level - 1]
+					progress_text = " (%d/%d uses)" % [skill.uses, next_threshold]
+				
+				skills_text += "\n[b]%s[/b] - Level %s%s\n" % [skill.name, level_str, progress_text]
+				skills_text += "  %s\n" % skill.description
+				
+				# Show skill stats
+				if skill.type in [Skill.SkillType.DAMAGE, Skill.SkillType.HEAL, Skill.SkillType.RESTORE]:
+					skills_text += "  Power: %d | " % skill.power
+				if skill.type in [Skill.SkillType.BUFF, Skill.SkillType.DEBUFF, Skill.SkillType.INFLICT_STATUS]:
+					if skill.duration > 0:
+						skills_text += "  Duration: %d turns | " % skill.duration
+				
+				# Show costs
+				if skill.mp_cost > 0:
+					skills_text += "MP Cost: %d | " % skill.mp_cost
+				if skill.sp_cost > 0:
+					skills_text += "SP Cost: %d | " % skill.sp_cost
+				if skill.cooldown > 0:
+					skills_text += "Cooldown: %d turns" % skill.cooldown
+				skills_text += "\n"
+		
+		# Enable BBCode for RichTextLabel
+		if skills_info is RichTextLabel:
+			skills_info.bbcode_enabled = true
+			skills_info.text = skills_text
+		else:
+			skills_info.text = skills_text
 	
 	print("StatusScene: update_status completed")
 

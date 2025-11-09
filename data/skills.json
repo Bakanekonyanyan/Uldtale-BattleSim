@@ -11,6 +11,7 @@
 			"power": 18,
 			"duration": 3,
 			"mp_cost": 8,
+			"sp_cost": 0,
 			"cooldown": 3
 		},
 		"Divine Shield": {
@@ -24,6 +25,7 @@
 			"power": 20,
 			"duration": 4,
 			"mp_cost": 10,
+			"sp_cost": 0,
 			"cooldown": 5
 		},
 		"Lay on Hands": {
@@ -37,6 +39,7 @@
 			"power": 25,
 			"duration": 0,
 			"mp_cost": 12,
+			"sp_cost": 0,
 			"cooldown": 6
 		},
 		"Backstab": {
@@ -49,7 +52,8 @@
 			"status_effect": "NONE",
 			"power": 20,
 			"duration": 0,
-			"mp_cost": 8,
+			"mp_cost": 0,
+			"sp_cost": 8,
 			"cooldown": 3
 		},
 		"Evasion": {
@@ -62,7 +66,8 @@
 			"status_effect": "NONE",
 			"power": 15,
 			"duration": 4,
-			"mp_cost": 6,
+			"mp_cost": 0,
+			"sp_cost": 6,
 			"cooldown": 5
 		},
 		"Poison Blade": {
@@ -75,7 +80,8 @@
 			"status_effect": "POISON",
 			"power": 5,
 			"duration": 5,
-			"mp_cost": 10,
+			"mp_cost": 0,
+			"sp_cost": 10,
 			"cooldown": 4
 		},
 		"Healing Light": {
@@ -89,6 +95,7 @@
 			"power": 20,
 			"duration": 0,
 			"mp_cost": 8,
+			"sp_cost": 0,
 			"cooldown": 3
 		},
 		"Bless": {
@@ -102,6 +109,7 @@
 			"power": 10,
 			"duration": 5,
 			"mp_cost": 6,
+			"sp_cost": 0,
 			"cooldown": 5
 		},
 		"Smite": {
@@ -115,6 +123,7 @@
 			"power": 15,
 			"duration": 0,
 			"mp_cost": 7,
+			"sp_cost": 0,
 			"cooldown": 3
 		},
 		"Dark Bolt": {
@@ -128,6 +137,7 @@
 			"power": 18,
 			"duration": 0,
 			"mp_cost": 6,
+			"sp_cost": 0,
 			"cooldown": 3
 		},
 		"Life Tap": {
@@ -141,6 +151,7 @@
 			"power": 0,
 			"duration": 0,
 			"mp_cost": 0,
+			"sp_cost": 0,
 			"cooldown": 4
 		},
 		"Curse of Weakness": {
@@ -154,6 +165,7 @@
 			"power": 10,
 			"duration": 4,
 			"mp_cost": 8,
+			"sp_cost": 0,
 			"cooldown": 5
 		},
 		"Scratch": {
@@ -166,7 +178,8 @@
 			"status_effect": "NONE",
 			"power": 10,
 			"duration": 0,
-			"mp_cost": 4,
+			"mp_cost": 0,
+			"sp_cost": 4,
 			"cooldown": 2
 		},
 		"Bite": {
@@ -179,7 +192,8 @@
 			"status_effect": "NONE",
 			"power": 12,
 			"duration": 0,
-			"mp_cost": 5,
+			"mp_cost": 0,
+			"sp_cost": 5,
 			"cooldown": 3
 		},
 		"Howl": {
@@ -192,7 +206,8 @@
 			"status_effect": "NONE",
 			"power": 5,
 			"duration": 3,
-			"mp_cost": 6,
+			"mp_cost": 0,
+			"sp_cost": 6,
 			"cooldown": 4
 		},
 		"Smash": {
@@ -205,7 +220,8 @@
 			"status_effect": "NONE",
 			"power": 20,
 			"duration": 0,
-			"mp_cost": 8,
+			"mp_cost": 0,
+			"sp_cost": 8,
 			"cooldown": 3
 		},
 		"Roar": {
@@ -218,7 +234,8 @@
 			"status_effect": "NONE",
 			"power": 5,
 			"duration": 4,
-			"mp_cost": 7,
+			"mp_cost": 0,
+			"sp_cost": 7,
 			"cooldown": 5
 		},
 		"Stomp": {
@@ -231,7 +248,8 @@
 			"status_effect": "NONE",
 			"power": 15,
 			"duration": 0,
-			"mp_cost": 10,
+			"mp_cost": 0,
+			"sp_cost": 10,
 			"cooldown": 5
 		},
 		"Lightning Bolt": {
@@ -245,6 +263,7 @@
 			"power": 18,
 			"duration": 0,
 			"mp_cost": 7,
+			"sp_cost": 0,
 			"cooldown": 3
 		},
 		"Healing Wave": {
@@ -258,6 +277,7 @@
 			"power": 15,
 			"duration": 0,
 			"mp_cost": 12,
+			"sp_cost": 0,
 			"cooldown": 6
 		},
 		"Totemic Blessing": {
@@ -271,6 +291,7 @@
 			"power": 10,
 			"duration": 5,
 			"mp_cost": 10,
+			"sp_cost": 0,
 			"cooldown": 5
 		},
 		"Fireball": {
@@ -284,6 +305,7 @@
 			"power": 20,
 			"duration": 0,
 			"mp_cost": 8,
+			"sp_cost": 0,
 			"cooldown": 3
 		},
 		"Frost Nova": {
@@ -297,6 +319,7 @@
 			"power": 0,
 			"duration": 2,
 			"mp_cost": 10,
+			"sp_cost": 0,
 			"cooldown": 5
 		},
 		"Arcane Intellect": {
@@ -310,6 +333,7 @@
 			"power": 10,
 			"duration": 5,
 			"mp_cost": 6,
+			"sp_cost": 0,
 			"cooldown": 4
 		},
 		"Royal Decree": {
@@ -323,6 +347,7 @@
 			"power": 10,
 			"duration": 5,
 			"mp_cost": 12,
+			"sp_cost": 0,
 			"cooldown": 6
 		},
 		"Execution": {
@@ -335,7 +360,8 @@
 			"status_effect": "NONE",
 			"power": 30,
 			"duration": 0,
-			"mp_cost": 15,
+			"mp_cost": 0,
+			"sp_cost": 15,
 			"cooldown": 6
 		},
 		"Crown of Flames": {
@@ -349,6 +375,7 @@
 			"power": 10,
 			"duration": 5,
 			"mp_cost": 12,
+			"sp_cost": 0,
 			"cooldown": 5
 		}
 	}

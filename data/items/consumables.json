@@ -8,7 +8,8 @@
 	"max_stack": 99,
 	"consumable_type": "HEAL",
 	"effect_power": 50,
-	"effect_duration": 0
+	"effect_duration": 0,
+	"combat_usable": true
   },
   "mana_potion": {
 	"name": "Mana Potion",
@@ -19,6 +20,123 @@
 	"max_stack": 99,
 	"consumable_type": "RESTORE",
 	"effect_power": 30,
-	"effect_duration": 0
+	"effect_duration": 0,
+	"combat_usable": true
+  },
+  "flame_flask": {
+	"name": "Flame Flask",
+	"description": "Throws a fiery bomb dealing 40 damage and inflicting burn for 3 turns",
+	"item_type": "CONSUMABLE",
+	"value": 100,
+	"stackable": true,
+	"max_stack": 20,
+	"consumable_type": "DAMAGE",
+	"effect_power": 40,
+	"effect_duration": 3,
+	"status_effect": "BURN",
+	"combat_usable": true
+  },
+  "frost_crystal": {
+	"name": "Frost Crystal",
+	"description": "Shatters to deal 35 damage and freeze target for 2 turns",
+	"item_type": "CONSUMABLE",
+	"value": 120,
+	"stackable": true,
+	"max_stack": 20,
+	"consumable_type": "DAMAGE",
+	"effect_power": 35,
+	"effect_duration": 2,
+	"status_effect": "FREEZE",
+	"combat_usable": true
+  },
+  "thunder_orb": {
+	"name": "Thunder Orb",
+	"description": "Releases lightning dealing 45 damage and shocking for 2 turns",
+	"item_type": "CONSUMABLE",
+	"value": 130,
+	"stackable": true,
+	"max_stack": 20,
+	"consumable_type": "DAMAGE",
+	"effect_power": 45,
+	"effect_duration": 2,
+	"status_effect": "SHOCK",
+	"combat_usable": true
+  },
+  "venom_vial": {
+	"name": "Venom Vial",
+	"description": "Toxic liquid dealing 25 damage and poisoning for 4 turns",
+	"item_type": "CONSUMABLE",
+	"value": 80,
+	"stackable": true,
+	"max_stack": 20,
+	"consumable_type": "DAMAGE",
+	"effect_power": 25,
+	"effect_duration": 4,
+	"status_effect": "POISON",
+	"combat_usable": true
+  },
+  "stone_shard": {
+	"name": "Stone Shard",
+	"description": "A heavy rock that deals 30 damage",
+	"item_type": "CONSUMABLE",
+	"value": 25,
+	"stackable": true,
+	"max_stack": 50,
+	"consumable_type": "DAMAGE",
+	"effect_power": 30,
+	"effect_duration": 0,
+	"combat_usable": true
+  },
+  "rotten_dung": {
+	"name": "Rotten Dung",
+	"description": "Disgusting filth dealing 15 damage with 50% chance to poison for 2 turns",
+	"item_type": "CONSUMABLE",
+	"value": 10,
+	"stackable": true,
+	"max_stack": 99,
+	"consumable_type": "DAMAGE",
+	"effect_power": 15,
+	"effect_duration": 2,
+	"status_effect": "POISON",
+	"poison_chance": 0.5,
+	"combat_usable": true
+  },
+  "smoke_bomb": {
+	"name": "Smoke Bomb",
+	"description": "Creates a smoke screen, increasing dodge chance by 30% for 3 turns",
+	"item_type": "CONSUMABLE",
+	"value": 90,
+	"stackable": true,
+	"max_stack": 20,
+	"consumable_type": "BUFF",
+	"effect_power": 30,
+	"effect_duration": 3,
+	"buff_type": "DODGE",
+	"combat_usable": true
+  },
+  "berserker_brew": {
+	"name": "Berserker Brew",
+	"description": "Increases attack power by 20 for 4 turns",
+	"item_type": "CONSUMABLE",
+	"value": 150,
+	"stackable": true,
+	"max_stack": 10,
+	"consumable_type": "BUFF",
+	"effect_power": 20,
+	"effect_duration": 4,
+	"buff_type": "ATTACK",
+	"combat_usable": true
+  },
+  "holy_water": {
+	"name": "Holy Water",
+	"description": "Cures all status effects and restores 20 HP",
+	"item_type": "CONSUMABLE",
+	"value": 200,
+	"stackable": true,
+	"max_stack": 10,
+	"consumable_type": "CURE",
+	"effect_power": 20,
+	"effect_duration": 0,
+	"combat_usable": true
   }
 }
