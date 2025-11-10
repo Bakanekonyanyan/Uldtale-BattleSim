@@ -15,6 +15,7 @@ var rarity_applied: bool = false
 var inventory_key: String = ""  # Stores the unique inventory key for this instance
 
 # New rarity system properties
+var rarity_stat_modifiers: Dictionary = {}
 var stat_modifiers: Dictionary = {}  # Dictionary of AttributeTarget -> value
 var status_effect_chance: float = 0.0  # Chance to apply status effect (0.0 to 1.0)
 var status_effect_type: Skill.StatusEffect = Skill.StatusEffect.NONE
@@ -170,7 +171,7 @@ func apply_rarity_modifiers():
 		"uncommon":
 			# 1 random stat modifier (+1 to +3)
 			add_random_stat_modifier(1, 1, 3)
-		
+			
 		"magic":
 			# 2 random stat modifiers (+1 to +4)
 			add_random_stat_modifier(2, 1, 4)
@@ -197,32 +198,27 @@ func apply_rarity_modifiers():
 	
 	rarity_applied = true
 
-func add_random_stat_modifier(count: int, min_value: int, max_value: int, unique: bool = false):
-	"""Add random stat modifiers to the item"""
-	var available_stats = PRIMARY_STATS.duplicate()
+func add_random_stat_modifier(count: int, min_val: int, max_val: int, unique := false):
+	var available_stats = Skill.AttributeTarget.keys()
 	
 	for i in range(count):
-		if available_stats.is_empty():
-			break
-		
-		var stat: Skill.AttributeTarget
-		if unique:
-			# Pick a unique stat
-			stat = available_stats[randi() % available_stats.size()]
-			available_stats.erase(stat)
-		else:
-			# Can pick the same stat multiple times
-			stat = PRIMARY_STATS[randi() % PRIMARY_STATS.size()]
-		
-		var modifier_value = randi_range(min_value, max_value)
-		
-		# If stat already has a modifier, add to it instead of replacing
+		var stat = available_stats[randi() % available_stats.size()]
+		var value = randi_range(min_val, max_val)
+
+		# Prevent duplicates if needed
+		if unique and stat_modifiers.has(stat):
+			continue
+
+		# Add to base modifiers
 		if stat_modifiers.has(stat):
-			stat_modifiers[stat] += modifier_value
+			stat_modifiers[stat] += value
 		else:
-			stat_modifiers[stat] = modifier_value
-		
-		print("Added stat modifier: %s +%d" % [Skill.AttributeTarget.keys()[stat], modifier_value])
+			stat_modifiers[stat] = value
+
+		# Record as rarity bonus
+		if not rarity_stat_modifiers.has(stat):
+			rarity_stat_modifiers[stat] = 0
+		rarity_stat_modifiers[stat] += value
 
 func add_status_effect():
 	"""Add a random status effect with a chance to proc"""
@@ -310,33 +306,43 @@ func generate_procedural_name():
 	print("Flavor text: %s" % flavor_text)
 
 func get_full_description() -> String:
-	"""Get the full description including all modifiers"""
-	var desc = description + "\n"
-	
+	var desc = "[b]%s[/b]\n%s\n" % [name, description]
+
 	if flavor_text != "":
 		desc += "\n[i]" + flavor_text + "[/i]\n"
-	
+
 	if rarities.has(rarity):
-		desc += "\n[color=%s]%s[/color]\n" % [rarities[rarity]["color"], rarity.capitalize()]
-	
+		var rarity_data = rarities[rarity]
+		desc += "\n[color=%s]%s[/color]\n" % [rarity_data["color"], rarity.capitalize()]
+
+	# Base stats
 	if damage > 0:
 		desc += "Damage: %d\n" % damage
 	if armor_value > 0:
 		desc += "Armor: %d\n" % armor_value
 	if bonus_damage > 0:
 		desc += "[color=orange]Bonus Damage: +%d[/color]\n" % bonus_damage
-	
+
+	# All Stat Modifiers
 	if not stat_modifiers.is_empty():
-		desc += "\n[color=green]Stat Modifiers:[/color]\n"
+		desc += "\n[color=green]Attribute Bonuses:[/color]\n"
 		for stat in stat_modifiers:
-			desc += "  +%d %s\n" % [stat_modifiers[stat], Skill.AttributeTarget.keys()[stat].capitalize()]
-	
+			var stat_name = Skill.AttributeTarget.keys()[stat].capitalize()
+			var value = stat_modifiers[stat]
+
+			if rarity_stat_modifiers.has(stat):
+				desc += "  [color=gold]+%d %s[/color] (from rarity)\n" % [value, stat_name]
+			else:
+				desc += "  +%d %s\n" % [value, stat_name]
+
+	# Status Effect
 	if status_effect_type != Skill.StatusEffect.NONE:
+		var effect_name = Skill.StatusEffect.keys()[status_effect_type]
 		desc += "\n[color=purple]%.1f%% chance to inflict %s[/color]\n" % [
 			status_effect_chance * 100,
-			Skill.StatusEffect.keys()[status_effect_type]
+			effect_name
 		]
-	
+
 	return desc
 
 func apply_stat_modifiers(character: CharacterData):

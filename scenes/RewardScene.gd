@@ -25,14 +25,28 @@ var new_floor_pressed = false
 @onready var accept_reward_button = $UI/AcceptRewardButton
 var xp_gained: int = 0
 
+func set_rewards_accepted(value: bool) -> void:
+	rewards_collected = value
+
 func _ready():
 	print("RewardScene: _ready called")
+	print(rewards_collected)
 	call_deferred("deferred_setup")
+	if rewards_collected:
+		hide_rewards()
+
+func hide_rewards():
+	if $UI/RewardLabel:
+		$UI/RewardLabel.visible = false
+	if $UI/AcceptRewardButton:
+		$UI/AcceptRewardButton.visible = false
 
 func deferred_setup():
 	print("RewardScene: deferred_setup called")
 	setup_ui()
-	display_rewards()
+	if rewards_collected == false:
+		display_rewards()
+		
 	setup_complete = true
 
 func setup_ui():
@@ -215,6 +229,9 @@ func _on_next_floor_pressed():
 	print("RewardScene: Next floor button pressed")
 	SaveManager.save_game(player_character)
 	emit_signal("next_floor")
+	SceneManager.rewards_accepted = true
+	rewards_collected = true
+
 
 func _on_quit_pressed():
 	print("RewardScene: Quit button pressed")
@@ -239,6 +256,9 @@ func _on_continue_pressed():
 	
 	print("RewardScene: Continue button pressed")
 	SceneManager.reward_scene_active = false
+	SceneManager.rewards_accepted = true
+	rewards_collected = true
+
 	
 	if not setup_complete:
 		print("Error: Setup not complete, cannot continue")
@@ -250,21 +270,24 @@ func _on_continue_pressed():
 	print("RewardScene: Emitted rewards_accepted signal")
 
 func show_collection_prompt(action: String):
-	var dialog = ConfirmationDialog.new()
-	dialog.title = "Collect Rewards First"
-	dialog.dialog_text = "You must accept your rewards before you can %s!\n\nDo you want to accept them now?" % action
-	dialog.ok_button_text = "Push forward and disregard rubbish."
-	dialog.cancel_button_text = "Cancel to Accept Rewards."
-	dialog.connect("confirmed", Callable(self, "_on_ignore_rewards_pressed").bind())
-	add_child(dialog)
-	dialog.popup_centered()
+	if rewards_collected == false:
+		var dialog = ConfirmationDialog.new()
+		dialog.title = "Collect Rewards First"
+		dialog.dialog_text = "You must accept your rewards before you can %s!\n\nDo you want to accept them now?" % action
+		dialog.ok_button_text = "Push forward and disregard rubbish."
+		dialog.cancel_button_text = "Cancel to Accept Rewards."
+		dialog.connect("confirmed", Callable(self, "_on_ignore_rewards_pressed").bind())
+		add_child(dialog)
+		dialog.popup_centered()
 	
 	# Wait for user choice
-	var confirmed = await dialog.confirmed
-	dialog.confirmed.connect(_on_ignore_rewards_pressed)
-	continue_pressed = false
-	new_floor_pressed = false
-	print("confirmed")
+		var confirmed = await dialog.confirmed
+		dialog.confirmed.connect(_on_ignore_rewards_pressed)
+		continue_pressed = false
+		new_floor_pressed = false
+		print("confirmed")
+	else:
+		return
 			
 			
 func _on_ignore_rewards_pressed():

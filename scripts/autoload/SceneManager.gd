@@ -9,6 +9,8 @@ var reward_data: Dictionary = {}
 var reward_data_temp: Dictionary = {}
 var reward_scene_active = false
 var town_scene_active = false
+var rewards_accepted = false
+
 
 func _ready() -> void:
 	var root = get_tree().root
@@ -32,6 +34,12 @@ func _change_scene_internal(path: String, player_character: CharacterData = null
 		return
 	
 	current_scene = scene_resource.instantiate()
+	
+	# If we're loading a RewardScene, tell it whether rewards were already accepted
+	if current_scene.has_method("set_rewards_accepted"):
+		current_scene.set_rewards_accepted(rewards_accepted)
+
+	
 	if current_scene == null:
 		printerr("Failed to instantiate scene: ", path)
 		return
@@ -104,6 +112,8 @@ func start_battle(battle_data: Dictionary) -> void:
 
 func setup_battle_scene():
 	await get_tree().process_frame
+	reward_scene_active = false
+	rewards_accepted = false
 	
 	if not current_scene or not current_scene.has_method("set_player"):
 		push_error("SceneManager: Battle scene not ready or missing required methods")
@@ -272,7 +282,8 @@ func _on_rewards_accepted():
 func _on_next_floor():
 	print("SceneManager: Next floor requested")
 	reward_scene_active = false
-	
+	rewards_accepted = false
+
 	if not dungeon_info.is_empty():
 		dungeon_info["current_floor"] += 1
 		dungeon_info["current_wave"] = 0
