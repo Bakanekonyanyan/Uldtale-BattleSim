@@ -190,29 +190,38 @@ func calculate_secondary_attributes():
 	
 func equip_item(item: Equipment) -> Equipment:
 	if not item.can_equip(self):
+		print("Cannot equip %s - class restriction" % item.name)
 		return null
 	
 	var old_item = equipment[item.slot]
+	
+	# CRITICAL FIX: Store the inventory key BEFORE any operations
+	var item_inventory_key = item.inventory_key if item.inventory_key != "" else item.id
+	
+	print("Equipping %s to slot %s (key: %s)" % [item.name, item.slot, item_inventory_key])
+	
+	# If slot has an item, unequip it first
 	if old_item:
+		print("Slot %s already occupied by %s, unequipping first" % [item.slot, old_item.name])
 		unequip_item(item.slot)
 	
+	# Now equip the new item
 	equipment[item.slot] = item
 	item.apply_effects(self)
 	
-	# Apply stat modifiers from the new rarity system
 	if item.has_method("apply_stat_modifiers"):
 		item.apply_stat_modifiers(self)
 	
-	# Remove from inventory using the unique key if it exists
-	if item is Equipment and item.inventory_key != "":
-		inventory.remove_item(item.inventory_key, 1)
+	# Remove from inventory using the stored key
+	var removed = inventory.remove_item(item_inventory_key, 1)
+	if not removed:
+		print("ERROR: Failed to remove item from inventory with key: %s" % item_inventory_key)
 	else:
-		# Fallback to base id for non-equipment or old saves
-		inventory.remove_item(item.id, 1)
+		print("Successfully removed item from inventory")
 	
 	calculate_secondary_attributes()
 	return old_item
-
+		
 func unequip_item(slot: String) -> Equipment:
 	var item = equipment[slot]
 	if item:

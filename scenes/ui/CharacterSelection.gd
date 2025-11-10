@@ -47,14 +47,37 @@ func _on_character_selected(character):
 
 func _on_start_new_game_pressed():
 	if selected_character:
-		print("Starting new game with character: ", selected_character.name)
-		# Reset character to initial state if needed
-		selected_character.reset_for_new_game()
-		# FIXED: Use SaveManager.save_game() instead of CharacterManager.save_character()
-		SaveManager.save_game(selected_character)
-		SceneManager.change_to_town(selected_character)
+		# Check if save exists
+		if SaveManager.save_exists(selected_character.name):
+			show_new_game_warning()
+		else:
+			start_new_game()
 	else:
 		print("No character selected")
+
+func show_new_game_warning():
+	var dialog = ConfirmationDialog.new()
+	dialog.title = "Overwrite Save?"
+	dialog.dialog_text = "Starting a new game will DELETE your existing save for %s!\n\nAre you sure you want to continue?" % selected_character.name
+	dialog.ok_button_text = "Yes, Delete Save"
+	dialog.cancel_button_text = "Cancel"
+	dialog.connect("confirmed", Callable(self, "start_new_game").bind())
+	add_child(dialog)
+	dialog.popup_centered()
+	
+	var confirmed = await dialog.confirmed
+	dialog.confirmed.connect(_on_confirmed)
+
+func _on_confirmed():
+	print("confirm")
+	start_new_game()
+
+
+func start_new_game():
+	print("Starting new game with character: ", selected_character.name)
+	selected_character.reset_for_new_game()
+	SaveManager.save_game(selected_character)
+	SceneManager.change_to_town(selected_character)
 
 func _on_load_saved_game_pressed():
 	if selected_character:
