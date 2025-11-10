@@ -1,22 +1,26 @@
 {
   "common": {
-    "multiplier": 1,
-    "color": "white"
+	"multiplier": 1,
+	"color": "white"
   },
   "uncommon": {
-    "multiplier": 2,
-    "color": "blue"
+	"multiplier": 2,
+	"color": "blue"
   },
   "magic": {
-    "multiplier": 2.5,
-    "color": "yellow"
+	"multiplier": 2.5,
+	"color": "yellow"
+  },
+  "rare": {
+	"multiplier": 3,
+	"color": "yellow"
   },
   "epic": {
-    "multiplier": 3,
-    "color": "purple"
+	"multiplier": 4,
+	"color": "purple"
   },
   "legendary": {
-    "multiplier": 5,
-    "color": "orange"
+	"multiplier": 5,
+	"color": "orange"
   }
 }

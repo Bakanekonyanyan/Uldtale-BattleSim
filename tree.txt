@@ -1,0 +1,474 @@
+Folder PATH listing for volume Extreme SSD
+Volume serial number is 76C8-B76D
+D:.
+|   .gitignore
+|   .gitattributes
+|   icon.svg
+|   icon.svg.import
+|   default_bus_layout.tres
+|   project.godot
+|   export_presets.cfg
+|   tree.txt
+|   
++---.godot
+|   |   .gdignore
+|   |   global_script_class_cache.cfg
+|   |   uid_cache.bin
+|   |   scene_groups_cache.cfg
+|   |   export_credentials.cfg
+|   |   
+|   +---editor
+|   |       MainMenu.tscn-editstate-99174fb0fd2492fee0dd7d5ca3b0e3c8.cfg
+|   |       MainMenu.tscn-folding-99174fb0fd2492fee0dd7d5ca3b0e3c8.cfg
+|   |       Battle.tscn-editstate-775dedb01002f3e4f6cd9189d48c5661.cfg
+|   |       Main.tscn-folding-68a04552abb3f12a362e1db2098e38c9.cfg
+|   |       project_metadata.cfg
+|   |       EquipmentScene.gd-folding-05119008f53a17ebfb3d8afc53b23054.cfg
+|   |       classes.json-folding-3364a69556c3db40b0501197a44552ab.cfg
+|   |       filesystem_cache8
+|   |       favorites.Node
+|   |       WaveBattle.tscn-folding-609a69827a4bb5fad1410772eb2745e8.cfg
+|   |       TownScene.tscn-folding-ea0cc97c85afa9f41aecf114da3f2e5b.cfg
+|   |       DungeonScene.gd-folding-9a2e6062395959d6cc31ec733dcab6d6.cfg
+|   |       ShopScene.tscn-folding-fd3fc7977a41b73ebdb3e1ec3584f970.cfg
+|   |       CharacterCreation.tscn-folding-687b28e729cdbf384a2214f1d2769ad5.cfg
+|   |       RewardScene.gd-folding-817a09f5c713b3332e0998b090ca87b9.cfg
+|   |       favorites
+|   |       script_editor_cache.cfg
+|   |       create_recent.Node
+|   |       Battle.tscn-folding-775dedb01002f3e4f6cd9189d48c5661.cfg
+|   |       Main.tscn-editstate-4a24720ee5e787dbe30abc634fa3679d.cfg
+|   |       SaveManager.gd-folding-c3addc2b73966bbc5e7d5c1b4d248130.cfg
+|   |       Main.tscn-folding-4a24720ee5e787dbe30abc634fa3679d.cfg
+|   |       TownScene.gd-folding-b77a072a9d3623994a8017d73e95032f.cfg
+|   |       SceneManager.gd-folding-9f8c38dc857b254a8ff9b1686e6173b7.cfg
+|   |       DungeonScene.tscn-editstate-775364f176db7dd5a27b6810f8d5e89d.cfg
+|   |       Inventory.gd-folding-80606c5c053dff8e5dc9ba19a0f5dc3e.cfg
+|   |       recent_dirs
+|   |       CharacterCreation.gd-folding-bca22514e701f2c0b1ac9a650baae00e.cfg
+|   |       ShopScene.gd-folding-573a3713cee6f572a84dca5d0e9d292e.cfg
+|   |       LevelUpScene.gd-folding-60420d64e78d35c53054bf6154918aa3.cfg
+|   |       Item.gd-folding-db05f2a5bc0e1ab76defade93cc3c7fc.cfg
+|   |       Equipment.gd-folding-1a7e23a7022dd5e257985d9854b17bd0.cfg
+|   |       WaveBattle.gd-folding-2755d1094b4ef6f2cc551f9e2936664e.cfg
+|   |       filesystem_cache10
+|   |       filesystem_update4
+|   |       materials.json-folding-f7b1fcc54aa2f6b005c55117e7d1844c.cfg
+|   |       ItemManager.gd-folding-88c412c718f39280f3dafe80992fce75.cfg
+|   |       BossFactory.gd-folding-09d890cd3e841274869023c6a2081827.cfg
+|   |       StatusScene.gd-folding-eca4ae91d5ed40d8653de2423d3352ff.cfg
+|   |       EnemyFactory.gd-folding-2d285524e698deb3d3e31c0c4daf6dca.cfg
+|   |       InventoryScene.tscn-folding-8a74330932cdfb6a0856c17a6b368706.cfg
+|   |       races.json-folding-151b0b4f2f14967b7ea8bbbb597f9efd.cfg
+|   |       Main.gd-folding-335f3e9ba516508728339c94657e3f44.cfg
+|   |       StashScene.tscn-folding-0df3c64dd8951d87a4c0312085c4eb6f.cfg
+|   |       editor_layout.cfg
+|   |       Battle.gd-folding-e6e9c0a5a4c10e463d17ec35544d79c2.cfg
+|   |       RewardScene.tscn-editstate-b0d42c2707387c0baf1e9b0dfb9ce078.cfg
+|   |       SceneManager.gd-folding-8ff368fa5a0946bdafb46afd013a16e2.cfg
+|   |       consumables.json-folding-a593b02e45b32de95448901335821c04.cfg
+|   |       EquipmentScene.tscn-editstate-69024be31add3bde43602b9c2604c876.cfg
+|   |       Main.gd-folding-3d79e75df97ebfed234f2e2c3c95a384.cfg
+|   |       MainMenu.gd-folding-3a3d103dd87f639fbb6a888668219f4c.cfg
+|   |       LevelSystem.gd-folding-c1767cd1049ec3f207807e5e26e1ecf2.cfg
+|   |       HEROICCC(chosic.com).mp3-327335c850a370fab47dff6a41bc335a.mp3str-folding-180d35daa2469d5d8cd80f9ab3169812.cfg
+|   |       export-687b28e729cdbf384a2214f1d2769ad5-CharacterCreation.scn-folding-4414f8ccf079021d43a86afdfd9ef319.cfg
+|   |       LootManager.gd-folding-305cf0f7da02713f078d1e1cb05d674a.cfg
+|   |       WaveBattle.tscn-editstate-609a69827a4bb5fad1410772eb2745e8.cfg
+|   |       CharacterSelection.tscn-folding-2b6fcbc167f78db5edebc830a23d9889.cfg
+|   |       CharacterSelection.tscn-editstate-2b6fcbc167f78db5edebc830a23d9889.cfg
+|   |       PointLight2D.gd-folding-1470abefe458bbec1efdfa18d3b6e561.cfg
+|   |       CharacterCreation.tscn-editstate-687b28e729cdbf384a2214f1d2769ad5.cfg
+|   |       skills.json-folding-43f0967963f352d03b5ed16748a11097.cfg
+|   |       Equipment Scene.tscn-editstate-a0417744c987409e80ee10f637666fe9.cfg
+|   |       EquipmentScene.tscn-folding-69024be31add3bde43602b9c2604c876.cfg
+|   |       Equipment Scene.tscn-folding-a0417744c987409e80ee10f637666fe9.cfg
+|   |       CharacterSelection.gd-folding-b0ee47a41873075222589af019c85dee.cfg
+|   |       InventoryScene.tscn-editstate-8a74330932cdfb6a0856c17a6b368706.cfg
+|   |       Main.tscn-editstate-68a04552abb3f12a362e1db2098e38c9.cfg
+|   |       default_bus_layout.tres-folding-19246414aa9fb561ced4b8dce477acec.cfg
+|   |       CharacterManager.gd-folding-ac659bd9a909186d98c739e88199b550.cfg
+|   |       Skill.gd-folding-b0c1ff6ebc18c3bd4b763ea585bbe43f.cfg
+|   |       StashScene.tscn-editstate-0df3c64dd8951d87a4c0312085c4eb6f.cfg
+|   |       SkillManager.gd-folding-67a5c41c8e2ebc490994e19444449546.cfg
+|   |       Main.tscn-folding-c14f4eb758fc2f0b1b68a56207ab2596.cfg
+|   |       InventoryMenu.gd-folding-c23b7dd9cd8eaef2b1fbcafb57a46061.cfg
+|   |       StatusScene.tscn-editstate-71ae2e0c90c6932f97f1e34115eae303.cfg
+|   |       BattleManager.gd-folding-80cc2e5bee97360b7e80b531bb107d2d.cfg
+|   |       Currency.gd-folding-b21e5babdf6f743760b27a4f18d2b4a4.cfg
+|   |       TownScene.tscn-editstate-ea0cc97c85afa9f41aecf114da3f2e5b.cfg
+|   |       favorite_properties
+|   |       LevelUpScene.tscn-editstate-d1e23c43d92d381070c2a2325977f957.cfg
+|   |       InventoryScene.gd-folding-a56c4b4a43dc47eaab70ae765f7a336e.cfg
+|   |       InventoryScene.tscn-editstate-d79846c1746999fc923de6e10825e05b.cfg
+|   |       InventoryScene.tscn-folding-d79846c1746999fc923de6e10825e05b.cfg
+|   |       InventoryScene.gd-folding-3e88f765e54c4c33732c16811c7b34e2.cfg
+|   |       StashScene.gd-folding-ebabcde9382e34954df2e8c85e2e2dc4.cfg
+|   |       StatusEffectData.gd-folding-d7dd08efb0cde919f23cf11ad6437687.cfg
+|   |       DungeonScene.tscn-folding-775364f176db7dd5a27b6810f8d5e89d.cfg
+|   |       ShopScene.tscn-editstate-fd3fc7977a41b73ebdb3e1ec3584f970.cfg
+|   |       medieval-fanfare-6826.mp3-714c539510d88bb78121c8ce2f2f25e6.mp3str-folding-8d162184bab6052ffa2bb8bdeae112db.cfg
+|   |       tavern_greece_indoor-63937.mp3-ce2754626f1ffa348eca915d0d63c315.mp3str-folding-273a73c188aa83d8311d21b3849fafd2.cfg
+|   |       Main.tscn-editstate-c14f4eb758fc2f0b1b68a56207ab2596.cfg
+|   |       text-notification-96707.mp3-48e6ebdde251bae899047c4f964cc19e.mp3str-folding-c865548939c1a37341ffd9f6a988eeed.cfg
+|   |       Sunset-Landscape(chosic.com).mp3-cdb39ae77bb47f27d93e5a14fd5d85b0.mp3str-folding-ea2a3663ca1992cce93e5de07e237f27.cfg
+|   |       Exploring the Cursed Cemetery .mp3-9fc05468b008a916e68f858adb636c33.mp3str-folding-d9c7dfe8548a020d55aea1e10a9178f6.cfg
+|   |       RewardScene.tscn-folding-b0d42c2707387c0baf1e9b0dfb9ce078.cfg
+|   |       status_effects.json-folding-e7a5b3ed176b4230303267bf29981223.cfg
+|   |       LevelUpScene.tscn-folding-d1e23c43d92d381070c2a2325977f957.cfg
+|   |       export-775dedb01002f3e4f6cd9189d48c5661-Battle.scn-folding-7b22fc28d3b1d5007cfddae09eed7ed8.cfg
+|   |       clicking-interface-select-201946.mp3-db86c032b4a3f41b8d286578a72043ea.mp3str-folding-8112dbe3716a6b262def3003748691ff.cfg
+|   |       Gloomy Atmosphere for Documentaries.mp3-332566a5d922de2c1e63cb6dd1892068.mp3str-folding-94ef42400ced32a754f1aa3cad0e73c3.cfg
+|   |       TurnManager.gd-folding-625c5dcfc1dfbb1c9d53349bd9b37c34.cfg
+|   |       menu-button-88360.mp3-30ed2d010ed7288268044a640df0626f.mp3str-folding-5df477fc4ac1b53662bc8dea57f89c14.cfg
+|   |       menu-selection-102220.mp3-835a058183f9361d41bf16dd6eba1c60.mp3str-folding-c256023ed75c61a89711b0f3c79a8cb2.cfg
+|   |       export-c14f4eb758fc2f0b1b68a56207ab2596-Main.scn-folding-5d44dce95a40e4ed68abbc72ff4a1ce9.cfg
+|   |       CharacterData.gd-folding-70f37e876c25c108f253e729df63f8eb.cfg
+|   |       export-2b6fcbc167f78db5edebc830a23d9889-CharacterSelection.scn-folding-d56b6e835e6bdacef60fb0af631da615.cfg
+|   |       export-99174fb0fd2492fee0dd7d5ca3b0e3c8-MainMenu.scn-folding-942f3ec56d8d8887a600fbfbc3daaadd.cfg
+|   |       export-775364f176db7dd5a27b6810f8d5e89d-DungeonScene.scn-folding-2fa382e11a5d461f8c0e408bde9d1607.cfg
+|   |       export-69024be31add3bde43602b9c2604c876-EquipmentScene.scn-folding-edd96b1bb3fe63b02cba40f28e44946e.cfg
+|   |       export-8a74330932cdfb6a0856c17a6b368706-InventoryScene.scn-folding-d12a5ee0669665d215c76d23ca29d4e8.cfg
+|   |       export-d1e23c43d92d381070c2a2325977f957-LevelUpScene.scn-folding-2f7385d7dbef3f3ce00e0c391d3c1bfc.cfg
+|   |       export-b0d42c2707387c0baf1e9b0dfb9ce078-RewardScene.scn-folding-cd37c9b5c0de5a6e0611527b05bf577b.cfg
+|   |       export-fd3fc7977a41b73ebdb3e1ec3584f970-ShopScene.scn-folding-0e7b636d97316091765aa25473117f51.cfg
+|   |       export-0df3c64dd8951d87a4c0312085c4eb6f-StashScene.scn-folding-0230744a1d0664c006cb72745f5db0ba.cfg
+|   |       export-71ae2e0c90c6932f97f1e34115eae303-StatusScene.scn-folding-f43c3d404ec4afd57e073495190275cd.cfg
+|   |       export-ea0cc97c85afa9f41aecf114da3f2e5b-TownScene.scn-folding-df21b45aa71e1ff6cb90273c9e3b7062.cfg
+|   |       export-609a69827a4bb5fad1410772eb2745e8-WaveBattle.scn-folding-9732486326ac953542cddb831d49365d.cfg
+|   |       export-19246414aa9fb561ced4b8dce477acec-default_bus_layout.res-folding-78e26862b5a1159d1ac1d1996757bcbe.cfg
+|   |       StatusScene.tscn-folding-71ae2e0c90c6932f97f1e34115eae303.cfg
+|   |       CombatManager.gd-folding-a6166b4c2e96b79758c4b5c9d6ff4619.cfg
+|   |       BattleUIManager.gd-folding-34217c5b34efc439f4b994dd7d1263df.cfg
+|   |       rarities.json-folding-d62d8c66cc0c9c82958a94193255e54e.cfg
+|   |       EnemyFactory.gd-folding-6b81d7f4cd649fa86a5addb4c298ee7d.cfg
+|   |       EnemyFactory.gd-folding-0acc73fd8c53b8bb5597bbb519fe5453.cfg
+|   |       
+|   +---imported
+|   |       Main Menu Logo.png-dae7555438fb3057eedd24ffbbe4a1a8.ctex
+|   |       Shopkeep.png-94541f1e12c622d9ee8aaa333b251120.ctex
+|   |       BossBackground.png-8942546b4287f4aa2ccb307af28af51f.ctex
+|   |       main menu 1.png-f1da95285f344efeb97efa24ce4a1318.ctex
+|   |       main menu 2.png-955ad45bdbdc530100cc5564e1c1d9df.ctex
+|   |       WaveBackground.png-e096e3415089d0de5d36abd43331b934.ctex
+|   |       Main Menu Logo.png-dae7555438fb3057eedd24ffbbe4a1a8.md5
+|   |       GoblinKing.png-b38b392191704a62e433b544d7caef59.ctex
+|   |       Shopkeep.png-94541f1e12c622d9ee8aaa333b251120.md5
+|   |       GoblinBrute.png-1569a07c6ab9d0dbf3954a3cf51fbdfe.ctex
+|   |       GoblinMage.png-d50b901e256d2030625061ac2e78b514.ctex
+|   |       GoblinShaman.png-0020e176e31d9bb66034e6dfcb88377b.ctex
+|   |       main menu 1.png-f1da95285f344efeb97efa24ce4a1318.md5
+|   |       BossBackground.png-8942546b4287f4aa2ccb307af28af51f.md5
+|   |       main menu 2.png-955ad45bdbdc530100cc5564e1c1d9df.md5
+|   |       WaveBackground.png-e096e3415089d0de5d36abd43331b934.md5
+|   |       GoblinMinion.png-f91206196bc8d5e6c2cad16b4fab671d.ctex
+|   |       GoblinKing.png-b38b392191704a62e433b544d7caef59.md5
+|   |       GoblinBrute.png-1569a07c6ab9d0dbf3954a3cf51fbdfe.md5
+|   |       GoblinShaman.png-0020e176e31d9bb66034e6dfcb88377b.md5
+|   |       GoblinMage.png-d50b901e256d2030625061ac2e78b514.md5
+|   |       GoblinMinion.png-f91206196bc8d5e6c2cad16b4fab671d.md5
+|   |       icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex
+|   |       icon.svg-218a8f2b3041327d8a5756f3a245f83b.md5
+|   |       Shopkeep.png-d8c2877ee559ad6bc0f14a749db09fe3.ctex
+|   |       TownScene.png-078c44796198c62f0bc69adae5d6af45.ctex
+|   |       Shopkeep.png-d8c2877ee559ad6bc0f14a749db09fe3.md5
+|   |       TownScene.png-078c44796198c62f0bc69adae5d6af45.md5
+|   |       WaveBackground.png-469bba2265498bc46f539a715a877b0b.ctex
+|   |       RewardsBackground.png-dfb4e1070b95955fe06252311e9cc5c2.ctex
+|   |       Main Menu Logo.png-6e77baab3051575de46c9c7317191d52.ctex
+|   |       WaveBackground.png-469bba2265498bc46f539a715a877b0b.md5
+|   |       RewardsBackground.png-dfb4e1070b95955fe06252311e9cc5c2.md5
+|   |       Main Menu Logo.png-6e77baab3051575de46c9c7317191d52.md5
+|   |       GoblinBrute.png-b7984041c68202e5846a59e924aaaf7e.ctex
+|   |       GoblinKing.png-2048ee185dcbdc60cda0cb0f171caaf4.ctex
+|   |       GoblinMage.png-0cdacc435a28fef1245458162af07972.ctex
+|   |       main menu 2.png-e6aa449c978ebc22bb6c77139eb3a3be.ctex
+|   |       GoblinBrute.png-b7984041c68202e5846a59e924aaaf7e.md5
+|   |       GoblinKing.png-2048ee185dcbdc60cda0cb0f171caaf4.md5
+|   |       GoblinShaman.png-a76b1070fed13460f3f3d6b7a0c40665.ctex
+|   |       main menu 2.png-e6aa449c978ebc22bb6c77139eb3a3be.md5
+|   |       GoblinMage.png-0cdacc435a28fef1245458162af07972.md5
+|   |       BossBackground.png-f340eef7e6aa2fbaf9ea6846b124947a.ctex
+|   |       main menu 1.png-f690acca00998421afde90851030a96b.ctex
+|   |       GoblinShaman.png-a76b1070fed13460f3f3d6b7a0c40665.md5
+|   |       main menu 1.png-f690acca00998421afde90851030a96b.md5
+|   |       BossBackground.png-f340eef7e6aa2fbaf9ea6846b124947a.md5
+|   |       GoblinMinion.png-40c2509b84679424fb99f292319de2cb.ctex
+|   |       GoblinMinion.png-40c2509b84679424fb99f292319de2cb.md5
+|   |       clicking-interface-select-201946.mp3-db86c032b4a3f41b8d286578a72043ea.mp3str
+|   |       menu-button-88360.mp3-30ed2d010ed7288268044a640df0626f.mp3str
+|   |       HEROICCC(chosic.com).mp3-327335c850a370fab47dff6a41bc335a.mp3str
+|   |       medieval-fanfare-6826.mp3-714c539510d88bb78121c8ce2f2f25e6.mp3str
+|   |       Gloomy Atmosphere for Documentaries.mp3-332566a5d922de2c1e63cb6dd1892068.mp3str
+|   |       menu-selection-102220.mp3-835a058183f9361d41bf16dd6eba1c60.mp3str
+|   |       tavern_greece_indoor-63937.mp3-ce2754626f1ffa348eca915d0d63c315.mp3str
+|   |       Sunset-Landscape(chosic.com).mp3-cdb39ae77bb47f27d93e5a14fd5d85b0.mp3str
+|   |       Exploring the Cursed Cemetery .mp3-9fc05468b008a916e68f858adb636c33.mp3str
+|   |       medieval-fanfare-6826.mp3-714c539510d88bb78121c8ce2f2f25e6.md5
+|   |       menu-selection-102220.mp3-835a058183f9361d41bf16dd6eba1c60.md5
+|   |       HEROICCC(chosic.com).mp3-327335c850a370fab47dff6a41bc335a.md5
+|   |       Gloomy Atmosphere for Documentaries.mp3-332566a5d922de2c1e63cb6dd1892068.md5
+|   |       clicking-interface-select-201946.mp3-db86c032b4a3f41b8d286578a72043ea.md5
+|   |       menu-button-88360.mp3-30ed2d010ed7288268044a640df0626f.md5
+|   |       tavern_greece_indoor-63937.mp3-ce2754626f1ffa348eca915d0d63c315.md5
+|   |       Exploring the Cursed Cemetery .mp3-9fc05468b008a916e68f858adb636c33.md5
+|   |       Sunset-Landscape(chosic.com).mp3-cdb39ae77bb47f27d93e5a14fd5d85b0.md5
+|   |       text-notification-96707.mp3-48e6ebdde251bae899047c4f964cc19e.mp3str
+|   |       text-notification-96707.mp3-48e6ebdde251bae899047c4f964cc19e.md5
+|   |       
+|   +---shader_cache
+|   |   +---CanvasSdfShaderGLES3
+|   |   |   \---c149263803dc5b859c3141221dfc0c29418e59133256b85a6c81726909946074
+|   |   +---SkeletonShaderGLES3
+|   |   |   \---4939e741074dc0b07fb00f8f721f38bb601c9d4a80728c698260fb73c4d061a9
+|   |   +---ParticlesShaderGLES3
+|   |   |   \---60fd810ca0675769d51ef64eb0ab6a07dd80a94544e2fdb2ab1792dd0bf1b85d
+|   |   +---ParticlesCopyShaderGLES3
+|   |   |   \---0dd3e02be2a92bfd5ea2bb64eb4a3a4cfd2d0e0fb60649c45921dd195dbf3534
+|   |   +---CopyShaderGLES3
+|   |   |   \---5a31a028ea2c2f24617616b25776dff6f6c78b31d61218b4872a20bc3a6f02fd
+|   |   |           6bb7c9a2fd1c4a8fa77cb96555b9b4a720209981.cache
+|   |   |           
+|   |   +---CubemapFilterShaderGLES3
+|   |   |   \---d83434e463139aaa837bd0d8b02d0aa812b42c0f7422e2e49ae311c0e5c81457
+|   |   |           6bb7c9a2fd1c4a8fa77cb96555b9b4a720209981.cache
+|   |   |           
+|   |   +---GlowShaderGLES3
+|   |   |   \---fec09c206ea5644e07ff438c27be89770bbd49f58e19d796dafac09ec096356b
+|   |   |           6bb7c9a2fd1c4a8fa77cb96555b9b4a720209981.cache
+|   |   |           
+|   |   +---PostShaderGLES3
+|   |   |   \---7688c3b7ce237ed669a57f3a95ff0862e26d47d835ce0af778f23106b4b5a376
+|   |   |           6bb7c9a2fd1c4a8fa77cb96555b9b4a720209981.cache
+|   |   |           
+|   |   +---FeedShaderGLES3
+|   |   |   \---53916027a29c4da007ddce15e8fc88115d40683cf256f1d7316f1340da9f4f78
+|   |   |           6bb7c9a2fd1c4a8fa77cb96555b9b4a720209981.cache
+|   |   |           
+|   |   +---CanvasShaderGLES3
+|   |   |   \---2548486d72ca9bed4ba6091520d7ab672f1064fa38c6229f76bd6811bf83bfcb
+|   |   |           6bb7c9a2fd1c4a8fa77cb96555b9b4a720209981.cache
+|   |   |           
+|   |   +---CanvasOcclusionShaderGLES3
+|   |   |   \---4b4886a946b5de0dd3038ca080ef3e04d3e405180f507e8801cd660b465ddb01
+|   |   |           6bb7c9a2fd1c4a8fa77cb96555b9b4a720209981.cache
+|   |   |           
+|   |   +---SceneShaderGLES3
+|   |   |   \---b201bc729d0e63039fe9670b83ab00aecc7f694b0a2d05ee36b7833f6c837ae0
+|   |   |           6bb7c9a2fd1c4a8fa77cb96555b9b4a720209981.cache
+|   |   |           0c9689a7dae2d011729a1e2cf29c71ecb4a7e8bb.cache
+|   |   |           e4803059b59d245bee29da2f87c302ecb830c09e.cache
+|   |   |           
+|   |   \---SkyShaderGLES3
+|   |       \---f0685cc0ea19e6df6cdee222f06909a4d961adb7fe69a844fc989ca27e874206
+|   |               851ad615ab5772632d2dd49f5447ff21ea10b2fe.cache
+|   |               
+|   \---exported
+|       \---133200997
+|               export-687b28e729cdbf384a2214f1d2769ad5-CharacterCreation.scn
+|               export-2b6fcbc167f78db5edebc830a23d9889-CharacterSelection.scn
+|               export-99174fb0fd2492fee0dd7d5ca3b0e3c8-MainMenu.scn
+|               export-775364f176db7dd5a27b6810f8d5e89d-DungeonScene.scn
+|               export-69024be31add3bde43602b9c2604c876-EquipmentScene.scn
+|               export-8a74330932cdfb6a0856c17a6b368706-InventoryScene.scn
+|               export-d1e23c43d92d381070c2a2325977f957-LevelUpScene.scn
+|               export-b0d42c2707387c0baf1e9b0dfb9ce078-RewardScene.scn
+|               export-fd3fc7977a41b73ebdb3e1ec3584f970-ShopScene.scn
+|               export-609a69827a4bb5fad1410772eb2745e8-WaveBattle.scn
+|               export-19246414aa9fb561ced4b8dce477acec-default_bus_layout.res
+|               export-c14f4eb758fc2f0b1b68a56207ab2596-Main.scn
+|               export-ea0cc97c85afa9f41aecf114da3f2e5b-TownScene.scn
+|               export-0df3c64dd8951d87a4c0312085c4eb6f-StashScene.scn
+|               export-775dedb01002f3e4f6cd9189d48c5661-Battle.scn
+|               export-71ae2e0c90c6932f97f1e34115eae303-StatusScene.scn
+|               file_cache
+|               
++---assets
+|   +---fonts
+|   +---themes
+|   +---Images
+|   |   +---enemies
+|   |   |       GoblinBrute.png
+|   |   |       GoblinKing.png
+|   |   |       GoblinMage.png
+|   |   |       GoblinMinion.png
+|   |   |       GoblinShaman.png
+|   |   |       GoblinBrute.png.import
+|   |   |       GoblinKing.png.import
+|   |   |       GoblinMage.png.import
+|   |   |       GoblinShaman.png.import
+|   |   |       GoblinMinion.png.import
+|   |   |       
+|   |   +---shopkeepers
+|   |   |       Shopkeep.png
+|   |   |       Shopkeep.png.import
+|   |   |       
+|   |   \---backgrounds
+|   |           BossBackground.png
+|   |           main menu 1.png
+|   |           main menu 2.png
+|   |           Main Menu Logo.png
+|   |           WaveBackground.png
+|   |           TownScene.png
+|   |           RewardsBackground.png
+|   |           TownScene.png.import
+|   |           WaveBackground.png.import
+|   |           RewardsBackground.png.import
+|   |           Main Menu Logo.png.import
+|   |           main menu 2.png.import
+|   |           main menu 1.png.import
+|   |           BossBackground.png.import
+|   |           
+|   \---audio
+|       +---bgMusic
+|       |       Exploring the Cursed Cemetery .mp3
+|       |       Gloomy Atmosphere for Documentaries.mp3
+|       |       HEROICCC(chosic.com).mp3
+|       |       Sunset-Landscape(chosic.com).mp3
+|       |       medieval-fanfare-6826.mp3
+|       |       tavern_greece_indoor-63937.mp3
+|       |       medieval-fanfare-6826.mp3.import
+|       |       HEROICCC(chosic.com).mp3.import
+|       |       Gloomy Atmosphere for Documentaries.mp3.import
+|       |       tavern_greece_indoor-63937.mp3.import
+|       |       Sunset-Landscape(chosic.com).mp3.import
+|       |       Exploring the Cursed Cemetery .mp3.import
+|       |       
+|       \---sfx
+|               clicking-interface-select-201946.mp3
+|               menu-button-88360.mp3
+|               menu-selection-102220.mp3
+|               text-notification-96707.mp3
+|               menu-selection-102220.mp3.import
+|               clicking-interface-select-201946.mp3.import
+|               menu-button-88360.mp3.import
+|               text-notification-96707.mp3.import
+|               
++---DevTools
+|       content_manager.py
+|       
++---scenes
+|   |   DungeonScene.gd
+|   |   EquipmentScene.tscn
+|   |   LevelUpScene.tscn
+|   |   RewardScene.tscn
+|   |   RewardScene.gd
+|   |   TownScene.tscn
+|   |   EquipmentScene.gd
+|   |   ShopScene.gd
+|   |   ShopScene.tscn
+|   |   TownScene.gd
+|   |   StatusScene.tscn
+|   |   DungeonScene.tscn
+|   |   WaveBattle.tscn
+|   |   DungeonScene.gd.uid
+|   |   EquipmentScene.gd.uid
+|   |   InventoryScene.gd
+|   |   InventoryScene.gd.uid
+|   |   InventoryScene.tscn
+|   |   LevelUpScene.gd.uid
+|   |   RewardScene.gd.uid
+|   |   ShopScene.gd.uid
+|   |   StashScene.gd
+|   |   StashScene.gd.uid
+|   |   StashScene.tscn
+|   |   StatusScene.gd.uid
+|   |   TownScene.gd.uid
+|   |   WaveBattle.gd.uid
+|   |   ShopScene.tscn136559245859.tmp
+|   |   LevelUpScene.gd
+|   |   StatusScene.gd
+|   |   WaveBattle.gd
+|   |   
+|   +---Main
+|   |       Main.gd
+|   |       Main.gd.uid
+|   |       Main.tscn
+|   |       
+|   +---ui
+|   |       MainMenu.gd
+|   |       CharacterCreation.gd.uid
+|   |       CharacterCreation.tscn
+|   |       CharacterSelection.gd.uid
+|   |       CharacterSelection.tscn
+|   |       MainMenu.gd.uid
+|   |       CharacterCreation.gd
+|   |       CharacterSelection.gd
+|   |       MainMenu.tscn
+|   |       
+|   +---battle
+|   |       Battle.gd.uid
+|   |       InventoryMenu.gd.uid
+|   |       InventoryMenu.gd
+|   |       Battle.gd
+|   |       Battle.tscn
+|   |       
+|   +---character
+|   \---mechanics
+|           Skill.gd.uid
+|           Skill.gd
+|           
++---scripts
+|   |   LevelSystem.gd
+|   |   PointLight2D.gd
+|   |   BattleManager.gd.uid
+|   |   LevelSystem.gd.uid
+|   |   PointLight2D.gd.uid
+|   |   BattleManager.gd
+|   |   
+|   +---autoload
+|   |       BossFactory.gd
+|   |       LootManager.gd
+|   |       SkillManager.gd
+|   |       BossFactory.gd.uid
+|   |       CharacterManager.gd
+|   |       CharacterManager.gd.uid
+|   |       EnemyFactory.gd.uid
+|   |       ItemManager.gd
+|   |       ItemManager.gd.uid
+|   |       LootManager.gd.uid
+|   |       SaveManager.gd.uid
+|   |       SceneManager.gd.uid
+|   |       SkillManager.gd.uid
+|   |       StatusEffectData.gd.uid
+|   |       StatusEffectData.gd
+|   |       SceneManager.gd
+|   |       SaveManager.gd
+|   |       EnemyFactory.gd
+|   |       
+|   +---resources
+|   |       Currency.gd
+|   |       CharacterData.gd.uid
+|   |       Currency.gd.uid
+|   |       Equipment.gd.uid
+|   |       Inventory.gd.uid
+|   |       Item.gd.uid
+|   |       Item.gd
+|   |       CharacterData.gd
+|   |       Inventory.gd
+|   |       Equipment.gd
+|   |       
+|   +---battle
+|   +---character
+|   \---combat
+|           CombatManager.gd
+|           CombatManager.gd.uid
+|           TurnManager.gd.uid
+|           BattleUIManager.gd.uid
+|           BattleUIManager.gd
+|           TurnManager.gd
+|           
+\---data
+    |   oldskills.json
+    |   classes.json
+    |   races.json
+    |   status_effects.json
+    |   skills.json
+    |   rarities.json
+    |   
+    \---items
+            weapons.json
+            armors.json
+            materials.json
+            consumables.json
+            

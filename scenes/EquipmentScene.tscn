@@ -130,45 +130,46 @@ base_pulse_duration = 1.0
 layout_mode = 0
 offset_left = 8.0
 offset_top = 64.0
-offset_right = 176.0
+offset_right = 233.0
 offset_bottom = 320.0
 
 [node name="EquipmentList" type="ItemList" parent="."]
 layout_mode = 0
-offset_left = 192.0
+offset_left = 256.0
 offset_top = 64.0
-offset_right = 448.0
+offset_right = 512.0
 offset_bottom = 320.0
 
 [node name="EquipButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 216.0
+offset_left = 280.0
 offset_top = 336.0
-offset_right = 268.0
+offset_right = 332.0
 offset_bottom = 367.0
 text = "Equip"
 
 [node name="UnequipButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 344.0
+offset_left = 408.0
 offset_top = 336.0
-offset_right = 418.0
+offset_right = 482.0
 offset_bottom = 367.0
 text = "Unequip"
 
-[node name="ItemInfo" type="Label" parent="."]
+[node name="ItemInfo" type="RichTextLabel" parent="."]
 layout_mode = 0
-offset_left = 512.0
+offset_left = 576.0
 offset_top = 64.0
-offset_right = 552.0
-offset_bottom = 90.0
-text = "Info: "
+offset_right = 976.0
+offset_bottom = 464.0
+bbcode_enabled = true
+text = "Info"
 
 [node name="ExitButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 512.0
-offset_top = 288.0
-offset_right = 586.0
-offset_bottom = 319.0
+offset_left = 408.0
+offset_top = 416.0
+offset_right = 482.0
+offset_bottom = 447.0
 text = "Exit
 "

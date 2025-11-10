@@ -1,20 +1,20 @@
 {
 	"POISON": {
 		"damage_type": "hp_percent",
-		"damage_value": 0.1,
+		"damage_value": 0.15,
 		"message": "{name} took {damage} poison damage"
 	},
 	"BURN": {
 		"damage_type": "hp_percent",
-		"damage_value": 0.05,
+		"damage_value": 0.1,
 		"stat_modifiers": {
-			"strength": -2
+			"strength": -3
 		},
 		"message": "{name} took {damage} burn damage"
 	},
 	"SHOCK": {
 		"damage_type": "hp_percent",
-		"damage_value": 0.066,
+		"damage_value": 0.125,
 		"stun_chance": 0.2,
 		"message": "{name} took {damage} shock damage"
 	},

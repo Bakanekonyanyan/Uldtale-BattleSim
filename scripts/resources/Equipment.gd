@@ -12,32 +12,46 @@ var class_restriction: Array
 var effects: Dictionary
 var rarity: String = "common"
 var rarity_applied: bool = false
-var inventory_key: String = ""  # Stores the unique inventory key for this instance
+var inventory_key: String = ""
 
 # New rarity system properties
 var rarity_stat_modifiers: Dictionary = {}
-var stat_modifiers: Dictionary = {}  # Dictionary of AttributeTarget -> value
-var status_effect_chance: float = 0.0  # Chance to apply status effect (0.0 to 1.0)
+var stat_modifiers: Dictionary = {}
+var status_effect_chance: float = 0.0
 var status_effect_type: Skill.StatusEffect = Skill.StatusEffect.NONE
-var bonus_damage: int = 0  # Flat damage bonus for legendary items
-var item_prefix: String = ""  # "Burning", "Frozen", etc.
-var item_suffix: String = ""  # "of the Flame", "of Solara", etc.
-var flavor_text: String = ""  # Lore text based on pantheon
+var bonus_damage: int = 0
+var item_prefix: String = ""
+var item_suffix: String = ""
+var flavor_text: String = ""
 
 var rarities: Dictionary = {}
 
 # Stat-based prefixes for the highest stat modifier
 const STAT_PREFIXES = {
-	Skill.AttributeTarget.VITALITY: ["Stalwart", "Enduring", "Resilient"],
-	Skill.AttributeTarget.STRENGTH: ["Crushing", "Mighty", "Titanic"],
-	Skill.AttributeTarget.DEXTERITY: ["Swift", "Precise", "Nimble"],
-	Skill.AttributeTarget.INTELLIGENCE: ["Brilliant", "Cunning", "Sage's"],
-	Skill.AttributeTarget.FAITH: ["Devout", "Hallowed", "Divine"],
-	Skill.AttributeTarget.MIND: ["Focused", "Contemplative", "Mindful"],
-	Skill.AttributeTarget.ENDURANCE: ["Tireless", "Steadfast", "Unyielding"],
-	Skill.AttributeTarget.ARCANE: ["Mystical", "Arcane", "Eldritch"],
-	Skill.AttributeTarget.AGILITY: ["Graceful", "Flowing", "Lithe"],
-	Skill.AttributeTarget.FORTITUDE: ["Ironclad", "Fortified", "Unbreakable"]
+	Skill.AttributeTarget.VITALITY: ["Stalwart", "Enduring", "Resilient", "Vigorous", "Hardy"],
+	Skill.AttributeTarget.STRENGTH: ["Crushing", "Mighty", "Titanic", "Brutal", "Overwhelming"],
+	Skill.AttributeTarget.DEXTERITY: ["Swift", "Precise", "Nimble", "Keen", "Masterful"],
+	Skill.AttributeTarget.INTELLIGENCE: ["Brilliant", "Cunning", "Sage's", "Scholarly", "Enlightened"],
+	Skill.AttributeTarget.FAITH: ["Devout", "Hallowed", "Divine", "Sacred", "Blessed"],
+	Skill.AttributeTarget.MIND: ["Focused", "Contemplative", "Mindful", "Serene", "Transcendent"],
+	Skill.AttributeTarget.ENDURANCE: ["Tireless", "Steadfast", "Unyielding", "Indomitable", "Relentless"],
+	Skill.AttributeTarget.ARCANE: ["Mystical", "Arcane", "Eldritch", "Enigmatic", "Occult"],
+	Skill.AttributeTarget.AGILITY: ["Graceful", "Flowing", "Lithe", "Acrobatic", "Dancer's"],
+	Skill.AttributeTarget.FORTITUDE: ["Ironclad", "Fortified", "Unbreakable", "Adamant", "Impervious"]
+}
+
+# Secondary prefixes for additional stat modifiers (used for higher rarities)
+const SECONDARY_PREFIXES = {
+	Skill.AttributeTarget.VITALITY: ["Life-Giving", "Vital", "Living"],
+	Skill.AttributeTarget.STRENGTH: ["Powerful", "Strong", "Forceful"],
+	Skill.AttributeTarget.DEXTERITY: ["Deft", "Skilled", "Artful"],
+	Skill.AttributeTarget.INTELLIGENCE: ["Wise", "Astute", "Cerebral"],
+	Skill.AttributeTarget.FAITH: ["Pious", "Righteous", "Holy"],
+	Skill.AttributeTarget.MIND: ["Clear", "Sharp", "Insightful"],
+	Skill.AttributeTarget.ENDURANCE: ["Lasting", "Persistent", "Enduring"],
+	Skill.AttributeTarget.ARCANE: ["Magical", "Enchanted", "Bewitched"],
+	Skill.AttributeTarget.AGILITY: ["Quick", "Fleet", "Rapid"],
+	Skill.AttributeTarget.FORTITUDE: ["Sturdy", "Tough", "Solid"]
 }
 
 # Pantheon-based naming data
@@ -60,6 +74,14 @@ const STATUS_PANTHEON_MAP = {
 	Skill.StatusEffect.SHOCK: "Aetherion"
 }
 
+# Status effect descriptors
+const STATUS_DESCRIPTORS = {
+	Skill.StatusEffect.BURN: ["Burning", "Flaming", "Blazing", "Scorching", "Infernal"],
+	Skill.StatusEffect.FREEZE: ["Frozen", "Icy", "Glacial", "Frigid", "Chilling"],
+	Skill.StatusEffect.POISON: ["Venomous", "Toxic", "Poisoned", "Virulent", "Noxious"],
+	Skill.StatusEffect.SHOCK: ["Shocking", "Crackling", "Lightning", "Thunderous", "Voltaic"]
+}
+
 # Primary stats for random modifiers
 const PRIMARY_STATS = [
 	Skill.AttributeTarget.VITALITY,
@@ -73,6 +95,9 @@ const PRIMARY_STATS = [
 	Skill.AttributeTarget.AGILITY,
 	Skill.AttributeTarget.FORTITUDE
 ]
+
+# Equipment.gd - Add this to the _init function
+# This will convert OLD rarity system equipment to the NEW system
 
 func _init(data: Dictionary):
 	# Load rarities FIRST before anything else
@@ -91,7 +116,8 @@ func _init(data: Dictionary):
 	class_restriction = data.get("class_restriction", [])
 	effects = data.get("effects", {})
 	
-	# Set the proper item_type based on whether it's a weapon or armor
+	inventory_key = data.get("inventory_key", "")
+	
 	if type == "weapon":
 		item_type = Item.ItemType.WEAPON
 	elif type == "armor":
@@ -100,51 +126,85 @@ func _init(data: Dictionary):
 		item_type = Item.ItemType.WEAPON
 	
 	# Check if rarity is already set in the data (for loading saves)
-	# Use 'in' operator for dictionary checks instead of has()
 	if "rarity" in data and data["rarity"] != "":
 		rarity = data["rarity"]
 		rarity_applied = data.get("rarity_applied", false)
 		
 		# Load saved modifiers if they exist (NEW SYSTEM)
-		if "stat_modifiers" in data:
-			# New system - has stat_modifiers
-			stat_modifiers = data.get("stat_modifiers", {})
+		if "stat_modifiers" in data and not data["stat_modifiers"].is_empty():
+			# NEW SYSTEM - has stat_modifiers
+			stat_modifiers = {}
+			
+			# Convert string keys back to enum values
+			for key in data["stat_modifiers"].keys():
+				if typeof(key) == TYPE_STRING:
+					if Skill.AttributeTarget.has(key):
+						var enum_val = Skill.AttributeTarget[key]
+						stat_modifiers[enum_val] = data["stat_modifiers"][key]
+				elif typeof(key) == TYPE_INT:
+					stat_modifiers[key] = data["stat_modifiers"][key]
+			
 			status_effect_chance = data.get("status_effect_chance", 0.0)
 			status_effect_type = data.get("status_effect_type", Skill.StatusEffect.NONE)
 			bonus_damage = data.get("bonus_damage", 0)
 			item_prefix = data.get("item_prefix", "")
 			item_suffix = data.get("item_suffix", "")
 			flavor_text = data.get("flavor_text", "")
-			print("Equipment loaded with NEW rarity system: %s (%s)" % [name, rarity])
+			print("Equipment loaded with NEW rarity system: %s (%s) - Modifiers: %s" % [name, rarity, stat_modifiers])
 		else:
-			# Old system - just had rarity multiplier applied
-			# Leave item as-is, don't generate new modifiers
-			print("Equipment loaded with OLD rarity system: %s (%s) - keeping as-is" % [name, rarity])
+			# OLD SYSTEM - Convert to new system
+			print("Converting OLD rarity equipment to NEW system: %s (%s)" % [name, rarity])
+
+			# Generate new modifiers based on rarity
+			# This gives the equipment the bonuses it should have had
+			match rarity:
+				"common":
+					pass  # No modifiers for common
+				"uncommon":
+					add_random_stat_modifier(1, 1, 3)
+				"magic":
+					add_random_stat_modifier(2, 1, 4)
+				"rare":
+					if randf() < 0.3:
+						add_random_stat_modifier(2, 2, 5)
+						add_status_effect()
+					else:
+						add_random_stat_modifier(3, 2, 5)
+				"epic":
+					add_random_stat_modifier(3, 3, 6, true)
+					add_status_effect()
+				"legendary":
+					add_random_stat_modifier(3, 4, 7, true)
+					add_status_effect()
+					bonus_damage = randi_range(5, 15)
+			
+			# Regenerate the procedural name
+			generate_procedural_name()
+			
+			print("Converted to NEW system: %s - Modifiers: %s" % [name, stat_modifiers])
 	else:
-		# Only assign and apply rarity for NEW items
+		# Brand new item - generate everything
 		assign_random_rarity()
 		apply_rarity_modifiers()
 		generate_procedural_name()
-		print("New equipment created: %s with rarity %s (damage: %d, armor: %d)" % [name, rarity, damage, armor_value])
+		print("New equipment created: %s with rarity %s (damage: %d, armor: %d, modifiers: %s)" % [name, rarity, damage, armor_value, stat_modifiers])
 
 func assign_random_rarity():
 	var rarity_roll = randf()
-	if rarity_roll < 0.50:  # 50% common
+	if rarity_roll < 0.50:
 		rarity = "common"
-	elif rarity_roll < 0.75:  # 25% uncommon
+	elif rarity_roll < 0.75:
 		rarity = "uncommon"
-	elif rarity_roll < 0.87:  # 12% magic
+	elif rarity_roll < 0.87:
 		rarity = "magic"
-	elif rarity_roll < 0.94:  # 7% rare
+	elif rarity_roll < 0.94:
 		rarity = "rare"
-	elif rarity_roll < 0.98:  # 4% epic
+	elif rarity_roll < 0.98:
 		rarity = "epic"
-	else:  # 2% legendary
+	else:
 		rarity = "legendary"
-	print("Assigned rarity: %s (roll: %.3f)" % [rarity, rarity_roll])
 
 func apply_rarity_modifiers():
-	"""Apply the new rarity system with stat modifiers and status effects"""
 	if rarities.is_empty():
 		print("ERROR: Rarities not loaded!")
 		return
@@ -155,73 +215,59 @@ func apply_rarity_modifiers():
 		
 	var multiplier = rarities[rarity]["multiplier"]
 	
-	# Apply base multiplier to damage/armor
 	if damage > 0:
 		damage = int(damage * multiplier)
 	if armor_value > 0:
 		armor_value = int(armor_value * multiplier)
 	value = int(value * multiplier)
 	
-	# Apply rarity-specific modifiers
 	match rarity:
 		"common":
-			# No additional modifiers
 			pass
-		
 		"uncommon":
-			# 1 random stat modifier (+1 to +3)
 			add_random_stat_modifier(1, 1, 3)
-			
 		"magic":
-			# 2 random stat modifiers (+1 to +4)
 			add_random_stat_modifier(2, 1, 4)
-		
 		"rare":
-			# 3 random stat modifiers (+2 to +5) OR 2 mods + status effect
-			if randf() < 0.3:  # 30% chance for status effect
+			if randf() < 0.3:
 				add_random_stat_modifier(2, 2, 5)
 				add_status_effect()
 			else:
 				add_random_stat_modifier(3, 2, 5)
-		
 		"epic":
-			# 3 unique stat modifiers (+3 to +6) + status effect
-			add_random_stat_modifier(3, 3, 6, true)  # true = ensure unique
+			add_random_stat_modifier(3, 3, 6, true)
 			add_status_effect()
-		
 		"legendary":
-			# 3 unique stat modifiers (+4 to +7) + status effect + bonus damage
 			add_random_stat_modifier(3, 4, 7, true)
 			add_status_effect()
 			bonus_damage = randi_range(5, 15)
-			print("Legendary bonus damage: +%d" % bonus_damage)
 	
 	rarity_applied = true
 
 func add_random_stat_modifier(count: int, min_val: int, max_val: int, unique := false):
-	var available_stats = Skill.AttributeTarget.keys()
+	var available_stats = PRIMARY_STATS.duplicate()
 	
 	for i in range(count):
-		var stat = available_stats[randi() % available_stats.size()]
+		if available_stats.is_empty():
+			break
+			
+		var stat_index = randi() % available_stats.size()
+		var stat = available_stats[stat_index]
 		var value = randi_range(min_val, max_val)
 
-		# Prevent duplicates if needed
-		if unique and stat_modifiers.has(stat):
-			continue
+		if unique:
+			available_stats.remove_at(stat_index)
 
-		# Add to base modifiers
 		if stat_modifiers.has(stat):
 			stat_modifiers[stat] += value
 		else:
 			stat_modifiers[stat] = value
 
-		# Record as rarity bonus
 		if not rarity_stat_modifiers.has(stat):
 			rarity_stat_modifiers[stat] = 0
 		rarity_stat_modifiers[stat] += value
 
 func add_status_effect():
-	"""Add a random status effect with a chance to proc"""
 	var status_effects = [
 		Skill.StatusEffect.BURN,
 		Skill.StatusEffect.FREEZE,
@@ -231,161 +277,174 @@ func add_status_effect():
 	
 	status_effect_type = status_effects[randi() % status_effects.size()]
 	
-	# Chance varies by rarity
 	match rarity:
 		"rare":
-			status_effect_chance = randf_range(0.10, 0.20)  # 10-20%
+			status_effect_chance = randf_range(0.10, 0.20)
 		"epic":
-			status_effect_chance = randf_range(0.15, 0.30)  # 15-30%
+			status_effect_chance = randf_range(0.15, 0.30)
 		"legendary":
-			status_effect_chance = randf_range(0.25, 0.40)  # 25-40%
-	
-	print("Added status effect: %s (%.1f%% chance)" % [Skill.StatusEffect.keys()[status_effect_type], status_effect_chance * 100])
+			status_effect_chance = randf_range(0.25, 0.40)
 
 func generate_procedural_name():
-	"""Generate a procedurally named item based on its properties"""
 	if rarity == "common":
-		# Common items keep their base name
 		return
+	
+	var base_name = name
+	var prefixes = []
+	var suffix = ""
 	
 	# Select pantheon based on status effect or random
 	var pantheon_key = ""
 	if status_effect_type != Skill.StatusEffect.NONE and STATUS_PANTHEON_MAP.has(status_effect_type):
 		pantheon_key = STATUS_PANTHEON_MAP[status_effect_type]
 	else:
-		# Pick random pantheon
 		var pantheon_keys = PANTHEON_NAMES.keys()
 		pantheon_key = pantheon_keys[randi() % pantheon_keys.size()]
 	
 	var pantheon_data = PANTHEON_NAMES[pantheon_key]
 	
-	# Generate prefix based on highest stat modifier OR pantheon
-	if not stat_modifiers.is_empty():
-		# Find the stat with the highest modifier
-		var highest_stat = null
-		var highest_value = 0
-		for stat in stat_modifiers:
-			if stat_modifiers[stat] > highest_value:
-				highest_value = stat_modifiers[stat]
-				highest_stat = stat
-		
-		# Use stat-based prefix for the primary modifier
-		if highest_stat != null and STAT_PREFIXES.has(highest_stat):
-			var stat_prefix_options = STAT_PREFIXES[highest_stat]
-			item_prefix = stat_prefix_options[randi() % stat_prefix_options.size()]
-			print("Using stat-based prefix for %s: %s" % [Skill.AttributeTarget.keys()[highest_stat], item_prefix])
+	# Sort stat modifiers by value to get primary and secondary
+	var sorted_stats = []
+	for stat in stat_modifiers:
+		sorted_stats.append({"stat": stat, "value": stat_modifiers[stat]})
+	sorted_stats.sort_custom(func(a, b): return a["value"] > b["value"])
 	
-	# If no stat prefix was set, use pantheon adjective (70% chance)
-	if item_prefix == "" and randf() < 0.7:
-		item_prefix = pantheon_data["adjectives"][randi() % pantheon_data["adjectives"].size()]
+	# Add status effect descriptor as first prefix (for rare+)
+	if status_effect_type != Skill.StatusEffect.NONE and STATUS_DESCRIPTORS.has(status_effect_type):
+		var descriptors = STATUS_DESCRIPTORS[status_effect_type]
+		prefixes.append(descriptors[randi() % descriptors.size()])
 	
-	# Generate suffix (of + verb/noun) - 60% chance
-	if randf() < 0.6:
-		item_suffix = "of " + pantheon_data["verbs"][randi() % pantheon_data["verbs"].size()]
+	# Add primary stat prefix
+	if sorted_stats.size() > 0:
+		var primary_stat = sorted_stats[0]["stat"]
+		if STAT_PREFIXES.has(primary_stat):
+			var stat_prefix_options = STAT_PREFIXES[primary_stat]
+			prefixes.append(stat_prefix_options[randi() % stat_prefix_options.size()])
+	
+	# For epic/legendary, add secondary stat prefix
+	if rarity in ["epic", "legendary"] and sorted_stats.size() > 1:
+		var secondary_stat = sorted_stats[1]["stat"]
+		if SECONDARY_PREFIXES.has(secondary_stat):
+			var secondary_options = SECONDARY_PREFIXES[secondary_stat]
+			prefixes.append(secondary_options[randi() % secondary_options.size()])
+	
+	# Generate suffix (higher rarities get pantheon suffix)
+	if rarity in ["rare", "epic", "legendary"]:
+		suffix = "of " + pantheon_data["verbs"][randi() % pantheon_data["verbs"].size()]
 	
 	# Build full name
-	var new_name = ""
-	if item_prefix != "":
-		new_name = item_prefix + " " + name
+	var new_name = " ".join(prefixes)
+	if new_name != "":
+		new_name = new_name + " " + base_name
 	else:
-		new_name = name
+		new_name = base_name
 	
-	if item_suffix != "":
-		new_name = new_name + " " + item_suffix
+	if suffix != "":
+		new_name = new_name + " " + suffix
 	
 	name = new_name
 	
 	# Generate flavor text
-	flavor_text = "Blessed by %s, the god of %s. %s" % [
-		pantheon_key,
-		pantheon_data["domain"],
-		"This %s radiates otherworldly power." % type if rarity in ["epic", "legendary"] else "A fine %s touched by divine essence." % type
-	]
-	
-	print("Generated name: %s" % name)
-	print("Flavor text: %s" % flavor_text)
+	flavor_text = "Blessed by %s, the god of %s." % [pantheon_key, pantheon_data["domain"]]
+	if rarity in ["epic", "legendary"]:
+		flavor_text += " This %s radiates otherworldly power." % type
+	else:
+		flavor_text += " A fine %s touched by divine essence." % type
 
 func get_full_description() -> String:
-	var desc = "[b]%s[/b]\n%s\n" % [name, description]
-
-	if flavor_text != "":
-		desc += "\n[i]" + flavor_text + "[/i]\n"
-
+	var desc = "[b]%s[/b]\n" % name
+	
+	# Rarity display
 	if rarities.has(rarity):
 		var rarity_data = rarities[rarity]
-		desc += "\n[color=%s]%s[/color]\n" % [rarity_data["color"], rarity.capitalize()]
+		desc += "[color=%s]%s[/color]\n" % [rarity_data["color"], rarity.capitalize()]
+	
+	desc += "\n%s\n" % description
 
 	# Base stats
 	if damage > 0:
-		desc += "Damage: %d\n" % damage
+		desc += "\n[b]Damage:[/b] %d" % damage
+		if bonus_damage > 0:
+			desc += " [color=orange](+%d bonus)[/color]" % bonus_damage
+		desc += "\n"
 	if armor_value > 0:
-		desc += "Armor: %d\n" % armor_value
-	if bonus_damage > 0:
-		desc += "[color=orange]Bonus Damage: +%d[/color]\n" % bonus_damage
+		desc += "[b]Armor:[/b] %d\n" % armor_value
 
-	# All Stat Modifiers
+	# Stat Modifiers - Grouped and formatted
 	if not stat_modifiers.is_empty():
-		desc += "\n[color=green]Attribute Bonuses:[/color]\n"
+		desc += "\n[color=green][b]Attribute Bonuses:[/b][/color]\n"
+		
+		# Sort by value for better display
+		var sorted_mods = []
 		for stat in stat_modifiers:
-			var stat_name = Skill.AttributeTarget.keys()[stat].capitalize()
-			var value = stat_modifiers[stat]
-
-			if rarity_stat_modifiers.has(stat):
-				desc += "  [color=gold]+%d %s[/color] (from rarity)\n" % [value, stat_name]
-			else:
-				desc += "  +%d %s\n" % [value, stat_name]
+			sorted_mods.append({"stat": stat, "value": stat_modifiers[stat]})
+		sorted_mods.sort_custom(func(a, b): return a["value"] > b["value"])
+		
+		for mod in sorted_mods:
+			var stat_name = Skill.AttributeTarget.keys()[mod["stat"]].capitalize()
+			var value = mod["value"]
+			desc += "  [color=lime]+%d %s[/color]\n" % [value, stat_name]
 
 	# Status Effect
 	if status_effect_type != Skill.StatusEffect.NONE:
 		var effect_name = Skill.StatusEffect.keys()[status_effect_type]
-		desc += "\n[color=purple]%.1f%% chance to inflict %s[/color]\n" % [
+		var effect_color = "purple"
+		match status_effect_type:
+			Skill.StatusEffect.BURN:
+				effect_color = "orange"
+			Skill.StatusEffect.FREEZE:
+				effect_color = "cyan"
+			Skill.StatusEffect.POISON:
+				effect_color = "green"
+			Skill.StatusEffect.SHOCK:
+				effect_color = "yellow"
+		
+		desc += "\n[color=%s][b]Special Effect:[/b][/color]\n" % effect_color
+		desc += "  [color=%s]%.0f%% chance to inflict %s[/color]\n" % [
+			effect_color,
 			status_effect_chance * 100,
 			effect_name
 		]
 
+	# Flavor text
+	if flavor_text != "":
+		desc += "\n[i][color=gray]%s[/color][/i]\n" % flavor_text
+
 	return desc
 
 func apply_stat_modifiers(character: CharacterData):
-	"""Apply stat modifiers to a character when equipped"""
 	if not character or not is_instance_valid(character):
 		push_error("Cannot apply stat modifiers: invalid character")
 		return
 	
 	for stat in stat_modifiers:
 		var stat_name = Skill.AttributeTarget.keys()[stat].to_lower()
-		# Use 'in' operator for Resources instead of has()
 		if stat_name in character:
 			var current_value = character.get(stat_name)
 			character.set(stat_name, current_value + stat_modifiers[stat])
-			print("Applied +%d to %s" % [stat_modifiers[stat], stat_name])
 		else:
 			push_warning("Character missing stat: %s" % stat_name)
 
 func remove_stat_modifiers(character: CharacterData):
-	"""Remove stat modifiers from a character when unequipped"""
 	if not character or not is_instance_valid(character):
 		push_error("Cannot remove stat modifiers: invalid character")
 		return
 	
 	for stat in stat_modifiers:
 		var stat_name = Skill.AttributeTarget.keys()[stat].to_lower()
-		# Use 'in' operator for Resources instead of has()
 		if stat_name in character:
 			var current_value = character.get(stat_name)
 			character.set(stat_name, current_value - stat_modifiers[stat])
-			print("Removed +%d from %s" % [stat_modifiers[stat], stat_name])
 		else:
 			push_warning("Character missing stat: %s" % stat_name)
 
 func try_apply_status_effect(target: CharacterData) -> bool:
-	"""Try to apply status effect on hit. Returns true if applied."""
 	if not target or not is_instance_valid(target):
 		push_error("Cannot apply status effect: invalid target")
 		return false
 	
 	if status_effect_type != Skill.StatusEffect.NONE and randf() < status_effect_chance:
-		target.apply_status_effect(status_effect_type, 3)  # 3 turn duration
-		print("%s triggered %s on %s!" % [name, Skill.StatusEffect.keys()[status_effect_type], target.name])
+		target.apply_status_effect(status_effect_type, 3)
 		return true
 	return false
 
@@ -396,13 +455,10 @@ func get_rarity_color() -> String:
 	if rarities.has(rarity):
 		return rarities[rarity]["color"]
 	
-	print("WARNING: Rarity '%s' not found in rarities dictionary" % rarity)
-	return "white"  # Default fallback color
+	return "white"
 	
 func load_rarities():
 	if not FileAccess.file_exists("res://data/rarities.json"):
-		print("ERROR: rarities.json not found!")
-		# Create default rarities as fallback
 		rarities = {
 			"common": {"multiplier": 1, "color": "white"},
 			"uncommon": {"multiplier": 2, "color": "blue"},
@@ -417,10 +473,7 @@ func load_rarities():
 	if file:
 		rarities = JSON.parse_string(file.get_as_text())
 		file.close()
-		print("Loaded rarities: %s" % rarities.keys())
 	else:
-		print("ERROR: Could not open rarities.json")
-		# Create default rarities as fallback
 		rarities = {
 			"common": {"multiplier": 1, "color": "white"},
 			"uncommon": {"multiplier": 2, "color": "blue"},
@@ -440,21 +493,18 @@ func can_equip(character: CharacterData) -> bool:
 
 func apply_effects(character: CharacterData):
 	for effect in effects:
-		# Use 'in' operator for Resources instead of has()
 		if effect in character:
 			character[effect] += effects[effect]
 			
 func remove_effects(character: CharacterData):
 	for effect in effects:
-		# Use 'in' operator for Resources instead of has()
 		if effect in character:
 			character[effect] -= effects[effect]
 
 func get_save_data() -> Dictionary:
-	"""Get data for saving, including new rarity properties"""
 	return {
 		"id": id,
-		"name": name,  # Include the full name with prefix/suffix
+		"name": name,
 		"rarity": rarity,
 		"rarity_applied": rarity_applied,
 		"damage": damage,

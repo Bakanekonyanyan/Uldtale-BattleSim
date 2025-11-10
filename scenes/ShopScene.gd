@@ -3,8 +3,18 @@ extends Control
 
 var player_character: CharacterData
 var shop_inventory: Dictionary = {
-	"health_potion": {"item": null, "price": 50},
-	"mana_potion": {"item": null, "price": 75},
+	"health_potion": {"item": null, "price": 25},
+	"mana_potion": {"item": null, "price": 30},
+	"stamina_potion": {"item": null, "price": 30},
+	"flame_flask": {"item": null, "price": 50},
+	"frost_crystal": {"item": null, "price": 50},
+	"thunder_orb": {"item": null, "price": 50},
+	"venom_vial": {"item": null, "price": 50},
+	"stone_shard": {"item": null, "price": 10},
+	"rotten_dung": {"item": null, "price": 10},
+	"smoke_bomb": {"item": null, "price": 15},
+	"berserker_brew": {"item": null, "price": 30},
+	"holy_water": {"item": null, "price": 50},
 	# Add more items as needed
 }
 
@@ -65,7 +75,7 @@ func refresh_shop_display():
 		for item_id in shop_inventory:
 			var item_data = shop_inventory[item_id]
 			if item_data.item != null:
-				$UI/ItemList.add_item("%s - %d gold" % [item_data.item.name, item_data.price])
+				$UI/ItemList.add_item("%s - %d copper" % [item_data.item.name, item_data.price])
 			else:
 				print("Warning: Item not found in ItemManager: ", item_id)
 	else:
@@ -97,8 +107,10 @@ func refresh_sell_items():
 		for item_id in player_character.inventory.items:
 			var item_data = player_character.inventory.items[item_id]
 			var item = item_data.item
+			
 			if item:
 				$UI/SellItemList.add_item("%s (x%d) - %d gold" % [item.name, item_data.quantity, item.value / 2])
+
 	else:
 		print("Error: sell_item_list is null")
 

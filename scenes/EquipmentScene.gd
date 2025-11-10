@@ -60,6 +60,43 @@ func refresh_lists():
 			equipment_list.add_item("%s: Empty" % slot)
 		index += 1
 
+func update_item_info(item: Equipment):
+	if not item_info:
+		print("Error: item_info node not found")
+		return
+	
+	# First, let's clear out all the existing children of ItemInfo
+	for child in item_info.get_children():
+		child.queue_free()
+	
+	# Clear the text
+	item_info.text = ""
+
+	if item:
+		# Use the get_full_description() method which includes all modifiers
+		var full_desc = item.get_full_description()
+		
+		# If ItemInfo is a RichTextLabel, we can use BBCode directly
+		if item_info is RichTextLabel:
+			item_info.bbcode_enabled = true
+			item_info.text = full_desc
+			item_info.fit_content = true
+			# Make sure it's visible
+			item_info.visible = true
+		else:
+			# If it's a regular Label, we need to strip BBCode tags
+			# But ideally, ItemInfo should be a RichTextLabel to show colors and formatting
+			var stripped_desc = full_desc
+			# Basic BBCode stripping regex (simplified)
+			var regex = RegEx.new()
+			regex.compile("\\[.*?\\]")
+			stripped_desc = regex.sub(stripped_desc, "", true)
+			item_info.text = stripped_desc
+			item_info.visible = true
+	else:
+		item_info.text = "No equipment selected"
+		item_info.visible = true
+
 func _on_inventory_item_selected(index):
 	var equipment_items = []
 	for item_id in current_character.inventory.items:
@@ -84,34 +121,6 @@ func _on_equipment_item_selected(index):
 	update_item_info(selected_item)
 	equip_button.disabled = true
 	unequip_button.disabled = false if selected_item else true
-
-func update_item_info(item: Equipment):
-	# First, let's clear out all the existing children of ItemInfo
-	for child in $ItemInfo.get_children():
-		child.queue_free()
-	
-	# Clear the text
-	$ItemInfo.text = ""
-
-	if item:
-		# Use the get_full_description() method which includes all modifiers
-		var full_desc = item.get_full_description()
-		
-		# If ItemInfo is a RichTextLabel, we can use BBCode directly
-		if $ItemInfo is RichTextLabel:
-			$ItemInfo.bbcode_enabled = true
-			$ItemInfo.text = full_desc
-		else:
-			# If it's a regular Label, we need to strip BBCode tags
-			# But ideally, ItemInfo should be a RichTextLabel to show colors and formatting
-			var stripped_desc = full_desc
-			# Basic BBCode stripping regex (simplified)
-			var regex = RegEx.new()
-			regex.compile("\\[.*?\\]")
-			stripped_desc = regex.sub(stripped_desc, "", true)
-			$ItemInfo.text = stripped_desc
-	else:
-		$ItemInfo.text = "No equipment selected"
 
 func _on_equip_pressed():
 	if selected_item:

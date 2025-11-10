@@ -232,7 +232,7 @@ func apply_enemy_scaling(enemy: CharacterData, floor: int, wave: int, is_boss: b
 # Give enemy equipment based on floor and chance
 func give_enemy_equipment(enemy: CharacterData, floor: int, is_boss: bool = false):
 	# Normal enemies: 30% chance, Bosses: 0% (they're already strong)
-	var equipment_chance = 0.3 if not is_boss else 0.0
+	var equipment_chance = 0.7 if not is_boss else 1.0
 	
 	if randf() < equipment_chance:
 		# Give weapon

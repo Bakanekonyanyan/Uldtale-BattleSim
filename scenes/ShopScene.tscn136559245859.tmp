@@ -126,7 +126,6 @@ offset_left = 384.0
 offset_top = 8.0
 offset_right = 634.0
 offset_bottom = 258.0
-select_mode = 1
 
 [node name="BuyButton" type="Button" parent="UI"]
 light_mask = 0

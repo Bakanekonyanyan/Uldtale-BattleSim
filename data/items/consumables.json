@@ -23,6 +23,18 @@
 	"effect_duration": 0,
 	"combat_usable": true
   },
+  "stamina_potion": {
+	"name": "Stamina Potion",
+	"description": "Restores 30 SP",
+	"item_type": "CONSUMABLE",
+	"value": 75,
+	"stackable": true,
+	"max_stack": 99,
+	"consumable_type": "RESTORE",
+	"effect_power": 30,
+	"effect_duration": 0,
+	"combat_usable": true
+  },
   "flame_flask": {
 	"name": "Flame Flask",
 	"description": "Throws a fiery bomb dealing 40 damage and inflicting burn for 3 turns",

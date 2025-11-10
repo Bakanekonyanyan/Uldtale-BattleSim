@@ -16,7 +16,7 @@ var rewards_collected = false  # NEW: Track if rewards were accepted
 var continue_pressed = false # 
 var new_floor_pressed = false
 
-@onready var reward_label: Label = $UI/RewardLabel
+@onready var reward_label: RichTextLabel = $UI/RewardLabel
 @onready var continue_button: Button = $UI/ContinueButton
 @onready var quit_button: Button = $UI/QuitButton
 @onready var next_floor_button: Button = $UI/NextFloorButton
@@ -232,7 +232,6 @@ func _on_next_floor_pressed():
 	SceneManager.rewards_accepted = true
 	rewards_collected = true
 
-
 func _on_quit_pressed():
 	print("RewardScene: Quit button pressed")
 	SaveManager.save_game(player_character)
@@ -288,8 +287,7 @@ func show_collection_prompt(action: String):
 		print("confirmed")
 	else:
 		return
-			
-			
+						
 func _on_ignore_rewards_pressed():
 	rewards_collected = true
 	if continue_pressed == true:
@@ -299,7 +297,6 @@ func _on_ignore_rewards_pressed():
 		_on_next_floor_pressed()
 		new_floor_pressed = false
 	
-
 func _on_equip_pressed():
 	SceneManager.change_scene_with_return("res://scenes/EquipmentScene.tscn", player_character)
 
