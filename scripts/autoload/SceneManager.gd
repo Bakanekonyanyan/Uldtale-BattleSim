@@ -133,60 +133,6 @@ func setup_battle_scene():
 		battle_info.get("description")
 	)
 
-func _on_battle_completed(player_won: bool, xp_gained: int):
-	print("SceneManager: Battle completed signal received - Won: ", player_won, " XP: ", xp_gained)
-	
-	if not player_won:
-		change_scene("res://scenes/ui/CharacterSelection.tscn")
-		return
-	
-	dungeon_info["xp_gained"] = xp_gained
-	
-	print("SceneManager: Preparing reward scene after battle")
-	
-	var reward_data = {
-		"rewards": calculate_battle_rewards(dungeon_info),
-		"xp_gained": xp_gained,
-		"player_character": dungeon_info["player_character"],
-		"is_boss_fight": dungeon_info["is_boss_fight"],
-		"current_floor": dungeon_info["current_floor"],
-		"current_wave": dungeon_info["current_wave"],
-		"max_floor": dungeon_info["max_floor"]
-	}
-	
-	reward_data_temp = reward_data
-	reward_scene_active = true
-	
-	_change_scene_internal("res://scenes/RewardScene.tscn", dungeon_info["player_character"])
-	await get_tree().process_frame
-	setup_reward_scene_from_battle()
-
-func calculate_battle_rewards(battle_info: Dictionary) -> Dictionary:
-	var current_wave = battle_info.get("current_wave", 1)
-	var current_floor = battle_info.get("current_floor", 1)
-	var is_boss = battle_info.get("is_boss_fight", false)
-	var xp_gained = battle_info.get("xp_gained", 0)
-	
-	var rewards = {
-		"currency": (50 + (current_wave * 10)) * current_floor,
-		"xp": xp_gained
-	}
-	
-	var drop_chance_multiplier = 1 + (current_floor * 0.1)
-	
-	if is_boss:
-		rewards["currency"] *= 2
-		add_random_item_to_rewards(rewards, "consumable", 1.0 * drop_chance_multiplier)
-		add_random_item_to_rewards(rewards, "material", 1.0 * drop_chance_multiplier)
-		add_random_item_to_rewards(rewards, "weapon", 0.5 * drop_chance_multiplier)
-		add_random_item_to_rewards(rewards, "armor", 0.5 * drop_chance_multiplier)
-	else:
-		add_random_item_to_rewards(rewards, "consumable", 0.7 * drop_chance_multiplier)
-		add_random_item_to_rewards(rewards, "material", 0.3 * drop_chance_multiplier)
-		add_random_item_to_rewards(rewards, "equipment", 0.1 * drop_chance_multiplier)
-	
-	return rewards
-
 func add_random_item_to_rewards(rewards: Dictionary, item_type: String, chance: float):
 	if randf() < chance:
 		var item_id = ""
@@ -329,3 +275,98 @@ func show_level_up_scene(player: CharacterData):
 	
 	print("SceneManager: Level-up complete")
 	level_up_scene.queue_free()
+
+func _on_battle_completed(player_won: bool, xp_gained: int):
+	print("SceneManager: Battle completed signal received - Won: ", player_won, " XP: ", xp_gained)
+	
+	if not player_won:
+		change_scene("res://scenes/ui/CharacterSelection.tscn")
+		return
+	
+	dungeon_info["xp_gained"] = xp_gained
+	dungeon_info["enemy"] = battle_info.get("enemy")  # NEW: Store enemy reference
+	
+	print("SceneManager: Preparing reward scene after battle")
+	
+	var reward_data = {
+		"rewards": calculate_battle_rewards(dungeon_info),
+		"xp_gained": xp_gained,
+		"player_character": dungeon_info["player_character"],
+		"is_boss_fight": dungeon_info["is_boss_fight"],
+		"current_floor": dungeon_info["current_floor"],
+		"current_wave": dungeon_info["current_wave"],
+		"max_floor": dungeon_info["max_floor"]
+	}
+	
+	reward_data_temp = reward_data
+	reward_scene_active = true
+	
+	_change_scene_internal("res://scenes/RewardScene.tscn", dungeon_info["player_character"])
+	await get_tree().process_frame
+	setup_reward_scene_from_battle()
+
+func calculate_battle_rewards(battle_info: Dictionary) -> Dictionary:
+	var current_wave = battle_info.get("current_wave", 1)
+	var current_floor = battle_info.get("current_floor", 1)
+	var is_boss = battle_info.get("is_boss_fight", false)
+	var xp_gained = battle_info.get("xp_gained", 0)
+	var enemy = battle_info.get("enemy")  # NEW: Get enemy reference
+	
+	var rewards = {
+		"currency": (50 + (current_wave * 10)) * current_floor,
+		"xp": xp_gained
+	}
+	
+	var drop_chance_multiplier = 1 + (current_floor * 0.1)
+	
+	# NEW: Check for equipment drops from enemy
+	if enemy and enemy.has_meta("equipped_items"):
+		var equipped_items = enemy.get_meta("equipped_items")
+		for item in equipped_items:
+			if item is Equipment:
+				var drop_chance = get_equipment_drop_chance(item.rarity, is_boss)
+				if randf() < drop_chance:
+					# Use the inventory_key if it exists, otherwise use id
+					var item_key = item.inventory_key if item.inventory_key != "" else item.id
+					if not rewards.has(item_key):
+						rewards[item_key] = 0
+					rewards[item_key] += 1
+					print("Enemy dropped equipment: %s (%s)" % [item.name, item.rarity])
+	
+	# Regular loot drops
+	if is_boss:
+		rewards["currency"] *= 2
+		add_random_item_to_rewards(rewards, "consumable", 1.0 * drop_chance_multiplier)
+		add_random_item_to_rewards(rewards, "material", 1.0 * drop_chance_multiplier)
+		add_random_item_to_rewards(rewards, "weapon", 0.5 * drop_chance_multiplier)
+		add_random_item_to_rewards(rewards, "armor", 0.5 * drop_chance_multiplier)
+	else:
+		add_random_item_to_rewards(rewards, "consumable", 0.7 * drop_chance_multiplier)
+		add_random_item_to_rewards(rewards, "material", 0.3 * drop_chance_multiplier)
+		add_random_item_to_rewards(rewards, "equipment", 0.1 * drop_chance_multiplier)
+	
+	return rewards
+
+# NEW: Calculate drop chance based on rarity and boss status
+func get_equipment_drop_chance(rarity: String, is_boss: bool) -> float:
+	var base_chance = 0.0
+	
+	match rarity:
+		"uncommon":
+			base_chance = 0.50  # 50% drop for uncommon
+		"magic":
+			base_chance = 0.65  # 65% drop for magic
+		"rare":
+			base_chance = 0.75  # 75% drop for rare
+		"epic":
+			base_chance = 0.85  # 85% drop for epic
+		"legendary":
+			base_chance = 0.95  # 95% drop for legendary
+		_:
+			return 0.0  # Common items don't drop
+	
+	# Bosses have higher drop rates
+	if is_boss:
+		base_chance = min(1.0, base_chance + 0.15)
+	
+	return base_chance

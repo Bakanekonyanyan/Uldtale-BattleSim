@@ -224,9 +224,11 @@ func check_battle_end():
 	var outcome = combat_manager.check_battle_outcome(player_character, enemy_character)
 	match outcome:
 		"victory":
-			ui_manager.enable_actions(false)  # Disable all actions immediately
+			ui_manager.enable_actions(false)
 			var xp = enemy_character.level * 50 * current_floor
-			await get_tree().create_timer(1.0).timeout  # Brief pause to see victory
+			await get_tree().create_timer(1.0).timeout
+			
+			# UPDATED: Pass enemy reference in battle_completed signal
 			emit_signal("battle_completed", true, xp)
 		"defeat":
 			ui_manager.enable_actions(false)

@@ -1,4 +1,4 @@
-# StashScene.gd
+# res://scenes/StashScene.gd
 extends Control
 
 var player_character: CharacterData
@@ -6,8 +6,12 @@ var player_character: CharacterData
 @onready var inventory_list = $InventoryList
 @onready var stash_list = $StashList
 @onready var move_to_stash_button = $MoveToStashButton
+@onready var move_all_to_stash_button = $MoveAllToStashButton  # Add to scene
 @onready var move_to_inventory_button = $MoveToInventoryButton
+@onready var move_all_to_inventory_button = $MoveAllToInventoryButton  # Add to scene
 @onready var back_button = $BackButton
+@onready var inventory_capacity_label = $InventoryCapacityLabel  # Add to scene
+@onready var stash_capacity_label = $StashCapacityLabel  # Add to scene
 
 func _ready():
 	player_character = CharacterManager.get_current_character()
@@ -18,7 +22,9 @@ func _ready():
 	refresh_lists()
 	
 	move_to_stash_button.connect("pressed", Callable(self, "_on_move_to_stash_pressed"))
+	move_all_to_stash_button.connect("pressed", Callable(self, "_on_move_all_to_stash_pressed"))
 	move_to_inventory_button.connect("pressed", Callable(self, "_on_move_to_inventory_pressed"))
+	move_all_to_inventory_button.connect("pressed", Callable(self, "_on_move_all_to_inventory_pressed"))
 	back_button.connect("pressed", Callable(self, "_on_back_pressed"))
 
 func refresh_lists():
@@ -50,6 +56,19 @@ func refresh_lists():
 		else:
 			stash_list.add_item("%s (x%d)" % [item.name, item_data.quantity])
 		stash_index += 1
+	
+	update_capacity_labels()
+
+func update_capacity_labels():
+	if inventory_capacity_label:
+		var inv_size = player_character.inventory.items.size()
+		var inv_cap = player_character.inventory.capacity
+		inventory_capacity_label.text = "Inventory: %d/%d" % [inv_size, inv_cap]
+	
+	if stash_capacity_label:
+		var stash_size = player_character.stash.items.size()
+		var stash_cap = player_character.stash.capacity
+		stash_capacity_label.text = "Stash: %d/%d" % [stash_size, stash_cap]
 
 func _on_move_to_stash_pressed():
 	var selected_items = inventory_list.get_selected_items()
@@ -61,6 +80,19 @@ func _on_move_to_stash_pressed():
 		player_character.stash.add_item(item, 1)
 		refresh_lists()
 
+func _on_move_all_to_stash_pressed():
+	var selected_items = inventory_list.get_selected_items()
+	if selected_items.size() > 0:
+		var item_index = selected_items[0]
+		var item_id = player_character.inventory.items.keys()[item_index]
+		var item_data = player_character.inventory.items[item_id]
+		var item = item_data.item
+		var quantity = item_data.quantity
+		
+		player_character.inventory.remove_item(item_id, quantity)
+		player_character.stash.add_item(item, quantity)
+		refresh_lists()
+
 func _on_move_to_inventory_pressed():
 	var selected_items = stash_list.get_selected_items()
 	if selected_items.size() > 0:
@@ -69,6 +101,19 @@ func _on_move_to_inventory_pressed():
 		var item = player_character.stash.items[item_id].item
 		player_character.stash.remove_item(item_id, 1)
 		player_character.inventory.add_item(item, 1)
+		refresh_lists()
+
+func _on_move_all_to_inventory_pressed():
+	var selected_items = stash_list.get_selected_items()
+	if selected_items.size() > 0:
+		var item_index = selected_items[0]
+		var item_id = player_character.stash.items.keys()[item_index]
+		var item_data = player_character.stash.items[item_id]
+		var item = item_data.item
+		var quantity = item_data.quantity
+		
+		player_character.stash.remove_item(item_id, quantity)
+		player_character.inventory.add_item(item, quantity)
 		refresh_lists()
 
 func _on_back_pressed():

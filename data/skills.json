@@ -10,8 +10,8 @@
 			"status_effect": "BURN",
 			"power": 50,
 			"duration": 3,
-			"mp_cost": 8,
-			"sp_cost": 0,
+			"mp_cost": 4,
+			"sp_cost": 4,
 			"cooldown": 3
 		},
 		"Divine Shield": {
@@ -92,7 +92,7 @@
 			"target": "ALLY",
 			"attribute_target": "NONE",
 			"status_effect": "NONE",
-			"power": 50,
+			"power": 100,
 			"duration": 0,
 			"mp_cost": 8,
 			"sp_cost": 0,

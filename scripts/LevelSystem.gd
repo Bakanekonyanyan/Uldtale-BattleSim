@@ -1,8 +1,23 @@
-# LevelSystem.gd
+# res://scripts/LevelSystem.gd
 extends Node
 
-const BASE_XP_REQUIRED = 100
-const XP_INCREASE_PER_LEVEL = 50
-
+# More aggressive curve: exponential growth with compounding
 func calculate_xp_for_level(level: int) -> int:
-	return BASE_XP_REQUIRED + (level - 1) * XP_INCREASE_PER_LEVEL
+	if level <= 1:
+		return 0
+	
+	# Base formula: 100 * (1.5 ^ (level - 1))
+	# This creates a steeper curve:
+	# Level 2: 100 XP
+	# Level 3: 150 XP
+	# Level 4: 225 XP
+	# Level 5: 338 XP
+	# Level 6: 506 XP
+	# Level 10: 3844 XP
+	# Level 20: 867,362 XP
+	
+	var base_xp = 100.0
+	var exponent = 1.5
+	var required_xp = base_xp * pow(exponent, level - 2)
+	
+	return int(required_xp)

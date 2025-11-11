@@ -3,7 +3,7 @@ class_name Inventory
 extends Resource
 
 @export var items: Dictionary = {}  # Dictionary of item_name: {item: Item, quantity: int}
-@export var capacity: int = 25
+@export var capacity: int = 30
 
 func add_item(item: Item, quantity: int = 1) -> bool:
 	# Equipment should never stack - each piece is unique with its own rarity

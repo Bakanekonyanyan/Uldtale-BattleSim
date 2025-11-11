@@ -152,6 +152,15 @@ offset_right = 430.0
 offset_bottom = 311.0
 text = "Sell"
 
+[node name="SellAllButton" type="Button" parent="UI"]
+light_mask = 0
+offset_left = 472.0
+offset_top = 280.0
+offset_right = 510.0
+offset_bottom = 311.0
+text = "Sell All of Item
+"
+
 [node name="PlayerCurrencyLabel" type="Label" parent="UI"]
 light_mask = 0
 offset_left = 16.0
@@ -159,3 +168,10 @@ offset_top = 336.0
 offset_right = 95.0
 offset_bottom = 362.0
 text = "Currency: "
+
+[node name="RichTextLabel" type="RichTextLabel" parent="UI"]
+offset_left = 672.0
+offset_top = 8.0
+offset_right = 972.0
+offset_bottom = 408.0
+bbcode_enabled = true
