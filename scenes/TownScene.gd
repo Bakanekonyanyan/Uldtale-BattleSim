@@ -49,8 +49,102 @@ func update_ui():
 func _on_shop_pressed():
 	SceneManager.change_to_shop(current_character)
 
+# Update the _on_dungeon_pressed function in TownScene.gd:
+
 func _on_dungeon_pressed():
-	SceneManager.change_to_dungeon(current_character)
+	show_floor_selection_dialog()
+
+func show_floor_selection_dialog():
+	"""Show a dialog to select which floor to start from"""
+	var dialog = ConfirmationDialog.new()
+	dialog.title = "Select Starting Floor"
+	dialog.ok_button_text = "Start Dungeon"
+	dialog.cancel_button_text = "Cancel"
+	
+	# Create container for floor selection
+	var vbox = VBoxContainer.new()
+	vbox.custom_minimum_size = Vector2(300, 200)
+	
+	# Add info label
+	var info_label = Label.new()
+	info_label.text = "Choose which floor to start from:"
+	info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(info_label)
+	
+	# Add spacing
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 10)
+	vbox.add_child(spacer)
+	
+	# Create floor selection buttons in a grid
+	var grid = GridContainer.new()
+	grid.columns = 5
+	grid.add_theme_constant_override("h_separation", 5)
+	grid.add_theme_constant_override("v_separation", 5)
+	
+	var max_selectable = max(1, current_character.max_floor_cleared + 1)
+	var selected_floor = 1
+	var floor_buttons = []
+	
+	# Create floor buttons
+	for floor in range(1, 26):  # Floors 1-10
+		var btn = Button.new()
+		btn.text = str(floor)
+		btn.custom_minimum_size = Vector2(50, 40)
+		btn.toggle_mode = true
+		btn.disabled = floor > max_selectable
+		
+		if floor == 1:
+			btn.button_pressed = true
+		
+		# Store floor number in button
+		btn.set_meta("floor", floor)
+		floor_buttons.append(btn)
+		
+		# Connect button press
+		btn.pressed.connect(func():
+			# Unpress all other buttons
+			for other_btn in floor_buttons:
+				if other_btn != btn:
+					other_btn.button_pressed = false
+			btn.button_pressed = true
+			selected_floor = btn.get_meta("floor")
+			current_character.current_floor = selected_floor
+			print(current_character.current_floor)
+		)
+		
+		grid.add_child(btn)
+	
+	vbox.add_child(grid)
+	
+	# Add info about max cleared floor
+	var progress_label = Label.new()
+	if current_character.max_floor_cleared > 0:
+		progress_label.text = "\nHighest Cleared: Floor %d\nYou can start from floors 1-%d" % [
+			current_character.max_floor_cleared,
+			max_selectable
+		]
+	else:
+		progress_label.text = "\nYou haven't cleared any floors yet.\nStart from Floor 1!"
+	progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(progress_label)
+	
+	dialog.add_child(vbox)
+	add_child(dialog)
+	dialog.popup_centered()
+	
+	# Handle confirmation
+	dialog.confirmed.connect(func():
+		print("Starting dungeon from floor %d" % selected_floor)
+		SceneManager.start_dungeon_from_floor(current_character, selected_floor)
+		dialog.queue_free()
+	)
+	
+	# Handle cancellation
+	dialog.canceled.connect(func():
+		print("Dungeon entry cancelled")
+		dialog.queue_free()
+	)
 
 func _on_equipment_pressed():
 	SceneManager.change_to_equipment(current_character)

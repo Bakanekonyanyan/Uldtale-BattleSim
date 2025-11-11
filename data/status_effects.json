@@ -1,7 +1,7 @@
 {
 	"POISON": {
 		"damage_type": "hp_percent",
-		"damage_value": 0.15,
+		"damage_value": 0.2,
 		"message": "{name} took {damage} poison damage"
 	},
 	"BURN": {
@@ -15,21 +15,22 @@
 	"SHOCK": {
 		"damage_type": "hp_percent",
 		"damage_value": 0.125,
-		"stun_chance": 0.2,
+		"stun_chance": 0.3,
 		"message": "{name} took {damage} shock damage"
 	},
 	"FREEZE": {
 		"damage_type": "none",
 		"stat_modifiers": {
-			"vitality": -2,
+			"dexterity": -2,
 			"agility": -2,
 			"arcane": -2
 		},
+		"stun_chance": 0.25,
 		"message": "{name} is frozen, reducing their defense"
 	},
 	"BLEED": {
-	"damage_type": "flat",
-	"damage_value": 15,
+	"damage_type": "hp_percent",
+	"damage_value": 0.125,
 	"message": "{name} bleeds for {damage} damage"
 	}
 }

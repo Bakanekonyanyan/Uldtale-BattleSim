@@ -238,8 +238,7 @@ func set_player_character(character: CharacterData):
 	player_character = character
 
 func _on_next_floor_pressed():
-	new_floor_pressed = true
-	
+	player_character.current_floor += 1
 	# CRITICAL FIX: Check collection state
 	if not rewards_collected:
 		show_collection_prompt("next floor")

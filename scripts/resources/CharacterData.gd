@@ -57,6 +57,8 @@ var debuffs: Dictionary = {}
 
 @export var xp: int = 0
 @export var attribute_points: int = 0
+@export var current_floor: int = 0
+@export var max_floor_cleared: int = 0  # Highest floor number completed
 @export var is_player: bool = false
 
 # Equipment slots
@@ -704,7 +706,6 @@ func apply_status_effect_modifiers(effect: Skill.StatusEffect, apply: bool = tru
 			modify_attribute(Skill.AttributeTarget.AGILITY, -2, apply, status_effects.get(effect, 1))
 			modify_attribute(Skill.AttributeTarget.ARCANE, -2, apply, status_effects.get(effect, 1))
 
-
 # Modified modify_attribute to accept an explicit duration when applying, and to properly remove on unapply.
 # attribute: Skill.AttributeTarget (enum), value: int, apply: bool, duration: int
 func modify_attribute(attribute: Skill.AttributeTarget, value: int, apply: bool, duration: int = 1) -> void:
@@ -736,3 +737,9 @@ func update_status_effects() -> String:
 	update_buffs_and_debuffs()
 
 	return message
+
+func update_max_floor_cleared(floor: int):
+	"""Update the maximum floor cleared if the new floor is higher"""
+	if floor > max_floor_cleared:
+		max_floor_cleared = floor
+		print("New max floor cleared: %d" % max_floor_cleared)

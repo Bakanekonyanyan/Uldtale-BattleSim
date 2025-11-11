@@ -46,7 +46,9 @@ func save_game(player: CharacterData):
 		"stash": {},
 		"equipment": {},
 		"xp": player.xp,
-		"attribute_points": player.attribute_points
+		"attribute_points": player.attribute_points,
+		"max_floor_cleared": player.max_floor_cleared
+
 	}
 	
 	# Save inventory - with FIXED stat_modifiers conversion
@@ -226,6 +228,7 @@ func load_game(character_name: String) -> CharacterData:
 	player.spell_power_type = save_data.get("spell_power_type", "intelligence")
 	player.xp = save_data.get("xp", 0)
 	player.attribute_points = save_data.get("attribute_points", 0)
+	player.max_floor_cleared = save_data.get("max_floor_cleared", 0)
 	player.is_player = true
 	
 	# Handle skills separately

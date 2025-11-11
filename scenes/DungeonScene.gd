@@ -6,23 +6,16 @@ var current_wave: int = 0
 var current_floor: int = 1
 var waves_per_floor: int = 5
 var is_boss_fight: bool = false
-var max_floor: int = 10
+var max_floor: int = 25
 
 @onready var wave_label = $WaveLabel
 @onready var floor_label = $FloorLabel
 @onready var dungeon_description_label = $DungeonDescriptionLabel
 
 func _ready():
-	# Only initialize if we're starting fresh (no stored state in SceneManager)
-	if SceneManager.dungeon_info.is_empty():
-		player_character = CharacterManager.get_current_character()
-		if player_character == null:
-			print("Error: No character selected")
-			SceneManager.change_to_character_selection()
-			return
-		
-		reset_player_stats()
-		start_dungeon()
+	# CRITICAL FIX: Don't initialize anything here - wait for start_dungeon to be called
+	# The SceneManager will call start_dungeon() after the scene is ready
+	print("DungeonScene: _ready called, waiting for start_dungeon")
 
 func reset_player_stats():
 	player_character.current_hp = player_character.max_hp
@@ -34,12 +27,13 @@ func set_player(character: CharacterData):
 	update_labels()
 
 func start_dungeon(info: Dictionary = {}):
-	print("DungeonScene: start_dungeon called")
+	print("DungeonScene: start_dungeon called with info: ", info)
+	
 	if not info.is_empty():
-		# Restore from saved state
+		# Restore from saved state OR start from selected floor
 		player_character = info.get("player_character", player_character)
 		current_wave = info["current_wave"]
-		current_floor = info["current_floor"]
+		current_floor = player_character.current_floor
 		is_boss_fight = info["is_boss_fight"]
 		max_floor = info["max_floor"]
 		waves_per_floor = info.get("waves_per_floor", 5)
@@ -51,7 +45,6 @@ func start_dungeon(info: Dictionary = {}):
 			print("DungeonScene: Boss was defeated, checking if player wants to continue")
 			if current_floor >= max_floor:
 				print("DungeonScene: Max floor reached! Dungeon complete!")
-				# TODO: Show completion screen or return to town
 				SceneManager.change_to_town(player_character)
 				return
 			# Boss beaten but player clicked Continue instead of Next Floor
@@ -68,11 +61,19 @@ func start_dungeon(info: Dictionary = {}):
 		# Continue to next wave
 		next_wave()
 	else:
-		# Brand new dungeon
+		# FALLBACK: If info is empty (shouldn't happen from town anymore)
+		# Initialize with character from CharacterManager
+		player_character = CharacterManager.get_current_character()
+		if player_character == null:
+			print("Error: No character selected")
+			SceneManager.change_to_character_selection()
+			return
+		
 		current_wave = 0
 		current_floor = 1
 		is_boss_fight = false
-		print("DungeonScene: Starting new dungeon")
+		reset_player_stats()
+		print("DungeonScene: Starting new dungeon (fallback mode)")
 		EnemyFactory.set_dungeon_race(current_floor)
 		update_labels()
 		next_wave()

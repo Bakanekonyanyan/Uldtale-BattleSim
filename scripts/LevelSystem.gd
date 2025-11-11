@@ -4,7 +4,7 @@ extends Node
 # More aggressive curve: exponential growth with compounding
 func calculate_xp_for_level(level: int) -> int:
 	if level <= 1:
-		return 0
+		return 100
 	
 	# Base formula: 100 * (1.5 ^ (level - 1))
 	# This creates a steeper curve:
@@ -18,6 +18,6 @@ func calculate_xp_for_level(level: int) -> int:
 	
 	var base_xp = 100.0
 	var exponent = 1.5
-	var required_xp = base_xp * pow(exponent, level - 2)
+	var required_xp = base_xp * pow(exponent, level - 2) + 100.0
 	
 	return int(required_xp)

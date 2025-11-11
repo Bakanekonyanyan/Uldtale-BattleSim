@@ -231,13 +231,17 @@ func _on_next_floor():
 	rewards_accepted = false
 
 	if not dungeon_info.is_empty():
+		# CRITICAL: Update max floor cleared when advancing
+		var player = dungeon_info["player_character"]
+		if player and is_instance_valid(player):
+			player.update_max_floor_cleared(dungeon_info["current_floor"])
+			SaveManager.save_game(player)  # Save the updated progress
+		
 		dungeon_info["current_floor"] += 1
 		dungeon_info["current_wave"] = 0
 		dungeon_info["is_boss_fight"] = false
 		
 		print("SceneManager: Advancing to floor ", dungeon_info["current_floor"])
-		
-		# XP is already applied in RewardScene, no need to do it here
 		
 		_change_scene_internal(dungeon_info["path"], dungeon_info["player_character"])
 		await get_tree().process_frame
@@ -248,6 +252,24 @@ func _on_next_floor():
 			push_error("SceneManager: DungeonScene missing start_dungeon method")
 	else:
 		push_error("SceneManager: No dungeon info available for next floor")
+# Add new function to start dungeon from specific floor
+func start_dungeon_from_floor(player_character: CharacterData, start_floor: int) -> void:
+	"""Start a dungeon run from a specific floor"""
+	dungeon_info = {
+		"player_character": player_character,
+		"current_wave": 0,
+		"current_floor": start_floor,
+		"is_boss_fight": false,
+		"max_floor": 25,
+		"waves_per_floor": 5
+	}
+	
+	town_scene_active = false
+	_change_scene_internal("res://scenes/DungeonScene.tscn", player_character)
+	await get_tree().process_frame
+	
+	if current_scene.has_method("start_dungeon"):
+		current_scene.start_dungeon(dungeon_info)
 
 # REMOVE show_level_up_scene function entirely
 func show_level_up_scene(player: CharacterData):
@@ -317,7 +339,7 @@ func calculate_battle_rewards(battle_info: Dictionary) -> Dictionary:
 		"xp": xp_gained
 	}
 	
-	var drop_chance_multiplier = 1 + (current_floor * 0.1)
+	var drop_chance_multiplier = 1 + (current_floor * 0.25)
 	
 	# NEW: Check for equipment drops from enemy
 	if enemy and enemy.has_meta("equipped_items"):
@@ -353,15 +375,15 @@ func get_equipment_drop_chance(rarity: String, is_boss: bool) -> float:
 	
 	match rarity:
 		"uncommon":
-			base_chance = 0.50  # 50% drop for uncommon
+			base_chance = 0.80  # 50% drop for uncommon
 		"magic":
-			base_chance = 0.65  # 65% drop for magic
+			base_chance = 0.75  # 65% drop for magic
 		"rare":
-			base_chance = 0.75  # 75% drop for rare
+			base_chance = 0.66  # 75% drop for rare
 		"epic":
-			base_chance = 0.85  # 85% drop for epic
+			base_chance = 0.50  # 85% drop for epic
 		"legendary":
-			base_chance = 0.95  # 95% drop for legendary
+			base_chance = 0.33  # 95% drop for legendary
 		_:
 			return 0.0  # Common items don't drop
 	

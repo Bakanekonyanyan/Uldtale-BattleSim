@@ -66,7 +66,7 @@ func _on_create_pressed():
 	new_character.name = name_input.text
 	new_character.race = race_option.get_item_text(race_option.selected)
 	new_character.character_class = class_option.get_item_text(class_option.selected)
-	
+	new_character.max_floor_cleared = 0
 	var selected_race = races["playable"][new_character.race]
 	var selected_class = classes["playable"][new_character.character_class]
 	

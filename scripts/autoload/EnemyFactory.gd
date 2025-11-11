@@ -151,8 +151,8 @@ func setup_character(character: CharacterData, character_class: String, class_ty
 		character.add_skills(valid_skills)
 
 func apply_enemy_scaling(enemy: CharacterData, floor: int, wave: int, is_boss: bool = false):
-	var floor_bonus = floor - 1
-	var wave_multiplier = 1.0 + (0.10 * wave)
+	var floor_bonus = floor
+	var wave_multiplier = 1.25 + (0.25 * wave)
 	
 	enemy.vitality += floor_bonus
 	enemy.strength += floor_bonus
