@@ -10,15 +10,16 @@ script = ExtResource("1_e73ia")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 modulate = Color(0.8, 0.8, 0.8, 1)
-position = Vector2(576, 416)
-scale = Vector2(0.757, 0.757)
+position = Vector2(600, 592)
+scale = Vector2(0.825, 0.825)
 texture = ExtResource("2_aogts")
 
 [node name="MainContainer" type="VBoxContainer" parent="."]
 layout_mode = 0
-offset_left = 8.0
-offset_right = 187.0
-offset_bottom = 40.0
+offset_left = 32.0
+offset_top = 24.0
+offset_right = 211.0
+offset_bottom = 64.0
 
 [node name="ScrollContainer" type="VBoxContainer" parent="MainContainer"]
 layout_mode = 2
@@ -26,22 +27,34 @@ layout_mode = 2
 [node name="CharacterContainer" type="VBoxContainer" parent="MainContainer/ScrollContainer"]
 layout_mode = 2
 
-[node name="CreateNewButton" type="Button" parent="MainContainer"]
+[node name="CreateNewButton" type="Button" parent="."]
 layout_mode = 2
+offset_left = 456.0
+offset_top = 152.0
+offset_right = 635.0
+offset_bottom = 183.0
 text = "Create New Character"
+
+[node name="QuitButton" type="Button" parent="."]
+layout_mode = 2
+offset_left = 456.0
+offset_top = 216.0
+offset_right = 576.0
+offset_bottom = 247.0
+text = "Quit Game"
 
 [node name="LoadSavedGameButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 384.0
-offset_top = 64.0
-offset_right = 470.0
-offset_bottom = 95.0
+offset_left = 456.0
+offset_top = 88.0
+offset_right = 542.0
+offset_bottom = 119.0
 text = "Load Save"
 
 [node name="StartNewGameButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 384.0
-offset_top = 16.0
-offset_right = 470.0
-offset_bottom = 47.0
+offset_left = 456.0
+offset_top = 24.0
+offset_right = 591.0
+offset_bottom = 55.0
 text = "Start New Game"

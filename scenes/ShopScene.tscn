@@ -35,12 +35,13 @@ script = ExtResource("1_0c31w")
 
 [node name="Sprite2D2" type="Sprite2D" parent="."]
 modulate = Color(0.541176, 0.541176, 0.541176, 1)
-position = Vector2(368, 360)
+position = Vector2(352, 360)
 scale = Vector2(0.5, 0.5)
 texture = ExtResource("2_pcdiq")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(768, 360)
+modulate = Color(0.581033, 0.581033, 0.581033, 1)
+position = Vector2(824, 360)
 scale = Vector2(0.5, 0.5)
 texture = ExtResource("3_xobpl")
 
@@ -48,12 +49,13 @@ texture = ExtResource("3_xobpl")
 environment = SubResource("Environment_jmeq7")
 
 [node name="DirectionalLight2D" type="DirectionalLight2D" parent="."]
+position = Vector2(520, 0)
 color = Color(0.541176, 0.541176, 0.541176, 1)
 blend_mode = 2
 
 [node name="PointLight2D6" type="PointLight2D" parent="."]
-position = Vector2(768, 360)
-scale = Vector2(8, 8)
+position = Vector2(792, 360)
+scale = Vector2(8.72, 8)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.74
 texture = SubResource("GradientTexture2D_6u54x")
@@ -65,7 +67,7 @@ base_pulse_duration = 4.0
 randomness = 0.5
 
 [node name="PointLight2D" type="PointLight2D" parent="."]
-position = Vector2(1096, 136)
+position = Vector2(1152, 136)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 1.5
 texture = SubResource("GradientTexture2D_evf1j")
@@ -73,7 +75,7 @@ texture_scale = 1.5
 script = ExtResource("4_4t6n7")
 
 [node name="PointLight2D2" type="PointLight2D" parent="."]
-position = Vector2(456, 128)
+position = Vector2(512, 128)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 1.5
 texture = SubResource("GradientTexture2D_evf1j")
@@ -81,7 +83,7 @@ texture_scale = 1.5
 script = ExtResource("4_4t6n7")
 
 [node name="PointLight2D3" type="PointLight2D" parent="."]
-position = Vector2(1048, 184)
+position = Vector2(1104, 184)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.75
 texture = SubResource("GradientTexture2D_evf1j")
@@ -91,7 +93,7 @@ base_pulse_duration = 1.5
 randomness = 0.4
 
 [node name="PointLight2D4" type="PointLight2D" parent="."]
-position = Vector2(552, 208)
+position = Vector2(608, 208)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.75
 texture = SubResource("GradientTexture2D_evf1j")
@@ -101,7 +103,7 @@ base_pulse_duration = 1.5
 randomness = 0.3
 
 [node name="PointLight2D5" type="PointLight2D" parent="."]
-position = Vector2(1000, 224)
+position = Vector2(1056, 224)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.25
 texture = SubResource("GradientTexture2D_evf1j")
@@ -169,7 +171,7 @@ offset_right = 119.0
 offset_bottom = 378.0
 text = "Currency: "
 
-[node name="RichTextLabel" type="RichTextLabel" parent="UI"]
+[node name="ItemInfoLabel" type="RichTextLabel" parent="UI"]
 offset_left = 696.0
 offset_top = 24.0
 offset_right = 996.0

@@ -34,8 +34,8 @@ script = ExtResource("1_igoe4")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 modulate = Color(0.501961, 0.423529, 0.423529, 1)
-position = Vector2(576, 288)
-scale = Vector2(0.75, 0.75)
+position = Vector2(600, 328)
+scale = Vector2(0.85, 0.85)
 texture = ExtResource("2_2lbg6")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
@@ -60,7 +60,7 @@ base_pulse_duration = 4.0
 randomness = 0.5
 
 [node name="PointLight2D" type="PointLight2D" parent="."]
-position = Vector2(952, 376)
+position = Vector2(1032, 416)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 1.5
 texture = SubResource("GradientTexture2D_1eodc")
@@ -88,7 +88,7 @@ min_energy = 0.15
 max_energy = 0.75
 
 [node name="PointLight2D2" type="PointLight2D" parent="."]
-position = Vector2(307.2, -8)
+position = Vector2(296, -32)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 1.5
 texture = SubResource("GradientTexture2D_1eodc")
@@ -96,7 +96,7 @@ texture_scale = 1.5
 script = ExtResource("3_wdq3f")
 
 [node name="PointLight2D3" type="PointLight2D" parent="."]
-position = Vector2(891.2, 200)
+position = Vector2(960, 200)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.75
 texture = SubResource("GradientTexture2D_1eodc")
@@ -106,7 +106,7 @@ base_pulse_duration = 1.5
 randomness = 0.4
 
 [node name="PointLight2D4" type="PointLight2D" parent="."]
-position = Vector2(547.2, 104)
+position = Vector2(568, 96)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.75
 texture = SubResource("GradientTexture2D_1eodc")
@@ -116,7 +116,7 @@ base_pulse_duration = 1.5
 randomness = 0.3
 
 [node name="PointLight2D5" type="PointLight2D" parent="."]
-position = Vector2(691.2, 208)
+position = Vector2(736, 208)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.25
 texture = SubResource("GradientTexture2D_1eodc")

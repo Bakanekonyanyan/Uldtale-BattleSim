@@ -9,6 +9,7 @@ var classes = {}
 @onready var class_option = $ClassOption
 @onready var stats_label = $StatsLabel
 @onready var create_button = $CreateButton
+@onready var cancel_button = $QuitButton
 
 func _ready():
 	load_data()
@@ -29,8 +30,12 @@ func setup_ui():
 	race_option.connect("item_selected", Callable(self, "_on_race_selected"))
 	class_option.connect("item_selected", Callable(self, "_on_class_selected"))
 	create_button.connect("pressed", Callable(self, "_on_create_pressed"))
+	cancel_button.connect("pressed", Callable(self, "_on_cancel_pressed"))
 	
 	update_stats()
+
+func _on_cancel_pressed():
+	SceneManager.change_scene("res://scenes/ui/CharacterSelection.tscn")
 
 func _on_race_selected(_index):
 	update_stats()
@@ -66,7 +71,7 @@ func _on_create_pressed():
 	new_character.name = name_input.text
 	new_character.race = race_option.get_item_text(race_option.selected)
 	new_character.character_class = class_option.get_item_text(class_option.selected)
-	new_character.max_floor_cleared = 0
+	new_character.max_floor_cleared = 1
 	var selected_race = races["playable"][new_character.race]
 	var selected_class = classes["playable"][new_character.character_class]
 	

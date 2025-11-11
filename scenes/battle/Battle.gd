@@ -220,7 +220,7 @@ func _on_items_pressed():
 func _on_view_enemy_equipment_pressed():
 	show_enemy_equipment_dialog()
 
-# Battle.gd - Add to existing check_battle_end() function
+# Battle.gd - FIXED battle completion flow
 func check_battle_end():
 	var outcome = combat_manager.check_battle_outcome(player_character, enemy_character)
 	match outcome:
@@ -229,7 +229,13 @@ func check_battle_end():
 			var xp = enemy_character.level * 50 * current_floor
 			await get_tree().create_timer(1.0).timeout
 			
-			# Show battle complete dialog instead of immediately going to rewards
+			# CRITICAL FIX: Update max_floor_cleared BEFORE showing dialog
+			if is_boss_battle:
+				player_character.update_max_floor_cleared(current_floor)
+				SaveManager.save_game(player_character)
+				print("Battle: Boss defeated on floor %d, max_floor_cleared updated to %d" % [current_floor, player_character.max_floor_cleared])
+			
+			# Show battle complete dialog
 			show_battle_complete_dialog(xp)
 		"defeat":
 			ui_manager.enable_actions(false)
@@ -237,7 +243,6 @@ func check_battle_end():
 			emit_signal("battle_completed", false, 0)
 
 func show_battle_complete_dialog(xp_gained: int):
-	# Load the dialog scene
 	var dialog_scene = load("res://scenes/BattleCompleteDialog.tscn")
 	if not dialog_scene:
 		# Fallback to old behavior if dialog not found
@@ -249,7 +254,7 @@ func show_battle_complete_dialog(xp_gained: int):
 	
 	dialog.show_dialog(player_character, xp_gained)
 	
-	# Connect signals
+	# Connect signals - FIXED: Pass enemy reference for rewards
 	dialog.connect("press_on_selected", Callable(self, "_on_press_on_selected").bind(xp_gained))
 	dialog.connect("take_breather_selected", Callable(self, "_on_take_breather_selected").bind(xp_gained))
 
@@ -262,8 +267,9 @@ func _on_press_on_selected(xp_gained: int):
 	# Apply XP immediately (no level up screen mid-momentum)
 	player_character.gain_xp(xp_gained)
 	
-	# Emit battle completed with momentum flag
-	emit_signal("battle_completed", true, xp_gained)
+	# CRITICAL FIX: Pass momentum flag to SceneManager
+	# Emit with special "skip_rewards" flag
+	emit_signal("battle_completed", true, -1)  # -1 XP signals "skip rewards"
 
 func _on_take_breather_selected(xp_gained: int):
 	print("Battle: Player taking a breather, showing rewards...")
@@ -271,7 +277,8 @@ func _on_take_breather_selected(xp_gained: int):
 	# Reset momentum
 	MomentumSystem.reset_momentum()
 	
-	# Emit normal battle completion (goes to rewards)
+	# CRITICAL FIX: Emit normal battle completion with XP
+	# This will trigger reward calculation
 	emit_signal("battle_completed", true, xp_gained)
 
 func _on_turn_ended(character: CharacterData):

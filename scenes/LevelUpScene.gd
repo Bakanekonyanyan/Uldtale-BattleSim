@@ -60,12 +60,47 @@ func setup_attribute_buttons():
 		attribute_labels[attr] = label
 		
 		var minus_button = Button.new()
+		minus_button.custom_minimum_size = Vector2(20, 10)
 		minus_button.text = "-"
+		# 1. Create a StyleBox for the visual style
+		var style_normal = StyleBoxFlat.new()
+		# 2. Set the color (e.g., to a light blue)
+		style_normal.bg_color = Color("A52A2A") # Hex color for a shade of blue
+		style_normal.corner_radius_top_left = 2
+		style_normal.corner_radius_top_right = 2
+		style_normal.corner_radius_bottom_left = 2
+		style_normal.corner_radius_bottom_right = 2
+
+		# 3. Apply the StyleBox as a theme override for the 'normal' state
+		minus_button.add_theme_stylebox_override("normal", style_normal)
+
+		# You can also set other states, like 'pressed' or 'hover'
+		var style_pressed = StyleBoxFlat.new()
+		style_pressed.bg_color = Color("2e4a84") # A darker blue for pressed state
+		minus_button.add_theme_stylebox_override("pressed", style_pressed)
+		var style_hover = StyleBoxFlat.new()
+		style_hover.bg_color = Color("2e4a84") # A darker blue for pressed state
+		minus_button.add_theme_stylebox_override("hover", style_hover)
+		
+		
 		minus_button.connect("pressed", Callable(self, "_on_attribute_changed").bind(attr, -1))
 		hbox.add_child(minus_button)
 		
 		var plus_button = Button.new()
+		plus_button.custom_minimum_size = Vector2(20, 10)
 		plus_button.text = "+"
+		# 2. Set the color (e.g., to a light blue)
+		style_normal.bg_color = Color("4472c4") # Hex color for a shade of blue
+
+		# 3. Apply the StyleBox as a theme override for the 'normal' state
+		plus_button.add_theme_stylebox_override("normal", style_normal)
+
+		# You can also set other states, like 'pressed' or 'hover'
+		style_pressed.bg_color = Color("2e4a84") # A darker blue for pressed state
+		plus_button.add_theme_stylebox_override("pressed", style_pressed)
+		style_hover.bg_color = Color("4e6c48") # A darker blue for pressed state
+		plus_button.add_theme_stylebox_override("hover", style_hover)
+		
 		plus_button.connect("pressed", Callable(self, "_on_attribute_changed").bind(attr, 1))
 		hbox.add_child(plus_button)
 		

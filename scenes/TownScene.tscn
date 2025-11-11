@@ -35,8 +35,8 @@ fill_from = Vector2(0.5, 0.5)
 script = ExtResource("1_lgvuw")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(576, 272)
-scale = Vector2(0.75, 0.75)
+position = Vector2(568, 312)
+scale = Vector2(0.825, 0.825)
 texture = ExtResource("2_1e24h")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
@@ -180,9 +180,16 @@ offset_bottom = 199.0
 text = "Stash
 "
 
+[node name="CharacterSelectButton" type="Button" parent="UI"]
+offset_left = 48.0
+offset_top = 320.0
+offset_right = 164.0
+offset_bottom = 351.0
+text = "Character Selection"
+
 [node name="QuitButton" type="Button" parent="UI"]
 offset_left = 48.0
 offset_top = 384.0
 offset_right = 164.0
-offset_bottom = 438.0
+offset_bottom = 415.0
 text = "Save and Quit"

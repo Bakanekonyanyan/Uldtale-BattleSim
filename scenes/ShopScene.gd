@@ -101,6 +101,8 @@ func _on_sell_item_selected(index: int):
 	
 	display_item_info(item, item.value / 2, false)
 
+# In ShopScene.gd, update the display_item_info function:
+
 func display_item_info(item: Item, price: int, is_buying: bool):
 	if not item_info_label:
 		return
@@ -115,7 +117,31 @@ func display_item_info(item: Item, price: int, is_buying: bool):
 			info_text = item.get_full_description()
 			info_text += "\n\n"
 		else:
+			# FIXED: Show consumable details properly
 			info_text = "[b]%s[/b]\n\n%s\n\n" % [item.name, item.description]
+			
+			# Show consumable-specific info
+			if item.item_type == Item.ItemType.CONSUMABLE:
+				info_text += "[color=cyan][b]Consumable Effect:[/b][/color]\n"
+				
+				match item.consumable_type:
+					Item.ConsumableType.DAMAGE:
+						info_text += "  Deals %d damage\n" % item.effect_power
+						if item.status_effect != Skill.StatusEffect.NONE:
+							var effect_name = Skill.StatusEffect.keys()[item.status_effect]
+							info_text += "  Inflicts [color=purple]%s[/color] for %d turns\n" % [effect_name, item.effect_duration]
+					Item.ConsumableType.HEAL:
+						info_text += "  Restores %d HP\n" % item.effect_power
+					Item.ConsumableType.RESTORE:
+						info_text += "  Restores %d MP/SP\n" % item.effect_power
+					Item.ConsumableType.BUFF:
+						info_text += "  Increases %s by %d for %d turns\n" % [item.buff_type, item.effect_power, item.effect_duration]
+					Item.ConsumableType.CURE:
+						info_text += "  Cures all status effects\n"
+						if item.effect_power > 0:
+							info_text += "  Restores %d HP\n" % item.effect_power
+				
+				info_text += "\n"
 		
 		if is_buying:
 			info_text += "[color=yellow]Buy Price: %d copper[/color]" % price
@@ -131,7 +157,7 @@ func display_item_info(item: Item, price: int, is_buying: bool):
 		else:
 			info_text += "Sell Price: %d copper" % price
 		item_info_label.text = info_text
-
+		
 func clear_item_info():
 	if item_info_label:
 		item_info_label.text = "Select an item to view details"
@@ -184,7 +210,7 @@ func _on_sell_all_pressed():
 
 func _on_exit_pressed():
 	CharacterManager.save_character(player_character)
-	SceneManager.change_scene("res://scenes/TownScene.tscn")
+	SceneManager.change_to_town(player_character)
 
 func _on_item_selected(_index):
 	if buy_button:

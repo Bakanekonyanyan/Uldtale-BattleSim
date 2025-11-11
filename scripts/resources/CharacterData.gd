@@ -57,7 +57,7 @@ var debuffs: Dictionary = {}
 
 @export var xp: int = 0
 @export var attribute_points: int = 0
-@export var current_floor: int = 1
+@export var current_floor: int = 0
 @export var max_floor_cleared: int = 0  # Highest floor number completed
 @export var is_player: bool = false
 

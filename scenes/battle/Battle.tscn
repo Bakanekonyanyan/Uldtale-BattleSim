@@ -8,8 +8,8 @@
 script = ExtResource("1_jr4vv")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(576, 200)
-scale = Vector2(0.75, 0.75)
+position = Vector2(592, 312)
+scale = Vector2(0.85, 0.85)
 texture = ExtResource("2_18p0q")
 
 [node name="PlayerInfo" type="Label" parent="."]
@@ -41,32 +41,32 @@ script = ExtResource("2_ng7cs")
 
 [node name="ItemList" type="ItemList" parent="InventoryMenu"]
 layout_mode = 0
-offset_left = 296.0
+offset_left = 336.0
 offset_top = 200.0
-offset_right = 552.0
+offset_right = 592.0
 offset_bottom = 392.0
 
 [node name="UseButton" type="Button" parent="InventoryMenu"]
 layout_mode = 0
-offset_left = 320.0
+offset_left = 360.0
 offset_top = 408.0
-offset_right = 357.0
+offset_right = 397.0
 offset_bottom = 439.0
 text = "Use"
 
 [node name="CancelButton" type="Button" parent="InventoryMenu"]
 layout_mode = 0
-offset_left = 464.0
+offset_left = 504.0
 offset_top = 408.0
-offset_right = 524.0
+offset_right = 564.0
 offset_bottom = 439.0
 text = "Cancel"
 
 [node name="CurrencyLabel" type="Label" parent="InventoryMenu"]
 layout_mode = 0
-offset_left = 424.0
+offset_left = 464.0
 offset_top = 176.0
-offset_right = 499.0
+offset_right = 539.0
 offset_bottom = 202.0
 text = "Currency:"
 
@@ -104,16 +104,16 @@ offset_bottom = 290.0
 text = "XP:"
 
 [node name="DebugToggleButton" type="Button" parent="."]
-offset_left = 688.0
-offset_top = 376.0
-offset_right = 746.0
-offset_bottom = 407.0
+offset_left = 768.0
+offset_top = 368.0
+offset_right = 826.0
+offset_bottom = 399.0
 text = "Debug"
 
 [node name="DebugWindow" type="Panel" parent="."]
-offset_left = 688.0
+offset_left = 768.0
 offset_top = 416.0
-offset_right = 1088.0
+offset_right = 1168.0
 offset_bottom = 616.0
 scale = Vector2(1, 1.2)
 
@@ -128,23 +128,23 @@ bbcode_enabled = true
 scroll_following = true
 
 [node name="CombatLogLabel" type="Label" parent="."]
-offset_left = 624.0
+offset_left = 704.0
 offset_top = 40.0
-offset_right = 717.0
+offset_right = 797.0
 offset_bottom = 66.0
 text = "Combat Log"
 
 [node name="CombatLogWindow" type="Panel" parent="."]
-offset_left = 688.0
+offset_left = 768.0
 offset_top = 64.0
-offset_right = 1088.0
+offset_right = 1168.0
 offset_bottom = 264.0
 scale = Vector2(1, 1.36)
 
 [node name="CombatLog" type="RichTextLabel" parent="."]
-offset_left = 688.0
+offset_left = 768.0
 offset_top = 64.0
-offset_right = 1088.0
+offset_right = 1168.0
 offset_bottom = 264.0
 bbcode_enabled = true
 scroll_following = true

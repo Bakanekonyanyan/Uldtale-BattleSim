@@ -16,38 +16,47 @@ texture = ExtResource("2_misp4")
 
 [node name="NameInput" type="LineEdit" parent="."]
 layout_mode = 0
-offset_left = 8.0
-offset_right = 288.0
-offset_bottom = 31.0
+offset_left = 80.0
+offset_top = 64.0
+offset_right = 360.0
+offset_bottom = 95.0
 placeholder_text = "Type Name Here..."
 
 [node name="RaceOption" type="OptionButton" parent="."]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 48.0
-offset_right = 22.0
-offset_bottom = 68.0
+offset_left = 80.0
+offset_top = 128.0
+offset_right = 112.0
+offset_bottom = 148.0
 tooltip_text = "Race"
 
 [node name="ClassOption" type="OptionButton" parent="."]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 88.0
-offset_right = 22.0
-offset_bottom = 108.0
+offset_left = 80.0
+offset_top = 192.0
+offset_right = 112.0
+offset_bottom = 212.0
 tooltip_text = "Class"
 
 [node name="StatsLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 168.0
-offset_top = 48.0
-offset_right = 208.0
-offset_bottom = 71.0
+offset_left = 240.0
+offset_top = 128.0
+offset_right = 280.0
+offset_bottom = 151.0
 
 [node name="CreateButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 176.0
-offset_right = 148.0
-offset_bottom = 207.0
+offset_left = 80.0
+offset_top = 256.0
+offset_right = 220.0
+offset_bottom = 287.0
 text = "Create Character"
+
+[node name="QuitButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 88.0
+offset_top = 472.0
+offset_right = 308.0
+offset_bottom = 503.0
+text = "Back to Character Selection"

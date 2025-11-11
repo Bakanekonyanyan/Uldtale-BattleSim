@@ -34,8 +34,8 @@ script = ExtResource("1_ekuo7")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 modulate = Color(0.501961, 0.423529, 0.423529, 1)
-position = Vector2(576, 288)
-scale = Vector2(0.75, 0.75)
+position = Vector2(560, 336)
+scale = Vector2(0.85, 0.85)
 texture = ExtResource("2_2e5of")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
@@ -88,7 +88,7 @@ min_energy = 0.15
 max_energy = 0.75
 
 [node name="PointLight2D2" type="PointLight2D" parent="."]
-position = Vector2(304, -8)
+position = Vector2(272, -8)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 1.5
 texture = SubResource("GradientTexture2D_rgay6")
@@ -153,3 +153,13 @@ offset_left = 32.0
 offset_top = 8.0
 offset_right = 302.0
 offset_bottom = 58.0
+
+[node name="ItemInfoLabel" type="RichTextLabel" parent="UI"]
+offset_left = 448.0
+offset_top = 64.0
+offset_right = 488.0
+offset_bottom = 104.0
+bbcode_enabled = true
+text = "Select an item to view details"
+fit_content = true
+autowrap_mode = 0

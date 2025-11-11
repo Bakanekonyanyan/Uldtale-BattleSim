@@ -5,9 +5,10 @@ var character_list = []
 var selected_character: CharacterData = null
 
 @onready var character_container = $MainContainer/ScrollContainer/CharacterContainer
-@onready var create_new_button = $MainContainer/CreateNewButton
+@onready var create_new_button = $CreateNewButton
 @onready var load_saved_game_button = $LoadSavedGameButton
 @onready var start_new_game_button = $StartNewGameButton
+@onready var quit_button = $QuitButton
 
 func _ready():
 	load_characters()
@@ -20,15 +21,20 @@ func _ready():
 		load_saved_game_button.disconnect("pressed", Callable(self, "_on_load_saved_game_pressed"))
 	if start_new_game_button.is_connected("pressed", Callable(self, "_on_start_new_game_pressed")):
 		start_new_game_button.disconnect("pressed", Callable(self, "_on_start_new_game_pressed"))
-	
+	if quit_button.is_connected("pressed", Callable(self, "_on_quit_button_pressed")):
+		quit_button.disconnect("pressed", Callable(self, "_on_quit_button_pressed"))
 	# Connect signals
 	create_new_button.connect("pressed", Callable(self, "_on_create_new_pressed"))
 	load_saved_game_button.connect("pressed", Callable(self, "_on_load_saved_game_pressed"))
 	start_new_game_button.connect("pressed", Callable(self, "_on_start_new_game_pressed"))
+	quit_button.connect("pressed", Callable(self, "_on_quit_button_pressed"))
 	
 	# Initially disable buttons
 	load_saved_game_button.disabled = true
 	start_new_game_button.disabled = true
+
+func _on_quit_button_pressed():
+	get_tree().quit()
 
 func _on_character_selected(character):
 	selected_character = character
@@ -71,7 +77,6 @@ func show_new_game_warning():
 func _on_confirmed():
 	print("confirm")
 	start_new_game()
-
 
 func start_new_game():
 	print("Starting new game with character: ", selected_character.name)

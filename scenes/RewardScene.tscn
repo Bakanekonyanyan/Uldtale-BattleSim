@@ -30,8 +30,8 @@ script = ExtResource("1_sfmy3")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 modulate = Color(0.568627, 0.501961, 0.501961, 1)
-position = Vector2(568, 304)
-scale = Vector2(0.755, 0.755)
+position = Vector2(608, 336)
+scale = Vector2(0.85, 0.85)
 texture = ExtResource("2_ytqvo")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
@@ -43,7 +43,7 @@ color = Color(0.541176, 0.541176, 0.541176, 1)
 blend_mode = 2
 
 [node name="PointLight2D6" type="PointLight2D" parent="."]
-position = Vector2(560, 344)
+position = Vector2(624, 384)
 scale = Vector2(12, 7.16667)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.74
@@ -56,7 +56,7 @@ base_pulse_duration = 4.0
 randomness = 0.5
 
 [node name="PointLight2D7" type="PointLight2D" parent="."]
-position = Vector2(560, 344)
+position = Vector2(624, 488)
 scale = Vector2(12, 7.16667)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.74
@@ -103,7 +103,7 @@ offset_left = 336.0
 offset_top = 160.0
 offset_right = 378.0
 offset_bottom = 191.0
-text = "Quit"
+text = "Back to Town"
 
 [node name="EquipmentButton" type="Button" parent="UI"]
 offset_left = 528.0

@@ -50,7 +50,10 @@ func start_dungeon(info: Dictionary = {}):
 			# Boss beaten but player clicked Continue instead of Next Floor
 			# This shouldn't happen as Continue should only show for non-boss
 			# But if it does, treat same as Next Floor
+			
 			current_floor += 1
+			player_character.update_max_floor_cleared(current_floor)
+			print(player_character.max_floor_cleared)
 			current_wave = 0
 			is_boss_fight = false
 		

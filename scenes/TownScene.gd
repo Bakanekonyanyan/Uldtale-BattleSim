@@ -10,6 +10,7 @@ var current_character: CharacterData
 @onready var status_button = $UI/StatusButton
 @onready var inventory_button = $UI/InventoryButton
 @onready var stash_button = $UI/StashButton
+@onready var character_select_button = $UI/CharacterSelectButton
 @onready var quit_button = $UI/QuitButton
 
 func _ready():
@@ -25,6 +26,8 @@ func _ready():
 		inventory_button.connect("pressed", Callable(self, "_on_inventory_pressed"))
 	if stash_button:
 		stash_button.connect("pressed", Callable(self, "_on_stash_pressed"))
+	if character_select_button:
+		character_select_button.connect("pressed", Callable(self, "_on_charselect_pressed"))
 	if quit_button:
 		quit_button.connect("pressed", Callable(self, "_on_quit_pressed"))
 		
@@ -52,6 +55,13 @@ func _on_shop_pressed():
 # Update the _on_dungeon_pressed function in TownScene.gd:
 
 func _on_dungeon_pressed():
+	set_player(current_character)
+	if current_character.max_floor_cleared == null:
+		current_character.max_floor_cleared = 1;
+		print(current_character.max_floor_cleared)
+	else:
+		print(current_character.max_floor_cleared)
+	
 	show_floor_selection_dialog()
 
 func show_floor_selection_dialog():
@@ -83,7 +93,7 @@ func show_floor_selection_dialog():
 	grid.add_theme_constant_override("h_separation", 5)
 	grid.add_theme_constant_override("v_separation", 5)
 	
-	var max_selectable = max(1, current_character.max_floor_cleared + 1)
+	var max_selectable = max(1, current_character.max_floor_cleared)
 	var selected_floor = 1
 	var floor_buttons = []
 	
@@ -160,4 +170,8 @@ func _on_stash_pressed():
 	SceneManager.change_to_stash(current_character)
 	
 func _on_quit_pressed():
+	CharacterManager.save_character(current_character)
 	get_tree().quit()
+
+func _on_charselect_pressed():
+	SceneManager.change_scene("res://scenes/ui/CharacterSelection.tscn")
