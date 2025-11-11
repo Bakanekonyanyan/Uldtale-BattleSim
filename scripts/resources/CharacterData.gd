@@ -57,7 +57,7 @@ var debuffs: Dictionary = {}
 
 @export var xp: int = 0
 @export var attribute_points: int = 0
-@export var current_floor: int = 0
+@export var current_floor: int = 1
 @export var max_floor_cleared: int = 0  # Highest floor number completed
 @export var is_player: bool = false
 
@@ -254,23 +254,24 @@ func get_defense() -> int:
 			total_defense += equipment[slot].armor_value
 	return total_defense
 
+# Modified attack function with momentum damage bonus
 func attack(target: CharacterData) -> String:
-	# Validate target exists and has required properties
 	if not target or not is_instance_valid(target):
 		push_error("Attack failed: Invalid target")
 		return "%s's attack failed - no valid target!" % name
 	
-	# Ensure target has required properties initialized (use 'in' operator for Resources)
 	if not ("dodge" in target) or not ("toughness" in target):
 		push_error("Attack failed: Target missing required properties")
 		return "%s's attack failed - target not properly initialized!" % name
 	
-	# Validate target's numeric properties are valid
 	if typeof(target.dodge) != TYPE_FLOAT and typeof(target.dodge) != TYPE_INT:
 		push_error("Attack failed: Target dodge is not a valid number")
 		return "%s's attack failed - target stats invalid!" % name
 	
-	var base_damage = get_attack_power() * 0.5
+	# Apply momentum bonus to damage
+	var momentum_multiplier = MomentumSystem.get_damage_multiplier()
+	
+	var base_damage = get_attack_power() * 0.5 * momentum_multiplier
 	var resistance = target.get_defense()
 	var accuracy_check = randf() < accuracy
 	var dodge_check = randf() < target.dodge
@@ -285,32 +286,40 @@ func attack(target: CharacterData) -> String:
 	var damage = max(1, base_damage - resistance)
 	
 	if crit_check:
-		damage *= 1.5 + randf() * 0.5  # Random between 1.5x and 2x
+		damage *= 1.5 + randf() * 0.5
 		print("Critical hit!")
 	
 	damage = round(damage)
 	target.take_damage(damage)
 	
-	# Try to apply weapon status effect - use 'in' operator for Resources
+	# Status effect application
 	var status_msg = ""
 	if equipment["main_hand"] and equipment["main_hand"] is Equipment:
 		var weapon = equipment["main_hand"]
-		# Check if weapon has status effect properties set
 		if "status_effect_type" in weapon and "status_effect_chance" in weapon:
 			if weapon.status_effect_type != Skill.StatusEffect.NONE:
 				if weapon.has_method("try_apply_status_effect"):
 					if weapon.try_apply_status_effect(target):
 						status_msg = " and applied %s" % Skill.StatusEffect.keys()[weapon.status_effect_type]
 	
-	# Restore MP and SP
+	# Restore resources
 	var mp_restore = int(max_mp * 0.025)
 	var sp_restore = int(max_sp * 0.025)
 	restore_mp(mp_restore)
 	restore_sp(sp_restore)
 	
-	var result = "%s attacks %s for %d damage and restores %d MP, %d SP%s" % [name, target.name, damage, mp_restore, sp_restore, status_msg]
+	var result = "%s attacks %s for %d damage" % [name, target.name, damage]
+	
+	# Show momentum bonus in combat log
+	if momentum_multiplier > 1.0:
+		var bonus_pct = int((momentum_multiplier - 1.0) * 100)
+		result += " (+%d%% momentum)" % bonus_pct
+	
+	result += " and restores %d MP, %d SP%s" % [mp_restore, sp_restore, status_msg]
+	
 	if crit_check:
 		result = "Critical hit! " + result
+	
 	return result
 
 func take_damage(amount: float):

@@ -115,63 +115,63 @@ base_pulse_duration = 1.0
 
 [node name="ItemList" type="ItemList" parent="UI"]
 light_mask = 0
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 258.0
-offset_bottom = 258.0
+offset_left = 32.0
+offset_top = 24.0
+offset_right = 282.0
+offset_bottom = 274.0
 
 [node name="SellItemList" type="ItemList" parent="UI"]
 light_mask = 0
-offset_left = 384.0
-offset_top = 8.0
-offset_right = 634.0
-offset_bottom = 258.0
+offset_left = 408.0
+offset_top = 24.0
+offset_right = 658.0
+offset_bottom = 274.0
 select_mode = 1
 
 [node name="BuyButton" type="Button" parent="UI"]
 light_mask = 0
-offset_left = 16.0
-offset_top = 280.0
-offset_right = 54.0
-offset_bottom = 311.0
+offset_left = 40.0
+offset_top = 296.0
+offset_right = 78.0
+offset_bottom = 327.0
 text = "Buy"
 
 [node name="ExitButton" type="Button" parent="UI"]
 light_mask = 0
-offset_left = 152.0
-offset_top = 280.0
-offset_right = 189.0
-offset_bottom = 311.0
+offset_left = 176.0
+offset_top = 296.0
+offset_right = 213.0
+offset_bottom = 327.0
 text = "Exit"
 
 [node name="SellButton" type="Button" parent="UI"]
 light_mask = 0
-offset_left = 392.0
-offset_top = 280.0
-offset_right = 430.0
-offset_bottom = 311.0
+offset_left = 416.0
+offset_top = 296.0
+offset_right = 454.0
+offset_bottom = 327.0
 text = "Sell"
 
 [node name="SellAllButton" type="Button" parent="UI"]
 light_mask = 0
-offset_left = 472.0
-offset_top = 280.0
-offset_right = 510.0
-offset_bottom = 311.0
+offset_left = 496.0
+offset_top = 296.0
+offset_right = 615.0
+offset_bottom = 327.0
 text = "Sell All of Item
 "
 
 [node name="PlayerCurrencyLabel" type="Label" parent="UI"]
 light_mask = 0
-offset_left = 16.0
-offset_top = 336.0
-offset_right = 95.0
-offset_bottom = 362.0
+offset_left = 40.0
+offset_top = 352.0
+offset_right = 119.0
+offset_bottom = 378.0
 text = "Currency: "
 
 [node name="RichTextLabel" type="RichTextLabel" parent="UI"]
-offset_left = 672.0
-offset_top = 8.0
-offset_right = 972.0
-offset_bottom = 408.0
+offset_left = 696.0
+offset_top = 24.0
+offset_right = 996.0
+offset_bottom = 424.0
 bbcode_enabled = true

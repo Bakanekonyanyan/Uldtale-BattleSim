@@ -151,10 +151,21 @@ func use(user: CharacterData, targets: Array):
 		SkillType.INFLICT_STATUS:
 			return inflict_status(user, targets)
 
+# Skill.gd - Momentum Integration (Add to deal_damage function)
+
 func deal_damage(user: CharacterData, targets: Array):
 	var total_damage = 0
+	var was_crit = false  # Track if any hit was a crit
+	
+	# Get momentum damage multiplier
+	var momentum_multiplier = MomentumSystem.get_damage_multiplier()
+	
 	for t in targets:
 		var base_damage = power + (user.attack_power if ability_type == AbilityType.PHYSICAL else user.spell_power)
+		
+		# Apply momentum bonus
+		base_damage *= momentum_multiplier
+		
 		var resistance = (t.toughness if ability_type == AbilityType.PHYSICAL else t.spell_ward)
 		var accuracy_check = randf() < user.accuracy
 		var dodge_check = randf() < t.dodge
@@ -169,23 +180,29 @@ func deal_damage(user: CharacterData, targets: Array):
 		var damage = max(1, base_damage - resistance)
 		
 		if crit_check:
-			damage *= 1.5 + randf() * 0.5  # Random between 1.5x and 2x
+			damage *= 1.5 + randf() * 0.5
 			print("Critical hit!")
+			was_crit = true
 		
 		t.take_damage(damage)
 		total_damage += damage
 		
-		# Apply status effect if this skill has one
 		if status_effect != StatusEffect.NONE:
 			t.apply_status_effect(status_effect, duration)
 	
-		var result = "%s dealt %.1f damage to %d target(s)" % [name, total_damage, targets.size()]
-		if crit_check:
-			result = "Critical hit! " + result
-		if status_effect != StatusEffect.NONE:
-			result += " and applied %s status effect" % StatusEffect.keys()[status_effect]
-		return result
-
+	var result = "%s dealt %.1f damage to %d target(s)" % [name, total_damage, targets.size()]
+	
+	# Show momentum bonus
+	if momentum_multiplier > 1.0:
+		var bonus_pct = int((momentum_multiplier - 1.0) * 100)
+		result += " (+%d%% momentum)" % bonus_pct
+	
+	if was_crit:
+		result = "Critical hit! " + result
+	if status_effect != StatusEffect.NONE:
+		result += " and applied %s status effect" % StatusEffect.keys()[status_effect]
+	
+	return result
 
 func heal(user: CharacterData, targets: Array):
 	var total_heal = 0

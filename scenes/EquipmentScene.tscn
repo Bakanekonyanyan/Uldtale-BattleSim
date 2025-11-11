@@ -60,7 +60,7 @@ base_pulse_duration = 4.0
 randomness = 0.5
 
 [node name="PointLight2D" type="PointLight2D" parent="."]
-position = Vector2(811.2, 80)
+position = Vector2(952, 376)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 1.5
 texture = SubResource("GradientTexture2D_1eodc")
@@ -68,7 +68,7 @@ texture_scale = 1.5
 script = ExtResource("3_wdq3f")
 
 [node name="PointLight2D7" type="PointLight2D" parent="."]
-position = Vector2(147.2, 408)
+position = Vector2(144, 448)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.75
 texture = SubResource("GradientTexture2D_1eodc")
@@ -128,48 +128,48 @@ base_pulse_duration = 1.0
 
 [node name="InventoryList" type="ItemList" parent="."]
 layout_mode = 0
-offset_left = 8.0
+offset_left = 40.0
 offset_top = 64.0
-offset_right = 308.0
+offset_right = 340.0
 offset_bottom = 314.0
 
 [node name="EquipmentList" type="ItemList" parent="."]
 layout_mode = 0
-offset_left = 336.0
+offset_left = 368.0
 offset_top = 64.0
-offset_right = 636.0
+offset_right = 668.0
 offset_bottom = 314.0
 
 [node name="EquipButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 360.0
+offset_left = 392.0
 offset_top = 336.0
-offset_right = 412.0
+offset_right = 444.0
 offset_bottom = 367.0
 text = "Equip"
 
 [node name="UnequipButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 488.0
+offset_left = 520.0
 offset_top = 336.0
-offset_right = 562.0
+offset_right = 594.0
 offset_bottom = 367.0
 text = "Unequip"
 
 [node name="ItemInfo" type="RichTextLabel" parent="."]
 layout_mode = 0
-offset_left = 672.0
+offset_left = 704.0
 offset_top = 64.0
-offset_right = 1072.0
+offset_right = 1104.0
 offset_bottom = 464.0
 bbcode_enabled = true
 text = "Info"
 
 [node name="ExitButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 488.0
+offset_left = 520.0
 offset_top = 416.0
-offset_right = 562.0
+offset_right = 594.0
 offset_bottom = 447.0
 text = "Exit
 "

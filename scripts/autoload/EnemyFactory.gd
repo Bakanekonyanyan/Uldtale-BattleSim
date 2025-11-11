@@ -38,7 +38,8 @@ func set_dungeon_race(floor: int):
 	else:
 		print("Floor %d - Keeping current dungeon race: %s" % [floor, current_dungeon_race])
 
-func create_enemy(level: int = 1, floor: int = 1, wave: int = 1) -> CharacterData:
+# EnemyFactory.gd - Add momentum parameter to create functions
+func create_enemy(level: int = 1, floor: int = 1, wave: int = 1, momentum_level: int = 0) -> CharacterData:
 	var enemy = CharacterData.new()
 	get_dungeon_race()
 
@@ -52,7 +53,8 @@ func create_enemy(level: int = 1, floor: int = 1, wave: int = 1) -> CharacterDat
 	for _i in range(level - 1):
 		enemy.level_up()
 	
-	apply_enemy_scaling(enemy, floor, wave)
+	# Apply momentum scaling to enemies
+	apply_enemy_scaling(enemy, floor, wave, false, momentum_level)
 	give_enemy_equipment(enemy, floor)
 	give_enemy_items(enemy, floor)
 	
@@ -64,7 +66,7 @@ func create_enemy(level: int = 1, floor: int = 1, wave: int = 1) -> CharacterDat
 
 	return enemy
 
-func create_boss(floor: int = 1, wave: int = 1) -> CharacterData:
+func create_boss(floor: int = 1, wave: int = 1, momentum_level: int = 0) -> CharacterData:
 	var boss = CharacterData.new()
 	var king_data = classes["boss"]["King"]
 	
@@ -109,7 +111,8 @@ func create_boss(floor: int = 1, wave: int = 1) -> CharacterData:
 	if combined_skills.size() > 0:
 		boss.add_skills(combined_skills)
 	
-	apply_enemy_scaling(boss, floor, wave, true)
+	# Apply momentum scaling
+	apply_enemy_scaling(boss, floor, wave, true, momentum_level)
 	give_enemy_equipment(boss, floor, true)
 	
 	boss.is_player = false
@@ -119,6 +122,32 @@ func create_boss(floor: int = 1, wave: int = 1) -> CharacterData:
 	boss.current_sp = boss.max_sp
 	
 	return boss
+
+func apply_enemy_scaling(enemy: CharacterData, floor: int, wave: int, is_boss: bool = false, momentum_level: int = 0):
+	var floor_bonus = floor - 1
+	var wave_multiplier = 1.0 + (0.10 * wave)
+	
+	# Momentum scaling: enemies also get stronger with momentum
+	var momentum_multiplier = 1.0
+	if momentum_level > 0:
+		momentum_multiplier = 1.0 + (momentum_level * 0.05)  # Same as player: 5% per level
+	
+	var total_multiplier = wave_multiplier * momentum_multiplier
+	
+	enemy.vitality = int((enemy.vitality + floor_bonus) * total_multiplier)
+	enemy.strength = int((enemy.strength + floor_bonus) * total_multiplier)
+	enemy.dexterity = int((enemy.dexterity + floor_bonus) * total_multiplier)
+	enemy.intelligence = int((enemy.intelligence + floor_bonus) * total_multiplier)
+	enemy.faith = int((enemy.faith + floor_bonus) * total_multiplier)
+	enemy.mind = int((enemy.mind + floor_bonus) * total_multiplier)
+	enemy.endurance = int((enemy.endurance + floor_bonus) * total_multiplier)
+	enemy.arcane = int((enemy.arcane + floor_bonus) * total_multiplier)
+	enemy.agility = int((enemy.agility + floor_bonus) * total_multiplier)
+	enemy.fortitude = int((enemy.fortitude + floor_bonus) * total_multiplier)
+	
+	# Log momentum scaling
+	if momentum_level > 0:
+		print("Enemy scaled with momentum x%d: +%d%% stats" % [momentum_level, int((momentum_multiplier - 1.0) * 100)])
 
 func setup_character(character: CharacterData, character_class: String, class_type: String, race_data: Dictionary):
 	var class_data = classes[class_type][character_class]
@@ -150,31 +179,6 @@ func setup_character(character: CharacterData, character_class: String, class_ty
 	if valid_skills.size() > 0:
 		character.add_skills(valid_skills)
 
-func apply_enemy_scaling(enemy: CharacterData, floor: int, wave: int, is_boss: bool = false):
-	var floor_bonus = floor
-	var wave_multiplier = 1.25 + (0.25 * wave)
-	
-	enemy.vitality += floor_bonus
-	enemy.strength += floor_bonus
-	enemy.dexterity += floor_bonus
-	enemy.intelligence += floor_bonus
-	enemy.faith += floor_bonus
-	enemy.mind += floor_bonus
-	enemy.endurance += floor_bonus
-	enemy.arcane += floor_bonus
-	enemy.agility += floor_bonus
-	enemy.fortitude += floor_bonus
-	
-	enemy.vitality = int(enemy.vitality * wave_multiplier)
-	enemy.strength = int(enemy.strength * wave_multiplier)
-	enemy.dexterity = int(enemy.dexterity * wave_multiplier)
-	enemy.intelligence = int(enemy.intelligence * wave_multiplier)
-	enemy.faith = int(enemy.faith * wave_multiplier)
-	enemy.mind = int(enemy.mind * wave_multiplier)
-	enemy.endurance = int(enemy.endurance * wave_multiplier)
-	enemy.arcane = int(enemy.arcane * wave_multiplier)
-	enemy.agility = int(enemy.agility * wave_multiplier)
-	enemy.fortitude = int(enemy.fortitude * wave_multiplier)
 
 # NEW: Determine which slots enemy can equip based on floor
 func get_available_equipment_slots(floor: int, is_boss: bool) -> Array:

@@ -55,6 +55,7 @@ func _on_dungeon_pressed():
 	show_floor_selection_dialog()
 
 func show_floor_selection_dialog():
+	current_character.current_floor = 1
 	"""Show a dialog to select which floor to start from"""
 	var dialog = ConfirmationDialog.new()
 	dialog.title = "Select Starting Floor"

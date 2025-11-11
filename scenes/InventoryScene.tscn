@@ -129,27 +129,27 @@ base_pulse_duration = 1.0
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="ItemList" type="ItemList" parent="UI"]
-offset_left = 24.0
+offset_left = 32.0
 offset_top = 64.0
-offset_right = 296.0
+offset_right = 304.0
 offset_bottom = 264.0
 
 [node name="UseButton" type="Button" parent="UI"]
-offset_left = 64.0
+offset_left = 72.0
 offset_top = 280.0
-offset_right = 128.0
+offset_right = 136.0
 offset_bottom = 311.0
 text = "Use"
 
 [node name="BackButton" type="Button" parent="UI"]
-offset_left = 192.0
+offset_left = 200.0
 offset_top = 280.0
-offset_right = 256.0
+offset_right = 264.0
 offset_bottom = 311.0
 text = "Back"
 
 [node name="CapacityLabel" type="Label" parent="UI"]
-offset_left = 24.0
+offset_left = 32.0
 offset_top = 8.0
-offset_right = 294.0
+offset_right = 302.0
 offset_bottom = 58.0

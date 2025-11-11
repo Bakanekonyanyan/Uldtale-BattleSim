@@ -130,59 +130,59 @@ base_pulse_duration = 1.0
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="NameLabel" type="Label" parent="UI"]
-offset_left = 16.0
-offset_top = 8.0
-offset_right = 71.0
-offset_bottom = 34.0
+offset_left = 48.0
+offset_top = 16.0
+offset_right = 103.0
+offset_bottom = 42.0
 text = "Name: "
 
 [node name="ShopButton" type="Button" parent="UI"]
-offset_left = 8.0
-offset_top = 64.0
-offset_right = 104.0
-offset_bottom = 95.0
+offset_left = 40.0
+offset_top = 72.0
+offset_right = 136.0
+offset_bottom = 103.0
 text = "Shop"
 
 [node name="DungeonButton" type="Button" parent="UI"]
-offset_left = 112.0
-offset_top = 64.0
-offset_right = 208.0
-offset_bottom = 95.0
+offset_left = 160.0
+offset_top = 72.0
+offset_right = 256.0
+offset_bottom = 103.0
 text = "Dungeon"
 
 [node name="EquipmentButton" type="Button" parent="UI"]
-offset_left = 8.0
-offset_top = 112.0
-offset_right = 104.0
-offset_bottom = 143.0
+offset_left = 40.0
+offset_top = 120.0
+offset_right = 136.0
+offset_bottom = 151.0
 text = "Equipment"
 
 [node name="StatusButton" type="Button" parent="UI"]
-offset_left = 112.0
-offset_top = 112.0
-offset_right = 208.0
-offset_bottom = 143.0
+offset_left = 160.0
+offset_top = 120.0
+offset_right = 256.0
+offset_bottom = 151.0
 text = "Status"
 
 [node name="InventoryButton" type="Button" parent="UI"]
-offset_left = 8.0
-offset_top = 160.0
-offset_right = 104.0
-offset_bottom = 191.0
+offset_left = 40.0
+offset_top = 168.0
+offset_right = 136.0
+offset_bottom = 199.0
 text = "Inventory
 "
 
 [node name="StashButton" type="Button" parent="UI"]
-offset_left = 112.0
-offset_top = 160.0
-offset_right = 208.0
-offset_bottom = 191.0
+offset_left = 160.0
+offset_top = 168.0
+offset_right = 256.0
+offset_bottom = 199.0
 text = "Stash
 "
 
 [node name="QuitButton" type="Button" parent="UI"]
-offset_left = 8.0
-offset_top = 376.0
-offset_right = 124.0
-offset_bottom = 430.0
+offset_left = 48.0
+offset_top = 384.0
+offset_right = 164.0
+offset_bottom = 438.0
 text = "Save and Quit"

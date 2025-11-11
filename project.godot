@@ -28,6 +28,15 @@ SaveManager="*res://scripts/autoload/SaveManager.gd"
 LootManager="res://scripts/autoload/LootManager.gd"
 LevelSystem="*res://scripts/LevelSystem.gd"
 StatusEffects="*res://scripts/autoload/StatusEffectData.gd"
+RewardsManager="*res://scripts/autoload/RewardsManager.gd"
+MomentumSystem="*res://scripts/autoload/MomentumSystem.gd"
+
+[display]
+
+window/size/viewport_width=1200
+window/size/viewport_height=720
+window/stretch/mode="viewport"
+window/stretch/aspect="expand"
 
 [rendering]
 

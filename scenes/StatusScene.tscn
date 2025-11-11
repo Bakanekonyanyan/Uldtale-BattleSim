@@ -128,80 +128,85 @@ base_pulse_duration = 1.0
 
 [node name="NameLabel" type="Label" parent="."]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 23.0
+offset_left = 56.0
+offset_top = 8.0
+offset_right = 111.0
+offset_bottom = 31.0
 text = "Name: "
 
 [node name="ClassLabel" type="Label" parent="."]
 layout_mode = 0
-offset_top = 32.0
-offset_right = 49.0
-offset_bottom = 58.0
+offset_left = 56.0
+offset_top = 40.0
+offset_right = 105.0
+offset_bottom = 66.0
 text = "Class: "
 
 [node name="LevelLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 192.0
-offset_right = 241.0
-offset_bottom = 26.0
+offset_left = 248.0
+offset_top = 8.0
+offset_right = 297.0
+offset_bottom = 34.0
 text = "Level: "
 
 [node name="XPLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 192.0
-offset_top = 24.0
-offset_right = 241.0
-offset_bottom = 50.0
+offset_left = 248.0
+offset_top = 32.0
+offset_right = 297.0
+offset_bottom = 58.0
 text = "XP:"
 
 [node name="PrimaryAttributes" type="Label" parent="."]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 72.0
-offset_right = 160.0
-offset_bottom = 98.0
+offset_left = 64.0
+offset_top = 80.0
+offset_right = 216.0
+offset_bottom = 106.0
 text = "Primary Attributes: "
 
 [node name="SecondaryAttributes" type="Label" parent="."]
 layout_mode = 0
-offset_left = 256.0
-offset_top = 72.0
-offset_right = 428.0
-offset_bottom = 98.0
+offset_left = 312.0
+offset_top = 80.0
+offset_right = 484.0
+offset_bottom = 106.0
 text = "Secondary Attributes: "
 
 [node name="EquipmentInfo3" type="Label" parent="."]
 layout_mode = 0
-offset_left = 576.0
-offset_top = 64.0
-offset_right = 748.0
-offset_bottom = 90.0
+offset_left = 632.0
+offset_top = 72.0
+offset_right = 804.0
+offset_bottom = 98.0
 text = "Equipment:"
 
 [node name="EquipmentInfo" type="RichTextLabel" parent="."]
 layout_mode = 0
-offset_left = 576.0
-offset_top = 64.0
-offset_right = 926.0
-offset_bottom = 90.0
+offset_left = 632.0
+offset_top = 72.0
+offset_right = 982.0
+offset_bottom = 98.0
 bbcode_enabled = true
 text = "Equipment:"
 fit_content = true
 
 [node name="SkillsInfo" type="RichTextLabel" parent="."]
 layout_mode = 0
-offset_left = 16.0
-offset_top = 384.0
-offset_right = 548.0
-offset_bottom = 624.0
+offset_left = 72.0
+offset_top = 392.0
+offset_right = 604.0
+offset_bottom = 632.0
+scale = Vector2(0.978574, 1.34009)
 bbcode_enabled = true
 text = "Skills:"
 scroll_following = true
 
 [node name="ExitButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 520.0
-offset_top = 8.0
-offset_right = 557.0
-offset_bottom = 39.0
+offset_left = 576.0
+offset_top = 16.0
+offset_right = 613.0
+offset_bottom = 47.0
 text = "Exit"

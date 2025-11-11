@@ -13,9 +13,9 @@ scale = Vector2(0.75, 0.75)
 texture = ExtResource("2_18p0q")
 
 [node name="PlayerInfo" type="Label" parent="."]
-offset_left = 16.0
+offset_left = 64.0
 offset_top = 144.0
-offset_right = 56.0
+offset_right = 104.0
 offset_bottom = 167.0
 
 [node name="EnemyInfo" type="Label" parent="."]
@@ -25,96 +25,97 @@ offset_right = 424.0
 offset_bottom = 167.0
 
 [node name="ActionButtons" type="VBoxContainer" parent="."]
-offset_left = 24.0
-offset_top = 296.0
-offset_right = 224.0
-offset_bottom = 560.0
+offset_left = 72.0
+offset_top = 312.0
+offset_right = 272.0
+offset_bottom = 576.0
 
 [node name="InventoryMenu" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 64.0
+offset_left = 112.0
 offset_top = 168.0
-offset_right = 104.0
+offset_right = 152.0
 offset_bottom = 168.0
 script = ExtResource("2_ng7cs")
 
 [node name="ItemList" type="ItemList" parent="InventoryMenu"]
 layout_mode = 0
-offset_left = 256.0
-offset_top = 128.0
-offset_right = 512.0
-offset_bottom = 320.0
+offset_left = 296.0
+offset_top = 200.0
+offset_right = 552.0
+offset_bottom = 392.0
 
 [node name="UseButton" type="Button" parent="InventoryMenu"]
 layout_mode = 0
-offset_left = 280.0
-offset_top = 336.0
-offset_right = 317.0
-offset_bottom = 367.0
+offset_left = 320.0
+offset_top = 408.0
+offset_right = 357.0
+offset_bottom = 439.0
 text = "Use"
 
 [node name="CancelButton" type="Button" parent="InventoryMenu"]
 layout_mode = 0
-offset_left = 424.0
-offset_top = 336.0
-offset_right = 484.0
-offset_bottom = 367.0
+offset_left = 464.0
+offset_top = 408.0
+offset_right = 524.0
+offset_bottom = 439.0
 text = "Cancel"
 
 [node name="CurrencyLabel" type="Label" parent="InventoryMenu"]
 layout_mode = 0
-offset_left = 384.0
-offset_top = 104.0
-offset_right = 459.0
-offset_bottom = 130.0
+offset_left = 424.0
+offset_top = 176.0
+offset_right = 499.0
+offset_bottom = 202.0
 text = "Currency:"
 
 [node name="TurnLabel" type="Label" parent="."]
-offset_left = 104.0
+offset_left = 152.0
 offset_top = 72.0
-offset_right = 144.0
+offset_right = 192.0
 offset_bottom = 95.0
 
 [node name="WaveLabel" type="Label" parent="."]
-offset_left = 8.0
+offset_left = 56.0
 offset_top = 40.0
-offset_right = 59.0
+offset_right = 107.0
 offset_bottom = 66.0
 text = "Wave: "
 
 [node name="FloorLabel" type="Label" parent="."]
-offset_left = 384.0
+offset_left = 432.0
 offset_top = 40.0
-offset_right = 477.0
+offset_right = 525.0
 offset_bottom = 66.0
 text = "Floor Level: "
 
 [node name="DungeonDescriptionLabel" type="Label" parent="."]
-offset_left = 64.0
+offset_left = 112.0
 offset_top = 8.0
-offset_right = 104.0
+offset_right = 152.0
 offset_bottom = 31.0
 
 [node name="XPLabel" type="Label" parent="."]
-offset_left = 16.0
+offset_left = 64.0
 offset_top = 264.0
-offset_right = 56.0
+offset_right = 104.0
 offset_bottom = 290.0
 text = "XP:"
 
 [node name="DebugToggleButton" type="Button" parent="."]
-offset_left = 640.0
-offset_top = 320.0
-offset_right = 698.0
-offset_bottom = 351.0
+offset_left = 688.0
+offset_top = 376.0
+offset_right = 746.0
+offset_bottom = 407.0
 text = "Debug"
 
 [node name="DebugWindow" type="Panel" parent="."]
-offset_left = 640.0
-offset_top = 360.0
-offset_right = 1040.0
-offset_bottom = 560.0
+offset_left = 688.0
+offset_top = 416.0
+offset_right = 1088.0
+offset_bottom = 616.0
+scale = Vector2(1, 1.2)
 
 [node name="DebugText" type="RichTextLabel" parent="DebugWindow"]
 layout_mode = 1
@@ -127,22 +128,23 @@ bbcode_enabled = true
 scroll_following = true
 
 [node name="CombatLogLabel" type="Label" parent="."]
-offset_left = 576.0
+offset_left = 624.0
 offset_top = 40.0
-offset_right = 616.0
+offset_right = 717.0
 offset_bottom = 66.0
 text = "Combat Log"
 
 [node name="CombatLogWindow" type="Panel" parent="."]
-offset_left = 640.0
+offset_left = 688.0
 offset_top = 64.0
-offset_right = 1040.0
+offset_right = 1088.0
 offset_bottom = 264.0
+scale = Vector2(1, 1.36)
 
 [node name="CombatLog" type="RichTextLabel" parent="."]
-offset_left = 640.0
+offset_left = 688.0
 offset_top = 64.0
-offset_right = 1040.0
+offset_right = 1088.0
 offset_bottom = 264.0
 bbcode_enabled = true
 scroll_following = true

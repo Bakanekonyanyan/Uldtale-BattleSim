@@ -97,8 +97,14 @@ func next_wave():
 		is_boss_fight = false
 		start_battle()
 
+# DungeonScene.gd - Add momentum to battle data
 func start_battle():
-	var enemy = EnemyFactory.create_enemy(1, current_floor, current_wave)
+	var momentum_level = MomentumSystem.get_momentum()
+	var enemy = EnemyFactory.create_enemy(1, current_floor, current_wave, momentum_level)
+	
+	if momentum_level < 1:
+		reset_player_stats()
+	
 	var battle_data = {
 		"player_character": player_character,
 		"enemy": enemy,
@@ -107,12 +113,15 @@ func start_battle():
 		"is_boss_fight": false,
 		"max_floor": max_floor,
 		"waves_per_floor": waves_per_floor,
-		"description": get_dungeon_description()
+		"description": get_dungeon_description(),
+		"momentum_level": momentum_level
 	}
 	SceneManager.start_battle(battle_data)
 
 func start_boss_battle():
-	var boss = EnemyFactory.create_boss(current_floor, current_wave)
+	var momentum_level = MomentumSystem.get_momentum()
+	var boss = EnemyFactory.create_boss(current_floor, current_wave, momentum_level)
+	
 	var battle_data = {
 		"player_character": player_character,
 		"enemy": boss,
@@ -121,7 +130,8 @@ func start_boss_battle():
 		"is_boss_fight": true,
 		"max_floor": max_floor,
 		"waves_per_floor": waves_per_floor,
-		"description": get_dungeon_description() + " BOSS BATTLE!"
+		"description": get_dungeon_description() + " BOSS BATTLE!",
+		"momentum_level": momentum_level
 	}
 	SceneManager.start_battle(battle_data)
 
