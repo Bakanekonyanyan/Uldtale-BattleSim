@@ -18,7 +18,6 @@ var ui_manager: BattleUIManager
 
 func _ready():
 	_initialize_managers()
-	# Don't call setup_battle here - wait for SceneManager to set everything up
 
 func _initialize_managers():
 	combat_manager = CombatManager.new()
@@ -47,16 +46,25 @@ func start_battle():
 	inventory_menu.show_inventory(player_character.inventory, player_character.currency)
 	inventory_menu.hide()
 	
-	# CRITICAL: Initialize TurnManager with character references
+	# Initialize TurnManager with character references
 	turn_manager.initialize(player_character, enemy_character)
 	
 	update_all_ui()
-	turn_manager.current_turn = "player"
-	ui_manager.update_turn_display("Battle starts! It's your turn.")
-	ui_manager.enable_actions(true)
+	
+	# REMOVED: turn_manager.current_turn = "player" 
+	# Now handled by turn_manager.determine_first_turn() in initialize()
+	
+	# Display who goes first
+	var first_char = turn_manager.get_current_character()
+	var first_name = first_char.name if first_char else "Unknown"
+	ui_manager.update_turn_display("Battle starts! %s goes first." % first_name)
+	
+	# NEW: Always setup player action buttons, but disable them if enemy goes first
+	setup_player_actions()
+	ui_manager.enable_actions(turn_manager.is_player_turn())
 	
 	# Start first turn
-	turn_manager.start_turn(player_character)
+	turn_manager.start_turn(first_char)
 
 func set_player(character: CharacterData):
 	player_character = character
@@ -65,7 +73,6 @@ func set_enemy(new_enemy: CharacterData):
 	enemy_character = new_enemy
 	enemy_character.calculate_secondary_attributes()
 	
-	# Initialize resources
 	if enemy_character.current_sp == 0:
 		enemy_character.current_sp = enemy_character.max_sp
 
@@ -75,7 +82,6 @@ func set_dungeon_info(wave: int, floor: int, description: String):
 	dungeon_description = description
 	update_dungeon_labels()
 	
-	# Start battle after everything is set up
 	call_deferred("start_battle")
 
 func update_dungeon_labels():
@@ -101,7 +107,6 @@ func _on_turn_started(character: CharacterData):
 		update_all_ui()
 		await get_tree().create_timer(1.0).timeout
 	
-	# CRITICAL: Death check after status effects
 	if not combat_manager.is_character_alive(character):
 		_handle_death(character)
 		return
@@ -118,7 +123,9 @@ func _on_turn_started(character: CharacterData):
 	
 	turn_manager.advance_phase()
 	if character == player_character:
+		# NEW: Refresh player actions and enable them
 		setup_player_actions()
+		ui_manager.enable_actions(true)
 	else:
 		execute_enemy_turn()
 
@@ -143,7 +150,8 @@ func setup_player_actions():
 		ui_manager.action_buttons.add_child(button)
 	
 	setup_skill_buttons()
-	ui_manager.enable_actions(true)
+	# REMOVED: ui_manager.enable_actions(true) 
+	# Enabling is now handled by the caller based on turn state
 
 func setup_skill_buttons():
 	for skill_name in player_character.skills:
@@ -162,7 +170,6 @@ func setup_skill_buttons():
 		var cost = skill.mp_cost if cost_type == "MP" else skill.sp_cost
 		var available = player_character.current_mp if cost_type == "MP" else player_character.current_sp
 		
-		# CRITICAL FIX: Properly disable button when on cooldown or insufficient resources
 		var is_on_cooldown = cd > 0
 		var insufficient_resources = available < cost
 		
@@ -174,9 +181,8 @@ func setup_skill_buttons():
 			button.disabled = true
 		else:
 			button.text = "%s%s [%d %s]" % [skill.name, level_text, cost, cost_type]
-			button.disabled = false  # Explicitly enable
+			button.disabled = false
 		
-		# IMPORTANT: Only connect if not disabled
 		if not button.disabled:
 			button.pressed.connect(Callable(self, "_on_skill_used").bind(skill))
 		
@@ -223,7 +229,6 @@ func _on_view_enemy_equipment_pressed():
 func show_battle_complete_dialog(xp_gained: int):
 	var dialog_scene = load("res://scenes/BattleCompleteDialog.tscn")
 	if not dialog_scene:
-		# Fallback to old behavior if dialog not found
 		emit_signal("battle_completed", true, xp_gained)
 		return
 	
@@ -232,16 +237,12 @@ func show_battle_complete_dialog(xp_gained: int):
 	
 	dialog.show_dialog(player_character, xp_gained)
 	
-	# Connect signals - FIXED: Pass enemy reference for rewards
 	dialog.connect("press_on_selected", Callable(self, "_on_press_on_selected").bind(xp_gained))
 	dialog.connect("take_breather_selected", Callable(self, "_on_take_breather_selected").bind(xp_gained))
 
 func _on_turn_ended(character: CharacterData):
 	character.reset_defense()
 	ui_manager.enable_actions(false)
-	
-	# CRITICAL FIX: Don't start next turn if battle is over
-	# Check will be done by the action that just completed
 
 func _on_attack_pressed():
 	var result = combat_manager.execute_attack(player_character, enemy_character)
@@ -249,11 +250,10 @@ func _on_attack_pressed():
 	ui_manager.add_combat_log("[color=yellow]Player:[/color] " + result)
 	update_all_ui()
 	
-	# Check if battle ended BEFORE ending turn
 	var outcome = combat_manager.check_battle_outcome(player_character, enemy_character)
 	if outcome != "ongoing":
 		check_battle_end()
-		return  # Don't end turn if battle is over
+		return
 	
 	turn_manager.end_turn(player_character)
 
@@ -280,7 +280,6 @@ func _on_skill_used(skill: Skill):
 	ui_manager.add_combat_log("[color=orange]Player used %s:[/color] %s" % [skill.name, result.message])
 	update_all_ui()
 	
-	# Check if battle ended BEFORE ending turn
 	var outcome = combat_manager.check_battle_outcome(player_character, enemy_character)
 	if outcome != "ongoing":
 		check_battle_end()
@@ -293,7 +292,6 @@ func _on_item_used(item: Item):
 		ui_manager.update_turn_display("This item cannot be used in battle.")
 		return
 	
-	# CRITICAL FIX: Check if item exists and has quantity BEFORE using
 	var item_id = item.id
 	if not player_character.inventory.items.has(item_id):
 		ui_manager.update_turn_display("Item no longer available.")
@@ -313,10 +311,8 @@ func _on_item_used(item: Item):
 		_:
 			targets = [player_character]
 	
-	# Use the item (doesn't remove from inventory anymore)
 	var result = item.use(player_character, targets)
 	
-	# CRITICAL FIX: Remove item ONCE, after successful use
 	var removed = player_character.inventory.remove_item(item_id, 1)
 	if removed:
 		print("Item removed successfully. Remaining: %d" % player_character.inventory.get_quantity(item_id))
@@ -327,7 +323,6 @@ func _on_item_used(item: Item):
 	ui_manager.add_combat_log("[color=lime]Player used %s:[/color] %s" % [item.name, result])
 	update_all_ui()
 	
-	# Check if battle ended BEFORE ending turn
 	var outcome = combat_manager.check_battle_outcome(player_character, enemy_character)
 	if outcome != "ongoing":
 		check_battle_end()
@@ -364,7 +359,6 @@ func execute_enemy_turn():
 	update_all_ui()
 	await get_tree().create_timer(2.0).timeout
 	
-	# Check if battle ended BEFORE ending turn
 	var outcome = combat_manager.check_battle_outcome(player_character, enemy_character)
 	if outcome != "ongoing":
 		check_battle_end()
@@ -409,18 +403,13 @@ func get_enemy_equipment_text() -> String:
 func _on_take_breather_selected(xp_gained: int):
 	print("Battle: Player taking a breather, showing rewards...")
 	
-	# Reset momentum
 	MomentumSystem.reset_momentum()
 	
-	# CRITICAL FIX: Emit normal battle completion with XP
-	# The reward scene will handle level-ups
 	emit_signal("battle_completed", true, xp_gained)
 
-# ADD this new function to Battle.gd for momentum level-ups
 func show_level_up_overlay():
 	print("Battle: Showing level-up overlay during momentum")
 	
-	# Create level-up scene
 	var level_up_scene = load("res://scenes/LevelUpScene.tscn").instantiate()
 	add_child(level_up_scene)
 	
@@ -428,7 +417,6 @@ func show_level_up_overlay():
 	level_up_scene.show()
 	level_up_scene.setup(player_character)
 	
-	# Wait for completion
 	await level_up_scene.level_up_complete
 	
 	print("Battle: Level-up complete, continuing momentum")
@@ -442,16 +430,13 @@ func check_battle_end():
 			var xp = enemy_character.level * 50 * current_floor
 			await get_tree().create_timer(1.0).timeout
 			
-			# CRITICAL FIX: Update max_floor_cleared when boss is defeated
 			if is_boss_battle:
-				# Check if this is a new record
 				if current_floor > player_character.max_floor_cleared:
 					player_character.update_max_floor_cleared(current_floor)
 					print("Battle: NEW RECORD! Boss defeated on floor %d, max_floor_cleared updated to %d" % [
 						current_floor,
 						player_character.max_floor_cleared
 					])
-					# CRITICAL: Save immediately after updating max floor
 					SaveManager.save_game(player_character)
 					print("Battle: Progress saved with new max_floor_cleared: %d" % player_character.max_floor_cleared)
 				else:
@@ -460,7 +445,6 @@ func check_battle_end():
 						player_character.max_floor_cleared
 					])
 			
-			# Show battle complete dialog
 			show_battle_complete_dialog(xp)
 		"defeat":
 			ui_manager.enable_actions(false)
@@ -470,24 +454,17 @@ func check_battle_end():
 func _on_press_on_selected(xp_gained: int):
 	print("Battle: Player pressed on! Gaining momentum...")
 	
-	# Gain momentum
 	MomentumSystem.gain_momentum()
 	
-	# CRITICAL FIX: Store level before XP gain
 	var level_before = player_character.level
 	
-	# Apply XP immediately
 	player_character.gain_xp(xp_gained)
 	
-	# CRITICAL FIX: Check if level up occurred
 	if player_character.level > level_before:
 		print("Battle: Level up detected during momentum!")
-		# Show level up screen even during momentum
 		await show_level_up_overlay()
 	
-	# CRITICAL FIX: Save progress (this will save max_floor_cleared too)
 	SaveManager.save_game(player_character)
 	print("Battle: Progress saved - max_floor_cleared: %d" % player_character.max_floor_cleared)
 	
-	# Continue with momentum (skip rewards)
-	emit_signal("battle_completed", true, -1)  # -1 XP signals "skip rewards"
+	emit_signal("battle_completed", true, -1)

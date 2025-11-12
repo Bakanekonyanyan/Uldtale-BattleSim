@@ -1,3 +1,4 @@
+# scenes/mechanics/Skill.gd
 class_name Skill
 extends Resource
 
@@ -24,25 +25,27 @@ enum AbilityType { PHYSICAL, MAGICAL }
 @export var description: String
 @export var type: SkillType
 @export var target: TargetType
-@export var attribute_target: AttributeTarget
-@export var status_effect: StatusEffect
+
+# CHANGED: Now arrays to support multiple targets
+@export var attribute_targets: Array = []  # Array of AttributeTarget enums
+@export var status_effects: Array = []  # Array of StatusEffect enums
+
 @export var power: int
-@export var duration: int  # For buffs, debuffs, and status effects
+@export var duration: int
 @export var mp_cost: int
-@export var sp_cost: int  # Stamina cost for physical skills
+@export var sp_cost: int
 @export var cooldown: int
 
-# Skill level system
-@export var level: int = 1  # Current skill level (1-5, then Max)
-@export var uses: int = 0  # Number of times skill has been used
-@export var base_power: int  # Base power for scaling
-@export var base_mp_cost: int  # Base MP cost for scaling
-@export var base_sp_cost: int  # Base SP cost for scaling
-@export var base_cooldown: int  # Base cooldown for scaling
-@export var base_duration: int  # Base duration for scaling
+# Skill leveling
+@export var level: int = 1
+@export var uses: int = 0
+@export var base_power: int
+@export var base_mp_cost: int
+@export var base_sp_cost: int
+@export var base_cooldown: int
+@export var base_duration: int
 
-# Level thresholds for skill advancement
-const LEVEL_THRESHOLDS = [5, 25, 125, 625, 1500]  # Uses needed for levels 2, 3, 4, 5, Max
+const LEVEL_THRESHOLDS = [5, 25, 125, 625, 1500]
 
 static func create_from_dict(data: Dictionary) -> Skill:
 	var skill = Skill.new()
@@ -51,21 +54,56 @@ static func create_from_dict(data: Dictionary) -> Skill:
 	skill.ability_type = AbilityType[data.ability_type.to_upper()]
 	skill.type = SkillType[data.type.to_upper()]
 	skill.target = TargetType[data.target.to_upper()]
-	skill.attribute_target = AttributeTarget[data.attribute_target.to_upper()]
-	skill.status_effect = StatusEffect[data.status_effect.to_upper()]
 	
-	# Store base values for level scaling
+	# Parse attribute_targets - handles multiple formats
+	skill.attribute_targets = []
+	if data.has("attribute_targets") and data.attribute_targets is Array:
+		# New plural array format: "attribute_targets": ["FORTITUDE", "ENDURANCE"]
+		for attr_str in data.attribute_targets:
+			if attr_str != "" and AttributeTarget.has(attr_str.to_upper()):
+				skill.attribute_targets.append(AttributeTarget[attr_str.to_upper()])
+	elif data.has("attribute_target"):
+		# Handle both string and array for backward compatibility
+		var attr_data = data.attribute_target
+		if attr_data is Array:
+			# Array format: "attribute_target": ["FORTITUDE"]
+			for attr_str in attr_data:
+				if attr_str != "" and attr_str != "NONE" and AttributeTarget.has(attr_str.to_upper()):
+					skill.attribute_targets.append(AttributeTarget[attr_str.to_upper()])
+		elif attr_data is String:
+			# String format: "attribute_target": "FORTITUDE"
+			if attr_data != "" and attr_data != "NONE" and AttributeTarget.has(attr_data.to_upper()):
+				skill.attribute_targets.append(AttributeTarget[attr_data.to_upper()])
+	
+	# Parse status_effects - handles multiple formats
+	skill.status_effects = []
+	if data.has("status_effects") and data.status_effects is Array:
+		# New plural array format: "status_effects": ["FREEZE", "SHOCK"]
+		for effect_str in data.status_effects:
+			if effect_str != "" and StatusEffect.has(effect_str.to_upper()):
+				skill.status_effects.append(StatusEffect[effect_str.to_upper()])
+	elif data.has("status_effect"):
+		# Handle both string and array for backward compatibility
+		var effect_data = data.status_effect
+		if effect_data is Array:
+			# Array format: "status_effect": ["BURN"]
+			for effect_str in effect_data:
+				if effect_str != "" and effect_str != "NONE" and StatusEffect.has(effect_str.to_upper()):
+					skill.status_effects.append(StatusEffect[effect_str.to_upper()])
+		elif effect_data is String:
+			# String format: "status_effect": "BURN"
+			if effect_data != "" and effect_data != "NONE" and StatusEffect.has(effect_data.to_upper()):
+				skill.status_effects.append(StatusEffect[effect_data.to_upper()])
+	
 	skill.base_power = data.power
 	skill.base_mp_cost = data.get("mp_cost", 0)
 	skill.base_sp_cost = data.get("sp_cost", 0)
 	skill.base_cooldown = data.cooldown
 	skill.base_duration = data.duration
 	
-	# Initialize at level 1
 	skill.level = 1
 	skill.uses = 0
 	
-	# Set initial values (same as base at level 1)
 	skill.power = skill.base_power
 	skill.mp_cost = skill.base_mp_cost
 	skill.sp_cost = skill.base_sp_cost
@@ -74,22 +112,14 @@ static func create_from_dict(data: Dictionary) -> Skill:
 	
 	return skill
 
-# Get the display level string
 func get_level_string() -> String:
-	if level >= 6:
-		return "Max"
-	else:
-		return str(level)
+	return "Max" if level >= 6 else str(level)
 
-# Get uses needed for next level
 func get_uses_for_next_level() -> int:
-	if level <= 5:
-		return LEVEL_THRESHOLDS[level - 1]
-	return -1  # Max level
+	return LEVEL_THRESHOLDS[level - 1] if level <= 5 else -1
 
-# Check and apply level up
 func check_level_up() -> bool:
-	if level >= 6:  # Already at max
+	if level >= 6:
 		return false
 	
 	var threshold_index = level - 1
@@ -98,22 +128,18 @@ func check_level_up() -> bool:
 		return true
 	return false
 
-# Apply level up bonuses
 func level_up():
 	level += 1
 	calculate_level_bonuses()
 	
 func calculate_level_bonuses():
-	# Calculate scaling based on level
-	# Level 1: 100%, Level 2: 110%, Level 3: 125%, Level 4: 145%, Level 5: 170%, Max: 200%
 	var power_multipliers = [1.0, 1.1, 1.25, 1.45, 1.7, 2.0]
-	var cost_multipliers = [1.0, 0.95, 0.9, 0.85, 0.75, 0.6]  # Costs decrease
-	var cooldown_reductions = [0, 0, 1, 1, 2, 3]  # Cooldown reduction per level
-	var duration_bonuses = [0, 1, 1, 2, 2, 3]  # Duration bonus per level
+	var cost_multipliers = [1.0, 0.95, 0.9, 0.85, 0.75, 0.6]
+	var cooldown_reductions = [0, 0, 1, 1, 2, 3]
+	var duration_bonuses = [0, 1, 1, 2, 2, 3]
 	
 	var level_index = min(level - 1, 5)
 	
-	# Apply bonuses based on skill type
 	if type in [SkillType.DAMAGE, SkillType.HEAL, SkillType.RESTORE]:
 		power = int(base_power * power_multipliers[level_index])
 	elif type in [SkillType.BUFF, SkillType.DEBUFF]:
@@ -122,14 +148,10 @@ func calculate_level_bonuses():
 	elif type == SkillType.INFLICT_STATUS:
 		duration = base_duration + duration_bonuses[level_index]
 	
-	# Reduce costs
 	mp_cost = max(1, int(base_mp_cost * cost_multipliers[level_index]))
 	sp_cost = max(1, int(base_sp_cost * cost_multipliers[level_index]))
-	
-	# Reduce cooldown
 	cooldown = max(0, base_cooldown - cooldown_reductions[level_index])
 
-# Track skill use and check for level up
 func on_skill_used():
 	uses += 1
 	if check_level_up():
@@ -151,19 +173,14 @@ func use(user: CharacterData, targets: Array):
 		SkillType.INFLICT_STATUS:
 			return inflict_status(user, targets)
 
-# Skill.gd - Momentum Integration (Add to deal_damage function)
-
 func deal_damage(user: CharacterData, targets: Array):
 	var total_damage = 0
-	var was_crit = false  # Track if any hit was a crit
+	var was_crit = false
 	
-	# Get momentum damage multiplier
 	var momentum_multiplier = MomentumSystem.get_damage_multiplier()
 	
 	for t in targets:
 		var base_damage = power + (user.attack_power if ability_type == AbilityType.PHYSICAL else user.spell_power)
-		
-		# Apply momentum bonus
 		base_damage *= momentum_multiplier
 		
 		var resistance = (t.toughness if ability_type == AbilityType.PHYSICAL else t.spell_ward)
@@ -181,26 +198,33 @@ func deal_damage(user: CharacterData, targets: Array):
 		
 		if crit_check:
 			damage *= 1.5 + randf() * 0.5
-			print("Critical hit!")
 			was_crit = true
 		
 		t.take_damage(damage)
 		total_damage += damage
 		
-		if status_effect != StatusEffect.NONE:
-			t.apply_status_effect(status_effect, duration)
+		# NEW: Apply all status effects
+		for effect in status_effects:
+			if effect != StatusEffect.NONE:
+				t.apply_status_effect(effect, duration)
 	
 	var result = "%s dealt %.1f damage to %d target(s)" % [name, total_damage, targets.size()]
 	
-	# Show momentum bonus
 	if momentum_multiplier > 1.0:
 		var bonus_pct = int((momentum_multiplier - 1.0) * 100)
 		result += " (+%d%% momentum)" % bonus_pct
 	
 	if was_crit:
 		result = "Critical hit! " + result
-	if status_effect != StatusEffect.NONE:
-		result += " and applied %s status effect" % StatusEffect.keys()[status_effect]
+	
+	# NEW: List all status effects applied
+	if not status_effects.is_empty():
+		var effect_names = []
+		for effect in status_effects:
+			if effect != StatusEffect.NONE:
+				effect_names.append(StatusEffect.keys()[effect])
+		if not effect_names.is_empty():
+			result += " and applied " + ", ".join(effect_names)
 	
 	return result
 
@@ -213,18 +237,69 @@ func heal(user: CharacterData, targets: Array):
 	return "%s healed %d HP to %d target(s)" % [name, total_heal, targets.size()]
 
 func apply_buff(_user: CharacterData, targets: Array):
+	# NEW: Apply buffs to ALL attribute_targets
+	if attribute_targets.is_empty():
+		return "%s had no effect!" % name
+	
 	for t in targets:
-		t.apply_buff(attribute_target, power, duration)
-	return "%s buffed %s of %d target(s) by %d for %d turns" % [name, AttributeTarget.keys()[attribute_target], targets.size(), power, duration]
+		for attribute in attribute_targets:
+			if attribute != AttributeTarget.NONE:
+				t.apply_buff(attribute, power, duration)
+	
+	var attr_names = []
+	for attr in attribute_targets:
+		if attr != AttributeTarget.NONE:
+			attr_names.append(AttributeTarget.keys()[attr])
+	
+	return "%s buffed %s of %d target(s) by %d for %d turns" % [
+		name, 
+		", ".join(attr_names), 
+		targets.size(), 
+		power, 
+		duration
+	]
 
 func apply_debuff(_user: CharacterData, targets: Array):
 	for t in targets:
-		if status_effect != StatusEffect.NONE:
-			t.apply_status_effect(status_effect, duration)
-			return "%s inflicted %s on %d target(s) for %d turns" % [name, StatusEffect.keys()[status_effect], targets.size(), duration]
-		else:
-			t.apply_debuff(attribute_target, power, duration)
-			return "%s debuffed %s of %d target(s) by %d for %d turns" % [name, AttributeTarget.keys()[attribute_target], targets.size(), power, duration]
+		# NEW: Apply all status effects
+		for effect in status_effects:
+			if effect != StatusEffect.NONE:
+				t.apply_status_effect(effect, duration)
+		
+		# NEW: Apply debuffs to all attribute_targets
+		for attribute in attribute_targets:
+			if attribute != AttributeTarget.NONE:
+				t.apply_debuff(attribute, power, duration)
+	
+	var result_parts = []
+	
+	# Build status effect part
+	if not status_effects.is_empty():
+		var effect_names = []
+		for effect in status_effects:
+			if effect != StatusEffect.NONE:
+				effect_names.append(StatusEffect.keys()[effect])
+		if not effect_names.is_empty():
+			result_parts.append("inflicted " + ", ".join(effect_names))
+	
+	# Build attribute debuff part
+	if not attribute_targets.is_empty():
+		var attr_names = []
+		for attr in attribute_targets:
+			if attr != AttributeTarget.NONE:
+				attr_names.append(AttributeTarget.keys()[attr])
+		if not attr_names.is_empty():
+			result_parts.append("debuffed " + ", ".join(attr_names) + " by " + str(power))
+	
+	if result_parts.is_empty():
+		return "%s had no effect!" % name
+	
+	return "%s %s on %d target(s) for %d turns" % [
+		name,
+		" and ".join(result_parts),
+		targets.size(),
+		duration
+	]
 
 func restore(user: CharacterData, targets: Array):
 	var total_heal = 0
@@ -235,8 +310,23 @@ func restore(user: CharacterData, targets: Array):
 	return "%s healed %d MP to %d target(s)" % [name, total_heal, targets.size()]
 
 func inflict_status(_user: CharacterData, targets: Array):
-	var affected_targets = 0
+	# NEW: Apply all status effects to each target
 	for t in targets:
-		if t.apply_status_effect(status_effect, duration):
-			affected_targets += 1
-	return "%s inflicted %s on %d target(s) for %d turns" % [name, StatusEffect.keys()[status_effect], affected_targets, duration]
+		for effect in status_effects:
+			if effect != StatusEffect.NONE:
+				t.apply_status_effect(effect, duration)
+	
+	var effect_names = []
+	for effect in status_effects:
+		if effect != StatusEffect.NONE:
+			effect_names.append(StatusEffect.keys()[effect])
+	
+	if effect_names.is_empty():
+		return "%s had no effect!" % name
+	
+	return "%s inflicted %s on %d target(s) for %d turns" % [
+		name, 
+		", ".join(effect_names), 
+		targets.size(),
+		duration
+	]

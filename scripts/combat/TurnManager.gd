@@ -19,6 +19,25 @@ var enemy_character: CharacterData
 func initialize(player: CharacterData, enemy: CharacterData):
 	player_character = player
 	enemy_character = enemy
+	
+	# NEW: Determine who goes first based on agility
+	determine_first_turn()
+
+func determine_first_turn():
+	"""Determine who goes first based on agility with slight randomness"""
+	var player_agi = player_character.agility
+	var enemy_agi = enemy_character.agility
+	
+	# Add slight random factor (±10% of agility)
+	var player_roll = player_agi + randf_range(-player_agi * 0.1, player_agi * 0.1)
+	var enemy_roll = enemy_agi + randf_range(-enemy_agi * 0.1, enemy_agi * 0.1)
+	
+	if enemy_roll > player_roll:
+		current_turn = "enemy"
+		print("Enemy goes first! (AGI: %.1f vs Player: %.1f)" % [enemy_roll, player_roll])
+	else:
+		current_turn = "player"
+		print("Player goes first! (AGI: %.1f vs Enemy: %.1f)" % [player_roll, enemy_roll])
 
 func start_turn(character: CharacterData):
 	current_phase = TurnPhase.STATUS_EFFECTS
@@ -38,7 +57,7 @@ func end_turn(character: CharacterData):
 	turn_number += 1
 	toggle_turn()
 	
-	# CRITICAL FIX: Start the next character's turn
+	# Start the next character's turn
 	var next_character = get_current_character()
 	if next_character:
 		start_turn(next_character)
