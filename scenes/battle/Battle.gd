@@ -14,6 +14,9 @@ var combat_manager: CombatManager
 var turn_manager: TurnManager
 var ui_manager: BattleUIManager
 
+# NEW: Track if player has used their item action this turn
+var item_action_used: bool = false
+
 @onready var inventory_menu = $InventoryMenu
 
 func _ready():
@@ -46,25 +49,14 @@ func start_battle():
 	inventory_menu.show_inventory(player_character.inventory, player_character.currency)
 	inventory_menu.hide()
 	
-	# Initialize TurnManager with character references
 	turn_manager.initialize(player_character, enemy_character)
 	
 	update_all_ui()
+	turn_manager.current_turn = "player"
+	ui_manager.update_turn_display("Battle starts! It's your turn.")
+	ui_manager.enable_actions(true)
 	
-	# REMOVED: turn_manager.current_turn = "player" 
-	# Now handled by turn_manager.determine_first_turn() in initialize()
-	
-	# Display who goes first
-	var first_char = turn_manager.get_current_character()
-	var first_name = first_char.name if first_char else "Unknown"
-	ui_manager.update_turn_display("Battle starts! %s goes first." % first_name)
-	
-	# NEW: Always setup player action buttons, but disable them if enemy goes first
-	setup_player_actions()
-	ui_manager.enable_actions(turn_manager.is_player_turn())
-	
-	# Start first turn
-	turn_manager.start_turn(first_char)
+	turn_manager.start_turn(player_character)
 
 func set_player(character: CharacterData):
 	player_character = character
@@ -100,6 +92,11 @@ func initialize_resources():
 		player_character.current_sp = player_character.max_sp
 
 func _on_turn_started(character: CharacterData):
+	# Reset item action at start of player's turn
+	if character == player_character:
+		item_action_used = false
+		print("Battle: Item action refreshed")
+	
 	var status_message = combat_manager.process_status_effects(character)
 	if status_message:
 		ui_manager.update_turn_display(status_message)
@@ -123,9 +120,7 @@ func _on_turn_started(character: CharacterData):
 	
 	turn_manager.advance_phase()
 	if character == player_character:
-		# NEW: Refresh player actions and enable them
 		setup_player_actions()
-		ui_manager.enable_actions(true)
 	else:
 		execute_enemy_turn()
 
@@ -143,15 +138,23 @@ func setup_player_actions():
 	var base_actions = ["Attack", "Defend", "Items", "View Enemy Equipment"]
 	for action_name in base_actions:
 		var button = Button.new()
-		button.text = action_name
+		
+		# NEW: Show if item action is available
+		if action_name == "Items":
+			if item_action_used:
+				button.text = "Items (Used)"
+			else:
+				button.text = "Items (Bonus Action)"
+		else:
+			button.text = action_name
+			
 		button.custom_minimum_size = Vector2(180, 40)
 		var method = "_on_" + action_name.to_lower().replace(" ", "_") + "_pressed"
 		button.pressed.connect(Callable(self, method))
 		ui_manager.action_buttons.add_child(button)
 	
 	setup_skill_buttons()
-	# REMOVED: ui_manager.enable_actions(true) 
-	# Enabling is now handled by the caller based on turn state
+	ui_manager.enable_actions(true)
 
 func setup_skill_buttons():
 	for skill_name in player_character.skills:
@@ -190,6 +193,18 @@ func setup_skill_buttons():
 
 func decide_enemy_action() -> Dictionary:
 	var enemy_hp_percent = float(enemy_character.current_hp) / float(enemy_character.max_hp)
+	var momentum_level = MomentumSystem.get_momentum()
+	
+	# NEW: Enemy item usage chance (increases with floor and momentum)
+	var item_chance = 0.1 + (current_floor * 0.02) + (momentum_level * 0.05)
+	
+	# Check if enemy should use an item
+	if randf() < item_chance and enemy_character.inventory.items.size() > 0:
+		var usable_items = get_enemy_usable_items()
+		if usable_items.size() > 0:
+			var item = usable_items[randi() % usable_items.size()]
+			return {"type": "item", "item": item}
+	
 	var available_skills = []
 	
 	for skill_name in enemy_character.skills:
@@ -216,6 +231,15 @@ func decide_enemy_action() -> Dictionary:
 		return {"type": "skill", "skill": available_skills[randi() % available_skills.size()]}
 	
 	return {"type": "attack"}
+
+# NEW: Get items enemy can use in combat
+func get_enemy_usable_items() -> Array:
+	var usable = []
+	for item_id in enemy_character.inventory.items:
+		var item = enemy_character.inventory.items[item_id].item
+		if item and item.item_type == Item.ItemType.CONSUMABLE and item.combat_usable:
+			usable.append(item)
+	return usable
 
 func _on_turn_skipped(_character: CharacterData, _reason: String):
 	pass
@@ -287,6 +311,7 @@ func _on_skill_used(skill: Skill):
 	
 	turn_manager.end_turn(player_character)
 
+# NEW: Modified to support item actions
 func _on_item_used(item: Item):
 	if item.item_type != Item.ItemType.CONSUMABLE:
 		ui_manager.update_turn_display("This item cannot be used in battle.")
@@ -320,15 +345,21 @@ func _on_item_used(item: Item):
 		print("ERROR: Failed to remove item from inventory!")
 	
 	ui_manager.update_turn_display(result)
-	ui_manager.add_combat_log("[color=lime]Player used %s:[/color] %s" % [item.name, result])
+	ui_manager.add_combat_log("[color=lime]Player used %s (Item Action):[/color] %s" % [item.name, result])
 	update_all_ui()
+	
+	# NEW: Mark item action as used
+	item_action_used = true
+	
+	# NEW: Refresh action buttons to show item action is used
+	setup_player_actions()
+	
+	# NEW: Don't end turn - this is a bonus action!
+	print("Battle: Item action used, player can still take their main action")
 	
 	var outcome = combat_manager.check_battle_outcome(player_character, enemy_character)
 	if outcome != "ongoing":
 		check_battle_end()
-		return
-	
-	turn_manager.end_turn(player_character)
 
 func execute_enemy_turn():
 	ui_manager.update_turn_display("Enemy's turn")
@@ -354,6 +385,19 @@ func execute_enemy_turn():
 			if skill_result.success:
 				result = skill_result.message
 				ui_manager.add_combat_log("[color=orange]Enemy used %s:[/color] %s" % [action.skill.name, result])
+		"item":
+			# NEW: Enemy item usage
+			var item = action.item
+			var targets = []
+			match item.consumable_type:
+				Item.ConsumableType.DAMAGE, Item.ConsumableType.DEBUFF:
+					targets = [player_character]
+				_:
+					targets = [enemy_character]
+			
+			result = item.use(enemy_character, targets)
+			enemy_character.inventory.remove_item(item.id, 1)
+			ui_manager.add_combat_log("[color=red]Enemy used %s:[/color] %s" % [item.name, result])
 	
 	ui_manager.update_turn_display(result)
 	update_all_ui()
@@ -402,9 +446,7 @@ func get_enemy_equipment_text() -> String:
 
 func _on_take_breather_selected(xp_gained: int):
 	print("Battle: Player taking a breather, showing rewards...")
-	
 	MomentumSystem.reset_momentum()
-	
 	emit_signal("battle_completed", true, xp_gained)
 
 func show_level_up_overlay():
@@ -433,17 +475,8 @@ func check_battle_end():
 			if is_boss_battle:
 				if current_floor > player_character.max_floor_cleared:
 					player_character.update_max_floor_cleared(current_floor)
-					print("Battle: NEW RECORD! Boss defeated on floor %d, max_floor_cleared updated to %d" % [
-						current_floor,
-						player_character.max_floor_cleared
-					])
+					print("Battle: NEW RECORD! Boss defeated on floor %d" % current_floor)
 					SaveManager.save_game(player_character)
-					print("Battle: Progress saved with new max_floor_cleared: %d" % player_character.max_floor_cleared)
-				else:
-					print("Battle: Boss defeated on floor %d (max cleared: %d)" % [
-						current_floor, 
-						player_character.max_floor_cleared
-					])
 			
 			show_battle_complete_dialog(xp)
 		"defeat":
@@ -457,7 +490,6 @@ func _on_press_on_selected(xp_gained: int):
 	MomentumSystem.gain_momentum()
 	
 	var level_before = player_character.level
-	
 	player_character.gain_xp(xp_gained)
 	
 	if player_character.level > level_before:
@@ -465,6 +497,5 @@ func _on_press_on_selected(xp_gained: int):
 		await show_level_up_overlay()
 	
 	SaveManager.save_game(player_character)
-	print("Battle: Progress saved - max_floor_cleared: %d" % player_character.max_floor_cleared)
 	
 	emit_signal("battle_completed", true, -1)

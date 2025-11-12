@@ -53,10 +53,9 @@ func create_enemy(level: int = 1, floor: int = 1, wave: int = 1, momentum_level:
 	for _i in range(level - 1):
 		enemy.level_up()
 	
-	# Apply momentum scaling to enemies
 	apply_enemy_scaling(enemy, floor, wave, false, momentum_level)
 	give_enemy_equipment(enemy, floor)
-	give_enemy_items(enemy, floor)
+	give_enemy_items(enemy, floor, false, momentum_level)  # NEW: Pass momentum
 	
 	enemy.is_player = false
 	enemy.calculate_secondary_attributes()
@@ -111,9 +110,9 @@ func create_boss(floor: int = 1, wave: int = 1, momentum_level: int = 0) -> Char
 	if combined_skills.size() > 0:
 		boss.add_skills(combined_skills)
 	
-	# Apply momentum scaling
 	apply_enemy_scaling(boss, floor, wave, true, momentum_level)
 	give_enemy_equipment(boss, floor, true)
+	give_enemy_items(boss, floor, true, momentum_level)  # NEW: Boss gets items too
 	
 	boss.is_player = false
 	boss.calculate_secondary_attributes()
@@ -242,6 +241,7 @@ func give_enemy_equipment(enemy: CharacterData, floor: int, is_boss: bool = fals
 				
 				print("%s equipped %s: %s (rarity: %s)" % [enemy.name, slot, item.name, item.rarity])
 
+
 func get_rarity_tier(rarity: String) -> int:
 	match rarity:
 		"common": return 0
@@ -252,21 +252,64 @@ func get_rarity_tier(rarity: String) -> int:
 		"legendary": return 5
 		_: return 0
 
-func give_enemy_items(enemy: CharacterData, floor: int, is_boss: bool = false):
-	if is_boss:
-		return
+func give_enemy_items(enemy: CharacterData, floor: int, is_boss: bool = false, momentum_level: int = 0):
+	"""Give enemies combat items based on floor and momentum"""
 	
-	if randf() < 0.4:
-		var combat_items = [
-			"flame_flask", "frost_crystal", "thunder_orb", 
-			"venom_vial", "stone_shard", "rotten_dung",
-			"health_potion", "smoke_bomb"
-		]
-		
-		var num_items = randi_range(1, 3)
-		for i in num_items:
-			var item_id = combat_items[randi() % combat_items.size()]
+	# Base chance increases with floor
+	var base_item_chance = 0.3 + (floor * 0.05)
+	
+	# Momentum makes enemies prepare better
+	var momentum_bonus = momentum_level * 0.1
+	
+	# Boss battles give enemies more items
+	var boss_multiplier = 2.0 if is_boss else 1.0
+	
+	var total_chance = (base_item_chance + momentum_bonus) * boss_multiplier
+	
+	# Determine how many items enemy gets
+	var item_count = 0
+	if randf() < total_chance:
+		item_count = 1
+	if randf() < total_chance * 0.5:
+		item_count += 1
+	if randf() < total_chance * 0.25:
+		item_count += 1
+	
+	# Floor affects which items enemies get
+	var available_items = []
+	
+	# Basic items (all floors)
+	available_items.append_array(["health_potion", "stone_shard"])
+	
+	# Floor 2+: Better potions
+	if floor >= 2:
+		available_items.append_array(["mana_potion", "stamina_potion"])
+	
+	# Floor 3+: Damage items
+	if floor >= 3:
+		available_items.append_array(["flame_flask", "venom_vial", "rotten_dung"])
+	
+	# Floor 5+: Advanced items
+	if floor >= 5:
+		available_items.append_array(["frost_crystal", "thunder_orb", "smoke_bomb"])
+	
+	# Floor 7+: Buff items
+	if floor >= 7:
+		available_items.append_array(["berserker_brew"])
+	
+	# Floor 10+: Holy water for cure
+	if floor >= 10:
+		available_items.append_array(["holy_water"])
+	
+	# Give enemy random items from available pool
+	for i in range(item_count):
+		if available_items.size() > 0:
+			var item_id = available_items[randi() % available_items.size()]
 			var item = ItemManager.get_item(item_id)
 			if item:
-				var quantity = randi_range(1, 3)
+				# More items on higher floors
+				var quantity = 1 + int(floor / 5)
+				if is_boss:
+					quantity += 1
 				enemy.inventory.add_item(item, quantity)
+				print("Enemy received %dx %s" % [quantity, item.name])

@@ -136,9 +136,8 @@ func use_skill(skill_name: String):
 func remove_skill(skill_name: String):
 	skills.erase(skill_name)
 
-# Update calculate_secondary_attributes to use buffed/debuffed stats:
 func calculate_secondary_attributes():
-	# Get buffed/debuffed primary attributes
+	# Get effective stats
 	var effective_vit = get_attribute_with_buffs_and_debuffs(Skill.AttributeTarget.VITALITY) if Skill.AttributeTarget.has("VITALITY") else vitality
 	var effective_str = get_attribute_with_buffs_and_debuffs(Skill.AttributeTarget.STRENGTH) if Skill.AttributeTarget.has("STRENGTH") else strength
 	var effective_dex = get_attribute_with_buffs_and_debuffs(Skill.AttributeTarget.DEXTERITY) if Skill.AttributeTarget.has("DEXTERITY") else dexterity
@@ -150,27 +149,29 @@ func calculate_secondary_attributes():
 	var effective_agi = get_attribute_with_buffs_and_debuffs(Skill.AttributeTarget.AGILITY) if Skill.AttributeTarget.has("AGILITY") else agility
 	var effective_for = get_attribute_with_buffs_and_debuffs(Skill.AttributeTarget.FORTITUDE) if Skill.AttributeTarget.has("FORTITUDE") else fortitude
 
-	# Health and Resource Pools - use base stats (don't want max HP/MP changing mid-combat)
-	max_hp = vitality * 10 + strength * 5
-	max_mp = mind * 8 + intelligence * 4
-	max_sp = endurance * 8 + agility * 4
-	# CRITICAL FIX: Initialize current values if they're 0 or unset
+	# REBALANCED: Reduced resource pools
+	max_hp = vitality * 8 + strength * 3  # Was 10 + 5
+	max_mp = mind * 5 + intelligence * 3  # Was 8 + 4
+	max_sp = endurance * 5 + agility * 3  # Was 8 + 4
+	
+	# Initialize current values if needed
 	if current_hp == 0 or current_hp > max_hp:
 		current_hp = max_hp
 	if current_mp == 0 or current_mp > max_mp:
 		current_mp = max_mp
 	if current_sp == 0 or current_sp > max_sp:
 		current_sp = max_sp
-	# Defensive Stats - use effective stats
+	
+	# Defensive Stats
 	toughness = (effective_vit * 0.45 + effective_str * 0.25 + effective_end * 0.15 + effective_for * 0.15) / 10.0
 	dodge = 0.05 + (effective_agi * 0.55 + effective_dex * 0.35 + effective_for * 0.10) / 200.0
 	spell_ward = (effective_for * 0.5) * (0.6 * effective_arc + 0.3 * effective_mnd + 0.1 * effective_fai) / 10.0
 
-	# Offensive Stats - use effective stats
+	# Offensive Stats
 	accuracy = 0.75 + (effective_dex * 0.35 + effective_agi * 0.25 + effective_mnd * 0.25 + effective_for * 0.15) / 200.0
 	critical_hit_rate = 0.05 + (effective_dex * 0.4 + effective_agi * 0.25 + effective_int * 0.2 + effective_for * 0.15) / 200.0
 
-	# Attack Power - use effective stats
+	# Attack Power
 	match attack_power_type:
 		"strength":
 			attack_power = effective_str * 2 + effective_dex * 0.5 + effective_vit * 0.5
@@ -179,7 +180,7 @@ func calculate_secondary_attributes():
 		_:
 			print("Invalid attack_power_type")
 
-	# Spell Power - use effective stats
+	# Spell Power
 	match spell_power_type:
 		"balanced":
 			spell_power = (effective_int * 1.5 + effective_fai * 1.5 + effective_arc * 1.5) / 2
@@ -189,7 +190,73 @@ func calculate_secondary_attributes():
 			spell_power = effective_arc * 2 + effective_int + effective_fai
 		_:
 			print("Invalid spell_power_type")
+
+# REBALANCED: Reduced regeneration on attack
+func attack(target: CharacterData) -> String:
+	if not target or not is_instance_valid(target):
+		push_error("Attack failed: Invalid target")
+		return "%s's attack failed - no valid target!" % name
 	
+	if not ("dodge" in target) or not ("toughness" in target):
+		push_error("Attack failed: Target missing required properties")
+		return "%s's attack failed - target not properly initialized!" % name
+	
+	if typeof(target.dodge) != TYPE_FLOAT and typeof(target.dodge) != TYPE_INT:
+		push_error("Attack failed: Target dodge is not a valid number")
+		return "%s's attack failed - target stats invalid!" % name
+	
+	var momentum_multiplier = MomentumSystem.get_damage_multiplier()
+	
+	var base_damage = get_attack_power() * 0.5 * momentum_multiplier
+	var resistance = target.get_defense()
+	var accuracy_check = randf() < accuracy
+	var dodge_check = randf() < target.dodge
+	var crit_check = randf() < critical_hit_rate
+	
+	if not accuracy_check:
+		return "%s's attack missed!" % name
+	
+	if dodge_check:
+		return "%s dodged the attack!" % target.name
+	
+	var damage = max(1, base_damage - resistance)
+	
+	if crit_check:
+		damage *= 1.5 + randf() * 0.5
+		print("Critical hit!")
+	
+	damage = round(damage)
+	target.take_damage(damage)
+	
+	# Status effect application
+	var status_msg = ""
+	if equipment["main_hand"] and equipment["main_hand"] is Equipment:
+		var weapon = equipment["main_hand"]
+		if "status_effect_type" in weapon and "status_effect_chance" in weapon:
+			if weapon.status_effect_type != Skill.StatusEffect.NONE:
+				if weapon.has_method("try_apply_status_effect"):
+					if weapon.try_apply_status_effect(target):
+						status_msg = " and applied %s" % Skill.StatusEffect.keys()[weapon.status_effect_type]
+	
+	# REBALANCED: Increased regeneration from 2.5% to 8%
+	var mp_restore = int(max_mp * 0.08)
+	var sp_restore = int(max_sp * 0.08)
+	restore_mp(mp_restore)
+	restore_sp(sp_restore)
+	
+	var result = "%s attacks %s for %d damage" % [name, target.name, damage]
+	
+	if momentum_multiplier > 1.0:
+		var bonus_pct = int((momentum_multiplier - 1.0) * 100)
+		result += " (+%d%% momentum)" % bonus_pct
+	
+	result += " and restores %d MP, %d SP%s" % [mp_restore, sp_restore, status_msg]
+	
+	if crit_check:
+		result = "Critical hit! " + result
+	
+	return result
+
 func equip_item(item: Equipment) -> Equipment:
 	if not item.can_equip(self):
 		print("Cannot equip %s - class restriction" % item.name)
@@ -253,74 +320,6 @@ func get_defense() -> int:
 		if equipment[slot] and equipment[slot].armor_value:
 			total_defense += equipment[slot].armor_value
 	return total_defense
-
-# Modified attack function with momentum damage bonus
-func attack(target: CharacterData) -> String:
-	if not target or not is_instance_valid(target):
-		push_error("Attack failed: Invalid target")
-		return "%s's attack failed - no valid target!" % name
-	
-	if not ("dodge" in target) or not ("toughness" in target):
-		push_error("Attack failed: Target missing required properties")
-		return "%s's attack failed - target not properly initialized!" % name
-	
-	if typeof(target.dodge) != TYPE_FLOAT and typeof(target.dodge) != TYPE_INT:
-		push_error("Attack failed: Target dodge is not a valid number")
-		return "%s's attack failed - target stats invalid!" % name
-	
-	# Apply momentum bonus to damage
-	var momentum_multiplier = MomentumSystem.get_damage_multiplier()
-	
-	var base_damage = get_attack_power() * 0.5 * momentum_multiplier
-	var resistance = target.get_defense()
-	var accuracy_check = randf() < accuracy
-	var dodge_check = randf() < target.dodge
-	var crit_check = randf() < critical_hit_rate
-	
-	if not accuracy_check:
-		return "%s's attack missed!" % name
-	
-	if dodge_check:
-		return "%s dodged the attack!" % target.name
-	
-	var damage = max(1, base_damage - resistance)
-	
-	if crit_check:
-		damage *= 1.5 + randf() * 0.5
-		print("Critical hit!")
-	
-	damage = round(damage)
-	target.take_damage(damage)
-	
-	# Status effect application
-	var status_msg = ""
-	if equipment["main_hand"] and equipment["main_hand"] is Equipment:
-		var weapon = equipment["main_hand"]
-		if "status_effect_type" in weapon and "status_effect_chance" in weapon:
-			if weapon.status_effect_type != Skill.StatusEffect.NONE:
-				if weapon.has_method("try_apply_status_effect"):
-					if weapon.try_apply_status_effect(target):
-						status_msg = " and applied %s" % Skill.StatusEffect.keys()[weapon.status_effect_type]
-	
-	# Restore resources
-	var mp_restore = int(max_mp * 0.025)
-	var sp_restore = int(max_sp * 0.025)
-	restore_mp(mp_restore)
-	restore_sp(sp_restore)
-	
-	var result = "%s attacks %s for %d damage" % [name, target.name, damage]
-	
-	# Show momentum bonus in combat log
-	if momentum_multiplier > 1.0:
-		var bonus_pct = int((momentum_multiplier - 1.0) * 100)
-		result += " (+%d%% momentum)" % bonus_pct
-	
-	result += " and restores %d MP, %d SP%s" % [mp_restore, sp_restore, status_msg]
-	
-	if crit_check:
-		result = "Critical hit! " + result
-	
-	return result
 
 func take_damage(amount: float):
 	if is_defending:

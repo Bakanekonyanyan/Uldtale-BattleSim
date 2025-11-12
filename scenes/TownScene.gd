@@ -56,6 +56,7 @@ func _on_shop_pressed():
 
 func _on_dungeon_pressed():
 	set_player(current_character)
+	current_character.current_floor = 1
 	if current_character.max_floor_cleared == null:
 		current_character.max_floor_cleared = 1;
 		print(current_character.max_floor_cleared)
@@ -100,7 +101,7 @@ func show_floor_selection_dialog():
 	grid.add_theme_constant_override("h_separation", 5)
 	grid.add_theme_constant_override("v_separation", 5)
 	
-	var max_selectable = max(1, current_character.max_floor_cleared)
+	var max_selectable = max(1, current_character.max_floor_cleared + 1)
 	var selected_floor = 1  # Default to floor 1
 	var floor_buttons = []
 	
