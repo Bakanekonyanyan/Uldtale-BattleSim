@@ -26,61 +26,6 @@ func set_player(character: CharacterData):
 	player_character = character
 	update_labels()
 
-func start_dungeon(info: Dictionary = {}):
-	print("DungeonScene: start_dungeon called with info: ", info)
-	
-	if not info.is_empty():
-		# Restore from saved state OR start from selected floor
-		player_character = info.get("player_character", player_character)
-		current_wave = info["current_wave"]
-		current_floor = player_character.current_floor
-		is_boss_fight = info["is_boss_fight"]
-		max_floor = info["max_floor"]
-		waves_per_floor = info.get("waves_per_floor", 5)
-		print("DungeonScene: Restored state - Wave: ", current_wave, ", Floor: ", current_floor, ", Boss: ", is_boss_fight)
-		
-		# If we just beat a boss and clicked Continue (not Next Floor)
-		# Stay on same floor and reset for next run or show completion
-		if is_boss_fight:
-			print("DungeonScene: Boss was defeated, checking if player wants to continue")
-			if current_floor >= max_floor:
-				print("DungeonScene: Max floor reached! Dungeon complete!")
-				SceneManager.change_to_town(player_character)
-				return
-			# Boss beaten but player clicked Continue instead of Next Floor
-			# This shouldn't happen as Continue should only show for non-boss
-			# But if it does, treat same as Next Floor
-			
-			current_floor += 1
-			player_character.update_max_floor_cleared(current_floor)
-			print(player_character.max_floor_cleared)
-			current_wave = 0
-			is_boss_fight = false
-		
-		# Set race for current floor
-		EnemyFactory.set_dungeon_race(current_floor)
-		update_labels()
-		
-		# Continue to next wave
-		next_wave()
-	else:
-		# FALLBACK: If info is empty (shouldn't happen from town anymore)
-		# Initialize with character from CharacterManager
-		player_character = CharacterManager.get_current_character()
-		if player_character == null:
-			print("Error: No character selected")
-			SceneManager.change_to_character_selection()
-			return
-		
-		current_wave = 0
-		current_floor = 1
-		is_boss_fight = false
-		reset_player_stats()
-		print("DungeonScene: Starting new dungeon (fallback mode)")
-		EnemyFactory.set_dungeon_race(current_floor)
-		update_labels()
-		next_wave()
-
 func continue_dungeon():
 	print("DungeonScene: Continuing dungeon after rewards")
 	
@@ -88,19 +33,6 @@ func continue_dungeon():
 	# Just start next wave
 	next_wave()
 	
-func next_wave():
-	print("DungeonScene: Starting next wave")
-	current_wave += 1
-	update_labels()
-	
-	if current_wave > waves_per_floor:
-		is_boss_fight = true
-		start_boss_battle()
-	else:
-		is_boss_fight = false
-		start_battle()
-
-# DungeonScene.gd - Add momentum to battle data
 func start_battle():
 	var momentum_level = MomentumSystem.get_momentum()
 	var enemy = EnemyFactory.create_enemy(1, current_floor, current_wave, momentum_level)
@@ -152,3 +84,98 @@ func update_labels():
 		floor_label.text = "Floor: %d" % current_floor
 	if dungeon_description_label:
 		dungeon_description_label.text = get_dungeon_description()
+
+func start_dungeon(info: Dictionary = {}):
+	print("DungeonScene: start_dungeon called with info: ", info)
+	
+	if not info.is_empty():
+		# Restore from saved state OR start from selected floor
+		player_character = info.get("player_character", player_character)
+		current_wave = info["current_wave"]
+		current_floor = info["current_floor"]
+		is_boss_fight = info["is_boss_fight"]
+		max_floor = info["max_floor"]
+		waves_per_floor = info.get("waves_per_floor", 5)
+		
+		print("DungeonScene: Restored state - Wave: %d, Floor: %d, Boss: %s, max_floor_cleared: %d" % [
+			current_wave,
+			current_floor,
+			is_boss_fight,
+			player_character.max_floor_cleared
+		])
+		
+		# CRITICAL FIX: If boss was just defeated, advance to next floor
+		if is_boss_fight and current_wave > waves_per_floor:
+			print("DungeonScene: Boss defeated! Advancing to next floor...")
+			
+			# CRITICAL FIX: Update max_floor_cleared BEFORE advancing
+			if current_floor > player_character.max_floor_cleared:
+				player_character.update_max_floor_cleared(current_floor)
+				SaveManager.save_game(player_character)
+				print("DungeonScene: NEW RECORD! Updated max_floor_cleared to %d and saved" % player_character.max_floor_cleared)
+			
+			current_floor += 1
+			current_wave = 0
+			is_boss_fight = false
+			
+			# Check max floor
+			if current_floor > max_floor:
+				print("DungeonScene: Max floor reached! Dungeon complete!")
+				SceneManager.change_to_town(player_character)
+				return
+			
+			print("DungeonScene: Now on Floor %d (player max_floor_cleared: %d)" % [
+				current_floor,
+				player_character.max_floor_cleared
+			])
+		
+		# CRITICAL FIX: Sync player_character.current_floor with DungeonScene.current_floor
+		player_character.current_floor = current_floor
+		print("DungeonScene: Player floor synced to: %d" % player_character.current_floor)
+		
+		# Set race for current floor
+		EnemyFactory.set_dungeon_race(current_floor)
+		update_labels()
+		
+		# Continue to next wave
+		next_wave()
+	else:
+		# FALLBACK: If info is empty
+		player_character = CharacterManager.get_current_character()
+		if player_character == null:
+			print("Error: No character selected")
+			SceneManager.change_to_character_selection()
+			return
+		
+		current_wave = 0
+		current_floor = 1
+		is_boss_fight = false
+		
+		# CRITICAL FIX: Sync player floor
+		player_character.current_floor = current_floor
+		
+		reset_player_stats()
+		print("DungeonScene: Starting new dungeon (fallback mode)")
+		EnemyFactory.set_dungeon_race(current_floor)
+		update_labels()
+		next_wave()
+
+func next_wave():
+	print("DungeonScene: Starting next wave")
+	current_wave += 1
+	
+	# CRITICAL FIX: Always keep player_character.current_floor in sync
+	player_character.current_floor = current_floor
+	print("DungeonScene: Floor synced - DungeonScene.current_floor=%d, player.current_floor=%d" % [
+		current_floor, 
+		player_character.current_floor
+	])
+	
+	update_labels()
+	
+	if current_wave > waves_per_floor:
+		is_boss_fight = true
+		start_boss_battle()
+	else:
+		is_boss_fight = false
+		start_battle()

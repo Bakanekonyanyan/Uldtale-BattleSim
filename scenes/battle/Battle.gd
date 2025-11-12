@@ -220,28 +220,6 @@ func _on_items_pressed():
 func _on_view_enemy_equipment_pressed():
 	show_enemy_equipment_dialog()
 
-# Battle.gd - FIXED battle completion flow
-func check_battle_end():
-	var outcome = combat_manager.check_battle_outcome(player_character, enemy_character)
-	match outcome:
-		"victory":
-			ui_manager.enable_actions(false)
-			var xp = enemy_character.level * 50 * current_floor
-			await get_tree().create_timer(1.0).timeout
-			
-			# CRITICAL FIX: Update max_floor_cleared BEFORE showing dialog
-			if is_boss_battle:
-				player_character.update_max_floor_cleared(current_floor)
-				SaveManager.save_game(player_character)
-				print("Battle: Boss defeated on floor %d, max_floor_cleared updated to %d" % [current_floor, player_character.max_floor_cleared])
-			
-			# Show battle complete dialog
-			show_battle_complete_dialog(xp)
-		"defeat":
-			ui_manager.enable_actions(false)
-			await get_tree().create_timer(1.0).timeout
-			emit_signal("battle_completed", false, 0)
-
 func show_battle_complete_dialog(xp_gained: int):
 	var dialog_scene = load("res://scenes/BattleCompleteDialog.tscn")
 	if not dialog_scene:
@@ -257,29 +235,6 @@ func show_battle_complete_dialog(xp_gained: int):
 	# Connect signals - FIXED: Pass enemy reference for rewards
 	dialog.connect("press_on_selected", Callable(self, "_on_press_on_selected").bind(xp_gained))
 	dialog.connect("take_breather_selected", Callable(self, "_on_take_breather_selected").bind(xp_gained))
-
-func _on_press_on_selected(xp_gained: int):
-	print("Battle: Player pressed on! Gaining momentum...")
-	
-	# Gain momentum
-	MomentumSystem.gain_momentum()
-	
-	# Apply XP immediately (no level up screen mid-momentum)
-	player_character.gain_xp(xp_gained)
-	
-	# CRITICAL FIX: Pass momentum flag to SceneManager
-	# Emit with special "skip_rewards" flag
-	emit_signal("battle_completed", true, -1)  # -1 XP signals "skip rewards"
-
-func _on_take_breather_selected(xp_gained: int):
-	print("Battle: Player taking a breather, showing rewards...")
-	
-	# Reset momentum
-	MomentumSystem.reset_momentum()
-	
-	# CRITICAL FIX: Emit normal battle completion with XP
-	# This will trigger reward calculation
-	emit_signal("battle_completed", true, xp_gained)
 
 func _on_turn_ended(character: CharacterData):
 	character.reset_defense()
@@ -338,6 +293,19 @@ func _on_item_used(item: Item):
 		ui_manager.update_turn_display("This item cannot be used in battle.")
 		return
 	
+	# CRITICAL FIX: Check if item exists and has quantity BEFORE using
+	var item_id = item.id
+	if not player_character.inventory.items.has(item_id):
+		ui_manager.update_turn_display("Item no longer available.")
+		return
+	
+	var item_quantity = player_character.inventory.items[item_id].quantity
+	if item_quantity <= 0:
+		ui_manager.update_turn_display("No more of this item.")
+		return
+	
+	print("Using item: %s (Quantity before: %d)" % [item.name, item_quantity])
+	
 	var targets = []
 	match item.consumable_type:
 		Item.ConsumableType.DAMAGE, Item.ConsumableType.DEBUFF:
@@ -345,10 +313,18 @@ func _on_item_used(item: Item):
 		_:
 			targets = [player_character]
 	
-	var result = combat_manager.execute_item(player_character, item, targets)
-	ui_manager.update_turn_display(result.message)
-	ui_manager.add_combat_log("[color=lime]Player used %s:[/color] %s" % [item.name, result.message])
-	player_character.inventory.remove_item(item.id, 1)
+	# Use the item (doesn't remove from inventory anymore)
+	var result = item.use(player_character, targets)
+	
+	# CRITICAL FIX: Remove item ONCE, after successful use
+	var removed = player_character.inventory.remove_item(item_id, 1)
+	if removed:
+		print("Item removed successfully. Remaining: %d" % player_character.inventory.get_quantity(item_id))
+	else:
+		print("ERROR: Failed to remove item from inventory!")
+	
+	ui_manager.update_turn_display(result)
+	ui_manager.add_combat_log("[color=lime]Player used %s:[/color] %s" % [item.name, result])
 	update_all_ui()
 	
 	# Check if battle ended BEFORE ending turn
@@ -429,3 +405,89 @@ func get_enemy_equipment_text() -> String:
 		else:
 			text += "[b]%s:[/b] Empty\n" % slot_name
 	return text
+
+func _on_take_breather_selected(xp_gained: int):
+	print("Battle: Player taking a breather, showing rewards...")
+	
+	# Reset momentum
+	MomentumSystem.reset_momentum()
+	
+	# CRITICAL FIX: Emit normal battle completion with XP
+	# The reward scene will handle level-ups
+	emit_signal("battle_completed", true, xp_gained)
+
+# ADD this new function to Battle.gd for momentum level-ups
+func show_level_up_overlay():
+	print("Battle: Showing level-up overlay during momentum")
+	
+	# Create level-up scene
+	var level_up_scene = load("res://scenes/LevelUpScene.tscn").instantiate()
+	add_child(level_up_scene)
+	
+	level_up_scene.visible = true
+	level_up_scene.show()
+	level_up_scene.setup(player_character)
+	
+	# Wait for completion
+	await level_up_scene.level_up_complete
+	
+	print("Battle: Level-up complete, continuing momentum")
+	level_up_scene.queue_free()
+
+func check_battle_end():
+	var outcome = combat_manager.check_battle_outcome(player_character, enemy_character)
+	match outcome:
+		"victory":
+			ui_manager.enable_actions(false)
+			var xp = enemy_character.level * 50 * current_floor
+			await get_tree().create_timer(1.0).timeout
+			
+			# CRITICAL FIX: Update max_floor_cleared when boss is defeated
+			if is_boss_battle:
+				# Check if this is a new record
+				if current_floor > player_character.max_floor_cleared:
+					player_character.update_max_floor_cleared(current_floor)
+					print("Battle: NEW RECORD! Boss defeated on floor %d, max_floor_cleared updated to %d" % [
+						current_floor,
+						player_character.max_floor_cleared
+					])
+					# CRITICAL: Save immediately after updating max floor
+					SaveManager.save_game(player_character)
+					print("Battle: Progress saved with new max_floor_cleared: %d" % player_character.max_floor_cleared)
+				else:
+					print("Battle: Boss defeated on floor %d (max cleared: %d)" % [
+						current_floor, 
+						player_character.max_floor_cleared
+					])
+			
+			# Show battle complete dialog
+			show_battle_complete_dialog(xp)
+		"defeat":
+			ui_manager.enable_actions(false)
+			await get_tree().create_timer(1.0).timeout
+			emit_signal("battle_completed", false, 0)
+
+func _on_press_on_selected(xp_gained: int):
+	print("Battle: Player pressed on! Gaining momentum...")
+	
+	# Gain momentum
+	MomentumSystem.gain_momentum()
+	
+	# CRITICAL FIX: Store level before XP gain
+	var level_before = player_character.level
+	
+	# Apply XP immediately
+	player_character.gain_xp(xp_gained)
+	
+	# CRITICAL FIX: Check if level up occurred
+	if player_character.level > level_before:
+		print("Battle: Level up detected during momentum!")
+		# Show level up screen even during momentum
+		await show_level_up_overlay()
+	
+	# CRITICAL FIX: Save progress (this will save max_floor_cleared too)
+	SaveManager.save_game(player_character)
+	print("Battle: Progress saved - max_floor_cleared: %d" % player_character.max_floor_cleared)
+	
+	# Continue with momentum (skip rewards)
+	emit_signal("battle_completed", true, -1)  # -1 XP signals "skip rewards"

@@ -283,51 +283,6 @@ func return_to_previous_scene() -> void:
 		if current_scene.has_method("set_player_character"):
 			current_scene.set_player_character(reward_data_temp.get("player_character"))
 
-func _continue_with_momentum():
-	# No reward calculation, straight back to dungeon
-	print("SceneManager: Continuing with momentum")
-	
-	# Apply momentum effects (no recovery)
-	MomentumSystem.apply_momentum_effects(dungeon_info["player_character"])
-	
-	_change_scene_internal(dungeon_info["path"], dungeon_info["player_character"])
-	await get_tree().process_frame
-	
-	if current_scene.has_method("start_dungeon"):
-		current_scene.start_dungeon(dungeon_info)
-
-func _continue_without_momentum():
-	# No reward calculation, straight back to dungeon
-	print("SceneManager: Continuing without momentum")
-	
-	
-	_change_scene_internal(dungeon_info["path"], dungeon_info["player_character"])
-	await get_tree().process_frame
-	
-	if current_scene.has_method("start_dungeon"):
-		current_scene.start_dungeon(dungeon_info)
-
-func _on_rewards_accepted():
-	print("SceneManager: Rewards accepted, returning to dungeon")
-	
-	reward_scene_active = false
-	reward_data_temp.clear()
-	
-	# Apply full recovery since momentum was reset
-	var player = dungeon_info["player_character"]
-	player.current_hp = player.max_hp
-	player.current_mp = player.max_mp
-	player.current_sp = player.max_sp
-	player.status_effects.clear()
-	player.skill_cooldowns.clear()
-	
-	if not dungeon_info.is_empty():
-		_change_scene_internal(dungeon_info["path"], dungeon_info["player_character"])
-		await get_tree().process_frame
-		
-		if current_scene.has_method("start_dungeon"):
-			current_scene.start_dungeon(dungeon_info)
-
 func _on_next_floor():
 	print("SceneManager: Next floor requested")
 	reward_scene_active = false
@@ -346,6 +301,12 @@ func _on_next_floor():
 
 func start_dungeon_from_floor(player_character: CharacterData, start_floor: int) -> void:
 	"""Start a dungeon run from a specific floor"""
+	
+	# CRITICAL FIX: Set player_character.current_floor BEFORE creating dungeon_info
+	player_character.current_floor = start_floor
+	print("SceneManager: Starting dungeon from floor %d" % start_floor)
+	print("SceneManager: Set player.current_floor to: %d" % player_character.current_floor)
+	
 	dungeon_info = {
 		"player_character": player_character,
 		"current_wave": 0,
@@ -355,9 +316,91 @@ func start_dungeon_from_floor(player_character: CharacterData, start_floor: int)
 		"waves_per_floor": 5
 	}
 	
+	# Reset momentum when starting fresh from town
+	MomentumSystem.reset_momentum()
+	
 	town_scene_active = false
 	_change_scene_internal("res://scenes/DungeonScene.tscn", player_character)
 	await get_tree().process_frame
 	
 	if current_scene.has_method("start_dungeon"):
+		print("SceneManager: Calling start_dungeon with floor: %d" % dungeon_info["current_floor"])
 		current_scene.start_dungeon(dungeon_info)
+
+func _continue_with_momentum():
+	print("SceneManager: Continuing with momentum")
+	
+	# Apply momentum effects (no recovery)
+	MomentumSystem.apply_momentum_effects(dungeon_info["player_character"])
+	
+	# CRITICAL FIX: Log BEFORE sync
+	print("SceneManager: BEFORE sync - player.current_floor=%d, dungeon_info.current_floor=%d" % [
+		dungeon_info["player_character"].current_floor,
+		dungeon_info["current_floor"]
+	])
+	
+	# Sync floor from player_character BEFORE continuing
+	dungeon_info["current_floor"] = dungeon_info["player_character"].current_floor
+	
+	print("SceneManager: AFTER sync - dungeon_info.current_floor=%d" % dungeon_info["current_floor"])
+	
+	_change_scene_internal(dungeon_info["path"], dungeon_info["player_character"])
+	await get_tree().process_frame
+	
+	if current_scene.has_method("start_dungeon"):
+		print("SceneManager: Calling start_dungeon with floor: ", dungeon_info["current_floor"])
+		current_scene.start_dungeon(dungeon_info)
+
+func _continue_without_momentum():
+	print("SceneManager: Continuing without momentum")
+	
+	# CRITICAL FIX: Log BEFORE sync
+	print("SceneManager: BEFORE sync - player.current_floor=%d, dungeon_info.current_floor=%d" % [
+		dungeon_info["player_character"].current_floor,
+		dungeon_info["current_floor"]
+	])
+	
+	# Sync floor from player_character BEFORE continuing
+	dungeon_info["current_floor"] = dungeon_info["player_character"].current_floor
+	
+	print("SceneManager: AFTER sync - dungeon_info.current_floor=%d" % dungeon_info["current_floor"])
+	
+	_change_scene_internal(dungeon_info["path"], dungeon_info["player_character"])
+	await get_tree().process_frame
+	
+	if current_scene.has_method("start_dungeon"):
+		print("SceneManager: Calling start_dungeon with floor: ", dungeon_info["current_floor"])
+		current_scene.start_dungeon(dungeon_info)
+
+func _on_rewards_accepted():
+	print("SceneManager: Rewards accepted, returning to dungeon")
+	
+	reward_scene_active = false
+	reward_data_temp.clear()
+	
+	# Apply full recovery since momentum was reset
+	var player = dungeon_info["player_character"]
+	player.current_hp = player.max_hp
+	player.current_mp = player.max_mp
+	player.current_sp = player.max_sp
+	player.status_effects.clear()
+	player.skill_cooldowns.clear()
+	
+	# CRITICAL FIX: Log BEFORE sync
+	print("SceneManager: BEFORE sync - player.current_floor=%d, dungeon_info.current_floor=%d" % [
+		player.current_floor,
+		dungeon_info["current_floor"]
+	])
+	
+	# Sync floor from player_character BEFORE continuing
+	dungeon_info["current_floor"] = player.current_floor
+	
+	print("SceneManager: AFTER sync - dungeon_info.current_floor=%d" % dungeon_info["current_floor"])
+	
+	if not dungeon_info.is_empty():
+		_change_scene_internal(dungeon_info["path"], dungeon_info["player_character"])
+		await get_tree().process_frame
+		
+		if current_scene.has_method("start_dungeon"):
+			print("SceneManager: Calling start_dungeon with floor: ", dungeon_info["current_floor"])
+			current_scene.start_dungeon(dungeon_info)

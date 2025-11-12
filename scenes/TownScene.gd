@@ -64,9 +64,16 @@ func _on_dungeon_pressed():
 	
 	show_floor_selection_dialog()
 
+# In TownScene.gd, REPLACE the show_floor_selection_dialog function:
+
+# In TownScene.gd, REPLACE the show_floor_selection_dialog function:
+
 func show_floor_selection_dialog():
-	current_character.current_floor = 1
 	"""Show a dialog to select which floor to start from"""
+	
+	# CRITICAL: Log current max_floor_cleared
+	print("TownScene: Opening floor selection - max_floor_cleared: %d" % current_character.max_floor_cleared)
+	
 	var dialog = ConfirmationDialog.new()
 	dialog.title = "Select Starting Floor"
 	dialog.ok_button_text = "Start Dungeon"
@@ -94,11 +101,11 @@ func show_floor_selection_dialog():
 	grid.add_theme_constant_override("v_separation", 5)
 	
 	var max_selectable = max(1, current_character.max_floor_cleared)
-	var selected_floor = 1
+	var selected_floor = 1  # Default to floor 1
 	var floor_buttons = []
 	
 	# Create floor buttons
-	for floor in range(1, 26):  # Floors 1-10
+	for floor in range(1, 26):  # Floors 1-25
 		var btn = Button.new()
 		btn.text = str(floor)
 		btn.custom_minimum_size = Vector2(50, 40)
@@ -120,8 +127,12 @@ func show_floor_selection_dialog():
 					other_btn.button_pressed = false
 			btn.button_pressed = true
 			selected_floor = btn.get_meta("floor")
+			# CRITICAL FIX: Update character's floor immediately when selected
 			current_character.current_floor = selected_floor
-			print(current_character.current_floor)
+			print("TownScene: Selected floor %d, set current_character.current_floor to %d" % [
+				selected_floor,
+				current_character.current_floor
+			])
 		)
 		
 		grid.add_child(btn)
@@ -146,8 +157,14 @@ func show_floor_selection_dialog():
 	
 	# Handle confirmation
 	dialog.confirmed.connect(func():
-		print("Starting dungeon from floor %d" % selected_floor)
-		SceneManager.start_dungeon_from_floor(current_character, selected_floor)
+		# CRITICAL FIX: Use current_character.current_floor instead of selected_floor
+		# because selected_floor is captured by closure and may be stale
+		var final_floor = current_character.current_floor
+		print("TownScene: Confirmed floor selection - final_floor=%d, character.current_floor=%d" % [
+			final_floor,
+			current_character.current_floor
+		])
+		SceneManager.start_dungeon_from_floor(current_character, final_floor)
 		dialog.queue_free()
 	)
 	
@@ -156,7 +173,6 @@ func show_floor_selection_dialog():
 		print("Dungeon entry cancelled")
 		dialog.queue_free()
 	)
-
 func _on_equipment_pressed():
 	SceneManager.change_to_equipment(current_character)
 

@@ -71,11 +71,8 @@ func use(user: CharacterData, targets: Array) -> String:
 		ConsumableType.CURE:
 			result = cure_status(user, targets)
 	
-	# Remove the item from inventory after use
-	if user.inventory.remove_item(id, 1): 
-		print("Item removed from inventory: ", id)
-	else:
-		print("Failed to remove item from inventory: ", id)
+	# REMOVED: Item removal now handled by caller
+	# This prevents double-removal bugs
 	
 	return result
 

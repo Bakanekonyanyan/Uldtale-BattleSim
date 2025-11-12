@@ -106,11 +106,41 @@ func _on_use_pressed():
 	var selected_items = item_list.get_selected_items()
 	if selected_items.size() > 0:
 		var item_index = selected_items[0]
-		var item_id = player_character.inventory.items.keys()[item_index]
-		var item = player_character.inventory.items[item_id].item
+		
+		# Get the item ID from inventory keys
+		var inventory_keys = player_character.inventory.items.keys()
+		if item_index >= inventory_keys.size():
+			print("Invalid item selection")
+			return
+		
+		var item_id = inventory_keys[item_index]
+		
+		# CRITICAL FIX: Check quantity before using
+		if not player_character.inventory.items.has(item_id):
+			print("Item not found in inventory")
+			refresh_inventory()
+			return
+		
+		var item_data = player_character.inventory.items[item_id]
+		if item_data.quantity <= 0:
+			print("No quantity remaining")
+			refresh_inventory()
+			return
+		
+		var item = item_data.item
 		if item.item_type == Item.ItemType.CONSUMABLE:
+			print("Using item outside combat: %s (Quantity: %d)" % [item.name, item_data.quantity])
+			
+			# Use the item
 			var result = item.use(player_character, [player_character])
-			print(result)
+			
+			# Remove one from inventory
+			var removed = player_character.inventory.remove_item(item_id, 1)
+			if removed:
+				print("Item used successfully: ", result)
+			else:
+				print("ERROR: Failed to remove item!")
+			
 			refresh_inventory()
 
 func _on_back_pressed():

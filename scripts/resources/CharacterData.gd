@@ -523,18 +523,34 @@ func reset_defense():
 func gain_xp(amount: int):
 	previous_level = level
 	xp += amount
-	print("XP gained. Current XP: ", xp, " Level: ", level)
+	print("[XP] %s gained %d XP. Total: %d/%d (Level %d)" % [
+		name, 
+		amount, 
+		xp, 
+		LevelSystem.calculate_xp_for_level(level),
+		level
+	])
 	check_level_up()
 
 # In the check_level_up function:
 func check_level_up():
 	var xp_required = LevelSystem.calculate_xp_for_level(level)
-	print("XP required for next level: ", xp_required)
+	var leveled_up = false
+	
 	while xp >= xp_required:
 		level_up()
+		leveled_up = true
 		xp -= xp_required
 		xp_required = LevelSystem.calculate_xp_for_level(level)
-		print("Leveled up! New level: ", level, " Remaining XP: ", xp)
+		print("[LEVEL UP!] %s reached level %d! Remaining XP: %d/%d" % [
+			name,
+			level,
+			xp,
+			xp_required
+		])
+	
+	if leveled_up and is_player:
+		print("[LEVEL UP!] %s has %d attribute points to spend" % [name, attribute_points])
 
 func level_up() -> void:
 	level += 1
@@ -609,7 +625,6 @@ func apply_status_effect(effect: Skill.StatusEffect, duration: int) -> String:
 		status_effects[effect] = max(status_effects[effect], duration)
 		return "%s's %s effect refreshed for %d turns" % [name, effect_name, duration]
 
-
 # Removes a status effect and reverses its modifiers
 func remove_status_effect(effect: Skill.StatusEffect) -> String:
 	if effect in status_effects:
@@ -618,7 +633,6 @@ func remove_status_effect(effect: Skill.StatusEffect) -> String:
 		status_effects.erase(effect)
 		return "%s is no longer affected by %s\n" % [name, Skill.StatusEffect.keys()[effect]]
 	return ""
-
 
 # Handles the per-turn behavior (damage, stun, messages) for a single effect.
 # Uses StatusEffects autoload data when available; otherwise falls back to the old hardcoded behavior
@@ -681,7 +695,6 @@ func apply_status_effect_damage(effect: Skill.StatusEffect) -> String:
 			message = "%s is frozen, reducing their defense\n" % name
 	return message
 
-
 # Apply or remove stat modifiers for an effect.
 # New signature: apply_status_effect_modifiers(effect, apply: bool)
 # If autoload JSON contains stat_modifiers uses them; otherwise uses original BURN/FREEZE logic as fallback.
@@ -725,7 +738,6 @@ func modify_attribute(attribute: Skill.AttributeTarget, value: int, apply: bool,
 		# remove the debuff (or buff) for this attribute
 		if attribute in debuffs:
 			debuffs.erase(attribute)
-
 
 # Update all status effects each turn (keeps original outer logic but uses new apply_status_effect_damage/remove_status_effect)
 func update_status_effects() -> String:
