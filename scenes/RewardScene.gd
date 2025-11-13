@@ -275,7 +275,7 @@ func _on_continue_pressed():
 	
 	SceneManager.reward_scene_active = false
 	SaveManager.save_game(player_character)
-	SceneManager._continue_without_momentum()
+	DungeonStateManager.advance_wave()
 	emit_signal("rewards_accepted")
 
 func _on_next_floor_pressed():
@@ -291,7 +291,21 @@ func _on_next_floor_pressed():
 	emit_signal("next_floor")
 
 func _on_quit_pressed():
+
 	print("RewardScene: Quit pressed")
+	
+	if rewards.has("currency"):
+		player_character.currency.add(rewards["currency"])
+		print("Added ", rewards["currency"], " currency")
+		
+	if xp_gained > 0:
+		var old_level = player_character.level
+		player_character.gain_xp(xp_gained)
+		xp_gained = 0
+		
+		if player_character.level > old_level:
+			print("RewardScene: Player leveled up!")
+			await show_level_up_overlay()
 	SaveManager.save_game(player_character)
 	SceneManager.reward_scene_active = false
 	SceneManager.change_to_town(player_character)
