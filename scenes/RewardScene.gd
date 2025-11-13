@@ -1,4 +1,4 @@
-# RewardScene.gd - FIXED state preservation
+# RewardScene.gd - FIXED reward state persistence
 
 extends Control
 
@@ -30,7 +30,27 @@ func set_rewards_accepted(value: bool) -> void:
 
 func _ready():
 	print("RewardScene: _ready called")
-	print("Rewards already collected: ", rewards_collected)
+	
+	# CRITICAL FIX: Restore saved reward state from SceneManager
+	var saved_state = SceneManager.get_saved_reward_state()
+	if saved_state != null:
+		rewards = saved_state.rewards
+		xp_gained = saved_state.xp_gained
+		rewards_collected = saved_state.rewards_collected
+		# Restore dungeon info if available
+		if saved_state.has("is_boss_fight"):
+			is_boss_fight = saved_state.is_boss_fight
+		if saved_state.has("current_floor"):
+			current_floor = saved_state.current_floor
+		if saved_state.has("max_floor"):
+			max_floor = saved_state.max_floor
+		print("RewardScene: Restored saved state - rewards_collected: ", rewards_collected)
+		
+		# CRITICAL FIX: Connect signals when restoring
+		_connect_signals_to_scene_manager()
+	else:
+		print("RewardScene: No saved state, rewards_collected: ", rewards_collected)
+	
 	call_deferred("deferred_setup")
 
 func deferred_setup():
@@ -41,6 +61,9 @@ func deferred_setup():
 	if not setup_complete:
 		display_rewards()
 	
+	# CRITICAL FIX: Update button visibility after restoring state
+	update_button_visibility()
+	
 	setup_complete = true
 
 func setup_ui():
@@ -49,7 +72,7 @@ func setup_ui():
 		if continue_button.is_connected("pressed", Callable(self, "_on_continue_pressed")):
 			continue_button.disconnect("pressed", Callable(self, "_on_continue_pressed"))
 		continue_button.connect("pressed", Callable(self, "_on_continue_pressed"))
-		continue_button.visible = not is_boss_fight
+		# Don't set visibility here - will be set in update_button_visibility()
 		
 	if quit_button:
 		if quit_button.is_connected("pressed", Callable(self, "_on_quit_pressed")):
@@ -60,7 +83,7 @@ func setup_ui():
 		if next_floor_button.is_connected("pressed", Callable(self, "_on_next_floor_pressed")):
 			next_floor_button.disconnect("pressed", Callable(self, "_on_next_floor_pressed"))
 		next_floor_button.connect("pressed", Callable(self, "_on_next_floor_pressed"))
-		next_floor_button.visible = is_boss_fight and current_floor < max_floor
+		# Don't set visibility here - will be set in update_button_visibility()
 		
 	if equip_button:
 		if equip_button.is_connected("pressed", Callable(self, "_on_equip_pressed")):
@@ -103,10 +126,18 @@ func set_dungeon_info(boss_fight: bool, floor: int, max_floor_val: int):
 	current_floor = floor
 	max_floor = max_floor_val
 	print("RewardScene: Dungeon info set - Boss: ", is_boss_fight, ", Floor: ", current_floor)
+	
+	# Update button visibility immediately when dungeon info is set
+	if is_inside_tree():
+		update_button_visibility()
 
 func set_player_character(character: CharacterData):
 	player_character = character
 	print("RewardScene: Player character set")
+	
+	# Update display if we're already in the tree
+	if is_inside_tree() and reward_label:
+		display_rewards()
 
 func display_rewards():
 	if not reward_label:
@@ -147,7 +178,7 @@ func display_rewards():
 		if item:
 			reward_text += "[color=white]%dx %s[/color]\n" % [rewards[item_id], item.name]
 	
-	# NEW: Display equipment instances (stored as objects)
+	# Display equipment instances (stored as objects)
 	if rewards.has("equipment_instances"):
 		var equipment_list = rewards["equipment_instances"]
 		for equipment in equipment_list:
@@ -191,7 +222,7 @@ func _on_accept_reward_pressed():
 			print("Adding item: ", item.name, " x", quantity)
 			player_character.inventory.add_item(item, quantity)
 	
-	# NEW: Add equipment instances directly (no get_item() call)
+	# Add equipment instances directly (no get_item() call)
 	if rewards.has("equipment_instances"):
 		var equipment_list = rewards["equipment_instances"]
 		for equipment in equipment_list:
@@ -204,8 +235,8 @@ func _on_accept_reward_pressed():
 	rewards_collected = true
 	SceneManager.rewards_accepted = true
 	
-	# Clear rewards
-	rewards.clear()
+	# CRITICAL FIX: DON'T clear rewards yet - only clear when leaving scene
+	# rewards.clear()  # REMOVED
 	
 	# Save
 	SaveManager.save_game(player_character)
@@ -273,6 +304,10 @@ func _on_continue_pressed():
 		show_collection_prompt("continue")
 		return
 	
+	# CRITICAL FIX: Clear rewards and saved state NOW, when actually leaving
+	rewards.clear()
+	SceneManager.clear_saved_reward_state()
+	
 	SceneManager.reward_scene_active = false
 	SaveManager.save_game(player_character)
 	DungeonStateManager.advance_wave()
@@ -286,18 +321,40 @@ func _on_next_floor_pressed():
 		show_collection_prompt("next floor")
 		return
 	
+	# CRITICAL FIX: Clear rewards and saved state NOW, when actually leaving
+	rewards.clear()
+	SceneManager.clear_saved_reward_state()
+	
 	player_character.current_floor += 1
 	SaveManager.save_game(player_character)
 	emit_signal("next_floor")
 
 func _on_quit_pressed():
-
 	print("RewardScene: Quit pressed")
 	
-	if rewards.has("currency"):
-		player_character.currency.add(rewards["currency"])
-		print("Added ", rewards["currency"], " currency")
+	# CRITICAL FIX: Apply any pending rewards/XP before quitting
+	if not rewards_collected:
+		# Auto-collect rewards
+		if rewards.has("currency"):
+			player_character.currency.add(rewards["currency"])
+			print("Added ", rewards["currency"], " currency")
 		
+		# Add consumables/materials
+		for item_id in rewards:
+			if item_id in ["currency", "xp", "equipment_instances"]:
+				continue
+			var item = ItemManager.get_item(item_id)
+			if item:
+				player_character.inventory.add_item(item, rewards[item_id])
+		
+		# Add equipment
+		if rewards.has("equipment_instances"):
+			for equipment in rewards["equipment_instances"]:
+				if equipment is Equipment:
+					player_character.inventory.add_item(equipment, 1)
+		
+		rewards_collected = true
+	
 	if xp_gained > 0:
 		var old_level = player_character.level
 		player_character.gain_xp(xp_gained)
@@ -306,17 +363,28 @@ func _on_quit_pressed():
 		if player_character.level > old_level:
 			print("RewardScene: Player leveled up!")
 			await show_level_up_overlay()
+	
+	# CRITICAL FIX: Clear rewards and saved state NOW, when actually leaving
+	rewards.clear()
+	SceneManager.clear_saved_reward_state()
+	
 	SaveManager.save_game(player_character)
 	SceneManager.reward_scene_active = false
 	SceneManager.change_to_town(player_character)
 
 func _on_equip_pressed():
 	print("RewardScene: Equipment pressed - rewards_collected: ", rewards_collected)
-	SceneManager.change_scene_with_return("res://scenes/EquipmentScene.tscn", player_character)
+	# CRITICAL FIX: Save reward state to SceneManager before navigating
+	SceneManager.save_reward_state(rewards, xp_gained, rewards_collected)
+	SceneManager.reward_scene_active = true
+	SceneManager.push_scene("res://scenes/EquipmentScene.tscn", player_character)
 
 func _on_use_consumable_pressed():
 	print("RewardScene: Inventory pressed - rewards_collected: ", rewards_collected)
-	SceneManager.change_scene_with_return("res://scenes/InventoryScene.tscn", player_character)
+	# CRITICAL FIX: Save reward state to SceneManager before navigating
+	SceneManager.save_reward_state(rewards, xp_gained, rewards_collected)
+	SceneManager.reward_scene_active = true
+	SceneManager.push_scene("res://scenes/InventoryScene.tscn", player_character)
 
 func show_collection_prompt(action: String):
 	var dialog = ConfirmationDialog.new()
@@ -325,3 +393,39 @@ func show_collection_prompt(action: String):
 	dialog.ok_button_text = "OK"
 	add_child(dialog)
 	dialog.popup_centered()
+
+func _connect_signals_to_scene_manager():
+	"""Connect this instance's signals to SceneManager"""
+	print("RewardScene: Requesting signal connection from SceneManager")
+	
+	# Let SceneManager handle the connection
+	if SceneManager.has_method("_connect_reward_scene_signals"):
+		SceneManager._connect_reward_scene_signals()
+	else:
+		# Fallback: connect directly
+		print("RewardScene: Fallback - connecting signals directly")
+		if not is_connected("rewards_accepted", Callable(SceneManager, "_on_rewards_accepted")):
+			connect("rewards_accepted", Callable(SceneManager, "_on_rewards_accepted"))
+		if not is_connected("next_floor", Callable(SceneManager, "_on_next_floor")):
+			connect("next_floor", Callable(SceneManager, "_on_next_floor"))
+
+func update_button_visibility():
+	"""Update button visibility based on current state"""
+	print("RewardScene: Updating button visibility - is_boss: %s, floor: %d/%d" % [is_boss_fight, current_floor, max_floor])
+	
+	if continue_button:
+		continue_button.visible = not is_boss_fight
+		print("RewardScene: Continue button visible: ", continue_button.visible)
+	
+	if next_floor_button:
+		next_floor_button.visible = is_boss_fight and current_floor < max_floor
+		print("RewardScene: Next floor button visible: ", next_floor_button.visible)
+	
+	if quit_button:
+		quit_button.visible = true
+	
+	if equip_button:
+		equip_button.visible = true
+	
+	if use_consumable_button:
+		use_consumable_button.visible = true

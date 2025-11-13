@@ -92,7 +92,7 @@ func _on_create_pressed():
 	
 	# Add skills
 	for skill_name in selected_class.skills:
-		new_character.skills.append(skill_name)
+		new_character.add_skills(selected_class.skills)
 	
 	print("Skills added to new character: ", new_character.skills)
 	
@@ -102,6 +102,7 @@ func _on_create_pressed():
 	new_character.current_hp = new_character.max_hp
 	new_character.current_mp = new_character.max_mp
 	new_character.current_sp = new_character.max_sp
+	
 	
 	# FIXED: Use SaveManager.save_game() instead of CharacterManager.save_character()
 	SaveManager.save_game(new_character)

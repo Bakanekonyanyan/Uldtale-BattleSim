@@ -72,9 +72,8 @@ func advance_floor() -> bool:
 	if active_player:
 		active_player.current_floor = current_floor
 	
-	# Update max cleared if needed
-	if active_player and current_floor - 1 > active_player.max_floor_cleared:
-		active_player.update_max_floor_cleared(current_floor - 1)
+	# REMOVED: Update max cleared - this is now handled in SceneManager._show_rewards()
+	# when the boss is defeated, not when advancing to next floor
 	
 	EnemyFactory.set_dungeon_race(current_floor)
 	

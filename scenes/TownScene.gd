@@ -101,7 +101,11 @@ func show_floor_selection_dialog():
 	grid.add_theme_constant_override("h_separation", 5)
 	grid.add_theme_constant_override("v_separation", 5)
 	
-	var max_selectable = max(1, current_character.max_floor_cleared + 1)
+	var max_selectable
+	if current_character.max_floor_cleared == 1:
+		max_selectable = max(1, current_character.max_floor_cleared)
+	else:
+		max_selectable = max(1, current_character.max_floor_cleared + 1)
 	var selected_floor = 1  # Default to floor 1
 	var floor_buttons = []
 	

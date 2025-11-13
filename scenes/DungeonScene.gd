@@ -108,11 +108,8 @@ func start_dungeon(info: Dictionary = {}):
 		if is_boss_fight and current_wave > waves_per_floor:
 			print("DungeonScene: Boss defeated! Advancing to next floor...")
 			
-			# CRITICAL FIX: Update max_floor_cleared BEFORE advancing
-			if current_floor > player_character.max_floor_cleared:
-				player_character.update_max_floor_cleared(current_floor)
-				SaveManager.save_game(player_character)
-				print("DungeonScene: NEW RECORD! Updated max_floor_cleared to %d and saved" % player_character.max_floor_cleared)
+			# REMOVED: Don't update max_floor_cleared here
+			# It's already been updated in SceneManager._show_rewards()
 			
 			current_floor += 1
 			current_wave = 0

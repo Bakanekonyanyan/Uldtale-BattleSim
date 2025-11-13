@@ -472,11 +472,8 @@ func check_battle_end():
 			var xp = enemy_character.level * 50 * current_floor
 			await get_tree().create_timer(1.0).timeout
 			
-			if is_boss_battle:
-				if current_floor > player_character.max_floor_cleared:
-					player_character.update_max_floor_cleared(current_floor)
-					print("Battle: NEW RECORD! Boss defeated on floor %d" % current_floor)
-					SaveManager.save_game(player_character)
+			# REMOVED: Boss clear logic - now handled in SceneManager._show_rewards()
+			# This prevents premature updates before rewards are shown
 			
 			show_battle_complete_dialog(xp)
 		"defeat":

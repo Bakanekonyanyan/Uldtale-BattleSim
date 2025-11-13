@@ -13,6 +13,7 @@ var scene_stack: Array[Dictionary] = []
 var reward_scene_active: bool = false
 var rewards_accepted: bool = false
 var town_scene_active = false
+var saved_reward_data: Dictionary = {}
 
 func _ready() -> void:
 	var root = get_tree().root
@@ -60,14 +61,15 @@ func push_scene(path: String, character: CharacterData = null) -> void:
 		"player_character": character
 	}
 	
-	# Preserve reward state if in rewards
+	# CRITICAL: Preserve reward state if in rewards
 	if reward_scene_active:
 		state["reward_scene_active"] = true
 		state["rewards_collected"] = rewards_accepted
+		print("SceneManager: Saving reward state - collected: %s" % rewards_accepted)
 	
 	scene_stack.push_back(state)
 	change_scene_with_character(path, character)
-
+	
 func pop_scene() -> void:
 	"""Return to previous scene"""
 	if scene_stack.is_empty():
@@ -182,58 +184,6 @@ func _continue_with_momentum():
 	var battle_data = DungeonStateManager.advance_wave()
 	start_battle(battle_data)
 
-func _show_rewards(xp_gained: int):
-	"""Show reward scene"""
-	print("SceneManager: Showing rewards")
-	
-	# Calculate rewards
-	var battle_data = DungeonStateManager.get_battle_data()
-	battle_data["xp_gained"] = xp_gained
-	battle_data["enemy"] = DungeonStateManager.active_enemy
-	
-	var rewards = RewardsManager.calculate_battle_rewards(battle_data)
-	
-	# Prepare reward scene data
-	var reward_data = {
-		"rewards": rewards,
-		"xp_gained": xp_gained,
-		"player_character": DungeonStateManager.active_player,
-		"is_boss_fight": DungeonStateManager.is_boss_fight,
-		"current_floor": DungeonStateManager.current_floor,
-		"max_floor": DungeonStateManager.max_floor
-	}
-	
-	reward_scene_active = true
-	rewards_accepted = false
-	
-	change_scene("res://scenes/RewardScene.tscn")
-	await get_tree().process_frame
-	setup_reward_scene(reward_data)
-
-func setup_reward_scene(data: Dictionary):
-	"""Configure reward scene"""
-	if current_scene.has_method("set_player_character"):
-		current_scene.set_player_character(data["player_character"])
-	
-	if current_scene.has_method("set_rewards"):
-		current_scene.set_rewards(data["rewards"])
-	
-	if current_scene.has_method("set_xp_gained"):
-		current_scene.set_xp_gained(data["xp_gained"])
-	
-	if current_scene.has_method("set_dungeon_info"):
-		current_scene.set_dungeon_info(
-			data["is_boss_fight"],
-			data["current_floor"],
-			data["max_floor"]
-		)
-	
-	# Connect signals
-	if not current_scene.is_connected("rewards_accepted", Callable(self, "_on_rewards_accepted")):
-		current_scene.connect("rewards_accepted", Callable(self, "_on_rewards_accepted"))
-	if not current_scene.is_connected("next_floor", Callable(self, "_on_next_floor")):
-		current_scene.connect("next_floor", Callable(self, "_on_next_floor"))
-
 func _on_rewards_accepted():
 	"""Player collected rewards and wants to continue"""
 	print("SceneManager: Rewards accepted")
@@ -269,3 +219,104 @@ func _on_next_floor():
 	if current_scene.has_method("start_dungeon"):
 		var dungeon_data = DungeonStateManager.get_battle_data()
 		current_scene.start_dungeon(dungeon_data)
+
+func save_reward_state(rewards: Dictionary, xp_gained: int, rewards_collected: bool):
+	"""Save reward state before navigating away from RewardScene"""
+	saved_reward_data = {
+		"rewards": rewards.duplicate(true),  # Deep copy
+		"xp_gained": xp_gained,
+		"rewards_collected": rewards_collected,
+		# Also save dungeon context
+		"is_boss_fight": DungeonStateManager.is_boss_fight,
+		"current_floor": DungeonStateManager.current_floor,
+		"max_floor": DungeonStateManager.max_floor
+	}
+	print("SceneManager: Saved reward state - collected: %s, xp: %d" % [rewards_collected, xp_gained])
+
+func get_saved_reward_state():
+	"""Get saved reward state when returning to RewardScene"""
+	if saved_reward_data.is_empty():
+		return null
+	print("SceneManager: Restoring reward state - collected: %s" % saved_reward_data.get("rewards_collected", false))
+	return saved_reward_data
+
+func clear_saved_reward_state():
+	"""Clear saved reward state when actually leaving rewards"""
+	saved_reward_data.clear()
+	print("SceneManager: Cleared saved reward state")
+
+func setup_reward_scene(data: Dictionary):
+	"""Configure reward scene"""
+	if current_scene.has_method("set_player_character"):
+		current_scene.set_player_character(data["player_character"])
+	
+	if current_scene.has_method("set_rewards"):
+		current_scene.set_rewards(data["rewards"])
+	
+	if current_scene.has_method("set_xp_gained"):
+		current_scene.set_xp_gained(data["xp_gained"])
+	
+	if current_scene.has_method("set_dungeon_info"):
+		current_scene.set_dungeon_info(
+			data["is_boss_fight"],
+			data["current_floor"],
+			data["max_floor"]
+		)
+	
+	# CRITICAL FIX: Always ensure signals are connected
+	_connect_reward_scene_signals()
+
+func _connect_reward_scene_signals():
+	"""Ensure reward scene signals are connected to SceneManager"""
+	print("SceneManager: Connecting reward scene signals")
+	
+	# Disconnect existing connections first
+	if current_scene.is_connected("rewards_accepted", Callable(self, "_on_rewards_accepted")):
+		current_scene.disconnect("rewards_accepted", Callable(self, "_on_rewards_accepted"))
+	if current_scene.is_connected("next_floor", Callable(self, "_on_next_floor")):
+		current_scene.disconnect("next_floor", Callable(self, "_on_next_floor"))
+	
+	# Connect signals
+	if not current_scene.is_connected("rewards_accepted", Callable(self, "_on_rewards_accepted")):
+		current_scene.connect("rewards_accepted", Callable(self, "_on_rewards_accepted"))
+		print("SceneManager: Connected rewards_accepted")
+	
+	if not current_scene.is_connected("next_floor", Callable(self, "_on_next_floor")):
+		current_scene.connect("next_floor", Callable(self, "_on_next_floor"))
+		print("SceneManager: Connected next_floor")
+
+func _show_rewards(xp_gained: int):
+	"""Show reward scene"""
+	print("SceneManager: Showing rewards")
+	
+	# Calculate rewards
+	var battle_data = DungeonStateManager.get_battle_data()
+	battle_data["xp_gained"] = xp_gained
+	battle_data["enemy"] = DungeonStateManager.active_enemy
+	
+	var rewards = RewardsManager.calculate_battle_rewards(battle_data)
+	
+	# CRITICAL FIX: Update max_floor_cleared immediately after boss victory
+	if DungeonStateManager.is_boss_fight:
+		var cleared_floor = DungeonStateManager.current_floor
+		if cleared_floor > DungeonStateManager.active_player.max_floor_cleared:
+			DungeonStateManager.active_player.update_max_floor_cleared(cleared_floor)
+			SaveManager.save_game(DungeonStateManager.active_player)
+			print("SceneManager: Boss defeated! Updated max_floor_cleared to %d" % cleared_floor)
+	
+	# Prepare reward scene data
+	var reward_data = {
+		"rewards": rewards,
+		"xp_gained": xp_gained,
+		"player_character": DungeonStateManager.active_player,
+		"is_boss_fight": DungeonStateManager.is_boss_fight,
+		"current_floor": DungeonStateManager.current_floor,
+		"max_floor": DungeonStateManager.max_floor
+	}
+	
+	reward_scene_active = true
+	rewards_accepted = false
+	
+	change_scene("res://scenes/RewardScene.tscn")
+	await get_tree().process_frame
+	setup_reward_scene(reward_data)
