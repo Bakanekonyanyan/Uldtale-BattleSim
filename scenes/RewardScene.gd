@@ -118,7 +118,6 @@ func display_rewards():
 	print("RewardScene: Rewards: ", rewards)
 	print("RewardScene: Already collected: ", rewards_collected)
 	
-	# CRITICAL FIX: Check collection state
 	if rewards_collected:
 		reward_label.text = "[b][color=green]Rewards already collected![/color][/b]"
 		if accept_reward_button:
@@ -126,7 +125,6 @@ func display_rewards():
 			accept_reward_button.disabled = true
 		return
 
-	# CRITICAL FIX: Handle empty rewards
 	if rewards.is_empty() and xp_gained == 0:
 		reward_label.text = "[b][color=yellow]No rewards to display[/color][/b]"
 		return
@@ -136,18 +134,30 @@ func display_rewards():
 	if xp_gained > 0:
 		reward_text += "[color=cyan]%d XP[/color]\n" % xp_gained
 	
+	# Display currency
+	if rewards.has("currency"):
+		reward_text += "[color=yellow]%d Gold[/color]\n" % rewards["currency"]
+	
+	# Display consumables/materials (stored as item_id: quantity)
 	for item_id in rewards:
-		if item_id == "currency":
-			reward_text += "[color=yellow]%d Gold[/color]\n" % rewards[item_id]
-		elif item_id != "xp":
-			var item = ItemManager.get_item(item_id)
-			if item:
-				var color = "white"
-				if item is Equipment:
-					color = item.get_rarity_color()
-				reward_text += "[color=%s]%dx %s[/color]\n" % [color, rewards[item_id], item.name]
-			else:
-				print("Warning: Item not found: ", item_id)
+		if item_id in ["currency", "xp", "equipment_instances"]:
+			continue  # Skip special keys
+		
+		var item = ItemManager.get_item(item_id)
+		if item:
+			reward_text += "[color=white]%dx %s[/color]\n" % [rewards[item_id], item.name]
+	
+	# NEW: Display equipment instances (stored as objects)
+	if rewards.has("equipment_instances"):
+		var equipment_list = rewards["equipment_instances"]
+		for equipment in equipment_list:
+			if equipment is Equipment:
+				var color = equipment.get_rarity_color()
+				reward_text += "[color=%s]%s[/color] [ilvl %d]\n" % [
+					color, 
+					equipment.name,
+					equipment.item_level
+				]
 	
 	reward_label.bbcode_enabled = true
 	reward_label.text = reward_text
@@ -156,7 +166,6 @@ func display_rewards():
 func _on_accept_reward_pressed():
 	print("RewardScene: Accept reward pressed")
 	
-	# CRITICAL FIX: Prevent double collection
 	if rewards.is_empty() or rewards_collected:
 		print("RewardScene: Rewards already collected or empty")
 		reward_label.text = "[b][color=red]Rewards already collected![/color][/b]"
@@ -166,17 +175,30 @@ func _on_accept_reward_pressed():
 	
 	print("Accepting rewards: ", rewards)
 	
-	# Add items to inventory
+	# Add currency
+	if rewards.has("currency"):
+		player_character.currency.add(rewards["currency"])
+		print("Added ", rewards["currency"], " currency")
+	
+	# Add consumables/materials (by item_id)
 	for item_id in rewards:
-		if item_id == "currency":
-			player_character.currency.add(rewards[item_id])
-			print("Added ", rewards[item_id], " currency")
-		else:
-			var item = ItemManager.get_item(item_id)
-			if item:
-				var quantity = rewards[item_id]
-				print("Adding item: ", item.name, " x", quantity)
-				player_character.inventory.add_item(item, quantity)
+		if item_id in ["currency", "xp", "equipment_instances"]:
+			continue
+		
+		var item = ItemManager.get_item(item_id)
+		if item:
+			var quantity = rewards[item_id]
+			print("Adding item: ", item.name, " x", quantity)
+			player_character.inventory.add_item(item, quantity)
+	
+	# NEW: Add equipment instances directly (no get_item() call)
+	if rewards.has("equipment_instances"):
+		var equipment_list = rewards["equipment_instances"]
+		for equipment in equipment_list:
+			if equipment is Equipment:
+				print("Adding equipment instance: ", equipment.name, " (ilvl %d)" % equipment.item_level)
+				# Add the EXACT instance, not a new one
+				player_character.inventory.add_item(equipment, 1)
 	
 	# Mark as collected
 	rewards_collected = true

@@ -21,6 +21,8 @@ enum ConsumableType { DAMAGE, HEAL, BUFF, DEBUFF, RESTORE, CURE }
 @export var buff_type: String = ""  # ATTACK, DODGE, etc.
 @export var poison_chance: float = 1.0  # For special items like dung
 @export var combat_usable: bool = false
+@export var effect_percent: float = 0.0  # 0.0-1.0 (0%-100%)
+@export var is_percentage_based: bool = false
 
 static func create_from_dict(item_id: String, data: Dictionary) -> Item:
 	var item = Item.new()
@@ -34,25 +36,32 @@ static func create_from_dict(item_id: String, data: Dictionary) -> Item:
 	
 	if item.item_type == ItemType.CONSUMABLE:
 		item.consumable_type = ConsumableType[data.consumable_type]
-		item.effect_power = data.effect_power
-		item.effect_duration = data.effect_duration
 		item.combat_usable = data.get("combat_usable", false)
 		
-		# Optional status effect
+		# NEW: Check if percentage-based
+		item.is_percentage_based = data.get("is_percentage_based", false)
+		
+		if item.is_percentage_based:
+			# Use percentage value (0.0-1.0)
+			item.effect_percent = data.get("effect_percent", 0.0)
+			item.effect_power = 0  # Not used for percentage
+		else:
+			# Use fixed value (legacy)
+			item.effect_power = data.effect_power
+			item.effect_percent = 0.0
+		
+		item.effect_duration = data.effect_duration
+		
+		# Status effects
 		if data.has("status_effect"):
 			item.status_effect = Skill.StatusEffect[data.status_effect]
 		
-		# Optional buff type
 		item.buff_type = data.get("buff_type", "")
-		
-		# Special chance modifiers
 		item.poison_chance = data.get("poison_chance", 1.0)
 	
 	return item
 
-# In Item.gd
 func use(user: CharacterData, targets: Array) -> String:
-	print("Using item: ", name, " (ID: ", id, ")")
 	if item_type != ItemType.CONSUMABLE:
 		return "This item cannot be used in battle."
 	
@@ -71,39 +80,91 @@ func use(user: CharacterData, targets: Array) -> String:
 		ConsumableType.CURE:
 			result = cure_status(user, targets)
 	
-	# REMOVED: Item removal now handled by caller
-	# This prevents double-removal bugs
-	
 	return result
+
+func heal(user: CharacterData, targets: Array) -> String:
+	var total_heal = 0
+	
+	for target in targets:
+		var heal_amount = 0
+		
+		if is_percentage_based:
+			# NEW: Percentage-based healing
+			heal_amount = int(target.max_hp * effect_percent)
+		else:
+			# LEGACY: Fixed value
+			heal_amount = effect_power
+		
+		target.heal(heal_amount)
+		total_heal += heal_amount
+	
+	if is_percentage_based:
+		return "%s restored %.0f%% HP (%d HP) to %d target(s)" % [
+			name, effect_percent * 100, total_heal, targets.size()
+		]
+	else:
+		return "%s healed %d HP to %d target(s)" % [name, total_heal, targets.size()]
+
+func restore(user: CharacterData, targets: Array) -> String:
+	var total_restore = 0
+	
+	for target in targets:
+		var restore_amount = 0
+		
+		if is_percentage_based:
+			# NEW: Percentage-based restoration
+			# Restore both MP and SP
+			var mp_restore = int(target.max_mp * effect_percent)
+			var sp_restore = int(target.max_sp * effect_percent)
+			target.restore_mp(mp_restore)
+			target.restore_sp(sp_restore)
+			restore_amount = mp_restore + sp_restore
+		else:
+			# LEGACY: Fixed value (just MP)
+			target.restore_mp(effect_power)
+			restore_amount = effect_power
+		
+		total_restore += restore_amount
+	
+	if is_percentage_based:
+		return "%s restored %.0f%% MP/SP to %d target(s)" % [
+			name, effect_percent * 100, targets.size()
+		]
+	else:
+		return "%s restored %d MP to %d target(s)" % [name, total_restore, targets.size()]
 
 func deal_damage(user: CharacterData, targets: Array) -> String:
 	var total_damage = 0
+	
 	for target in targets:
-		var damage = effect_power
+		var damage = 0
+		
+		if is_percentage_based:
+			# NEW: Percentage-based damage (of MAX HP)
+			damage = int(target.max_hp * effect_percent)
+		else:
+			# LEGACY: Fixed damage
+			damage = effect_power
+		
 		target.take_damage(damage)
 		total_damage += damage
 		
 		# Apply status effect if present
 		if status_effect != Skill.StatusEffect.NONE:
-			# Special handling for items with chance (like dung)
 			if poison_chance < 1.0:
 				if randf() <= poison_chance:
 					target.apply_status_effect(status_effect, effect_duration)
-					return "%s dealt %d damage and inflicted %s!" % [name, total_damage, Skill.StatusEffect.keys()[status_effect]]
+					return "%s dealt %d damage and inflicted %s!" % [
+						name, total_damage, Skill.StatusEffect.keys()[status_effect]
+					]
 			else:
 				target.apply_status_effect(status_effect, effect_duration)
-				return "%s dealt %d damage and inflicted %s for %d turns!" % [name, total_damage, Skill.StatusEffect.keys()[status_effect], effect_duration]
+				return "%s dealt %d damage and inflicted %s for %d turns!" % [
+					name, total_damage, Skill.StatusEffect.keys()[status_effect], effect_duration
+				]
 	
 	return "%s dealt %d damage to %d target(s)" % [name, total_damage, targets.size()]
-
-func heal(user: CharacterData, targets: Array) -> String:
-	var total_heal = 0
-	for target in targets:
-		var heal_amount = effect_power
-		target.heal(heal_amount)
-		total_heal += heal_amount
-	return "%s healed %d HP to %d target(s)" % [name, total_heal, targets.size()]
-
+	
 func apply_buff(user: CharacterData, targets: Array) -> String:
 	for target in targets:
 		if buff_type == "ATTACK":
@@ -119,14 +180,6 @@ func apply_debuff(user: CharacterData, targets: Array) -> String:
 		if status_effect != Skill.StatusEffect.NONE:
 			target.apply_status_effect(status_effect, effect_duration)
 	return "%s applied debuff to %d target(s)" % [name, targets.size()]
-
-func restore(user: CharacterData, targets: Array) -> String:
-	var total_restore = 0
-	for target in targets:
-		var restore_amount = effect_power
-		target.restore_mp(restore_amount)
-		total_restore += restore_amount
-	return "%s restored %d MP to %d target(s)" % [name, total_restore, targets.size()]
 
 func cure_status(user: CharacterData, targets: Array) -> String:
 	for target in targets:

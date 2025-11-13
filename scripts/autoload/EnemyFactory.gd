@@ -178,7 +178,6 @@ func setup_character(character: CharacterData, character_class: String, class_ty
 	if valid_skills.size() > 0:
 		character.add_skills(valid_skills)
 
-
 # NEW: Determine which slots enemy can equip based on floor
 func get_available_equipment_slots(floor: int, is_boss: bool) -> Array:
 	# Normal enemies unlock slots as floors increase
@@ -206,41 +205,47 @@ func get_available_equipment_slots(floor: int, is_boss: bool) -> Array:
 	return slots
 
 # ENHANCED: Equipment system with floor-based slots
+# EnemyFactory.gd - FIXED to use create_equipment_for_floor
+
 func give_enemy_equipment(enemy: CharacterData, floor: int, is_boss: bool = false):
 	var available_slots = get_available_equipment_slots(floor, is_boss)
 	var equipment_chance = 0.7 if not is_boss else 1.0
 	
-	# Store equipped items for potential drops
 	if not enemy.has_meta("equipped_items"):
 		enemy.set_meta("equipped_items", [])
 	
 	for slot in available_slots:
-		# Bosses always get equipment, normal enemies have chance
 		if is_boss or randf() < equipment_chance:
 			var item = null
 			
 			if slot == "main_hand":
 				var weapon_id = ItemManager.get_random_weapon()
 				if weapon_id:
-					item = ItemManager.get_item(weapon_id)
+					# FIXED: Use create_equipment_for_floor instead of get_item
+					item = ItemManager.create_equipment_for_floor(weapon_id, floor)
 			else:
-				# Get armor for specific slot
 				var armor_id = ItemManager.get_random_armor("", slot)
 				if armor_id:
-					item = ItemManager.get_item(armor_id)
+					# FIXED: Use create_equipment_for_floor instead of get_item
+					item = ItemManager.create_equipment_for_floor(armor_id, floor)
 			
 			if item and item is Equipment:
 				enemy.equip_item(item)
 				
 				# Track for drops if uncommon or better
 				var rarity_tier = get_rarity_tier(item.rarity)
-				if rarity_tier >= 1:  # Uncommon or better
+				if rarity_tier >= 1:
 					var equipped_items = enemy.get_meta("equipped_items")
-					equipped_items.append(item)
+					equipped_items.append(item)  # Store the INSTANCE
 					enemy.set_meta("equipped_items", equipped_items)
 				
-				print("%s equipped %s: %s (rarity: %s)" % [enemy.name, slot, item.name, item.rarity])
-
+				print("%s equipped ilvl %d %s: %s (%s)" % [
+					enemy.name, 
+					item.item_level, 
+					slot, 
+					item.name,
+					item.rarity
+				])
 
 func get_rarity_tier(rarity: String) -> int:
 	match rarity:

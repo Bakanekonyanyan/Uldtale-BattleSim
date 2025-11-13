@@ -7,6 +7,8 @@ var weapons = {}
 var armors = {}
 var consumables = {}
 var materials = {}
+# NEW: Separate templates from instances
+var equipment_templates = {}  # Base templates (never modified)
 
 func _ready():
 	load_consumables()
@@ -44,17 +46,14 @@ func load_weapons():
 	for hand_type in json:
 		for weapon_category in json[hand_type]:
 			for weapon_id in json[hand_type][weapon_category]:
-				if weapon_id != "rarity":  # Skip the rarity field if it's at this level
+				if weapon_id != "rarity":
 					var weapon_data = json[hand_type][weapon_category][weapon_id]
 					if typeof(weapon_data) == TYPE_DICTIONARY:
-						weapon_data["id"] = weapon_id  # Add the id to the weapon data
-						var weapon = Equipment.new(weapon_data)
-						weapons[weapon_id] = weapon
-						items[weapon_id] = weapon
-					else:
-						print("Warning: Invalid weapon data for ", weapon_id)
-
-	print("Loaded weapons: ", weapons.keys())
+						weapon_data["id"] = weapon_id
+						# Store as template (never modified)
+						equipment_templates[weapon_id] = weapon_data
+						# Don't create Equipment instance yet
+						weapons[weapon_id] = weapon_data
 
 func load_armors():
 	var file = FileAccess.open("res://data/items/armors.json", FileAccess.READ)
@@ -65,47 +64,36 @@ func load_armors():
 		for slot in json[armor_type]:
 			for armor_id in json[armor_type][slot]:
 				var armor_data = json[armor_type][slot][armor_id]
-				armor_data["id"] = armor_id  # Make sure this line is here
-				var armor = Equipment.new(armor_data)
-				armor.id = armor_id  # Explicitly set the id
-				armors[armor_id] = armor
-				items[armor_id] = armor
-				
+				armor_data["id"] = armor_id
+				equipment_templates[armor_id] = armor_data
+				armors[armor_id] = armor_data
+
+func create_equipment_instance(item_id: String) -> Equipment:
+	"""Creates a NEW equipment instance with fresh random rolls"""
+	if not equipment_templates.has(item_id):
+		return null
+	
+	# Create NEW instance from template data
+	var template_data = equipment_templates[item_id].duplicate(true)
+	
+	# CRITICAL: Mark as NEW (no rarity pre-assigned)
+	template_data.erase("rarity")
+	template_data.erase("rarity_applied")
+	template_data.erase("stat_modifiers")
+	
+	# This will trigger full generation in Equipment._init()
+	return Equipment.new(template_data)
+
+func get_equipment_template(item_id: String) -> Dictionary:
+	"""Get base template data (for display/info only)"""
+	return equipment_templates.get(item_id, {})
+
 func update_items():
 	items.clear()
 	items.merge(consumables)
 	items.merge(materials)
 	items.merge(weapons)
 	items.merge(armors)
-
-func get_item(item_id: String) -> Item:
-	print("Attempting to get item: ", item_id)
-	var item = items.get(item_id)
-	if item:
-		print("Item found: ", item_id)
-		if item is Equipment:
-			# Create a new instance with the same data to avoid modifying the original
-			var item_data = {
-				"id": item.id,
-				"name": item.name,
-				"description": item.description,
-				"value": item.value,
-				"damage": item.damage,
-				"armor_value": item.armor_value,
-				"attribute_target": item.attribute_target,
-				"attribute_increase": item.attribute_increase,
-				"type": item.type,
-				"slot": item.slot,
-				"class_restriction": item.class_restriction,
-				"effects": item.effects,
-				"rarity": item.rarity,
-				"rarity_applied": item.rarity_applied
-			}
-			return Equipment.new(item_data)
-		return item
-	else:
-		print("Item not found: ", item_id)
-		return null
 
 func get_all_items() -> Dictionary:
 	return items
@@ -147,7 +135,6 @@ func get_random_equipment() -> String:
 	if all_equipment.size() > 0:
 		return all_equipment[randi() % all_equipment.size()]
 	return ""
-
 # Helper function to filter arrays
 func filter_array(arr: Array, condition: Callable) -> Array:
 	var result = []
@@ -161,3 +148,41 @@ func print_consumables():
 
 func print_materials():
 	print("Available materials: ", materials.keys())
+
+func create_equipment_for_floor(item_id: String, floor: int) -> Equipment:
+	"""Creates equipment instance scaled to a specific floor"""
+	if not equipment_templates.has(item_id):
+		print("ItemManager: Template not found for: ", item_id)
+		return null
+	
+	var template_data = equipment_templates[item_id].duplicate(true)
+	
+	# Add floor context
+	template_data["floor_number"] = floor
+	
+	# Clear any pre-existing rarity data to force fresh generation
+	template_data.erase("rarity")
+	template_data.erase("rarity_applied")
+	template_data.erase("stat_modifiers")
+	
+	print("ItemManager: Creating equipment for floor %d: %s" % [floor, item_id])
+	
+	# This will trigger generation in Equipment._init()
+	return Equipment.new(template_data)
+
+func get_item(item_id: String) -> Item:
+	"""Get an item - for consumables/materials returns singleton, for equipment creates new instance"""
+	
+	# Consumables/Materials - return singleton
+	if consumables.has(item_id):
+		return consumables[item_id]
+	if materials.has(item_id):
+		return materials[item_id]
+	
+	# Equipment - create NEW instance (defaults to floor 1)
+	if equipment_templates.has(item_id):
+		print("ItemManager: WARNING - get_item() called for equipment, defaulting to floor 1. Use create_equipment_for_floor() instead.")
+		return create_equipment_for_floor(item_id, 1)
+	
+	print("ItemManager: Item not found: ", item_id)
+	return null

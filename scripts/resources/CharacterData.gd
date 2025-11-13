@@ -260,11 +260,11 @@ func attack(target: CharacterData) -> String:
 func equip_item(item: Equipment) -> Equipment:
 	if not item.can_equip(self):
 		print("Cannot equip %s - class restriction" % item.name)
-		return null
+		return null  # Actually prevent equipping
 	
 	var old_item = equipment[item.slot]
 	
-	# CRITICAL FIX: Store the inventory key BEFORE any operations
+	# Store the inventory key BEFORE any operations
 	var item_inventory_key = item.inventory_key if item.inventory_key != "" else item.id
 	
 	print("Equipping %s to slot %s (key: %s)" % [item.name, item.slot, item_inventory_key])
@@ -281,16 +281,20 @@ func equip_item(item: Equipment) -> Equipment:
 	if item.has_method("apply_stat_modifiers"):
 		item.apply_stat_modifiers(self)
 	
-	# Remove from inventory using the stored key
-	var removed = inventory.remove_item(item_inventory_key, 1)
-	if not removed:
-		print("ERROR: Failed to remove item from inventory with key: %s" % item_inventory_key)
+	# FIXED: Only remove from inventory if it's actually IN the inventory
+	if inventory.items.has(item_inventory_key):
+		var removed = inventory.remove_item(item_inventory_key, 1)
+		if not removed:
+			print("ERROR: Failed to remove item from inventory with key: %s" % item_inventory_key)
+		else:
+			print("Successfully removed item from inventory")
 	else:
-		print("Successfully removed item from inventory")
+		# Item is being equipped directly (e.g., enemy generation)
+		print("Equipped item directly (not from inventory)")
 	
 	calculate_secondary_attributes()
 	return old_item
-		
+
 func unequip_item(slot: String) -> Equipment:
 	var item = equipment[slot]
 	if item:
