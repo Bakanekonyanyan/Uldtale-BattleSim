@@ -124,6 +124,8 @@ func _init(data: Dictionary):
 	class_restriction = data.get("class_restriction", [])
 	effects = data.get("effects", {})
 	inventory_key = data.get("inventory_key", "")
+	
+	# CRITICAL FIX: Always load item_level from data first
 	item_level = data.get("item_level", 1)
 	base_item_level = data.get("base_item_level", 1)
 	
@@ -137,39 +139,44 @@ func _init(data: Dictionary):
 	# CRITICAL: Check if this is SAVED equipment (has full modifier data)
 	if "stat_modifiers" in data and not data["stat_modifiers"].is_empty():
 		# LOADED FROM SAVE - Restore all properties
-		print("Equipment: Loading from save - %s" % name)
+		print("Equipment: Loading from save - %s (ilvl %d)" % [name, item_level])
 		_load_from_save_data(data)
 		return  # DONE - Don't generate anything
 	
 	# CRITICAL: Check if this is ALREADY GENERATED equipment (has rarity_applied)
 	if "rarity_applied" in data and data["rarity_applied"] == true:
 		# ALREADY GENERATED - Just restore properties
-		print("Equipment: Already generated - %s (%s)" % [name, data.get("rarity", "common")])
+		print("Equipment: Already generated - %s (%s, ilvl %d)" % [name, data.get("rarity", "common"), item_level])
 		rarity = data.get("rarity", "common")
 		rarity_applied = true
 		damage = data.get("damage", damage)
 		armor_value = data.get("armor_value", armor_value)
 		
-		# Restore OLD system converted data (if any)
+		# Restore any existing stat modifiers
 		if "stat_modifiers" in data:
 			_load_from_save_data(data)
 		return  # DONE
-		if "stat_modifiers" in data and not data["stat_modifiers"].is_empty():
-			_load_from_save_data(data)
-		return
 	
 	# NEW EQUIPMENT - Generate with floor context
-		if "floor_number" in data:
-			generate_for_floor(data["floor_number"])
-		else:
-		# Fallback for shop/default generation
-			generate_for_floor(1)
-	# NEW EQUIPMENT - Generate everything fresh
 	print("Equipment: Generating new - %s" % name)
-	assign_random_rarity()
-	apply_rarity_modifiers()
-	generate_procedural_name()
-	print("Equipment: Generated %s with rarity %s" % [name, rarity])
+	print("Equipment: Data contains floor_number? ", data.has("floor_number"))
+	print("Equipment: Data keys: ", data.keys())
+	
+	# CRITICAL FIX: Check for floor_number in data
+	if "floor_number" in data:
+		var floor = data["floor_number"]
+		print("Equipment: Generating for floor %d" % floor)
+		generate_for_floor(floor)
+		print("Equipment: After generate_for_floor() - item_level is now: %d" % item_level)
+	else:
+		# Fallback - use item_level if already set, otherwise default to 1
+		print("Equipment: No floor_number in data, using item_level %d" % item_level)
+		if item_level > 1:
+			generate_for_floor(item_level)
+		else:
+			generate_for_floor(1)
+	
+	print("Equipment: Generated %s with rarity %s (ilvl %d)" % [name, rarity, item_level])
 
 func _load_from_save_data(data: Dictionary):
 	"""Load all properties from saved/generated data"""

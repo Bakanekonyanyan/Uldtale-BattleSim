@@ -157,7 +157,7 @@ func create_equipment_for_floor(item_id: String, floor: int) -> Equipment:
 	
 	var template_data = equipment_templates[item_id].duplicate(true)
 	
-	# Add floor context
+	# CRITICAL: Add floor context
 	template_data["floor_number"] = floor
 	
 	# Clear any pre-existing rarity data to force fresh generation
@@ -169,7 +169,7 @@ func create_equipment_for_floor(item_id: String, floor: int) -> Equipment:
 	
 	# This will trigger generation in Equipment._init()
 	return Equipment.new(template_data)
-
+	
 func get_item(item_id: String) -> Item:
 	"""Get an item - for consumables/materials returns singleton, for equipment creates new instance"""
 	
