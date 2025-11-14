@@ -3,7 +3,7 @@
 # Replaces old Battle.gd with cleaner architecture
 
 extends Node
-class_name BattleOrchestrator
+#class_name BattleOrchestrator
 
 signal battle_completed(player_won: bool, xp_gained: int)
 
@@ -90,6 +90,10 @@ func _on_turn_started(character: CharacterData, is_player: bool):
 	"""Handle start of turn"""
 	print("BattleOrchestrator: Turn started - %s" % character.name)
 	
+	# ✅ FIX: Update UI immediately for both player and enemy
+	if ui_controller:
+		ui_controller.update_character_info(player, enemy)
+	
 	# Reset item action for player
 	if is_player:
 		item_action_used = false
@@ -98,6 +102,8 @@ func _on_turn_started(character: CharacterData, is_player: bool):
 	var status_message = combat_engine.process_status_effects(character)
 	if status_message:
 		ui_controller.add_combat_log(status_message, "purple")
+		# ✅ Update UI again after status effects
+		ui_controller.update_character_info(player, enemy)
 		await get_tree().create_timer(1.0).timeout
 	
 	# Check if character died from status
@@ -146,8 +152,9 @@ func _on_action_selected(action: BattleAction):
 	
 	# Special handling for item actions (bonus action)
 	if action.type == BattleAction.ActionType.ITEM:
-		_execute_item_action(action)
-		return
+		if not item_action_used:
+			_execute_item_action(action)
+			return
 	
 	# Regular actions
 	_execute_action(action, true)

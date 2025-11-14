@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3 uid="uid://52o8rbghf0jb"]
 
-[ext_resource type="Script" uid="uid://bw8pnru22sw7p" path="res://scripts/autoload/BattleOrchestrator.gd" id="1_w6b63"]
+[ext_resource type="Script" uid="uid://c3nk7wcu6mtgy" path="res://scenes/battle/BattleOrchestrator.gd" id="1_w6b63"]
 [ext_resource type="Texture2D" uid="uid://cpndw8q8cse38" path="res://assets/Images/backgrounds/WaveBackground.png" id="2_18p0q"]
 [ext_resource type="Script" uid="uid://dl6y0b4t8nfu0" path="res://scenes/battle/components/ui/BattleUIController.gd" id="2_emwda"]
 [ext_resource type="Script" uid="uid://bcptvq3l2acql" path="res://scenes/battle/InventoryMenu.gd" id="2_ng7cs"]

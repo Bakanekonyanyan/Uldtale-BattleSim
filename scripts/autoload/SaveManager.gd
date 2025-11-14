@@ -41,7 +41,7 @@ func save_game(player: CharacterData):
 		"attack_power_type": player.attack_power_type,
 		"spell_power_type": player.spell_power_type,
 		"skills": player.skills,
-		"skill_levels": player.skill_levels,
+		"skill_levels": player.skill_manager.skill_levels,
 		"inventory": {},
 		"stash": {},
 		"equipment": {},
@@ -237,16 +237,15 @@ func load_game(character_name: String) -> CharacterData:
 	else:
 		print("Warning: Skills data not found or invalid for character: ", character_name)
 	
-	# ADD THIS: Restore skill levels BEFORE adding skills
 	if "skill_levels" in save_data and typeof(save_data["skill_levels"]) == TYPE_DICTIONARY:
-		player.skill_levels = save_data["skill_levels"]
-		print("Loaded skill levels: ", player.skill_levels)
-	
+		player.skill_manager.skill_levels = save_data["skill_levels"]  # ✅ Use skill_manager
+		print("Loaded skill levels: ", player.skill_manager.skill_levels)
+
 	# Handle skills separately - this will now use the loaded skill_levels
 	if "skills" in save_data and save_data["skills"] is Array:
 		player.add_skills(save_data["skills"])
 	else:
-		print("Warning: Skills data not found or invalid for character: ", character_name)
+		print("Warning: Skills data not found or invalid")
 
 	# Load inventory
 	if "inventory" in save_data:

@@ -69,7 +69,7 @@ func initialize(p_player: CharacterData, p_enemy: CharacterData):
 		if not inventory_menu.is_connected("item_selected", Callable(self, "_on_inventory_item_selected")):
 			inventory_menu.connect("item_selected", Callable(self, "_on_inventory_item_selected"))
 	
-	update_character_info()
+	update_character_info(player,enemy)
 	update_xp_display()
 
 # === DISPLAY UPDATES ===
@@ -258,7 +258,7 @@ func _get_enemy_equipment_text() -> String:
 			text += "[b]%s:[/b] Empty\n" % slot_name
 	return text
 
-func update_character_info():
+func update_character_info(player: CharacterData, enemy: CharacterData):
 	"""Update player and enemy info displays - FIXED debuff display"""
 	if player_info_label and player:
 		# QOL: Fix debuff display (show single - not --)
@@ -358,5 +358,5 @@ func display_result(result: ActionResult):
 	else:
 		add_combat_log(result.message, color)
 	
-	update_character_info()
+	update_character_info(player,enemy)
 	update_xp_display()

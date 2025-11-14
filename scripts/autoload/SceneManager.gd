@@ -201,24 +201,29 @@ func _on_rewards_accepted():
 	var battle_data = DungeonStateManager.advance_wave()
 	start_battle(battle_data)
 
-func _on_next_floor():
-	"""Advance to next floor"""
-	print("SceneManager: Next floor requested")
-	
-	reward_scene_active = false
-	
-	if not DungeonStateManager.advance_floor():
-		# Max floor reached
-		change_to_town(DungeonStateManager.active_player)
+func _on_next_floor_pressed():
+	print("RewardScene: Next floor pressed")
+	var player = DungeonStateManager.active_player
+	# Check if rewards collected
+	if not rewards_accepted:
+		
 		return
 	
-	# Start next floor
-	change_scene_with_character("res://scenes/DungeonScene.tscn", DungeonStateManager.active_player)
-	await get_tree().process_frame
+	# ✅ FIX: Update max_floor_cleared BEFORE advancing
+	if DungeonStateManager.is_boss_fight:
+		var cleared_floor = DungeonStateManager.current_floor
+		if cleared_floor > player.max_floor_cleared:
+			player.update_max_floor_cleared(cleared_floor)
+			print("RewardScene: Boss cleared! Updated max_floor_cleared to %d" % cleared_floor)
 	
-	if current_scene.has_method("start_dungeon"):
-		var dungeon_data = DungeonStateManager.get_battle_data()
-		current_scene.start_dungeon(dungeon_data)
+	# Clear rewards and saved state
+	saved_reward_data.clear()
+	SceneManager.clear_saved_reward_state()
+	
+	# Save AFTER updating max_floor_cleared
+	SaveManager.save_game(player)
+	
+	emit_signal("next_floor")
 
 func save_reward_state(rewards: Dictionary, xp_gained: int, rewards_collected: bool):
 	"""Save reward state before navigating away from RewardScene"""

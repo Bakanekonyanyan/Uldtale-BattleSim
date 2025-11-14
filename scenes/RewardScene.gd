@@ -321,12 +321,20 @@ func _on_next_floor_pressed():
 		show_collection_prompt("next floor")
 		return
 	
-	# CRITICAL FIX: Clear rewards and saved state NOW, when actually leaving
+	# ✅ FIX: Update max_floor_cleared BEFORE advancing
+	if DungeonStateManager.is_boss_fight:
+		var cleared_floor = DungeonStateManager.current_floor
+		if cleared_floor > player_character.max_floor_cleared:
+			player_character.update_max_floor_cleared(cleared_floor)
+			print("RewardScene: Boss cleared! Updated max_floor_cleared to %d" % cleared_floor)
+	
+	# Clear rewards and saved state
 	rewards.clear()
 	SceneManager.clear_saved_reward_state()
 	
-	player_character.current_floor += 1
+	# Save AFTER updating max_floor_cleared
 	SaveManager.save_game(player_character)
+	
 	emit_signal("next_floor")
 
 func _on_quit_pressed():

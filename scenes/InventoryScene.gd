@@ -105,7 +105,7 @@ func _matches_category(item: Item) -> bool:
 		ItemCategory.CONSUMABLES:
 			return item.item_type == Item.ItemType.CONSUMABLE
 		ItemCategory.WEAPONS:
-			return item is Equipment
+			return item is Equipment 
 		ItemCategory.ARMOR:
 			return item is Equipment
 		ItemCategory.MATERIALS:
