@@ -128,37 +128,68 @@ base_pulse_duration = 1.0
 
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="ItemList" type="ItemList" parent="UI"]
-offset_left = 32.0
-offset_top = 64.0
-offset_right = 304.0
-offset_bottom = 264.0
-
-[node name="UseButton" type="Button" parent="UI"]
-offset_left = 72.0
-offset_top = 280.0
-offset_right = 136.0
-offset_bottom = 311.0
-text = "Use"
-
-[node name="BackButton" type="Button" parent="UI"]
-offset_left = 200.0
-offset_top = 280.0
-offset_right = 264.0
-offset_bottom = 311.0
-text = "Back"
-
 [node name="CapacityLabel" type="Label" parent="UI"]
 offset_left = 32.0
 offset_top = 8.0
 offset_right = 302.0
-offset_bottom = 58.0
+offset_bottom = 34.0
+
+[node name="TabContainer" type="HBoxContainer" parent="UI"]
+offset_left = 32.0
+offset_top = 40.0
+offset_right = 632.0
+offset_bottom = 72.0
+
+[node name="AllTab" type="Button" parent="UI/TabContainer"]
+custom_minimum_size = Vector2(100, 32)
+layout_mode = 2
+text = "All"
+
+[node name="ConsumablesTab" type="Button" parent="UI/TabContainer"]
+custom_minimum_size = Vector2(100, 32)
+layout_mode = 2
+text = "Consumables"
+
+[node name="WeaponsTab" type="Button" parent="UI/TabContainer"]
+custom_minimum_size = Vector2(100, 32)
+layout_mode = 2
+text = "Weapons"
+
+[node name="ArmorTab" type="Button" parent="UI/TabContainer"]
+custom_minimum_size = Vector2(100, 32)
+layout_mode = 2
+text = "Armor"
+
+[node name="MaterialsTab" type="Button" parent="UI/TabContainer"]
+custom_minimum_size = Vector2(100, 32)
+layout_mode = 2
+text = "Materials"
+
+[node name="ItemList" type="ItemList" parent="UI"]
+offset_left = 32.0
+offset_top = 80.0
+offset_right = 304.0
+offset_bottom = 280.0
+
+[node name="UseButton" type="Button" parent="UI"]
+offset_left = 72.0
+offset_top = 296.0
+offset_right = 136.0
+offset_bottom = 327.0
+text = "Use"
+
+[node name="BackButton" type="Button" parent="UI"]
+offset_left = 200.0
+offset_top = 296.0
+offset_right = 264.0
+offset_bottom = 327.0
+text = "Back"
 
 [node name="ItemInfoLabel" type="RichTextLabel" parent="UI"]
 offset_left = 448.0
 offset_top = 64.0
-offset_right = 488.0
-offset_bottom = 104.0
+offset_right = 1048.0
+offset_bottom = 464.0
 bbcode_enabled = true
 text = "Select an item to view details"
 fit_content = true

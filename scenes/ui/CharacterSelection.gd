@@ -1,4 +1,4 @@
-# CharacterSelection.gd
+# scenes/ui/CharacterSelection.gd
 extends Control
 
 var character_list = []
@@ -14,7 +14,7 @@ func _ready():
 	load_characters()
 	setup_ui()
 	
-	# Disconnect existing connections if any
+	# Connect signals
 	if create_new_button.is_connected("pressed", Callable(self, "_on_create_new_pressed")):
 		create_new_button.disconnect("pressed", Callable(self, "_on_create_new_pressed"))
 	if load_saved_game_button.is_connected("pressed", Callable(self, "_on_load_saved_game_pressed")):
@@ -23,7 +23,7 @@ func _ready():
 		start_new_game_button.disconnect("pressed", Callable(self, "_on_start_new_game_pressed"))
 	if quit_button.is_connected("pressed", Callable(self, "_on_quit_button_pressed")):
 		quit_button.disconnect("pressed", Callable(self, "_on_quit_button_pressed"))
-	# Connect signals
+	
 	create_new_button.connect("pressed", Callable(self, "_on_create_new_pressed"))
 	load_saved_game_button.connect("pressed", Callable(self, "_on_load_saved_game_pressed"))
 	start_new_game_button.connect("pressed", Callable(self, "_on_start_new_game_pressed"))
@@ -32,6 +32,11 @@ func _ready():
 	# Initially disable buttons
 	load_saved_game_button.disabled = true
 	start_new_game_button.disabled = true
+	
+	# QOL: Auto-select first character if list is not empty
+	if not character_list.is_empty():
+		_on_character_selected(character_list[0])
+		
 
 func _on_quit_button_pressed():
 	get_tree().quit()
@@ -50,6 +55,23 @@ func _on_character_selected(character):
 		load_saved_game_button.disabled = false
 	else:
 		load_saved_game_button.disabled = true
+	
+	# QOL: Highlight the selected character button
+	_highlight_selected_character()
+
+func _highlight_selected_character():
+	"""Visual feedback for selected character"""
+	var index = 0
+	for child in character_container.get_children():
+		if child is HBoxContainer:
+			var select_button = child.get_child(0)
+			if character_list[index] == selected_character:
+				# Highlight selected
+				select_button.modulate = Color(2.5, 2.8, 2.2)  # Slight yellow tint
+			else:
+				# Normal color
+				select_button.modulate = Color(1, 1, 1)
+			index += 1
 
 func _on_start_new_game_pressed():
 	if selected_character:
@@ -67,16 +89,11 @@ func show_new_game_warning():
 	dialog.dialog_text = "Starting a new game will DELETE your existing save for %s!\n\nAre you sure you want to continue?" % selected_character.name
 	dialog.ok_button_text = "Yes, Delete Save"
 	dialog.cancel_button_text = "Cancel"
-	dialog.connect("confirmed", Callable(self, "start_new_game").bind())
 	add_child(dialog)
 	dialog.popup_centered()
 	
-	var confirmed = await dialog.confirmed
-	dialog.confirmed.connect(_on_confirmed)
-
-func _on_confirmed():
-	print("confirm")
-	start_new_game()
+	dialog.confirmed.connect(func(): start_new_game(); dialog.queue_free())
+	dialog.canceled.connect(func(): dialog.queue_free())
 
 func start_new_game():
 	print("Starting new game with character: ", selected_character.name)
@@ -101,7 +118,6 @@ func _on_create_new_pressed():
 	SceneManager.change_scene("res://scenes/ui/CharacterCreation.tscn")
 
 func load_characters():
-	# FIXED: Use SaveManager.get_all_characters() instead of CharacterManager.get_all_characters()
 	character_list = SaveManager.get_all_characters()
 
 func setup_ui():
@@ -133,7 +149,16 @@ func _on_delete_pressed(character):
 	dialog.popup_centered()
 
 func _delete_character(character):
-	# FIXED: Use SaveManager.delete_character() instead of CharacterManager.delete_character()
 	SaveManager.delete_character(character.name)
 	load_characters()
 	setup_ui()
+	
+	# QOL: If deleted character was selected, clear selection
+	if selected_character == character:
+		selected_character = null
+		start_new_game_button.disabled = true
+		load_saved_game_button.disabled = true
+		
+		# Auto-select first character if any remain
+		if not character_list.is_empty():
+			_on_character_selected(character_list[0])

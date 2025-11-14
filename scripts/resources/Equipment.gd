@@ -215,6 +215,10 @@ func get_rarity_color() -> String:
 func get_full_description() -> String:
 	"""Generate rich description with all stats"""
 	var desc = "[b]%s[/b]\n" % name
+	
+	# QOL: Show slot prominently
+	desc += "[color=cyan][b]Slot: %s[/b][/color]\n" % _get_slot_display_name()
+	
 	desc += "[color=gray]Item Level: %d[/color]\n" % item_level
 	desc += "[color=%s]%s[/color]\n" % [get_rarity_color(), rarity.capitalize()]
 	desc += "\n%s\n" % description
@@ -227,6 +231,10 @@ func get_full_description() -> String:
 	
 	if armor_value > 0:
 		desc += "[b]Armor:[/b] %d\n" % armor_value
+	
+	# Show equipment type (weapon/armor type)
+	if type:
+		desc += "[color=gray]Type: %s[/color]\n" % type.capitalize()
 	
 	if not stat_modifiers.is_empty():
 		desc += "\n[color=green][b]Attribute Bonuses:[/b][/color]\n"
@@ -250,10 +258,34 @@ func get_full_description() -> String:
 			Skill.StatusEffect.keys()[status_effect_type]
 		]
 	
+	# Show class restrictions if any
+	if not class_restriction.is_empty():
+		desc += "\n[color=yellow]Class Restriction: %s[/color]\n" % ", ".join(class_restriction)
+	
 	if flavor_text:
 		desc += "\n[i][color=gray]%s[/color][/i]\n" % flavor_text
 	
 	return desc
+
+func _get_slot_display_name() -> String:
+	"""Get user-friendly slot name"""
+	match slot:
+		"main_hand":
+			return "Main Hand (Weapon)"
+		"off_hand":
+			return "Off Hand (Shield/Source)"
+		"head":
+			return "Head (Helmet)"
+		"chest":
+			return "Chest (Armor)"
+		"hands":
+			return "Hands (Gloves)"
+		"legs":
+			return "Legs (Greaves)"
+		"feet":
+			return "Feet (Boots)"
+		_:
+			return slot.capitalize()
 
 # === SAVE/LOAD ===
 

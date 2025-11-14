@@ -74,24 +74,6 @@ func initialize(p_player: CharacterData, p_enemy: CharacterData):
 
 # === DISPLAY UPDATES ===
 
-func update_character_info():
-	"""Update player and enemy info displays"""
-	if player_info_label and player:
-		player_info_label.text = "Player: %s\nHP: %d/%d\nMP: %d/%d\nSP: %d/%d\nStatus: %s" % [
-			player.name, player.current_hp, player.max_hp,
-			player.current_mp, player.max_mp,
-			player.current_sp, player.max_sp,
-			player.get_status_effects_string()
-		]
-	
-	if enemy_info_label and enemy:
-		enemy_info_label.text = "Enemy: %s\nHP: %d/%d\nMP: %d/%d\nSP: %d/%d\nStatus: %s" % [
-			enemy.name, enemy.current_hp, enemy.max_hp,
-			enemy.current_mp, enemy.max_mp,
-			enemy.current_sp, enemy.max_sp,
-			enemy.get_status_effects_string()
-		]
-
 func update_turn_display(text: String):
 	"""Update turn status message"""
 	if turn_label:
@@ -115,13 +97,6 @@ func add_combat_log(message: String, color: String = "white"):
 	"""Add colored message to combat log"""
 	if combat_log:
 		combat_log.append_text("[color=%s]%s[/color]\n" % [color, message])
-
-func display_result(result: ActionResult):
-	"""Display action result with appropriate color"""
-	var color = result.get_log_color()
-	add_combat_log(result.message, color)
-	update_character_info()
-	update_xp_display()
 
 # === ACTION SETUP ===
 
@@ -282,3 +257,106 @@ func _get_enemy_equipment_text() -> String:
 		else:
 			text += "[b]%s:[/b] Empty\n" % slot_name
 	return text
+
+func update_character_info():
+	"""Update player and enemy info displays - FIXED debuff display"""
+	if player_info_label and player:
+		# QOL: Fix debuff display (show single - not --)
+		var status_str = _get_clean_status_string(player)
+		
+		player_info_label.text = "Player: %s\nHP: %d/%d\nMP: %d/%d\nSP: %d/%d\n%s" % [
+			player.name, player.current_hp, player.max_hp,
+			player.current_mp, player.max_mp,
+			player.current_sp, player.max_sp,
+			status_str
+		]
+	
+	if enemy_info_label and enemy:
+		var status_str = _get_clean_status_string(enemy)
+		
+		enemy_info_label.text = "Enemy: %s\nHP: %d/%d\nMP: %d/%d\nSP: %d/%d\n%s" % [
+			enemy.name, enemy.current_hp, enemy.max_hp,
+			enemy.current_mp, enemy.max_mp,
+			enemy.current_sp, enemy.max_sp,
+			status_str
+		]
+	
+	# QOL: Update debug log with secondary stats
+	if debug_log:
+		update_debug_display()
+
+func _get_clean_status_string(character: CharacterData) -> String:
+	"""Get status effects string with proper formatting"""
+	var effects = []
+	
+	# Status effects
+	var status_mgr = character.status_manager
+	if status_mgr:
+		for effect in status_mgr.active_effects:
+			var effect_name = Skill.StatusEffect.keys()[effect]
+			var duration = status_mgr.active_effects[effect]
+			effects.append("%s (%d)" % [effect_name, duration])
+	
+	# Buffs
+	var buff_mgr = character.buff_manager
+	if buff_mgr and buff_mgr.has_buffs():
+		for attr in buff_mgr.buffs:
+			var attr_name = Skill.AttributeTarget.keys()[attr]
+			var value = buff_mgr.buffs[attr].value
+			var duration = buff_mgr.buffs[attr].duration
+			effects.append("%s +%d (%d)" % [attr_name, value, duration])
+	
+	# Debuffs - FIXED: show single - not --
+	if buff_mgr and buff_mgr.has_debuffs():
+		for attr in buff_mgr.debuffs:
+			var attr_name = Skill.AttributeTarget.keys()[attr]
+			var value = buff_mgr.debuffs[attr].value
+			var duration = buff_mgr.debuffs[attr].duration
+			effects.append("%s -%d (%d)" % [attr_name, value, duration])  # Single - now
+	
+	return "Status: " + (", ".join(effects) if not effects.is_empty() else "Normal")
+
+func update_debug_display():
+	"""QOL: Fixed - now shows secondary stats"""
+	if not debug_log:
+		return
+	
+	debug_log.clear()
+	debug_log.append_text("[b][color=cyan]PLAYER STATS[/color][/b]\n")
+	debug_log.append_text("ATK Power: %.1f | Spell Power: %.1f\n" % [player.get_attack_power(), player.spell_power])
+	debug_log.append_text("Toughness: %.1f | Spell Ward: %.1f\n" % [player.toughness, player.spell_ward])
+	debug_log.append_text("Accuracy: %.1f%% | Dodge: %.1f%% | Crit: %.1f%%\n" % [
+		player.accuracy * 100, player.dodge * 100, player.critical_hit_rate * 100
+	])
+	debug_log.append_text("Defense: %d | Armor Pen: %.1f%%\n\n" % [
+		player.get_defense(), player.armor_penetration * 100
+	])
+	
+	debug_log.append_text("[b][color=red]ENEMY STATS[/color][/b]\n")
+	debug_log.append_text("ATK Power: %.1f | Spell Power: %.1f\n" % [enemy.get_attack_power(), enemy.spell_power])
+	debug_log.append_text("Toughness: %.1f | Spell Ward: %.1f\n" % [enemy.toughness, enemy.spell_ward])
+	debug_log.append_text("Accuracy: %.1f%% | Dodge: %.1f%% | Crit: %.1f%%\n" % [
+		enemy.accuracy * 100, enemy.dodge * 100, enemy.critical_hit_rate * 100
+	])
+	debug_log.append_text("Defense: %d | Armor Pen: %.1f%%\n" % [
+		enemy.get_defense(), enemy.armor_penetration * 100
+	])
+
+func display_result(result: ActionResult):
+	"""Display action result with appropriate color - QOL: Better skill display"""
+	var color = result.get_log_color()
+	
+	# QOL: For skills, show actor name
+	if result.actor and result.message.find("used") == -1:
+		# Add actor name if not already in message
+		var prefix = ""
+		if result.actor == player:
+			prefix = "[color=yellow]Player:[/color] "
+		else:
+			prefix = "[color=red]Enemy:[/color] "
+		add_combat_log(prefix + result.message, color)
+	else:
+		add_combat_log(result.message, color)
+	
+	update_character_info()
+	update_xp_display()

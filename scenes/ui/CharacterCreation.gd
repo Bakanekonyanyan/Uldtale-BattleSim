@@ -1,4 +1,4 @@
-# CharacterCreation.gd
+# scenes/ui/CharacterCreation.gd
 extends Control
 
 var races = {}
@@ -10,6 +10,9 @@ var classes = {}
 @onready var stats_label = $StatsLabel
 @onready var create_button = $CreateButton
 @onready var cancel_button = $QuitButton
+
+# QOL: Starting resources
+const STARTING_GOLD = 100  # 100 copper = 1 silver
 
 func _ready():
 	load_data()
@@ -72,6 +75,7 @@ func _on_create_pressed():
 	new_character.race = race_option.get_item_text(race_option.selected)
 	new_character.character_class = class_option.get_item_text(class_option.selected)
 	new_character.max_floor_cleared = 1
+	
 	var selected_race = races["playable"][new_character.race]
 	var selected_class = classes["playable"][new_character.character_class]
 	
@@ -103,11 +107,14 @@ func _on_create_pressed():
 	new_character.current_mp = new_character.max_mp
 	new_character.current_sp = new_character.max_sp
 	
+	# QOL: Give starting gold
+	new_character.currency.copper = STARTING_GOLD
+	print("New character starting with %d copper (%s)" % [STARTING_GOLD, new_character.currency.get_formatted()])
 	
-	# FIXED: Use SaveManager.save_game() instead of CharacterManager.save_character()
+	# Save the character
 	SaveManager.save_game(new_character)
 	print("Character created: ", new_character.name)
 	print("Skills for new character: ", new_character.skills)
 	
-	# Transition to the next scene (e.g., main game or character selection)
+	# Transition to character selection
 	SceneManager.change_scene("res://scenes/ui/CharacterSelection.tscn")
