@@ -215,7 +215,7 @@
 		"attribute_increase": 5,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin","Myrmidon"],
 		"effects": {
 		  "dodge": 5,
 		  "crit": 3,

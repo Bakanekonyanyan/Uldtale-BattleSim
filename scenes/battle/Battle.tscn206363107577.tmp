@@ -90,6 +90,7 @@ bbcode_enabled = true
 scroll_following = true
 
 [node name="DebugToggleButton" type="Button" parent="BattleUIController"]
+visible = false
 offset_left = 768.0
 offset_top = 368.0
 offset_right = 826.0
@@ -97,6 +98,7 @@ offset_bottom = 399.0
 text = "Debug"
 
 [node name="DebugWindow" type="Panel" parent="BattleUIController"]
+visible = false
 offset_left = 768.0
 offset_top = 416.0
 offset_right = 1168.0
