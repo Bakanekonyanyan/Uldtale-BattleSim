@@ -71,6 +71,7 @@ randomness = 0.9
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="RewardLabel" type="RichTextLabel" parent="UI"]
+visible = false
 offset_left = 88.0
 offset_top = 64.0
 offset_right = 288.0

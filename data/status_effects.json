@@ -29,8 +29,35 @@
 		"message": "{name} is frozen, reducing their defense"
 	},
 	"BLEED": {
-	"damage_type": "hp_percent",
-	"damage_value": 0.125,
-	"message": "{name} bleeds for {damage} damage"
+		"damage_type": "hp_percent",
+		"damage_value": 0.125,
+		"message": "{name} bleeds for {damage} damage"
+	},
+	"REGENERATION": {
+		"damage_type": "heal_percent",
+		"damage_value": 0.05,
+		"stat_modifiers": {
+			"vitality": 2,
+			"endurance": 2
+		},
+		"message": "{name} regenerated {damage} HP"
+	},
+	"ENRAGED": {
+		"damage_type": "none",
+		"stat_modifiers": {
+			"strength": 5,
+			"intelligence": 3,
+			"agility": 3
+		},
+		"reflect_damage": 0.1,
+		"message": "{name} is ENRAGED! (+Attack, reflects 10% damage)"
+	},
+	"REFLECT": {
+		"damage_type": "none",
+		"reflect_damage": 0.3,
+		"stat_modifiers": {
+			"fortitude": 3
+		},
+		"message": "{name} has a damage reflection barrier (30%)"
 	}
 }

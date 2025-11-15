@@ -317,11 +317,23 @@ func clear_item_info():
 func _on_buy_pressed():
 	var selected_items = item_list.get_selected_items()
 	if selected_items.is_empty():
-		print("No items selected")
 		return
 	
-	var total_cost = 0
+	# ✅ Cache metadata BEFORE processing
 	var items_to_buy = []
+	for item_index in selected_items:
+		var metadata = item_list.get_item_metadata(item_index)
+		if metadata:
+			items_to_buy.append(metadata)
+	
+	# Calculate and validate total
+	var total_cost = 0
+	for item_data in items_to_buy:
+		total_cost += item_data["price"]
+	
+	if player_character.currency.copper < total_cost:
+		# show error dialog
+		return
 	
 	# Calculate total cost
 	for item_index in selected_items:
@@ -380,21 +392,35 @@ func _on_buy_pressed():
 	print("Purchased %d items for %d copper" % [items_to_buy.size(), total_cost])
 
 # NEW: Batch sell selected items (one of each)
+# === FIXED: Batch sell functions ===
+
 func _on_sell_pressed():
+	"""Sell selected items (one of each) - FIXED"""
 	var selected_items = sell_item_list.get_selected_items()
 	if selected_items.is_empty():
 		print("No items selected")
 		return
 	
+	# ✅ FIX: Sort indices in DESCENDING order to avoid index shifting
+	selected_items.sort()
+	selected_items.reverse()
+	
 	var total_earned = 0
 	
 	for item_index in selected_items:
-		var item_id = player_character.inventory.items.keys()[item_index]
+		# ✅ FIX: Re-fetch item keys EACH iteration (inventory may have changed)
+		var current_keys = player_character.inventory.items.keys()
+		
+		if item_index >= current_keys.size():
+			print("⚠️ Index %d out of range (only %d items), skipping" % [item_index, current_keys.size()])
+			continue
+		
+		var item_id = current_keys[item_index]
 		var item_data = player_character.inventory.items[item_id]
 		var item = item_data.item
 		var sell_value = item.value / 2
 		
-		# Add to buyback BEFORE removing from inventory
+		# Add to buyback BEFORE removing
 		ShopManager.add_to_buyback(item, sell_value, 1)
 		
 		player_character.inventory.remove_item(item_id, 1)
@@ -407,23 +433,34 @@ func _on_sell_pressed():
 	
 	print("Sold %d items for %d copper" % [selected_items.size(), total_earned])
 
-# NEW: Batch sell all selected items (full stacks)
 func _on_sell_all_pressed():
+	"""Sell all selected items (full stacks) - FIXED"""
 	var selected_items = sell_item_list.get_selected_items()
 	if selected_items.is_empty():
 		print("No items selected")
 		return
 	
+	# ✅ FIX: Sort indices in DESCENDING order
+	selected_items.sort()
+	selected_items.reverse()
+	
 	var total_earned = 0
 	
 	for item_index in selected_items:
-		var item_id = player_character.inventory.items.keys()[item_index]
+		# ✅ FIX: Re-fetch keys EACH iteration
+		var current_keys = player_character.inventory.items.keys()
+		
+		if item_index >= current_keys.size():
+			print("⚠️ Index %d out of range (only %d items), skipping" % [item_index, current_keys.size()])
+			continue
+		
+		var item_id = current_keys[item_index]
 		var item_data = player_character.inventory.items[item_id]
 		var item = item_data.item
 		var quantity = item_data.quantity
 		var sell_value = item.value / 2
 		
-		# Add to buyback BEFORE removing from inventory
+		# Add to buyback BEFORE removing
 		ShopManager.add_to_buyback(item, sell_value, quantity)
 		
 		player_character.inventory.remove_item(item_id, quantity)

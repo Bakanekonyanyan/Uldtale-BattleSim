@@ -63,7 +63,7 @@ func update_effects() -> String:
 # === PRIVATE HELPERS ===
 
 func _process_effect_damage(effect: Skill.StatusEffect) -> String:
-	"""Handle per-turn damage/stun for an effect"""
+	"""Handle per-turn damage/healing/effects for a status"""
 	var message = ""
 	var effect_name = Skill.StatusEffect.keys()[effect]
 	var data = _get_effect_data(effect_name)
@@ -71,7 +71,30 @@ func _process_effect_damage(effect: Skill.StatusEffect) -> String:
 	if data.is_empty():
 		return _fallback_damage(effect)
 	
-	# Damage
+	# ✅ REGENERATION (Healing over time)
+	if effect == Skill.StatusEffect.REGENERATION:
+		var heal_amount = 0
+		if data.damage_type == "heal_percent":
+			heal_amount = int(character.max_hp * float(data.damage_value))
+		
+		if heal_amount > 0:
+			character.heal(heal_amount)
+			message += "%s regenerated %d HP\n" % [character.name, heal_amount]
+		
+		return message
+	
+	# ✅ ENRAGED (No damage, just stat boost + reflection)
+	if effect == Skill.StatusEffect.ENRAGED:
+		# Reflection is handled in take_damage()
+		message += "%s is ENRAGED (reflecting damage)!\n" % character.name
+		return message
+	
+	# ✅ REFLECT (Passive, no per-turn effect)
+	if effect == Skill.StatusEffect.REFLECT:
+		message += "%s has a damage reflection barrier\n" % character.name
+		return message
+	
+	# Standard damage effects
 	if data.has("damage_type") and data.damage_type != "none":
 		var dmg = 0
 		if data.damage_type == "hp_percent":
@@ -166,3 +189,20 @@ func get_effects_string() -> String:
 
 func get_active_effects() -> Dictionary:
 	return active_effects.duplicate()
+
+# =============================================
+# GET REFLECTION AMOUNT (for damage calc)
+# =============================================
+
+func get_total_reflection() -> float:
+	"""Calculate total damage reflection from all status effects"""
+	var total_reflection = 0.0
+	
+	for effect in active_effects:
+		var effect_name = Skill.StatusEffect.keys()[effect]
+		var data = _get_effect_data(effect_name)
+		
+		if data.has("reflect_damage"):
+			total_reflection += float(data.reflect_damage)
+	
+	return total_reflection

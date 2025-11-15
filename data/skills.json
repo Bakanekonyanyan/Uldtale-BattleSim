@@ -10,7 +10,7 @@
 	  "status_effect": "BURN",
 	  "power": 35,
 	  "duration": 3,
-	  "mp_cost": 25,
+	  "mp_cost": 20,
 	  "sp_cost": 15,
 	  "cooldown": 3
 	},
@@ -22,7 +22,7 @@
 	  "target": "SELF",
 	  "attribute_target": "FORTITUDE",
 	  "status_effect": "NONE",
-	  "power": 150,
+	  "power": 80,
 	  "duration": 3,
 	  "mp_cost": 35,
 	  "sp_cost": 0,
@@ -36,7 +36,7 @@
 	  "target": "ALLY",
 	  "attribute_target": "NONE",
 	  "status_effect": "NONE",
-	  "power": 50,
+	  "power": 60,
 	  "duration": 0,
 	  "mp_cost": 30,
 	  "sp_cost": 0,
@@ -52,7 +52,7 @@
 	  "status_effect": "NONE",
 	  "power": 60,
 	  "duration": 0,
-	  "mp_cost": 0,
+	  "mp_cost": 10,
 	  "sp_cost": 40,
 	  "cooldown": 4
 	},
@@ -66,7 +66,7 @@
 	  "status_effect": "NONE",
 	  "power": 30,
 	  "duration": 3,
-	  "mp_cost": 0,
+	  "mp_cost": 15,
 	  "sp_cost": 35,
 	  "cooldown": 4
 	},
@@ -80,7 +80,7 @@
 	  "status_effect": "POISON",
 	  "power": 20,
 	  "duration": 5,
-	  "mp_cost": 0,
+	  "mp_cost": 10,
 	  "sp_cost": 30,
 	  "cooldown": 4
 	},
@@ -95,7 +95,7 @@
 	  "power": 60,
 	  "duration": 0,
 	  "mp_cost": 35,
-	  "sp_cost": 0,
+	  "sp_cost": 5,
 	  "cooldown": 3
 	},
 	"Bless": {
@@ -109,7 +109,7 @@
 	  "power": 80,
 	  "duration": 4,
 	  "mp_cost": 30,
-	  "sp_cost": 0,
+	  "sp_cost": 10,
 	  "cooldown": 5
 	},
 	"Smite": {
@@ -122,8 +122,8 @@
 	  "status_effect": "BURN",
 	  "power": 40,
 	  "duration": 2,
-	  "mp_cost": 28,
-	  "sp_cost": 0,
+	  "mp_cost": 30,
+	  "sp_cost": 10,
 	  "cooldown": 3
 	},
 	"Dark Bolt": {
@@ -137,21 +137,23 @@
 	  "power": 45,
 	  "duration": 2,
 	  "mp_cost": 32,
-	  "sp_cost": 0,
+	  "sp_cost": 13,
 	  "cooldown": 3
 	},
 	"Life Tap": {
 	  "name": "Life Tap",
-	  "description": "Sacrifice 20% HP to restore 40% MP.",
+	  "description": "Drain life force from your enemy, dealing damage and healing yourself.",
 	  "ability_type": "MAGICAL",
-	  "type": "RESTORE",
-	  "target": "SELF",
+	  "type": "DRAIN",
+	  "target": "ENEMY",
 	  "attribute_target": "NONE",
 	  "status_effect": "NONE",
-	  "power": 0,
+	  "drain_target": "HP",
+	  "drain_efficiency": 0.5,
+	  "power": 40,
 	  "duration": 0,
-	  "mp_cost": 0,
-	  "sp_cost": 0,
+	  "mp_cost": 25,
+	  "sp_cost": 15,
 	  "cooldown": 5
 	},
 	"Curse of Weakness": {
@@ -165,7 +167,7 @@
 	  "power": 80,
 	  "duration": 3,
 	  "mp_cost": 30,
-	  "sp_cost": 0,
+	  "sp_cost": 10,
 	  "cooldown": 4
 	},
 	"Scratch": {

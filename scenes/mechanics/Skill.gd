@@ -2,7 +2,7 @@
 class_name Skill
 extends Resource
 
-enum SkillType { DAMAGE, HEAL, BUFF, DEBUFF, RESTORE, INFLICT_STATUS }
+enum SkillType { DAMAGE, HEAL, BUFF, DEBUFF, RESTORE, INFLICT_STATUS, DRAIN }
 enum TargetType { SELF, ALLY, ENEMY, ALL_ALLIES, ALL_ENEMIES }
 enum AttributeTarget { 
 	NONE, 
@@ -17,8 +17,9 @@ enum AttributeTarget {
 	AGILITY, 
 	FORTITUDE 
 }
-enum StatusEffect { NONE, POISON, BURN, FREEZE, SHOCK }
+enum StatusEffect { NONE, POISON, BURN, FREEZE, SHOCK, REGENERATION, ENRAGED, REFLECT }
 enum AbilityType { PHYSICAL, MAGICAL }
+enum DrainTarget {HP, MP, SP }
 
 @export var ability_type: AbilityType
 @export var name: String
@@ -29,6 +30,8 @@ enum AbilityType { PHYSICAL, MAGICAL }
 # CHANGED: Now arrays to support multiple targets
 @export var attribute_targets: Array = []  # Array of AttributeTarget enums
 @export var status_effects: Array = []  # Array of StatusEffect enums
+@export var drain_target: DrainTarget = DrainTarget.HP
+@export var drain_efficiency: float = 0.5  # 50% of damage becomes healing
 
 @export var power: int
 @export var duration: int
@@ -44,6 +47,7 @@ enum AbilityType { PHYSICAL, MAGICAL }
 @export var base_sp_cost: int
 @export var base_cooldown: int
 @export var base_duration: int
+
 
 const LEVEL_THRESHOLDS = [5, 25, 125, 625, 1500]
 
@@ -94,6 +98,11 @@ static func create_from_dict(data: Dictionary) -> Skill:
 			# String format: "status_effect": "BURN"
 			if effect_data != "" and effect_data != "NONE" and StatusEffect.has(effect_data.to_upper()):
 				skill.status_effects.append(StatusEffect[effect_data.to_upper()])
+	
+	if data.has("drain_target"):
+		skill.drain_target = DrainTarget[data.drain_target.to_upper()]
+	if data.has("drain_efficiency"):
+		skill.drain_efficiency = data.drain_efficiency
 	
 	skill.base_power = data.power
 	skill.base_mp_cost = data.get("mp_cost", 0)
@@ -172,6 +181,8 @@ func use(user: CharacterData, targets: Array):
 			return restore(user, targets)
 		SkillType.INFLICT_STATUS:
 			return inflict_status(user, targets)
+		SkillType.DRAIN:  # ✅ NEW
+			return drain(user, targets)
 
 func deal_damage(user: CharacterData, targets: Array):
 	var total_damage = 0
@@ -308,6 +319,60 @@ func restore(user: CharacterData, targets: Array):
 		t.restore_mp(heal_amount)
 		total_heal += heal_amount
 	return "%s healed %d MP to %d target(s)" % [name, total_heal, targets.size()]
+
+# =============================================
+# DRAIN SKILL IMPLEMENTATION
+# =============================================
+
+func drain(user: CharacterData, targets: Array) -> String:
+	"""Drain resource from target and restore user"""
+	var total_drained = 0
+	var total_restored = 0
+	
+	for t in targets:
+		var drain_amount = 0
+		
+		match drain_target:
+			DrainTarget.HP:
+				# Drain HP (like damage)
+				var base_damage = power + user.spell_power
+				var resistance = t.toughness
+				drain_amount = max(1, base_damage - resistance)
+				
+				# Apply damage
+				t.take_damage(drain_amount)
+				
+				# Heal user
+				var heal_amount = int(drain_amount * drain_efficiency)
+				user.heal(heal_amount)
+				total_restored = heal_amount
+				
+			DrainTarget.MP:
+				# Drain MP
+				drain_amount = min(power, t.current_mp)
+				t.current_mp -= drain_amount
+				
+				# Restore user MP
+				var restore_amount = int(drain_amount * drain_efficiency)
+				user.restore_mp(restore_amount)
+				total_restored = restore_amount
+				
+			DrainTarget.SP:
+				# Drain SP
+				drain_amount = min(power, t.current_sp)
+				t.current_sp -= drain_amount
+				
+				# Restore user SP
+				var restore_amount = int(drain_amount * drain_efficiency)
+				user.restore_sp(restore_amount)
+				total_restored = restore_amount
+		
+		total_drained += drain_amount
+	
+	var resource_name = DrainTarget.keys()[drain_target]
+	return "%s drained %d %s from %d target(s) and restored %d %s" % [
+		name, total_drained, resource_name, targets.size(), total_restored, resource_name
+	]
 
 func inflict_status(_user: CharacterData, targets: Array):
 	# NEW: Apply all status effects to each target

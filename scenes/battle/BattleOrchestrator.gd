@@ -35,6 +35,7 @@ func start_battle():
 	
 	print("BattleOrchestrator: Starting battle - %s vs %s" % [player.name, enemy.name])
 	
+	# Initialize systems
 	combat_engine = CombatEngine.new()
 	combat_engine.initialize(player, enemy)
 	
@@ -42,7 +43,14 @@ func start_battle():
 	add_child(turn_controller)
 	turn_controller.initialize(player, enemy)
 	
-	enemy_ai = EnemyAI.new()
+	# ✅ NEW: Use BossAI for boss battles, regular AI for normal enemies
+	if is_boss_battle:
+		enemy_ai = BossAI.new()
+		print("BattleOrchestrator: Using BOSS AI")
+	else:
+		enemy_ai = EnemyAI.new()
+		print("BattleOrchestrator: Using regular AI")
+	
 	enemy_ai.initialize(enemy, player, current_floor)
 	
 	turn_controller.turn_started.connect(_on_turn_started)

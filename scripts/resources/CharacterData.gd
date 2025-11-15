@@ -55,6 +55,7 @@ var spell_power_type: String = "intelligence"
 # === COMBAT STATE ===
 var is_defending: bool = false
 var is_stunned: bool = false
+var last_attacker: CharacterData = null
 
 # === LEGACY ACCESSORS (for backward compatibility) ===
 var skills: Array:
@@ -153,70 +154,12 @@ func calculate_secondary_attributes():
 
 # === COMBAT ===
 
-func attack(target: CharacterData) -> String:
-	"""Execute basic attack"""
-	if not target or not is_instance_valid(target):
-		return "%s's attack failed - no valid target!" % name
-	
-	var momentum_mult = MomentumSystem.get_damage_multiplier()
-	var base_damage = get_attack_power() * 0.5 * momentum_mult
-	var resistance = target.get_defense()
-	
-	# Rolls
-	if randf() >= accuracy:
-		return "%s's attack missed!" % name
-	if randf() < target.dodge:
-		return "%s dodged the attack!" % target.name
-	
-	var is_crit = randf() < critical_hit_rate
-	var damage = max(1, base_damage - resistance)
-	
-	if is_crit:
-		damage *= 1.5 + randf() * 0.5
-	
-	damage = round(damage)
-	target.take_damage(damage)
-	
-	# Status effect from weapon
-	var status_msg = ""
-	if equipment["main_hand"] and equipment["main_hand"] is Equipment:
-		var weapon = equipment["main_hand"]
-		if "status_effect_type" in weapon and "status_effect_chance" in weapon:
-			if weapon.status_effect_type != Skill.StatusEffect.NONE:
-				if weapon.has_method("try_apply_status_effect"):
-					if weapon.try_apply_status_effect(target):
-						status_msg = " and applied %s" % Skill.StatusEffect.keys()[weapon.status_effect_type]
-	
-	# Resource regen
-	var mp_restore = int(max_mp * 0.08)
-	var sp_restore = int(max_sp * 0.08)
-	restore_mp(mp_restore)
-	restore_sp(sp_restore)
-	
-	var result = "%s attacks %s for %d damage" % [name, target.name, damage]
-	
-	if momentum_mult > 1.0:
-		result += " (+%d%% momentum)" % int((momentum_mult - 1.0) * 100)
-	
-	result += " and restores %d MP, %d SP%s" % [mp_restore, sp_restore, status_msg]
-	
-	if is_crit:
-		result = "Critical hit! " + result
-	
-	return result
-
 func defend() -> String:
 	is_defending = true
 	return "%s takes a defensive stance" % name
 
 func reset_defense():
 	is_defending = false
-
-func take_damage(amount: float):
-	if is_defending:
-		amount *= 0.5
-	current_hp -= int(amount)
-	current_hp = max(0, current_hp)
 
 func heal(amount: int):
 	current_hp += amount
@@ -421,3 +364,89 @@ func update_max_floor_cleared(floor: int):
 	if floor > max_floor_cleared:
 		max_floor_cleared = floor
 		print("New max floor: %d" % max_floor_cleared)
+
+func take_damage(amount: float, attacker: CharacterData = null):
+	"""Take damage with reflection support"""
+	
+	# Store attacker for reflection
+	if attacker:
+		last_attacker = attacker
+	
+	# Apply defense reduction
+	if is_defending:
+		amount *= 0.5
+	
+	# ✅ REFLECTION MECHANIC
+	if last_attacker and last_attacker != self:
+		var reflection = status_manager.get_total_reflection()
+		
+		if reflection > 0.0:
+			var reflected_damage = int(amount * reflection)
+			
+			if reflected_damage > 0:
+				print("%s reflected %d damage back to %s!" % [name, reflected_damage, last_attacker.name])
+				
+				# Apply reflected damage (no further reflection chain)
+				last_attacker.take_damage(reflected_damage, null)
+	
+	# Apply damage
+	current_hp -= int(amount)
+	current_hp = max(0, current_hp)
+
+# =============================================
+# UPDATE ATTACK TO PASS ATTACKER
+# =============================================
+
+func attack(target: CharacterData) -> String:
+	"""Execute basic attack with attacker tracking"""
+	if not target or not is_instance_valid(target):
+		return "%s's attack failed - no valid target!" % name
+	
+	var momentum_mult = MomentumSystem.get_damage_multiplier()
+	var base_damage = get_attack_power() * 0.5 * momentum_mult
+	var resistance = target.get_defense()
+	
+	# Rolls
+	if randf() >= accuracy:
+		return "%s's attack missed!" % name
+	if randf() < target.dodge:
+		return "%s dodged the attack!" % target.name
+	
+	var is_crit = randf() < critical_hit_rate
+	var damage = max(1, base_damage - resistance)
+	
+	if is_crit:
+		damage *= 1.5 + randf() * 0.5
+	
+	damage = round(damage)
+	
+	# ✅ PASS ATTACKER TO take_damage()
+	target.take_damage(damage, self)
+	
+	# Status effect from weapon
+	var status_msg = ""
+	if equipment["main_hand"] and equipment["main_hand"] is Equipment:
+		var weapon = equipment["main_hand"]
+		if "status_effect_type" in weapon and "status_effect_chance" in weapon:
+			if weapon.status_effect_type != Skill.StatusEffect.NONE:
+				if weapon.has_method("try_apply_status_effect"):
+					if weapon.try_apply_status_effect(target):
+						status_msg = " and applied %s" % Skill.StatusEffect.keys()[weapon.status_effect_type]
+	
+	# Resource regen
+	var mp_restore = int(max_mp * 0.08)
+	var sp_restore = int(max_sp * 0.08)
+	restore_mp(mp_restore)
+	restore_sp(sp_restore)
+	
+	var result = "%s attacks %s for %d damage" % [name, target.name, damage]
+	
+	if momentum_mult > 1.0:
+		result += " (+%d%% momentum)" % int((momentum_mult - 1.0) * 100)
+	
+	result += " and restores %d MP, %d SP%s" % [mp_restore, sp_restore, status_msg]
+	
+	if is_crit:
+		result = "Critical hit! " + result
+	
+	return result
