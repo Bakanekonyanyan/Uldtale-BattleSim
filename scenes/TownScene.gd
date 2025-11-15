@@ -65,9 +65,6 @@ func _on_dungeon_pressed():
 	
 	show_floor_selection_dialog()
 
-# In TownScene.gd, REPLACE the show_floor_selection_dialog function:
-
-# In TownScene.gd, REPLACE the show_floor_selection_dialog function:
 
 func show_floor_selection_dialog():
 	"""Show a dialog to select which floor to start from"""
@@ -178,6 +175,7 @@ func show_floor_selection_dialog():
 		print("Dungeon entry cancelled")
 		dialog.queue_free()
 	)
+
 func _on_equipment_pressed():
 	SceneManager.change_to_equipment(current_character)
 

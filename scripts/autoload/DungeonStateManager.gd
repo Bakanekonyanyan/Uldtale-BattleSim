@@ -1,4 +1,4 @@
-# DungeonStateManager.gd
+# DungeonStateManager.gd - FIXED
 # Autoload: Add to project.godot as DungeonStateManager
 # Handles ALL dungeon state - removes this responsibility from SceneManager
 
@@ -14,6 +14,7 @@ var current_wave: int = 0
 var waves_per_floor: int = 5
 var max_floor: int = 25
 var is_boss_fight: bool = false
+var dungeon_description: String
 
 # Battle context
 var active_player: CharacterData
@@ -26,28 +27,32 @@ func start_dungeon(player: CharacterData, start_floor: int = 1):
 	"""Initialize a new dungeon run"""
 	active_player = player
 	current_floor = start_floor
-	current_wave = 0
+	current_wave = 0  # Start at 0, first advance_wave() makes it 1
 	is_boss_fight = false
 	dungeon_active = true
 	
 	# Sync player's floor
 	player.current_floor = start_floor
 	
-	print("DungeonState: Started dungeon at floor %d" % current_floor)
+	# ✅ FIX: Set dungeon race immediately
+	EnemyFactory.set_dungeon_race(start_floor)
+	
+	print("DungeonState: Started dungeon at floor %d, race: %s" % [current_floor, EnemyFactory.current_dungeon_race])
 	emit_signal("floor_changed", current_floor)
 
 func advance_wave() -> Dictionary:
 	"""Move to next wave and return battle data"""
 	current_wave += 1
 	
-	# Check if boss wave
-	if current_wave > waves_per_floor:
+	# ✅ FIX: Boss is wave 6 (after 5 regular waves)
+	if current_wave == waves_per_floor + 1:
 		is_boss_fight = true
 		emit_signal("boss_spawned")
-		print("DungeonState: Boss wave!")
+		print("DungeonState: Boss wave! (Wave %d)" % current_wave)
 	else:
 		is_boss_fight = false
 		emit_signal("wave_changed", current_wave)
+		print("DungeonState: Wave %d/%d" % [current_wave, waves_per_floor])
 	
 	# Generate enemy
 	var momentum = MomentumSystem.get_momentum()
@@ -65,19 +70,16 @@ func advance_floor() -> bool:
 		return false
 	
 	current_floor += 1
-	current_wave = 0
+	current_wave = 0  # Reset to 0, next advance_wave() will make it 1
 	is_boss_fight = false
 	
 	# Sync player's floor
 	if active_player:
 		active_player.current_floor = current_floor
 	
-	# REMOVED: Update max cleared - this is now handled in SceneManager._show_rewards()
-	# when the boss is defeated, not when advancing to next floor
-	
 	EnemyFactory.set_dungeon_race(current_floor)
 	
-	print("DungeonState: Advanced to floor %d" % current_floor)
+	print("DungeonState: Advanced to floor %d, wave reset to 0" % current_floor)
 	emit_signal("floor_changed", current_floor)
 	return true
 
@@ -107,6 +109,7 @@ func get_dungeon_description() -> String:
 	if is_boss_fight:
 		base += " [color=red][b]BOSS BATTLE![/b][/color]"
 	
+	dungeon_description = base
 	return base
 
 func end_dungeon():

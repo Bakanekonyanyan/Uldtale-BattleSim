@@ -17,9 +17,9 @@ texture = ExtResource("2_misp4")
 [node name="NameInput" type="LineEdit" parent="."]
 layout_mode = 0
 offset_left = 64.0
-offset_top = 24.0
+offset_top = 64.0
 offset_right = 364.0
-offset_bottom = 124.0
+offset_bottom = 128.0
 placeholder_text = "Type Name Here..."
 
 [node name="RaceOption" type="OptionButton" parent="."]
@@ -40,17 +40,17 @@ tooltip_text = "Class"
 
 [node name="StatsLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 240.0
-offset_top = 128.0
-offset_right = 280.0
-offset_bottom = 151.0
+offset_left = 384.0
+offset_top = 72.0
+offset_right = 832.0
+offset_bottom = 640.0
 
 [node name="CreateButton" type="Button" parent="."]
 layout_mode = 0
 offset_left = 64.0
-offset_top = 512.0
+offset_top = 384.0
 offset_right = 244.0
-offset_bottom = 572.0
+offset_bottom = 444.0
 text = "Create Character"
 
 [node name="QuitButton" type="Button" parent="."]

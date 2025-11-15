@@ -48,15 +48,15 @@ color = Color(0.541176, 0.541176, 0.541176, 1)
 blend_mode = 2
 
 [node name="PointLight2D6" type="PointLight2D" parent="."]
-position = Vector2(568, 344)
-scale = Vector2(12, 7.16667)
+position = Vector2(600, 356)
+scale = Vector2(12.1667, 7.25)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.74
 texture = SubResource("GradientTexture2D_n5kah")
 texture_scale = 1.5
 script = ExtResource("3_ncvtu")
-min_energy = 0.25
-max_energy = 0.75
+min_energy = 0.1
+max_energy = 0.5
 base_pulse_duration = 4.0
 randomness = 0.5
 
@@ -137,6 +137,7 @@ offset_bottom = 42.0
 text = "Name: "
 
 [node name="ShopButton" type="Button" parent="UI"]
+custom_minimum_size = Vector2(180, 60)
 offset_left = 40.0
 offset_top = 72.0
 offset_right = 136.0
@@ -144,52 +145,59 @@ offset_bottom = 103.0
 text = "Shop"
 
 [node name="DungeonButton" type="Button" parent="UI"]
-offset_left = 160.0
+custom_minimum_size = Vector2(180, 60)
+offset_left = 256.0
 offset_top = 72.0
-offset_right = 256.0
-offset_bottom = 103.0
+offset_right = 436.0
+offset_bottom = 132.0
 text = "Dungeon"
 
 [node name="EquipmentButton" type="Button" parent="UI"]
+custom_minimum_size = Vector2(180, 60)
 offset_left = 40.0
-offset_top = 120.0
-offset_right = 136.0
-offset_bottom = 151.0
+offset_top = 160.0
+offset_right = 220.0
+offset_bottom = 220.0
 text = "Equipment"
 
 [node name="StatusButton" type="Button" parent="UI"]
-offset_left = 160.0
-offset_top = 120.0
-offset_right = 256.0
-offset_bottom = 151.0
+custom_minimum_size = Vector2(180, 60)
+offset_left = 256.0
+offset_top = 160.0
+offset_right = 436.0
+offset_bottom = 220.0
 text = "Status"
 
 [node name="InventoryButton" type="Button" parent="UI"]
+custom_minimum_size = Vector2(180, 60)
 offset_left = 40.0
-offset_top = 168.0
-offset_right = 136.0
-offset_bottom = 199.0
+offset_top = 256.0
+offset_right = 220.0
+offset_bottom = 316.0
 text = "Inventory
 "
 
 [node name="StashButton" type="Button" parent="UI"]
-offset_left = 160.0
-offset_top = 168.0
-offset_right = 256.0
-offset_bottom = 199.0
+custom_minimum_size = Vector2(180, 60)
+offset_left = 256.0
+offset_top = 256.0
+offset_right = 436.0
+offset_bottom = 316.0
 text = "Stash
 "
 
 [node name="CharacterSelectButton" type="Button" parent="UI"]
-offset_left = 48.0
-offset_top = 320.0
-offset_right = 164.0
-offset_bottom = 351.0
+custom_minimum_size = Vector2(180, 60)
+offset_left = 952.0
+offset_top = 448.0
+offset_right = 1132.0
+offset_bottom = 508.0
 text = "Character Selection"
 
 [node name="QuitButton" type="Button" parent="UI"]
-offset_left = 48.0
-offset_top = 384.0
-offset_right = 164.0
-offset_bottom = 415.0
+custom_minimum_size = Vector2(180, 60)
+offset_left = 952.0
+offset_top = 576.0
+offset_right = 1132.0
+offset_bottom = 636.0
 text = "Save and Quit"

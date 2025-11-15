@@ -1,6 +1,6 @@
 # RewardsManager.gd
 # Autoload: Add to project.godot as RewardsManager
-# RewardsManager.gd - FIXED to store Equipment instances
+# FIXED: Proper momentum accumulation and bonus rewards
 
 extends Node
 
@@ -17,8 +17,7 @@ func calculate_battle_rewards(battle_data: Dictionary) -> Dictionary:
 	var rewards = {
 		"currency": (50 + (current_wave * 10)) * current_floor,
 		"xp": xp_gained,
-		# NEW: Separate storage for equipment instances
-		"equipment_instances": []  # Array of Equipment objects
+		"equipment_instances": []
 	}
 	
 	var momentum_bonus = 1.0
@@ -27,14 +26,13 @@ func calculate_battle_rewards(battle_data: Dictionary) -> Dictionary:
 	
 	var drop_chance_multiplier = (1 + (current_floor * 0.1)) * momentum_bonus
 	
-	# FIXED: Store actual Equipment instances, not just keys
+	# Store actual Equipment instances from enemy drops
 	if enemy and enemy.has_meta("equipped_items"):
 		var equipped_items = enemy.get_meta("equipped_items")
 		for item in equipped_items:
 			if item is Equipment:
 				var drop_chance = get_equipment_drop_chance(item.rarity, is_boss, momentum_level)
 				if randf() < drop_chance:
-					# Store the ACTUAL Equipment instance
 					rewards["equipment_instances"].append(item)
 					print("RewardsManager: Dropped equipment - %s (ilvl %d)" % [item.name, item.item_level])
 	
@@ -49,6 +47,23 @@ func calculate_battle_rewards(battle_data: Dictionary) -> Dictionary:
 		add_random_item_to_rewards(rewards, "consumable", 0.7 * drop_chance_multiplier)
 		add_random_item_to_rewards(rewards, "material", 0.3 * drop_chance_multiplier)
 		add_random_item_to_rewards(rewards, "equipment", 0.1 * drop_chance_multiplier, current_floor)
+	
+	# CRITICAL: Accumulate loot during momentum runs
+	if momentum_level >= 1:
+		MomentumSystem.accumulate_loot(rewards)
+	
+	# CRITICAL: Add bonus rewards on boss defeats during momentum >= 3
+	if is_boss and momentum_level >= 3:
+		var bonus_rewards = MomentumSystem.get_momentum_bonus_rewards(current_floor)
+		
+		if bonus_rewards.has("currency"):
+			rewards["currency"] += bonus_rewards["currency"]
+			print("RewardsManager: Added %d bonus currency" % bonus_rewards["currency"])
+		
+		if bonus_rewards.has("equipment_instances"):
+			for equip in bonus_rewards["equipment_instances"]:
+				rewards["equipment_instances"].append(equip)
+			print("RewardsManager: Added %d bonus equipment pieces" % bonus_rewards["equipment_instances"].size())
 	
 	emit_signal("rewards_calculated", rewards)
 	return rewards

@@ -43,8 +43,8 @@ color = Color(0.541176, 0.541176, 0.541176, 1)
 blend_mode = 2
 
 [node name="PointLight2D6" type="PointLight2D" parent="."]
-position = Vector2(624, 384)
-scale = Vector2(12, 7.16667)
+position = Vector2(636, 288)
+scale = Vector2(25.0833, 12)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.74
 texture = SubResource("GradientTexture2D_hoyal")
@@ -56,8 +56,8 @@ base_pulse_duration = 4.0
 randomness = 0.5
 
 [node name="PointLight2D7" type="PointLight2D" parent="."]
-position = Vector2(624, 488)
-scale = Vector2(12, 7.16667)
+position = Vector2(600, 472)
+scale = Vector2(12.5, 10.5)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.74
 texture = SubResource("GradientTexture2D_hoyal")
@@ -78,11 +78,68 @@ offset_right = 288.0
 offset_bottom = 264.0
 bbcode_enabled = true
 
+[node name="AutoRewardsLabel" type="Label" parent="UI"]
+offset_left = 320.0
+offset_top = 40.0
+offset_right = 620.0
+offset_bottom = 100.0
+autowrap_mode = 3
+
+[node name="CollectionContainer" type="Control" parent="UI"]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="RewardItemsList" type="ItemList" parent="UI/CollectionContainer"]
+offset_left = 88.0
+offset_top = 120.0
+offset_right = 368.0
+offset_bottom = 440.0
+select_mode = 0
+
+[node name="ItemInfoLabel" type="RichTextLabel" parent="UI/CollectionContainer"]
+offset_left = 680.0
+offset_top = 120.0
+offset_right = 1130.0
+offset_bottom = 520.0
+bbcode_enabled = true
+fit_content = true
+text = "Select an item to view details"
+
+[node name="ButtonContainer" type="VBoxContainer" parent="UI/CollectionContainer"]
+offset_left = 400.0
+offset_top = 140.0
+offset_right = 580.0
+offset_bottom = 340.0
+theme_override_constants/separation = 10
+
+[node name="AcceptButton" type="Button" parent="UI/CollectionContainer/ButtonContainer"]
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+disabled = true
+text = "Accept Selected"
+
+[node name="AcceptAllButton" type="Button" parent="UI/CollectionContainer/ButtonContainer"]
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+text = "Accept All Items"
+
+[node name="DisposeButton" type="Button" parent="UI/CollectionContainer/ButtonContainer"]
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+disabled = true
+text = "Dispose Selected"
+
+[node name="DisposeAllButton" type="Button" parent="UI/CollectionContainer/ButtonContainer"]
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+text = "Dispose All Items"
+
 [node name="ContinueButton" type="Button" parent="UI"]
-offset_left = 768.0
-offset_top = 64.0
-offset_right = 847.0
-offset_bottom = 95.0
+offset_left = 968.0
+offset_top = 320.0
+offset_right = 1148.0
+offset_bottom = 380.0
 text = "Continue"
 
 [node name="AcceptRewardButton" type="Button" parent="UI"]
@@ -94,29 +151,29 @@ offset_bottom = 319.0
 text = "Accept Rewards"
 
 [node name="NextFloorButton" type="Button" parent="UI"]
-offset_left = 768.0
-offset_top = 112.0
-offset_right = 857.0
-offset_bottom = 143.0
+offset_left = 968.0
+offset_top = 448.0
+offset_right = 1148.0
+offset_bottom = 508.0
 text = "Next Floor"
 
 [node name="QuitButton" type="Button" parent="UI"]
-offset_left = 768.0
-offset_top = 160.0
-offset_right = 880.0
-offset_bottom = 191.0
+offset_left = 968.0
+offset_top = 576.0
+offset_right = 1148.0
+offset_bottom = 636.0
 text = "Back to Town"
 
 [node name="EquipmentButton" type="Button" parent="UI"]
-offset_left = 960.0
-offset_top = 112.0
-offset_right = 1053.0
-offset_bottom = 143.0
+offset_left = 968.0
+offset_top = 192.0
+offset_right = 1148.0
+offset_bottom = 252.0
 text = "Equipment"
 
 [node name="InventoryButton" type="Button" parent="UI"]
-offset_left = 960.0
+offset_left = 968.0
 offset_top = 64.0
-offset_right = 1043.0
-offset_bottom = 95.0
+offset_right = 1148.0
+offset_bottom = 124.0
 text = "Inventory"

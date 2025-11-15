@@ -47,8 +47,8 @@ color = Color(0.541176, 0.541176, 0.541176, 1)
 blend_mode = 2
 
 [node name="PointLight2D6" type="PointLight2D" parent="."]
-position = Vector2(600, 384)
-scale = Vector2(12.8333, 8.33333)
+position = Vector2(600, 708)
+scale = Vector2(12.3333, 14.4167)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.74
 texture = SubResource("GradientTexture2D_u466w")
@@ -190,13 +190,14 @@ text = "Move All To Inventory"
 
 [node name="BackButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 256.0
+offset_left = 976.0
 offset_top = 576.0
-offset_right = 436.0
+offset_right = 1156.0
 offset_bottom = 636.0
 text = "Back to Town"
 
 [node name="ItemInfoLabel" type="RichTextLabel" parent="."]
+layout_mode = 0
 offset_left = 688.0
 offset_top = 64.0
 offset_right = 1176.0

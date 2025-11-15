@@ -1,6 +1,4 @@
-# RewardScene.gd - FIXED
-# Fixes: State persistence, duplication prevention, proper restoration
-
+# RewardScene.gd - FIXED: Proper initialization order
 extends Control
 
 signal rewards_accepted
@@ -12,14 +10,11 @@ var rewards: Dictionary = {}
 var player_character: CharacterData
 var is_boss_fight: bool = false
 var current_floor: int = 1
+var current_wave: int = 1
 var max_floor: int = 25
-var setup_complete = false
 var xp_gained: int = 0
-
-# Track collected items - this is the SOURCE OF TRUTH
-var collected_items: Dictionary = {}  # item_key -> true
-
-# NEW: Track if auto-rewards were already given
+var dungeon_description
+var collected_items: Dictionary = {}
 var auto_rewards_given: bool = false
 
 @onready var reward_label: RichTextLabel = $UI/RewardLabel
@@ -28,35 +23,29 @@ var auto_rewards_given: bool = false
 @onready var next_floor_button: Button = $UI/NextFloorButton
 @onready var equip_button = $UI/EquipmentButton
 @onready var use_consumable_button = $UI/InventoryButton
-
-# ItemList-based UI (now from .tscn)
-@onready var reward_items_list: ItemList = $UI/RewardItemsList
-@onready var item_info_label: RichTextLabel = $UI/ItemInfoLabel
-@onready var accept_button: Button = $UI/AcceptButton
-@onready var accept_all_button: Button = $UI/AcceptAllButton
-@onready var dispose_button: Button = $UI/DisposeButton
-@onready var dispose_all_button: Button = $UI/DisposeAllButton
+@onready var reward_items_list: ItemList = $UI/CollectionContainer/RewardItemsList
+@onready var item_info_label: RichTextLabel = $UI/CollectionContainer/ItemInfoLabel
+@onready var accept_button: Button = $UI/CollectionContainer/ButtonContainer/AcceptButton
+@onready var accept_all_button: Button = $UI/CollectionContainer/ButtonContainer/AcceptAllButton
+@onready var dispose_button: Button = $UI/CollectionContainer/ButtonContainer/DisposeButton
+@onready var dispose_all_button: Button = $UI/CollectionContainer/ButtonContainer/DisposeAllButton
 @onready var auto_rewards_label: Label = $UI/AutoRewardsLabel
-@onready var collection_container: Control = $UI/CollectionContainer  # NEW: Container for all collection UI
+@onready var collection_container: Control = $UI/CollectionContainer
 
 func _ready():
 	print("RewardScene: _ready called")
 	
-	# Restore saved reward state
+	# Restore saved state if exists
 	var saved_state = SceneManager.get_saved_reward_state()
 	if saved_state != null:
 		rewards = saved_state.rewards
 		xp_gained = saved_state.xp_gained
 		
-		# CRITICAL FIX: Restore collected_items
 		if saved_state.has("collected_items"):
 			collected_items = saved_state.collected_items
-			print("RewardScene: Restored %d collected items" % collected_items.size())
 		
-		# CRITICAL FIX: Restore auto_rewards_given state
 		if saved_state.has("auto_rewards_given"):
 			auto_rewards_given = saved_state.auto_rewards_given
-			print("RewardScene: Auto rewards already given: %s" % auto_rewards_given)
 		
 		if saved_state.has("is_boss_fight"):
 			is_boss_fight = saved_state.is_boss_fight
@@ -64,148 +53,91 @@ func _ready():
 			current_floor = saved_state.current_floor
 		if saved_state.has("max_floor"):
 			max_floor = saved_state.max_floor
-		
-		print("RewardScene: Restored saved state with %d collected items" % collected_items.size())
-		_connect_signals_to_scene_manager()
 	
-	call_deferred("deferred_setup")
+	# Connect UI signals
+	setup_ui_signals()
+	_connect_signals_to_scene_manager()
 
-func deferred_setup():
-	print("RewardScene: deferred_setup called")
-	setup_ui()
-	setup_item_list_ui()
-	
-	if not setup_complete:
-		display_rewards()
-	
-	update_button_visibility()
-	setup_complete = true
-
-func setup_ui():
-	# Connect existing buttons
-	if continue_button:
-		if continue_button.is_connected("pressed", Callable(self, "_on_continue_pressed")):
-			continue_button.disconnect("pressed", Callable(self, "_on_continue_pressed"))
-		continue_button.connect("pressed", Callable(self, "_on_continue_pressed"))
-		
-	if quit_button:
-		if quit_button.is_connected("pressed", Callable(self, "_on_quit_pressed")):
-			quit_button.disconnect("pressed", Callable(self, "_on_quit_pressed"))
-		quit_button.connect("pressed", Callable(self, "_on_quit_pressed"))
-		
-	if next_floor_button:
-		if next_floor_button.is_connected("pressed", Callable(self, "_on_next_floor_pressed")):
-			next_floor_button.disconnect("pressed", Callable(self, "_on_next_floor_pressed"))
-		next_floor_button.connect("pressed", Callable(self, "_on_next_floor_pressed"))
-		
-	if equip_button:
-		if equip_button.is_connected("pressed", Callable(self, "_on_equip_pressed")):
-			equip_button.disconnect("pressed", Callable(self, "_on_equip_pressed"))
-		equip_button.connect("pressed", Callable(self, "_on_equip_pressed"))
-		
-	if use_consumable_button:
-		if use_consumable_button.is_connected("pressed", Callable(self, "_on_use_consumable_pressed")):
-			use_consumable_button.disconnect("pressed", Callable(self, "_on_use_consumable_pressed"))
-		use_consumable_button.connect("pressed", Callable(self, "_on_use_consumable_pressed"))
-
-func setup_item_list_ui():
-	"""Create ItemList-based UI similar to Inventory/Stash"""
-	
-	# Auto rewards label (XP/Gold - always collected)
-	auto_rewards_label = Label.new()
-	auto_rewards_label.position = Vector2(320, 40)
-	auto_rewards_label.custom_minimum_size = Vector2(300, 60)
-	auto_rewards_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	add_child(auto_rewards_label)
-	
-	# ItemList for rewards
-	reward_items_list = ItemList.new()
-	reward_items_list.position = Vector2(88, 120)
-	reward_items_list.custom_minimum_size = Vector2(280, 320)
-	reward_items_list.select_mode = ItemList.SELECT_SINGLE
+func setup_ui_signals():
+	"""Connect all UI signals"""
+	continue_button.pressed.connect(_on_continue_pressed)
+	quit_button.pressed.connect(_on_quit_pressed)
+	next_floor_button.pressed.connect(_on_next_floor_pressed)
+	equip_button.pressed.connect(_on_equip_pressed)
+	use_consumable_button.pressed.connect(_on_use_consumable_pressed)
 	reward_items_list.item_clicked.connect(_on_reward_item_clicked)
-	add_child(reward_items_list)
-	
-	# Item info display
-	item_info_label = RichTextLabel.new()
-	item_info_label.position = Vector2(680, 120)
-	item_info_label.custom_minimum_size = Vector2(450, 400)
-	item_info_label.bbcode_enabled = true
-	item_info_label.fit_content = true
-	item_info_label.text = "Select an item to view details"
-	add_child(item_info_label)
-	
-	# Action buttons container
-	var button_container = VBoxContainer.new()
-	button_container.position = Vector2(400, 140)
-	button_container.add_theme_constant_override("separation", 10)
-	add_child(button_container)
-	
-	# Accept selected button
-	accept_button = Button.new()
-	accept_button.text = "Accept Selected"
-	accept_button.custom_minimum_size = Vector2(180, 40)
-	accept_button.disabled = true
 	accept_button.pressed.connect(_on_accept_selected_pressed)
-	button_container.add_child(accept_button)
-	
-	# Accept all button
-	accept_all_button = Button.new()
-	accept_all_button.text = "Accept All Items"
-	accept_all_button.custom_minimum_size = Vector2(180, 40)
 	accept_all_button.pressed.connect(_on_accept_all_pressed)
-	button_container.add_child(accept_all_button)
-	
-	# Dispose selected button
-	dispose_button = Button.new()
-	dispose_button.text = "Dispose Selected"
-	dispose_button.custom_minimum_size = Vector2(180, 40)
-	dispose_button.disabled = true
 	dispose_button.pressed.connect(_on_dispose_selected_pressed)
-	button_container.add_child(dispose_button)
-	
-	# Dispose all button
-	dispose_all_button = Button.new()
-	dispose_all_button.text = "Dispose All Items"
-	dispose_all_button.custom_minimum_size = Vector2(180, 40)
 	dispose_all_button.pressed.connect(_on_dispose_all_pressed)
-	button_container.add_child(dispose_all_button)
 
 func set_rewards(new_rewards: Dictionary):
-	print("RewardScene: set_rewards called")
+	print("RewardScene: set_rewards called with %d keys" % new_rewards.size())
 	rewards = new_rewards
-	# DON'T clear collected_items here - preserve existing state
-	
-	if is_inside_tree():
-		display_rewards()
 
 func set_xp_gained(xp: int):
 	print("RewardScene: set_xp_gained called with: ", xp)
 	xp_gained = xp
-	
-	if is_inside_tree():
-		display_rewards()
 
-func set_dungeon_info(boss_fight: bool, floor: int, max_floor_val: int):
-	is_boss_fight = boss_fight
+@warning_ignore("shadowed_global_identifier")
+func set_dungeon_info(_boss_fight: bool, wave: int, floor: int, _max_floor: int, description: String):
+	is_boss_fight = _boss_fight
+	current_wave = wave
 	current_floor = floor
-	max_floor = max_floor_val
-	print("RewardScene: Dungeon info set - Boss: ", is_boss_fight, ", Floor: ", current_floor)
+	max_floor = _max_floor
 	
-	if is_inside_tree():
-		update_button_visibility()
+	if description == null or description == "":
+		dungeon_description = "Dungeon Floor %d" % floor
+	elif typeof(description) == TYPE_STRING:
+		dungeon_description = description
+	else:
+		dungeon_description = str(description)
+
+	print("RewardScene: Dungeon info set - Boss: %s, Floor: %d, Wave: %d" % [is_boss_fight, current_floor, current_wave])
 
 func set_player_character(character: CharacterData):
-	player_character = character
-	print("RewardScene: Player character set")
+	print("RewardScene: set_player_character called")
 	
-	if is_inside_tree():
-		display_rewards()
+	if not character:
+		push_error("RewardScene: Attempted to set null player_character!")
+		return
+	
+	player_character = character
+	print("RewardScene: Player character set successfully")
+
+func initialize_display():
+	"""Called by SceneManager after all setup is complete"""
+	print("RewardScene: initialize_display called")
+	display_rewards()
+	update_button_visibility()
+	_check_and_auto_collect()
+
+func _check_and_auto_collect():
+	"""Check if there are no collectable items and auto-collect if needed"""
+	if not player_character:
+		print("RewardScene: Cannot auto-collect - no player character")
+		return
+	
+	if not _has_collectable_items() and not auto_rewards_given:
+		print("RewardScene: No collectable items - auto-collecting rewards")
+		_add_auto_rewards()
+		_save_state_and_character()
+
+func _has_collectable_items() -> bool:
+	"""Check if there are any items that need to be collected/disposed"""
+	for item_id in rewards:
+		if item_id not in ["currency", "xp", "equipment_instances"]:
+			return true
+	
+	if rewards.has("equipment_instances"):
+		if rewards["equipment_instances"].size() > 0:
+			return true
+	
+	return false
 
 func display_rewards():
-	"""Display rewards in ItemList format"""
-	if not reward_items_list or not auto_rewards_label:
-		print("RewardScene: UI not ready yet")
+	if not player_character:
+		print("RewardScene: Cannot display rewards - no player character")
 		return
 	
 	print("RewardScene: Displaying rewards (%d collected)" % collected_items.size())
@@ -220,6 +152,16 @@ func display_rewards():
 		auto_text += " [Already Collected]"
 	
 	auto_rewards_label.text = auto_text
+
+	var has_collectable_items = _has_collectable_items()
+	
+	# Hide collection UI if there are no collectable items
+	collection_container.visible = has_collectable_items
+	print("RewardScene: Collection UI visibility set to: ", has_collectable_items)
+	
+	if not has_collectable_items:
+		print("RewardScene: No collectable items - skipping ItemList population")
+		return
 	
 	# Populate ItemList
 	reward_items_list.clear()
@@ -241,7 +183,6 @@ func display_rewards():
 			
 			reward_items_list.add_item(display_text)
 			
-			# Store metadata
 			reward_items_list.set_item_metadata(index, {
 				"type": "consumable",
 				"id": item_id,
@@ -250,7 +191,6 @@ func display_rewards():
 				"collected": collected
 			})
 			
-			# Gray out if collected
 			if collected:
 				reward_items_list.set_item_custom_fg_color(index, Color(0.5, 0.5, 0.5))
 			
@@ -271,14 +211,12 @@ func display_rewards():
 				
 				reward_items_list.add_item(display_text)
 				
-				# Color by rarity
 				if not collected:
 					var rarity_color = Color(equipment.get_rarity_color())
 					reward_items_list.set_item_custom_fg_color(index, rarity_color)
 				else:
 					reward_items_list.set_item_custom_fg_color(index, Color(0.5, 0.5, 0.5))
 				
-				# Store metadata
 				reward_items_list.set_item_metadata(index, {
 					"type": "equipment",
 					"key": equip_key,
@@ -291,26 +229,19 @@ func display_rewards():
 	print("RewardScene: Populated ItemList with %d items" % index)
 
 func _on_reward_item_clicked(index: int, _at_position: Vector2, _mouse_button_index: int):
-	"""Handle item selection"""
 	print("Reward item clicked at index: ", index)
 	
 	var metadata = reward_items_list.get_item_metadata(index)
 	if not metadata:
 		return
 	
-	# Enable/disable buttons based on collection status
 	var is_collected = metadata.get("collected", false)
 	accept_button.disabled = is_collected
 	dispose_button.disabled = is_collected
 	
-	# Display item info
 	display_item_info(metadata["item"])
 
 func display_item_info(item: Item):
-	"""Display detailed item information"""
-	if not item_info_label:
-		return
-	
 	var info_text = ""
 	
 	if item is Equipment:
@@ -341,7 +272,6 @@ func display_item_info(item: Item):
 	item_info_label.text = info_text
 
 func _on_accept_selected_pressed():
-	"""Accept the selected item"""
 	var selected = reward_items_list.get_selected_items()
 	if selected.is_empty():
 		return
@@ -353,7 +283,6 @@ func _on_accept_selected_pressed():
 		print("Item already collected")
 		return
 	
-	# Add to inventory
 	if metadata["type"] == "consumable":
 		var item = metadata["item"]
 		var quantity = metadata["quantity"]
@@ -367,7 +296,6 @@ func _on_accept_selected_pressed():
 		collected_items[metadata["key"]] = true
 		print("Accepted: %s" % equipment.name)
 	
-	# Save and refresh
 	_save_state_and_character()
 	display_rewards()
 	item_info_label.text = "Select an item to view details"
@@ -375,10 +303,8 @@ func _on_accept_selected_pressed():
 	dispose_button.disabled = true
 
 func _on_accept_all_pressed():
-	"""Accept all uncollected items"""
 	print("Accept all pressed")
 	
-	# Add consumables/materials
 	for item_id in rewards:
 		if item_id in ["currency", "xp", "equipment_instances"]:
 			continue
@@ -391,7 +317,6 @@ func _on_accept_all_pressed():
 				collected_items[item_id] = true
 				print("Accepted: %dx %s" % [quantity, item.name])
 	
-	# Add equipment
 	if rewards.has("equipment_instances"):
 		var equipment_list = rewards["equipment_instances"]
 		for i in range(equipment_list.size()):
@@ -404,16 +329,12 @@ func _on_accept_all_pressed():
 					collected_items[equip_key] = true
 					print("Accepted: %s" % equipment.name)
 	
-	# Add auto rewards (only once)
 	_add_auto_rewards()
-	
-	# Save and refresh
 	_save_state_and_character()
 	display_rewards()
 	item_info_label.text = "All items collected!"
 
 func _on_dispose_selected_pressed():
-	"""Dispose of selected item"""
 	var selected = reward_items_list.get_selected_items()
 	if selected.is_empty():
 		return
@@ -424,7 +345,6 @@ func _on_dispose_selected_pressed():
 	if metadata.get("collected", false):
 		return
 	
-	# Show confirmation
 	var item = metadata["item"]
 	var dialog = ConfirmationDialog.new()
 	dialog.title = "Dispose Item?"
@@ -435,7 +355,6 @@ func _on_dispose_selected_pressed():
 	dialog.popup_centered()
 	
 	dialog.confirmed.connect(func():
-		# Mark as collected but don't add to inventory
 		if metadata["type"] == "consumable":
 			collected_items[metadata["id"]] = true
 		elif metadata["type"] == "equipment":
@@ -451,7 +370,6 @@ func _on_dispose_selected_pressed():
 	dialog.canceled.connect(func(): dialog.queue_free())
 
 func _on_dispose_all_pressed():
-	"""Dispose of all items"""
 	var dialog = ConfirmationDialog.new()
 	dialog.title = "Dispose All Items?"
 	dialog.dialog_text = "Are you sure you want to dispose of ALL uncollected items?\n\nXP and gold will still be collected."
@@ -461,7 +379,6 @@ func _on_dispose_all_pressed():
 	dialog.popup_centered()
 	
 	dialog.confirmed.connect(func():
-		# Mark all as collected without adding to inventory
 		for item_id in rewards:
 			if item_id not in ["currency", "xp", "equipment_instances"]:
 				collected_items[item_id] = true
@@ -471,9 +388,7 @@ func _on_dispose_all_pressed():
 			for i in range(equipment_list.size()):
 				collected_items["equip_%d" % i] = true
 		
-		# Add auto rewards
 		_add_auto_rewards()
-		
 		_save_state_and_character()
 		display_rewards()
 		item_info_label.text = "All items disposed"
@@ -484,7 +399,10 @@ func _on_dispose_all_pressed():
 	dialog.canceled.connect(func(): dialog.queue_free())
 
 func _add_auto_rewards():
-	"""Add XP and currency automatically (only once)"""
+	if not player_character:
+		push_error("RewardScene: Cannot add auto rewards - player_character is null!")
+		return
+	
 	if auto_rewards_given:
 		print("RewardScene: Auto rewards already given, skipping")
 		return
@@ -504,12 +422,14 @@ func _add_auto_rewards():
 	print("RewardScene: Auto rewards given, flag set")
 
 func _all_items_collected() -> bool:
-	"""Check if all items have been collected/disposed"""
+	if not _has_collectable_items():
+		print("RewardScene: No collectable items - auto-allowing progression")
+		return true
+	
 	for item_id in rewards:
-		if item_id in ["currency", "xp", "equipment_instances"]:
-			continue
-		if not collected_items.has(item_id):
-			return false
+		if item_id not in ["currency", "xp", "equipment_instances"]:
+			if not collected_items.has(item_id):
+				return false
 	
 	if rewards.has("equipment_instances"):
 		var equipment_list = rewards["equipment_instances"]
@@ -522,7 +442,6 @@ func _all_items_collected() -> bool:
 func show_level_up_overlay():
 	print("RewardScene: Showing level-up overlay")
 	
-	# Hide UI during level-up
 	if reward_items_list:
 		reward_items_list.visible = false
 	if accept_button:
@@ -541,7 +460,6 @@ func show_level_up_overlay():
 	await level_up_scene.level_up_complete
 	level_up_scene.queue_free()
 	
-	# Restore UI
 	if reward_items_list:
 		reward_items_list.visible = true
 	if accept_button:
@@ -553,9 +471,11 @@ func show_level_up_overlay():
 	if dispose_all_button:
 		dispose_all_button.visible = true
 
-# CRITICAL FIX: Save state before navigation
 func _save_state_and_character():
-	"""Save both reward state and character data"""
+	if not player_character:
+		push_error("RewardScene: Cannot save - player_character is null!")
+		return
+	
 	SaveManager.save_game(player_character)
 	SceneManager.save_reward_state(rewards, xp_gained, _all_items_collected(), collected_items, auto_rewards_given)
 	print("RewardScene: Saved state - %d collected, auto_given=%s" % [collected_items.size(), auto_rewards_given])
@@ -571,9 +491,10 @@ func _on_continue_pressed():
 	collected_items.clear()
 	auto_rewards_given = false
 	SceneManager.clear_saved_reward_state()
-	
+
 	SceneManager.reward_scene_active = false
 	SaveManager.save_game(player_character)
+	emit_signal("next_wave")
 	emit_signal("rewards_accepted")
 
 func _on_next_floor_pressed():
@@ -592,7 +513,6 @@ func _on_next_floor_pressed():
 	emit_signal("next_floor")
 
 func _on_quit_pressed():
-	# Auto-collect remaining items
 	if not _all_items_collected():
 		_on_accept_all_pressed()
 	
@@ -606,15 +526,14 @@ func _on_quit_pressed():
 	SaveManager.save_game(player_character)
 	SceneManager.reward_scene_active = false
 	SceneManager.change_to_town(player_character)
+	emit_signal("quit_dungeon")
 
 func _on_equip_pressed():
-	# CRITICAL FIX: Save state with auto_rewards_given flag
 	SceneManager.save_reward_state(rewards, xp_gained, _all_items_collected(), collected_items, auto_rewards_given)
 	SceneManager.reward_scene_active = true
 	SceneManager.push_scene("res://scenes/EquipmentScene.tscn", player_character)
 
 func _on_use_consumable_pressed():
-	# CRITICAL FIX: Save state with auto_rewards_given flag
 	SceneManager.save_reward_state(rewards, xp_gained, _all_items_collected(), collected_items, auto_rewards_given)
 	SceneManager.reward_scene_active = true
 	SceneManager.push_scene("res://scenes/InventoryScene.tscn", player_character)

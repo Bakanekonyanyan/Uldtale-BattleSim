@@ -308,12 +308,16 @@ func _find_debuff_skill() -> Skill:
 # === ITEM FINDERS ===
 
 func _find_healing_item() -> Item:
-	"""Find healing item (checks quantity)"""
+	"""Find healing item (checks quantity and inventory existence)"""
+	# NEW: Check if inventory exists and has items
+	if not enemy.inventory or enemy.inventory.items.is_empty():
+		return null
+	
 	for item_id in enemy.inventory.items:
 		var item_data = enemy.inventory.items[item_id]
 		var item = item_data.item
 		
-		# ✅ FIX: Check if we actually have quantity
+		# Check if we actually have quantity
 		if item and item.item_type == Item.ItemType.CONSUMABLE and item_data.quantity > 0:
 			if item.consumable_type == Item.ConsumableType.HEAL:
 				return item
@@ -321,27 +325,42 @@ func _find_healing_item() -> Item:
 
 func _find_restore_item() -> Item:
 	"""Find MP/SP restore item"""
+	# NEW: Check if inventory exists and has items
+	if not enemy.inventory or enemy.inventory.items.is_empty():
+		return null
+	
 	for item_id in enemy.inventory.items:
-		var item = enemy.inventory.items[item_id].item
-		if item and item.item_type == Item.ItemType.CONSUMABLE:
+		var item_data = enemy.inventory.items[item_id]
+		var item = item_data.item
+		if item and item.item_type == Item.ItemType.CONSUMABLE and item_data.quantity > 0:
 			if item.consumable_type == Item.ConsumableType.RESTORE:
 				return item
 	return null
 
 func _find_buff_item() -> Item:
 	"""Find buff item"""
+	# NEW: Check if inventory exists and has items
+	if not enemy.inventory or enemy.inventory.items.is_empty():
+		return null
+	
 	for item_id in enemy.inventory.items:
-		var item = enemy.inventory.items[item_id].item
-		if item and item.item_type == Item.ItemType.CONSUMABLE:
+		var item_data = enemy.inventory.items[item_id]
+		var item = item_data.item
+		if item and item.item_type == Item.ItemType.CONSUMABLE and item_data.quantity > 0:
 			if item.consumable_type == Item.ConsumableType.BUFF:
 				return item
 	return null
 
 func _find_damage_item() -> Item:
 	"""Find damage/debuff item"""
+	# NEW: Check if inventory exists and has items
+	if not enemy.inventory or enemy.inventory.items.is_empty():
+		return null
+	
 	for item_id in enemy.inventory.items:
-		var item = enemy.inventory.items[item_id].item
-		if item and item.item_type == Item.ItemType.CONSUMABLE:
+		var item_data = enemy.inventory.items[item_id]
+		var item = item_data.item
+		if item and item.item_type == Item.ItemType.CONSUMABLE and item_data.quantity > 0:
 			if item.consumable_type in [Item.ConsumableType.DAMAGE, Item.ConsumableType.DEBUFF]:
 				return item
 	return null

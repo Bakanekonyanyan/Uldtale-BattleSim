@@ -71,27 +71,28 @@ text = "XP:"
 
 [node name="CombatLogLabel" type="Label" parent="BattleUIController"]
 offset_left = 704.0
-offset_top = 40.0
+offset_top = 24.0
 offset_right = 797.0
-offset_bottom = 66.0
+offset_bottom = 50.0
 text = "Combat Log"
 
 [node name="CombatLogWindow" type="Panel" parent="BattleUIController"]
-offset_left = 768.0
+offset_left = 704.0
 offset_top = 64.0
 offset_right = 1168.0
 offset_bottom = 264.0
 scale = Vector2(1, 1.36)
 
 [node name="CombatLog" type="RichTextLabel" parent="BattleUIController"]
-offset_left = 768.0
+offset_left = 704.0
 offset_top = 64.0
 offset_right = 1168.0
-offset_bottom = 264.0
+offset_bottom = 336.0
 bbcode_enabled = true
 scroll_following = true
 
 [node name="DebugToggleButton" type="Button" parent="BattleUIController"]
+visible = false
 offset_left = 768.0
 offset_top = 368.0
 offset_right = 826.0
@@ -100,20 +101,9 @@ text = "Debug"
 
 [node name="DebugWindow" type="Panel" parent="BattleUIController"]
 offset_left = 768.0
-offset_top = 416.0
+offset_top = 384.0
 offset_right = 1168.0
-offset_bottom = 616.0
-scale = Vector2(1, 1.2)
-
-[node name="DebugText" type="RichTextLabel" parent="BattleUIController/DebugWindow"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-bbcode_enabled = true
-scroll_following = true
+offset_bottom = 632.0
 
 [node name="InventoryMenu" type="Control" parent="BattleUIController"]
 layout_mode = 3
@@ -127,30 +117,32 @@ script = ExtResource("2_ng7cs")
 [node name="ItemList" type="ItemList" parent="BattleUIController/InventoryMenu"]
 layout_mode = 0
 offset_left = 336.0
-offset_top = 200.0
-offset_right = 592.0
-offset_bottom = 392.0
+offset_top = 216.0
+offset_right = 632.0
+offset_bottom = 464.0
 
 [node name="UseButton" type="Button" parent="BattleUIController/InventoryMenu"]
+custom_minimum_size = Vector2(120, 40)
 layout_mode = 0
-offset_left = 360.0
-offset_top = 408.0
-offset_right = 397.0
-offset_bottom = 439.0
+offset_left = 336.0
+offset_top = 480.0
+offset_right = 456.0
+offset_bottom = 520.0
 text = "Use"
 
 [node name="CancelButton" type="Button" parent="BattleUIController/InventoryMenu"]
+custom_minimum_size = Vector2(120, 40)
 layout_mode = 0
-offset_left = 504.0
-offset_top = 408.0
-offset_right = 564.0
-offset_bottom = 439.0
+offset_left = 512.0
+offset_top = 480.0
+offset_right = 632.0
+offset_bottom = 520.0
 text = "Cancel"
 
 [node name="CurrencyLabel" type="Label" parent="BattleUIController/InventoryMenu"]
 layout_mode = 0
-offset_left = 464.0
-offset_top = 176.0
-offset_right = 539.0
-offset_bottom = 202.0
+offset_left = 336.0
+offset_top = 184.0
+offset_right = 411.0
+offset_bottom = 210.0
 text = "Currency:"

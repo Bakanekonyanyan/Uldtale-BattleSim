@@ -47,8 +47,8 @@ color = Color(0.541176, 0.541176, 0.541176, 1)
 blend_mode = 2
 
 [node name="PointLight2D6" type="PointLight2D" parent="."]
-position = Vector2(584, 312)
-scale = Vector2(12, 7.16667)
+position = Vector2(596, 708)
+scale = Vector2(12.25, 14.4167)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.74
 texture = SubResource("GradientTexture2D_qi7gr")
@@ -141,35 +141,35 @@ offset_right = 632.0
 offset_bottom = 72.0
 
 [node name="AllTab" type="Button" parent="UI/TabContainer"]
-custom_minimum_size = Vector2(100, 32)
+custom_minimum_size = Vector2(180, 60)
 layout_mode = 2
 text = "All"
 
 [node name="ConsumablesTab" type="Button" parent="UI/TabContainer"]
-custom_minimum_size = Vector2(100, 32)
+custom_minimum_size = Vector2(180, 60)
 layout_mode = 2
 text = "Consumables"
 
 [node name="WeaponsTab" type="Button" parent="UI/TabContainer"]
-custom_minimum_size = Vector2(100, 32)
+custom_minimum_size = Vector2(180, 60)
 layout_mode = 2
 text = "Weapons"
 
 [node name="ArmorTab" type="Button" parent="UI/TabContainer"]
-custom_minimum_size = Vector2(100, 32)
+custom_minimum_size = Vector2(180, 60)
 layout_mode = 2
 text = "Armor"
 
 [node name="MaterialsTab" type="Button" parent="UI/TabContainer"]
-custom_minimum_size = Vector2(100, 32)
+custom_minimum_size = Vector2(180, 60)
 layout_mode = 2
 text = "Materials"
 
 [node name="ItemList" type="ItemList" parent="UI"]
 offset_left = 32.0
-offset_top = 80.0
+offset_top = 128.0
 offset_right = 560.0
-offset_bottom = 288.0
+offset_bottom = 448.0
 
 [node name="UseButton" type="Button" parent="UI"]
 visible = false
@@ -180,17 +180,18 @@ offset_bottom = 327.0
 text = "Use"
 
 [node name="BackButton" type="Button" parent="UI"]
-offset_left = 480.0
-offset_top = 304.0
-offset_right = 544.0
-offset_bottom = 335.0
+custom_minimum_size = Vector2(180, 60)
+offset_left = 976.0
+offset_top = 576.0
+offset_right = 1156.0
+offset_bottom = 636.0
 text = "Back"
 
 [node name="ItemInfoLabel" type="RichTextLabel" parent="UI"]
 offset_left = 576.0
-offset_top = 80.0
-offset_right = 1176.0
-offset_bottom = 480.0
+offset_top = 128.0
+offset_right = 1152.0
+offset_bottom = 528.0
 bbcode_enabled = true
 text = "Select an item to view details"
 fit_content = true

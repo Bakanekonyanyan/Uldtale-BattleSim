@@ -16,6 +16,8 @@ signal action_selected(action: BattleAction)
 @export var floor_label: Label
 @export var dungeon_description_label: Label
 @export var inventory_menu: Control
+@export var combat_log_window: Panel
+@export var debug_window: Panel
 
 var player: CharacterData
 var enemy: CharacterData
@@ -47,6 +49,10 @@ func _ready():
 		dungeon_description_label = $DungeonDescriptionLabel
 	if not inventory_menu:
 		inventory_menu = $InventoryMenu
+	if not combat_log_window:
+		combat_log_window = $CombatLogWindow
+	if not debug_window:
+		debug_window = $DebugWindow
 	
 	_force_ui_visible()
 	
@@ -56,12 +62,26 @@ func _force_ui_visible():
 	var nodes = [
 		player_info_label, enemy_info_label, turn_label,
 		combat_log, xp_label, action_buttons,
-		wave_label, floor_label, dungeon_description_label
+		wave_label, floor_label, dungeon_description_label,
+		combat_log, debug_log, combat_log_window, debug_window
 	]
 	
 	for node in nodes:
 		if node:
 			node.visible = true
+			node.modulate = Color(1, 1, 1, 1)
+
+func _force_ui_invisible():
+	var nodes = [
+		player_info_label, enemy_info_label, turn_label,
+		combat_log, xp_label, action_buttons,
+		wave_label, floor_label, dungeon_description_label,
+		combat_log, debug_log, combat_log_window, debug_window
+	]
+	
+	for node in nodes:
+		if node:
+			node.visible = false
 			node.modulate = Color(1, 1, 1, 1)
 
 func lock_ui():

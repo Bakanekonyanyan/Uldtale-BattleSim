@@ -15,6 +15,7 @@ var enemy: CharacterData
 var is_boss_battle: bool = false
 var current_wave: int
 var current_floor: int
+var max_floor: int
 var dungeon_description: String
 
 # ✅ FIX: Track both item and main action
@@ -289,6 +290,8 @@ func _show_battle_complete_dialog(xp_gained: int):
 		emit_signal("battle_completed", true, xp_gained)
 		return
 	
+	ui_controller._force_ui_invisible()
+
 	var dialog = dialog_scene.instantiate()
 	add_child(dialog)
 	
@@ -333,14 +336,71 @@ func set_enemy(new_enemy: CharacterData):
 	if enemy.current_sp == 0:
 		enemy.current_sp = enemy.max_sp
 
-func set_dungeon_info(wave: int, floor: int, description: String):
+func set_dungeon_info(boss_fight: bool, wave: int, floor: int, _max_floor:int, description: String):
 	current_wave = wave
 	current_floor = floor
 	dungeon_description = description
-	
+	# CRITICAL FIX: Safely handle description parameter
+	if description == null or description == "":
+		dungeon_description = "Dungeon Floor %d" % floor
+	elif typeof(description) == TYPE_STRING:
+		dungeon_description = description
+	else:
+		# Convert whatever type it is to String
+		dungeon_description = str(description)
+		push_warning("BattleOrchestrator: Description was type %d, converted to String" % typeof(description))
+		
 	call_deferred("_deferred_start_battle")
 
+# Add this to BattleOrchestrator.gd
+
 func _deferred_start_battle():
-	await get_tree().process_frame
-	await get_tree().process_frame
+	print("BattleOrchestrator: _deferred_start_battle called")
+	print("  - Player: ", player.name if player else "NULL")
+	print("  - Enemy: ", enemy.name if enemy else "NULL")
+	print("  - Floor: %d, Wave: %d" % [current_floor, current_wave])
+	
+	# Validation
+	if not player:
+		push_error("BattleOrchestrator: Cannot start battle - player is null!")
+		return
+	
+	if not enemy:
+		push_error("BattleOrchestrator: Cannot start battle - enemy is null!")
+		return
+	
+	if not ui_controller:
+		push_error("BattleOrchestrator: Cannot start battle - ui_controller is null!")
+		return
+	
+	# ✅ FIX: Check if tree is valid before awaiting
+	var tree = get_tree()
+	if not tree:
+		push_error("BattleOrchestrator: Scene tree is null!")
+		return
+	
+	print("BattleOrchestrator: Waiting for scene to stabilize...")
+	
+	# Wait with timeout protection
+	var frames_waited = 0
+	var max_frames = 30
+	
+	while frames_waited < max_frames:
+		if not is_inside_tree():
+			push_error("BattleOrchestrator: Node removed from tree while waiting!")
+			return
+		
+		await tree.process_frame
+		frames_waited += 1
+		
+		# Check if we're ready
+		if ui_controller and ui_controller.is_inside_tree():
+			print("BattleOrchestrator: Scene ready after %d frames" % frames_waited)
+			break
+	
+	if frames_waited >= max_frames:
+		push_error("BattleOrchestrator: Timeout waiting for scene!")
+		return
+	
+	print("BattleOrchestrator: Starting battle now...")
 	start_battle()

@@ -1,13 +1,20 @@
-[gd_scene load_steps=2 format=3 uid="uid://dk1cgspayiajl"]
+[gd_scene load_steps=3 format=3 uid="uid://dk1cgspayiajl"]
 
 [ext_resource type="Script" uid="uid://btwlgo5u3nmhv" path="res://scenes/DungeonScene.gd" id="1_wqh1j"]
+[ext_resource type="Texture2D" uid="uid://dla1kv74t33i7" path="res://assets/Images/backgrounds/BossBackground.png" id="2_8tqfu"]
 
 [node name="DungeonScene" type="Control"]
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1_wqh1j")
 
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.241156, 0.241156, 0.241156, 1)
+position = Vector2(656, 488)
+texture = ExtResource("2_8tqfu")
+
 [node name="WaveLabel" type="Label" parent="."]
+visible = false
 layout_mode = 0
 offset_left = 8.0
 offset_right = 59.0
@@ -15,6 +22,7 @@ offset_bottom = 26.0
 text = "Wave: "
 
 [node name="FloorLabel" type="Label" parent="."]
+visible = false
 layout_mode = 0
 offset_left = 320.0
 offset_right = 413.0
@@ -22,8 +30,19 @@ offset_bottom = 26.0
 text = "Floor Level: "
 
 [node name="DungeonDescriptionLabel" type="Label" parent="."]
+modulate = Color(0.707904, 0.25913, 0.424674, 1)
 layout_mode = 0
-offset_left = 64.0
-offset_top = 40.0
-offset_right = 104.0
-offset_bottom = 63.0
+offset_left = 360.0
+offset_top = 192.0
+offset_right = 613.0
+offset_bottom = 371.0
+scale = Vector2(2, 2)
+text = "You descend into the dungeon... 
+
+A hunger for treasures, 
+and desire to test your skill.
+
+Go forth and delve dungeoneer!
+"
+horizontal_alignment = 1
+vertical_alignment = 1
