@@ -105,7 +105,7 @@ func show_floor_selection_dialog():
 	if current_character.max_floor_cleared == 1:
 		max_selectable = max(1, current_character.max_floor_cleared)
 	else:
-		max_selectable = max(1, current_character.max_floor_cleared + 1)
+		max_selectable = max(1, current_character.max_floor_cleared)
 	var selected_floor = 1  # Default to floor 1
 	var floor_buttons = []
 	

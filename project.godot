@@ -22,21 +22,20 @@ EnemyFactory="*res://scripts/autoload/EnemyFactory.gd"
 SkillManager="*res://scripts/autoload/SkillManager.gd"
 ItemManager="*res://scripts/autoload/ItemManager.gd"
 BossFactory="*res://scripts/autoload/BossFactory.gd"
-BattleManager="res://scripts/BattleManager.gd"
 CharacterManager="*res://scripts/autoload/CharacterManager.gd"
 SaveManager="*res://scripts/autoload/SaveManager.gd"
-LootManager="res://scripts/autoload/LootManager.gd"
+LootManager="*res://scripts/autoload/LootManager.gd"
 LevelSystem="*res://scripts/LevelSystem.gd"
 StatusEffects="*res://scripts/autoload/StatusEffectData.gd"
 RewardsManager="*res://scripts/autoload/RewardsManager.gd"
 MomentumSystem="*res://scripts/autoload/MomentumSystem.gd"
+DungeonStateManager="*res://scripts/autoload/DungeonStateManager.gd"
 
 [display]
 
 window/size/viewport_width=1200
 window/size/viewport_height=720
-window/stretch/mode="viewport"
-window/stretch/aspect="expand"
+window/stretch/mode="canvas_items"
 
 [rendering]
 

@@ -54,15 +54,25 @@ func start_battle():
 	turn_controller.turn_ended.connect(_on_turn_ended)
 	turn_controller.turn_skipped.connect(_on_turn_skipped)
 	
-	# Initialize UI
+	# ✅ Initialize UI and force immediate update
 	if ui_controller:
 		ui_controller.initialize(player, enemy)
 		ui_controller.action_selected.connect(_on_action_selected)
+		
+		# ✅ CRITICAL: Force immediate character info update
+		ui_controller.update_character_info(player, enemy)
+		ui_controller.update_xp_display()
+		ui_controller.update_debug_display()
+		
+		print("BattleOrchestrator: UI initialized with character data")
+	else:
+		push_error("BattleOrchestrator: ui_controller is null!")
+		return
 	
 	# Initialize resources
 	_initialize_resources()
 	
-	# Start first turn
+	# ✅ Now safe to start turn sequence (scene is already deferred)
 	turn_controller.start_first_turn()
 
 func _validate_setup() -> bool:
@@ -143,6 +153,10 @@ func _on_turn_skipped(character: CharacterData, reason: String):
 func _setup_player_turn():
 	"""Setup player's turn"""
 	print("BattleOrchestrator: Player's turn")
+	
+	# ✅ FIX: Unlock UI when player's turn starts
+	ui_controller.unlock_ui()
+	
 	ui_controller.setup_player_actions(item_action_used)
 	ui_controller.enable_actions()
 
@@ -150,29 +164,42 @@ func _on_action_selected(action: BattleAction):
 	"""Handle player action selection"""
 	print("BattleOrchestrator: Action selected - %s" % action.get_description())
 	
+	# ✅ UI already locked by button press in BattleUIController
+	
 	# Special handling for item actions (bonus action)
 	if action.type == BattleAction.ActionType.ITEM:
-		if not item_action_used:
-			_execute_item_action(action)
-			return
+		_execute_item_action(action)
+		return
 	
-	# Regular actions
+	# Regular actions end the turn
 	_execute_action(action, true)
 
 func _execute_item_action(action: BattleAction):
 	"""Execute item as bonus action"""
+	print("BattleOrchestrator: Executing item as bonus action")
+	
+	# ✅ UI already locked by button press
+	
 	var result = combat_engine.execute_action(action)
 	ui_controller.display_result(result)
 	
+	# Brief pause for feedback
+	await get_tree().create_timer(0.5).timeout
+	
 	# Mark item action used
 	item_action_used = true
+	print("BattleOrchestrator: Item action used - player can still take main action")
 	
 	# Check for battle end
 	if _check_battle_end():
 		return
 	
-	# Refresh actions (show item action is used)
+	# Refresh actions to show item used
 	ui_controller.setup_player_actions(item_action_used)
+	
+	# ✅ FIX: Unlock UI so player can take main action
+	ui_controller.unlock_ui()
+	ui_controller.enable_actions()
 
 # === ENEMY TURN ===
 
@@ -197,6 +224,10 @@ func _execute_enemy_turn():
 
 func _execute_action(action: BattleAction, is_player: bool):
 	"""Execute any action"""
+	print("BattleOrchestrator: Executing action - %s" % action.get_description())
+	
+	# ✅ UI already locked if player action (by button press)
+	
 	var result = combat_engine.execute_action(action)
 	
 	# Display result
@@ -211,9 +242,10 @@ func _execute_action(action: BattleAction, is_player: bool):
 	
 	# Check for battle end
 	if _check_battle_end():
+		# ✅ Battle over - don't unlock
 		return
 	
-	# End turn
+	# End turn (next turn will unlock/enable)
 	turn_controller.end_current_turn()
 
 # === BATTLE END ===
@@ -319,5 +351,12 @@ func set_dungeon_info(wave: int, floor: int, description: String):
 	if ui_controller:
 		ui_controller.update_dungeon_info(wave, floor, description)
 	
-	# Start battle after info is set
-	call_deferred("start_battle")
+	# ✅ FIX: Don't call start_battle immediately - wait for scene to be fully ready
+	# Use call_deferred to ensure UI is completely initialized
+	call_deferred("_deferred_start_battle")
+
+func _deferred_start_battle():
+	"""Start battle after scene is fully ready"""
+	# Wait one additional frame to ensure UI rendering is complete
+	await get_tree().process_frame
+	start_battle()

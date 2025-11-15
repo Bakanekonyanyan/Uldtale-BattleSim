@@ -167,6 +167,21 @@ func _on_battle_completed(player_won: bool, xp_gained: int):
 		change_to_character_selection()
 		return
 	
+	# ✅ FIX: Update max_floor_cleared IMMEDIATELY after boss victory
+	if DungeonStateManager.is_boss_fight:
+		var cleared_floor = DungeonStateManager.current_floor
+		var player = DungeonStateManager.active_player
+		
+		if cleared_floor >= player.max_floor_cleared:
+			player.max_floor_cleared = cleared_floor
+			player.max_floor_cleared += 1
+			
+			print("SceneManager: Boss defeated! Max floor cleared updated to %d" % player.max_floor_cleared)
+			
+			# ✅ CRITICAL: Save immediately so it persists regardless of player choice
+			SaveManager.save_game(player)
+			print("SceneManager: Progress saved after boss victory")
+	
 	# Check if "Press On" (xp = -1) or "Take Breather" (xp >= 0)
 	if xp_gained == -1:
 		_continue_with_momentum()
@@ -201,29 +216,24 @@ func _on_rewards_accepted():
 	var battle_data = DungeonStateManager.advance_wave()
 	start_battle(battle_data)
 
-func _on_next_floor_pressed():
-	print("RewardScene: Next floor pressed")
-	var player = DungeonStateManager.active_player
-	# Check if rewards collected
-	if not rewards_accepted:
-		
+func _on_next_floor():
+	"""Advance to next floor"""
+	print("SceneManager: Next floor requested")
+	
+	reward_scene_active = false
+	
+	if not DungeonStateManager.advance_floor():
+		# Max floor reached
+		change_to_town(DungeonStateManager.active_player)
 		return
 	
-	# ✅ FIX: Update max_floor_cleared BEFORE advancing
-	if DungeonStateManager.is_boss_fight:
-		var cleared_floor = DungeonStateManager.current_floor
-		if cleared_floor > player.max_floor_cleared:
-			player.update_max_floor_cleared(cleared_floor)
-			print("RewardScene: Boss cleared! Updated max_floor_cleared to %d" % cleared_floor)
+	# Start next floor
+	change_scene_with_character("res://scenes/DungeonScene.tscn", DungeonStateManager.active_player)
+	await get_tree().process_frame
 	
-	# Clear rewards and saved state
-	saved_reward_data.clear()
-	SceneManager.clear_saved_reward_state()
-	
-	# Save AFTER updating max_floor_cleared
-	SaveManager.save_game(player)
-	
-	emit_signal("next_floor")
+	if current_scene.has_method("start_dungeon"): 
+		var dungeon_data = DungeonStateManager.get_battle_data()
+		current_scene.start_dungeon(dungeon_data)
 
 func save_reward_state(rewards: Dictionary, xp_gained: int, rewards_collected: bool):
 	"""Save reward state before navigating away from RewardScene"""
@@ -301,13 +311,7 @@ func _show_rewards(xp_gained: int):
 	
 	var rewards = RewardsManager.calculate_battle_rewards(battle_data)
 	
-	# CRITICAL FIX: Update max_floor_cleared immediately after boss victory
-	if DungeonStateManager.is_boss_fight:
-		var cleared_floor = DungeonStateManager.current_floor
-		if cleared_floor > DungeonStateManager.active_player.max_floor_cleared:
-			DungeonStateManager.active_player.update_max_floor_cleared(cleared_floor)
-			SaveManager.save_game(DungeonStateManager.active_player)
-			print("SceneManager: Boss defeated! Updated max_floor_cleared to %d" % cleared_floor)
+	# ✅ REMOVED: Don't update max_floor_cleared here - already done in _on_battle_completed
 	
 	# Prepare reward scene data
 	var reward_data = {

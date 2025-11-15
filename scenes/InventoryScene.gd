@@ -105,9 +105,15 @@ func _matches_category(item: Item) -> bool:
 		ItemCategory.CONSUMABLES:
 			return item.item_type == Item.ItemType.CONSUMABLE
 		ItemCategory.WEAPONS:
-			return item is Equipment 
+			# ✅ FIX: Check for main_hand or off_hand slots
+			if item is Equipment:
+				return item.slot in ["main_hand", "off_hand"]
+			return false
 		ItemCategory.ARMOR:
-			return item is Equipment
+			# ✅ FIX: Check for armor slots (not weapon slots)
+			if item is Equipment:
+				return item.slot in ["head", "chest", "hands", "legs", "feet"]
+			return false
 		ItemCategory.MATERIALS:
 			return item.item_type == Item.ItemType.MATERIAL
 	return false

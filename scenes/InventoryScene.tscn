@@ -168,10 +168,11 @@ text = "Materials"
 [node name="ItemList" type="ItemList" parent="UI"]
 offset_left = 32.0
 offset_top = 80.0
-offset_right = 304.0
-offset_bottom = 280.0
+offset_right = 560.0
+offset_bottom = 288.0
 
 [node name="UseButton" type="Button" parent="UI"]
+visible = false
 offset_left = 72.0
 offset_top = 296.0
 offset_right = 136.0
@@ -179,17 +180,17 @@ offset_bottom = 327.0
 text = "Use"
 
 [node name="BackButton" type="Button" parent="UI"]
-offset_left = 200.0
-offset_top = 296.0
-offset_right = 264.0
-offset_bottom = 327.0
+offset_left = 480.0
+offset_top = 304.0
+offset_right = 544.0
+offset_bottom = 335.0
 text = "Back"
 
 [node name="ItemInfoLabel" type="RichTextLabel" parent="UI"]
-offset_left = 448.0
-offset_top = 64.0
-offset_right = 1048.0
-offset_bottom = 464.0
+offset_left = 576.0
+offset_top = 80.0
+offset_right = 1176.0
+offset_bottom = 480.0
 bbcode_enabled = true
 text = "Select an item to view details"
 fit_content = true

@@ -47,8 +47,8 @@ color = Color(0.541176, 0.541176, 0.541176, 1)
 blend_mode = 2
 
 [node name="PointLight2D6" type="PointLight2D" parent="."]
-position = Vector2(560, 344)
-scale = Vector2(12, 7.16667)
+position = Vector2(600, 384)
+scale = Vector2(12.8333, 8.33333)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.74
 texture = SubResource("GradientTexture2D_u466w")
@@ -128,68 +128,78 @@ base_pulse_duration = 1.0
 
 [node name="InventoryList" type="ItemList" parent="."]
 layout_mode = 0
-offset_left = 56.0
-offset_top = 32.0
-offset_right = 264.0
-offset_bottom = 232.0
+offset_left = 64.0
+offset_top = 64.0
+offset_right = 344.0
+offset_bottom = 360.0
 
 [node name="StashList" type="ItemList" parent="."]
 layout_mode = 0
-offset_left = 312.0
-offset_top = 32.0
-offset_right = 528.0
-offset_bottom = 232.0
+offset_left = 384.0
+offset_top = 64.0
+offset_right = 672.0
+offset_bottom = 368.0
 
 [node name="InventoryCapacityLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 56.0
-offset_top = 8.0
-offset_right = 256.0
-offset_bottom = 31.0
+offset_left = 64.0
+offset_top = 40.0
+offset_right = 264.0
+offset_bottom = 63.0
 
 [node name="StashCapacityLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 312.0
-offset_top = 8.0
-offset_right = 512.0
-offset_bottom = 31.0
+offset_left = 320.0
+offset_top = 40.0
+offset_right = 520.0
+offset_bottom = 63.0
 
 [node name="MoveToStashButton" type="Button" parent="."]
 layout_mode = 0
 offset_left = 96.0
-offset_top = 280.0
-offset_right = 216.0
-offset_bottom = 311.0
+offset_top = 384.0
+offset_right = 276.0
+offset_bottom = 444.0
 text = "Move To Stash"
 
 [node name="MoveAllToStashButton" type="Button" parent="."]
 layout_mode = 0
 offset_left = 96.0
-offset_top = 320.0
-offset_right = 240.0
-offset_bottom = 351.0
+offset_top = 464.0
+offset_right = 276.0
+offset_bottom = 524.0
 text = "Move All To Stash"
 
 [node name="MoveToInventoryButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 344.0
-offset_top = 280.0
-offset_right = 497.0
-offset_bottom = 311.0
+offset_left = 432.0
+offset_top = 384.0
+offset_right = 612.0
+offset_bottom = 444.0
 text = "Move To Inventory"
 
 [node name="MoveAllToInventoryButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 344.0
-offset_top = 320.0
-offset_right = 520.0
-offset_bottom = 351.0
+offset_left = 432.0
+offset_top = 464.0
+offset_right = 612.0
+offset_bottom = 524.0
 text = "Move All To Inventory"
 
 [node name="BackButton" type="Button" parent="."]
 layout_mode = 0
 offset_left = 256.0
-offset_top = 376.0
-offset_right = 301.0
-offset_bottom = 407.0
-text = "Back"
+offset_top = 576.0
+offset_right = 436.0
+offset_bottom = 636.0
+text = "Back to Town"
+
+[node name="ItemInfoLabel" type="RichTextLabel" parent="."]
+offset_left = 688.0
+offset_top = 64.0
+offset_right = 1192.0
+offset_bottom = 464.0
+bbcode_enabled = true
+text = "Select an item to view details"
+fit_content = true
+autowrap_mode = 0

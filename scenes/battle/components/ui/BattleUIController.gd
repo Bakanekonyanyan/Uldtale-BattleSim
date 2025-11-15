@@ -22,6 +22,7 @@ signal action_selected(action: BattleAction)
 
 var player: CharacterData
 var enemy: CharacterData
+var ui_locked: bool = false
 
 func _ready():
 	print("BattleUIController: Ready")
@@ -57,7 +58,31 @@ func _ready():
 	print("  turn_label: ", turn_label != null)
 	print("  combat_log: ", combat_log != null)
 	print("  action_buttons: ", action_buttons != null)
+
+# ✅ NEW: UI locking state
+func lock_ui():
+	"""Lock all player input during action processing"""
+	if ui_locked:
+		print("BattleUIController: Already locked")
+		return
 	
+	ui_locked = true
+	disable_actions()
+	print("BattleUIController: UI LOCKED")
+
+func unlock_ui():
+	"""Unlock player input after action completes"""
+	if not ui_locked:
+		return
+	
+	ui_locked = false
+	print("BattleUIController: UI UNLOCKED")
+	# Note: Don't auto-enable actions - let the orchestrator decide when
+
+func is_ui_locked() -> bool:
+	"""Check if UI is currently locked"""
+	return ui_locked
+
 func initialize(p_player: CharacterData, p_enemy: CharacterData):
 	"""Initialize with battle participants"""
 	player = p_player
@@ -161,7 +186,20 @@ func _add_action_button(text: String, callback: Callable):
 	var button = Button.new()
 	button.text = text
 	button.custom_minimum_size = Vector2(180, 40)
-	button.pressed.connect(callback)
+	
+	# ✅ FIX: Wrap callback to check lock state
+	button.pressed.connect(func():
+		if is_ui_locked():
+			print("BattleUIController: Button press ignored - UI locked")
+			return
+		
+		# Lock UI immediately when button is pressed
+		lock_ui()
+		
+		# Execute the actual callback
+		callback.call()
+	)
+	
 	action_buttons.add_child(button)
 
 func _add_disabled_button(text: String):
