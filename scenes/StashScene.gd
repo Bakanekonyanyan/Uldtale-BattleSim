@@ -31,6 +31,10 @@ func _ready():
 		print("Whoops! No character loaded.")
 		return
 	
+	# ✅ FIX: Ensure ItemLists are in single selection mode
+	inventory_list.select_mode = ItemList.SELECT_SINGLE
+	stash_list.select_mode = ItemList.SELECT_SINGLE
+	
 	setup_tabs()
 	refresh_lists()
 	
@@ -39,6 +43,16 @@ func _ready():
 	move_to_inventory_button.connect("pressed", Callable(self, "_on_move_to_inventory_pressed"))
 	move_all_to_inventory_button.connect("pressed", Callable(self, "_on_move_all_to_inventory_pressed"))
 	back_button.connect("pressed", Callable(self, "_on_back_pressed"))
+	
+	# ✅ Use item_clicked instead of item_selected for more reliable detection
+	inventory_list.connect("item_clicked", Callable(self, "_on_inventory_item_clicked"))
+	stash_list.connect("item_clicked", Callable(self, "_on_stash_item_clicked"))
+	
+	# Debug: Verify connections
+	print("StashScene ready - signals connected")
+	print("Inventory list: ", inventory_list)
+	print("Stash list: ", stash_list)
+	print("Stash list item count: ", stash_list.get_item_count())
 
 func setup_tabs():
 	"""Setup category filter tabs programmatically"""
@@ -172,8 +186,8 @@ func update_capacity_labels():
 	
 	if stash_capacity_label:
 		var stash_size = player_character.stash.items.size()
-		var stash_cap = player_character.stash.capacity
-		stash_capacity_label.text = "Stash: %d/%d" % [stash_size, stash_cap]
+		# Display unlimited capacity for stash
+		stash_capacity_label.text = "Stash: %d (Unlimited)" % stash_size
 
 func _on_move_to_stash_pressed():
 	var selected_items = inventory_list.get_selected_items()
@@ -248,13 +262,50 @@ func _on_back_pressed():
 	SaveManager.save_game(player_character)
 	SceneManager.change_to_town(player_character)
 
-func _on_item_selected(index):
-	print("Item Slected")
-	# Get the selected item from filtered list
+# ✅ FIXED: Use item_clicked signal (more reliable than item_selected)
+func _on_inventory_item_clicked(index: int, _at_position: Vector2, _mouse_button_index: int):
+	print("Inventory item clicked at index: ", index)
+	
+	# Clear stash selection when inventory is selected
+	stash_list.deselect_all()
+	
+	# Select the clicked item
+	inventory_list.select(index)
+	
+	# Get the selected item from filtered inventory list
 	var filtered_items = _get_filtered_items_from(player_character.inventory)
 	if index >= 0 and index < filtered_items.size():
-		display_item_info(filtered_items[index])
+		var item_id = filtered_items[index].get("key")
+		var item = player_character.inventory.items[item_id].item
+		display_item_info(item)
+
+# ✅ FIXED: Use item_clicked signal
+func _on_stash_item_clicked(index: int, _at_position: Vector2, _mouse_button_index: int):
+	print("Stash item clicked at index: ", index)
+	
+	# Clear inventory selection when stash is selected
+	inventory_list.deselect_all()
+	
+	# Select the clicked item
+	stash_list.select(index)
+	
+	# Get the selected item from filtered stash list
+	var filtered_items = _get_filtered_items_from(player_character.stash)
+	print("Filtered stash items count: ", filtered_items.size())
+	
+	if index >= 0 and index < filtered_items.size():
+		var item_id = filtered_items[index].get("key")
+		print("Item ID: ", item_id)
 		
+		if player_character.stash.items.has(item_id):
+			var item = player_character.stash.items[item_id].item
+			print("Found item in stash: ", item.name)
+			display_item_info(item)
+		else:
+			print("ERROR: Item not found in stash!")
+	else:
+		print("ERROR: Index out of range!")
+
 func display_item_info(item: Item):
 	if not item_info_label:
 		return

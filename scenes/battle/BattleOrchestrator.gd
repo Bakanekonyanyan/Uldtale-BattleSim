@@ -72,6 +72,11 @@ func start_battle():
 	# ✅ CRITICAL FIX: Wait for UI to render before starting turns
 	await _wait_for_ui_ready()
 	
+	# ✅ FIX: Setup action buttons BEFORE any turns start
+	# This ensures buttons exist regardless of who goes first
+	ui_controller.setup_player_actions(false)
+	ui_controller.disable_actions()  # Start disabled, will unlock on player's turn
+	
 	# Now safe to start turn sequence
 	turn_controller.start_first_turn()
 
@@ -167,8 +172,9 @@ func _setup_player_turn():
 	"""Setup player's turn"""
 	print("BattleOrchestrator: Player's turn")
 	
-	ui_controller.unlock_ui()
+	# ✅ FIX: Update action buttons with current state, don't recreate from scratch
 	ui_controller.setup_player_actions(item_action_used)
+	ui_controller.unlock_ui()
 	ui_controller.enable_actions()
 
 func _on_action_selected(action: BattleAction):

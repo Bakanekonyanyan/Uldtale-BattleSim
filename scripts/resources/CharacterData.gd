@@ -79,7 +79,7 @@ var skill_levels: Dictionary:
 # === INVENTORY & EQUIPMENT ===
 @export var inventory: Inventory
 @export var currency: Currency
-@export var stash: Inventory
+@export var stash: Stash
 var equipment = {
 	"main_hand": null,
 	"off_hand": null,
@@ -96,7 +96,7 @@ func _init(p_name: String = "", p_race: String = "", p_class: String = ""):
 	character_class = p_class
 	inventory = Inventory.new()
 	currency = Currency.new()
-	stash = Inventory.new()
+	stash = Stash.new()
 	
 	# Initialize managers
 	status_manager = StatusEffectManager.new(self)

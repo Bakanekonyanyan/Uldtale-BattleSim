@@ -139,6 +139,8 @@ offset_left = 384.0
 offset_top = 64.0
 offset_right = 672.0
 offset_bottom = 368.0
+select_mode = 1
+max_text_lines = 2
 
 [node name="InventoryCapacityLabel" type="Label" parent="."]
 layout_mode = 0
@@ -197,9 +199,9 @@ text = "Back to Town"
 [node name="ItemInfoLabel" type="RichTextLabel" parent="."]
 offset_left = 688.0
 offset_top = 64.0
-offset_right = 1192.0
+offset_right = 1176.0
 offset_bottom = 464.0
 bbcode_enabled = true
 text = "Select an item to view details"
 fit_content = true
-autowrap_mode = 0
+autowrap_mode = 2

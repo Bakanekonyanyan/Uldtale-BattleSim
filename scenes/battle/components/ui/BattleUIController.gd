@@ -20,7 +20,7 @@ signal action_selected(action: BattleAction)
 var player: CharacterData
 var enemy: CharacterData
 var ui_locked: bool = false
-var is_initialized: bool = false  # ✅ NEW: Track initialization state
+var is_initialized: bool = false
 
 func _ready():
 	print("BattleUIController: Ready")
@@ -49,7 +49,6 @@ func _ready():
 	if not inventory_menu:
 		inventory_menu = $InventoryMenu
 	
-	# ✅ NEW: Force all UI elements visible immediately
 	_force_ui_visible()
 	
 	print("BattleUIController: All nodes ready")
@@ -65,7 +64,7 @@ func _force_ui_visible():
 	for node in nodes:
 		if node:
 			node.visible = true
-			node.modulate = Color(1, 1, 1, 1)  # Full opacity
+			node.modulate = Color(1, 1, 1, 1)
 
 func lock_ui():
 	"""Lock all player input during action processing"""
@@ -93,12 +92,25 @@ func initialize(p_player: CharacterData, p_enemy: CharacterData):
 	enemy = p_enemy
 	print("BattleUIController: Initializing for %s vs %s" % [player.name, enemy.name])
 	
-	# Connect inventory menu if it exists
-	if inventory_menu and inventory_menu.has_signal("item_selected"):
-		if not inventory_menu.is_connected("item_selected", Callable(self, "_on_inventory_item_selected")):
-			inventory_menu.connect("item_selected", Callable(self, "_on_inventory_item_selected"))
+	# Connect inventory menu signals
+	if inventory_menu:
+		print("BattleUIController: Found inventory_menu node")
+		
+		if inventory_menu.has_signal("item_selected"):
+			if not inventory_menu.is_connected("item_selected", Callable(self, "_on_inventory_item_selected")):
+				inventory_menu.connect("item_selected", Callable(self, "_on_inventory_item_selected"))
+				print("BattleUIController: Connected to item_selected signal")
+		
+		# ✅ Connect cancel/close signal to unlock UI
+		if inventory_menu.has_signal("inventory_closed"):
+			if not inventory_menu.is_connected("inventory_closed", Callable(self, "_on_inventory_closed")):
+				inventory_menu.connect("inventory_closed", Callable(self, "_on_inventory_closed"))
+				print("BattleUIController: Connected to inventory_closed signal")
+		else:
+			print("BattleUIController: WARNING - inventory_menu does not have 'inventory_closed' signal!")
+	else:
+		print("BattleUIController: WARNING - inventory_menu is null!")
 	
-	# ✅ NEW: Force immediate UI update with data
 	_force_initial_display()
 	
 	is_initialized = true
@@ -106,13 +118,11 @@ func initialize(p_player: CharacterData, p_enemy: CharacterData):
 
 func _force_initial_display():
 	"""Force all UI elements to display with initial data"""
-	# Update all displays immediately
 	update_character_info(player, enemy)
 	update_xp_display()
 	update_debug_display()
 	update_turn_display("Battle starting...")
 	
-	# Force text to render
 	if player_info_label:
 		player_info_label.queue_redraw()
 	if enemy_info_label:
@@ -128,13 +138,13 @@ func update_turn_display(text: String):
 	"""Update turn status message"""
 	if turn_label:
 		turn_label.text = text
-		turn_label.queue_redraw()  # ✅ Force redraw
+		turn_label.queue_redraw()
 
 func update_xp_display():
 	"""Update XP progress display"""
 	if xp_label and player:
 		xp_label.text = "XP: %d / %d" % [player.xp, LevelSystem.calculate_xp_for_level(player.level)]
-		xp_label.queue_redraw()  # ✅ Force redraw
+		xp_label.queue_redraw()
 
 func update_dungeon_info(wave: int, floor: int, description: String):
 	"""Update dungeon context displays"""
@@ -160,15 +170,34 @@ func setup_player_actions(item_action_used: bool):
 	"""Setup player action buttons"""
 	clear_action_buttons()
 	
+	if action_buttons:
+		action_buttons.visible = true
+		action_buttons.modulate = Color(1, 1, 1, 1)
+	
 	_add_action_button("Attack", func(): emit_signal("action_selected", BattleAction.attack(player, enemy)))
 	_add_action_button("Defend", func(): emit_signal("action_selected", BattleAction.defend(player)))
 	
+	# ✅ Special handling for Items button - doesn't auto-lock UI
 	var item_text = "Items (Used)" if item_action_used else "Items (Bonus Action)"
-	_add_action_button(item_text, func(): _show_inventory())
+	var item_button = Button.new()
+	item_button.text = item_text
+	item_button.custom_minimum_size = Vector2(180, 40)
+	item_button.visible = true
+	item_button.pressed.connect(func():
+		if is_ui_locked():
+			print("BattleUIController: Button press ignored - UI locked")
+			return
+		# Don't auto-lock - _show_inventory handles locking
+		_show_inventory()
+	)
+	action_buttons.add_child(item_button)
 	
 	_add_action_button("View Enemy Equipment", func(): _show_enemy_equipment())
 	
 	_add_skill_buttons()
+	
+	if action_buttons:
+		action_buttons.queue_redraw()
 
 func _add_skill_buttons():
 	"""Add buttons for available skills"""
@@ -213,6 +242,7 @@ func _add_action_button(text: String, callback: Callable):
 	var button = Button.new()
 	button.text = text
 	button.custom_minimum_size = Vector2(180, 40)
+	button.visible = true
 	
 	button.pressed.connect(func():
 		if is_ui_locked():
@@ -233,6 +263,7 @@ func _add_disabled_button(text: String):
 	var button = Button.new()
 	button.text = text
 	button.custom_minimum_size = Vector2(180, 40)
+	button.visible = true
 	button.disabled = true
 	action_buttons.add_child(button)
 
@@ -246,8 +277,27 @@ func enable_actions():
 	"""Enable all action buttons"""
 	if action_buttons:
 		for button in action_buttons.get_children():
-			if button is Button and not button.disabled:
-				button.disabled = false
+			if button is Button:
+				# Re-enable the button (unless it was intentionally disabled, like skills on cooldown)
+				# We need to check if this is a skill button with insufficient resources
+				var button_text = button.text
+				
+				# If button contains "(CD:" or shows insufficient resources, keep it disabled
+				if "(CD:" in button_text:
+					button.disabled = true
+				else:
+					# For skills, check if player has enough resources
+					if button_text.contains("[") and button_text.contains("MP]"):
+						var mp_cost = _extract_cost_from_text(button_text)
+						button.disabled = (player.current_mp < mp_cost)
+					elif button_text.contains("[") and button_text.contains("SP]"):
+						var sp_cost = _extract_cost_from_text(button_text)
+						button.disabled = (player.current_sp < sp_cost)
+					else:
+						# Regular buttons (Attack, Defend, Items, etc.)
+						button.disabled = false
+				
+				print("BattleUIController: Button '%s' disabled = %s" % [button.text, button.disabled])
 
 func disable_actions():
 	"""Disable all action buttons"""
@@ -255,6 +305,15 @@ func disable_actions():
 		for button in action_buttons.get_children():
 			if button is Button:
 				button.disabled = true
+
+func _extract_cost_from_text(text: String) -> int:
+	"""Extract resource cost from button text like 'Skill Name [25 MP]'"""
+	var start = text.find("[")
+	var end = text.find(" ", start)
+	if start != -1 and end != -1:
+		var cost_str = text.substr(start + 1, end - start - 1)
+		return int(cost_str)
+	return 0
 
 # === HELPER METHODS ===
 
@@ -273,6 +332,8 @@ func _get_skill_targets(skill: Skill) -> Array[CharacterData]:
 func _show_inventory():
 	"""Show inventory menu"""
 	if inventory_menu and inventory_menu.has_method("show_inventory"):
+		# Lock UI while inventory is open
+		lock_ui()
 		inventory_menu.show_inventory(player.inventory, player.currency)
 
 func _on_inventory_item_selected(item: Item):
@@ -284,7 +345,16 @@ func _on_inventory_item_selected(item: Item):
 		_:
 			targets = [player]
 	
+	# UI stays locked - action will be processed
 	emit_signal("action_selected", BattleAction.item(player, item, targets))
+
+func _on_inventory_closed():
+	"""Handle inventory being closed without selection"""
+	print("BattleUIController: _on_inventory_closed() called!")
+	print("BattleUIController: UI locked state before unlock: %s" % ui_locked)
+	unlock_ui()
+	enable_actions()
+	print("BattleUIController: UI should now be unlocked and enabled")
 
 func _show_enemy_equipment():
 	"""Show enemy equipment dialog"""
@@ -304,6 +374,9 @@ func _show_enemy_equipment():
 	
 	await dialog.confirmed
 	dialog.queue_free()
+
+	unlock_ui()
+	enable_actions()
 
 func _get_enemy_equipment_text() -> String:
 	"""Generate enemy equipment description"""
@@ -329,7 +402,7 @@ func update_character_info(p_player: CharacterData, p_enemy: CharacterData):
 			p_player.current_sp, p_player.max_sp,
 			status_str
 		]
-		player_info_label.queue_redraw()  # ✅ Force redraw
+		player_info_label.queue_redraw()
 	
 	if enemy_info_label and p_enemy:
 		var status_str = _get_clean_status_string(p_enemy)
@@ -340,7 +413,7 @@ func update_character_info(p_player: CharacterData, p_enemy: CharacterData):
 			p_enemy.current_sp, p_enemy.max_sp,
 			status_str
 		]
-		enemy_info_label.queue_redraw()  # ✅ Force redraw
+		enemy_info_label.queue_redraw()
 	
 	if debug_log:
 		update_debug_display()

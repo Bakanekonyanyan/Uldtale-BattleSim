@@ -1,12 +1,12 @@
-# res://scenes/battle/InventoryMenu.gd
 extends Control
 
 signal item_selected(item)
+signal inventory_closed()
 
 @onready var item_list = $ItemList
 @onready var use_button = $UseButton
 @onready var cancel_button = $CancelButton
-@onready var currency_label = $CurrencyLabel  # Add this line
+@onready var currency_label = $CurrencyLabel
 
 var current_inventory: Inventory
 
@@ -58,7 +58,12 @@ func _on_use_pressed():
 			hide()
 
 func _on_cancel_pressed():
+	print("InventoryMenu: Cancel button pressed!")
+	# ✅ FIX: Emit inventory_closed signal before hiding
+	emit_signal("inventory_closed")
+	print("InventoryMenu: inventory_closed signal emitted")
 	hide()
 
 func _on_item_selected(_index):
-	use_button.disabled = false
+	# Optional: Could enable/disable use button based on selection
+	pass
