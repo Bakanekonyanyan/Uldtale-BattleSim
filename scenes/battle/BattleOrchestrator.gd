@@ -16,10 +16,12 @@ var is_boss_battle: bool = false
 var current_wave: int
 var current_floor: int
 var dungeon_description: String
+
+# ✅ FIX: Track both item and main action
 var item_action_used: bool = false
+var main_action_taken: bool = false
 
 func _ready():
-	"""Get UI controller reference"""
 	ui_controller = get_node_or_null("BattleUIController")
 	if not ui_controller:
 		push_error("BattleOrchestrator: BattleUIController not found!")
@@ -28,13 +30,11 @@ func _ready():
 	print("BattleOrchestrator: Ready")
 
 func start_battle():
-	"""Initialize and start the battle"""
 	if not _validate_setup():
 		return
 	
 	print("BattleOrchestrator: Starting battle - %s vs %s" % [player.name, enemy.name])
 	
-	# Initialize systems
 	combat_engine = CombatEngine.new()
 	combat_engine.initialize(player, enemy)
 	
@@ -45,17 +45,14 @@ func start_battle():
 	enemy_ai = EnemyAI.new()
 	enemy_ai.initialize(enemy, player, current_floor)
 	
-	# Connect signals
 	turn_controller.turn_started.connect(_on_turn_started)
 	turn_controller.turn_ended.connect(_on_turn_ended)
 	turn_controller.turn_skipped.connect(_on_turn_skipped)
 	
-	# ✅ CRITICAL FIX: Initialize UI completely before any turns
 	if ui_controller:
 		ui_controller.initialize(player, enemy)
 		ui_controller.action_selected.connect(_on_action_selected)
 		
-		# Force immediate UI updates
 		ui_controller.update_character_info(player, enemy)
 		ui_controller.update_xp_display()
 		ui_controller.update_debug_display()
@@ -66,27 +63,19 @@ func start_battle():
 		push_error("BattleOrchestrator: ui_controller is null!")
 		return
 	
-	# Initialize resources
 	_initialize_resources()
 	
-	# ✅ CRITICAL FIX: Wait for UI to render before starting turns
 	await _wait_for_ui_ready()
 	
-	# ✅ FIX: Setup action buttons BEFORE any turns start
-	# This ensures buttons exist regardless of who goes first
-	ui_controller.setup_player_actions(false)
-	ui_controller.disable_actions()  # Start disabled, will unlock on player's turn
+	ui_controller.setup_player_actions(false, false)
+	ui_controller.disable_actions()
 	
-	# Now safe to start turn sequence
 	turn_controller.start_first_turn()
 
 func _wait_for_ui_ready():
-	"""Wait for UI to complete initial rendering"""
-	# Wait 2 frames to ensure all UI nodes are rendered
 	await get_tree().process_frame
 	await get_tree().process_frame
 	
-	# Force another UI update to ensure visibility
 	if ui_controller:
 		ui_controller.update_character_info(player, enemy)
 		ui_controller.update_turn_display("Battle starting...")
@@ -94,7 +83,6 @@ func _wait_for_ui_ready():
 	print("BattleOrchestrator: UI ready, starting combat")
 
 func _validate_setup() -> bool:
-	"""Ensure all required data is set"""
 	if not player or not enemy:
 		push_error("BattleOrchestrator: Missing player or enemy")
 		return false
@@ -106,7 +94,6 @@ func _validate_setup() -> bool:
 	return true
 
 func _initialize_resources():
-	"""Ensure characters have resources"""
 	if player.current_sp == 0:
 		player.current_sp = player.max_sp
 	if enemy.current_sp == 0:
@@ -115,31 +102,28 @@ func _initialize_resources():
 # === TURN FLOW ===
 
 func _on_turn_started(character: CharacterData, is_player: bool):
-	"""Handle start of turn"""
 	print("BattleOrchestrator: Turn started - %s" % character.name)
 	
-	# ✅ FIX: Always update UI at turn start (even for enemy)
 	if ui_controller:
 		ui_controller.update_character_info(player, enemy)
 		ui_controller.update_turn_display("%s's turn" % character.name)
 	
-	# Reset item action for player
+	# ✅ FIX: Reset BOTH action flags at turn start
 	if is_player:
 		item_action_used = false
+		main_action_taken = false
+		print("BattleOrchestrator: Reset action flags for player turn")
 	
-	# Process status effects
 	var status_message = combat_engine.process_status_effects(character)
 	if status_message:
 		ui_controller.add_combat_log(status_message, "purple")
 		ui_controller.update_character_info(player, enemy)
 		await get_tree().create_timer(1.0).timeout
 	
-	# Check if character died from status
 	if not combat_engine.is_alive(character):
 		_handle_death(character)
 		return
 	
-	# Check if stunned
 	if character.is_stunned:
 		var stun_msg = "%s is stunned and loses their turn!" % character.name
 		turn_controller.skip_turn(character, "stunned")
@@ -148,49 +132,54 @@ func _on_turn_started(character: CharacterData, is_player: bool):
 		await get_tree().create_timer(1.0).timeout
 		return
 	
-	# Advance to action phase
 	turn_controller.advance_phase()
 	
-	# Setup for action
 	if is_player:
 		_setup_player_turn()
 	else:
 		_execute_enemy_turn()
 
 func _on_turn_ended(character: CharacterData):
-	"""Handle end of turn"""
 	print("BattleOrchestrator: Turn ended - %s" % character.name)
 	ui_controller.disable_actions()
 
 func _on_turn_skipped(character: CharacterData, reason: String):
-	"""Handle skipped turn"""
 	print("BattleOrchestrator: Turn skipped - %s (%s)" % [character.name, reason])
 
 # === PLAYER TURN ===
 
 func _setup_player_turn():
-	"""Setup player's turn"""
 	print("BattleOrchestrator: Player's turn")
 	
-	# ✅ FIX: Update action buttons with current state, don't recreate from scratch
-	ui_controller.setup_player_actions(item_action_used)
+	# ✅ FIX: Pass both flags to UI
+	ui_controller.setup_player_actions(item_action_used, main_action_taken)
 	ui_controller.unlock_ui()
 	ui_controller.enable_actions()
 
 func _on_action_selected(action: BattleAction):
-	"""Handle player action selection"""
 	print("BattleOrchestrator: Action selected - %s" % action.get_description())
 	
-	# Special handling for item actions (bonus action)
+	# ✅ FIX: Handle item as bonus action
 	if action.type == BattleAction.ActionType.ITEM:
+		if item_action_used:
+			ui_controller.add_combat_log("You've already used an item this turn!", "red")
+			ui_controller.unlock_ui()
+			ui_controller.enable_actions()
+			return
 		_execute_item_action(action)
 		return
 	
-	# Regular actions end the turn
+	# ✅ FIX: All other actions are "main actions"
+	if main_action_taken:
+		ui_controller.add_combat_log("You've already taken your main action!", "red")
+		ui_controller.unlock_ui()
+		ui_controller.enable_actions()
+		return
+	
+	# Execute main action (ends turn)
 	_execute_action(action, true)
 
 func _execute_item_action(action: BattleAction):
-	"""Execute item as bonus action"""
 	print("BattleOrchestrator: Executing item as bonus action")
 	
 	var result = combat_engine.execute_action(action)
@@ -198,23 +187,23 @@ func _execute_item_action(action: BattleAction):
 	
 	await get_tree().create_timer(0.5).timeout
 	
+	# ✅ FIX: Mark item used but NOT main action
 	item_action_used = true
-	print("BattleOrchestrator: Item action used - player can still take main action")
+	print("BattleOrchestrator: Item used - player can still take main action")
 	
 	if _check_battle_end():
 		return
 	
-	ui_controller.setup_player_actions(item_action_used)
+	# ✅ FIX: Refresh UI with both flags
+	ui_controller.setup_player_actions(item_action_used, main_action_taken)
 	ui_controller.unlock_ui()
 	ui_controller.enable_actions()
 
 # === ENEMY TURN ===
 
 func _execute_enemy_turn():
-	"""Execute enemy's turn"""
 	print("BattleOrchestrator: Enemy's turn")
 	
-	# ✅ FIX: Show enemy turn message immediately
 	ui_controller.add_combat_log("Enemy's turn", "red")
 	ui_controller.update_turn_display("Enemy is acting...")
 	
@@ -230,7 +219,6 @@ func _execute_enemy_turn():
 # === ACTION EXECUTION ===
 
 func _execute_action(action: BattleAction, is_player: bool):
-	"""Execute any action"""
 	print("BattleOrchestrator: Executing action - %s" % action.get_description())
 	
 	var result = combat_engine.execute_action(action)
@@ -239,6 +227,11 @@ func _execute_action(action: BattleAction, is_player: bool):
 	
 	if result.has_level_up():
 		ui_controller.add_combat_log(result.level_up_message, "cyan")
+	
+	# ✅ FIX: Mark main action taken if player
+	if is_player:
+		main_action_taken = true
+		print("BattleOrchestrator: Main action taken - turn ending")
 	
 	await get_tree().create_timer(1.5).timeout
 	
@@ -250,14 +243,12 @@ func _execute_action(action: BattleAction, is_player: bool):
 # === BATTLE END ===
 
 func _handle_death(character: CharacterData):
-	"""Handle character death"""
 	var death_msg = "%s has been defeated!" % character.name
 	ui_controller.add_combat_log(death_msg, "red")
 	await get_tree().create_timer(1.5).timeout
 	_check_battle_end()
 
 func _check_battle_end() -> bool:
-	"""Check if battle has ended"""
 	var outcome = combat_engine.check_battle_end()
 	
 	if outcome == "victory":
@@ -270,7 +261,6 @@ func _check_battle_end() -> bool:
 	return false
 
 func _handle_victory():
-	"""Handle player victory"""
 	print("BattleOrchestrator: Player victory!")
 	ui_controller.disable_actions()
 	
@@ -280,14 +270,12 @@ func _handle_victory():
 	_show_battle_complete_dialog(xp)
 
 func _handle_defeat():
-	"""Handle player defeat"""
 	print("BattleOrchestrator: Player defeated!")
 	ui_controller.disable_actions()
 	await get_tree().create_timer(1.0).timeout
 	emit_signal("battle_completed", false, 0)
 
 func _show_battle_complete_dialog(xp_gained: int):
-	"""Show momentum choice dialog"""
 	var dialog_scene = load("res://scenes/BattleCompleteDialog.tscn")
 	if not dialog_scene:
 		emit_signal("battle_completed", true, xp_gained)
@@ -302,7 +290,6 @@ func _show_battle_complete_dialog(xp_gained: int):
 	dialog.take_breather_selected.connect(func(): _on_take_breather_selected(xp_gained))
 
 func _on_press_on_selected(xp_gained: int):
-	"""Player chose momentum"""
 	print("BattleOrchestrator: Press on selected")
 	MomentumSystem.gain_momentum()
 	
@@ -316,13 +303,11 @@ func _on_press_on_selected(xp_gained: int):
 	emit_signal("battle_completed", true, -1)
 
 func _on_take_breather_selected(xp_gained: int):
-	"""Player chose rest"""
 	print("BattleOrchestrator: Take breather selected")
 	MomentumSystem.reset_momentum()
 	emit_signal("battle_completed", true, xp_gained)
 
 func _show_level_up_overlay():
-	"""Show level-up UI"""
 	var level_up_scene = load("res://scenes/LevelUpScene.tscn").instantiate()
 	add_child(level_up_scene)
 	level_up_scene.setup(player)
@@ -345,13 +330,9 @@ func set_dungeon_info(wave: int, floor: int, description: String):
 	current_floor = floor
 	dungeon_description = description
 	
-	# ✅ FIX: Don't call start_battle immediately
-	# Use double-deferred to ensure scene tree is stable
 	call_deferred("_deferred_start_battle")
 
 func _deferred_start_battle():
-	"""Start battle after scene is fully ready"""
-	# Wait two frames to ensure complete scene initialization
 	await get_tree().process_frame
 	await get_tree().process_frame
 	start_battle()

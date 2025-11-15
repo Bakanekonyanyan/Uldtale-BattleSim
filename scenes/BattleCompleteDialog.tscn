@@ -22,9 +22,10 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.854902)
 
-[node name="Sprite2D" type="Sprite2D" parent="DimBackground"]
+[node name="Sprite2D" type="Sprite2D" parent="."]
+self_modulate = Color(0.889875, 0.648565, 0.749047, 1)
 show_behind_parent = true
-position = Vector2(544, 272)
+position = Vector2(608, 320)
 texture = ExtResource("2_al0er")
 
 [node name="Panel" type="Panel" parent="."]

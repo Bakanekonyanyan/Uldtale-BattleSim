@@ -20,10 +20,10 @@ color = Color(0, 0, 0, 0.796078)
 
 [node name="MainContainer" type="VBoxContainer" parent="."]
 layout_mode = 0
-offset_left = 224.0
+offset_left = 64.0
 offset_top = 72.0
-offset_right = 960.0
-offset_bottom = 656.0
+offset_right = 1152.0
+offset_bottom = 648.0
 
 [node name="LevelUpLabel" type="Label" parent="MainContainer"]
 layout_mode = 2

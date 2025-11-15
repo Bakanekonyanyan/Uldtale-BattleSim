@@ -1,33 +1,31 @@
 # res://scenes/ShopScene.gd
 extends Control
 
+enum ItemCategory { ALL, CONSUMABLES, WEAPONS, ARMOR }
+
 var player_character: CharacterData
-var shop_inventory: Dictionary = {
-	"health_potion": {"item": null, "price": 25},
-	"mana_potion": {"item": null, "price": 30},
-	"stamina_potion": {"item": null, "price": 30},
-	"flame_flask": {"item": null, "price": 50},
-	"frost_crystal": {"item": null, "price": 50},
-	"thunder_orb": {"item": null, "price": 50},
-	"venom_vial": {"item": null, "price": 50},
-	"stone_shard": {"item": null, "price": 10},
-	"rotten_dung": {"item": null, "price": 10},
-	"smoke_bomb": {"item": null, "price": 15},
-	"berserker_brew": {"item": null, "price": 30},
-	"holy_water": {"item": null, "price": 50},
-}
+var current_category: ItemCategory = ItemCategory.ALL
 
 @onready var item_list = $UI/ItemList
 @onready var sell_item_list = $UI/SellItemList
 @onready var buy_button = $UI/BuyButton
 @onready var sell_button = $UI/SellButton
-@onready var sell_all_button = $UI/SellAllButton  # Add to scene
+@onready var sell_all_button = $UI/SellAllButton
 @onready var exit_button = $UI/ExitButton
 @onready var player_currency_label = $UI/PlayerCurrencyLabel
-@onready var item_info_label = $UI/ItemInfoLabel  # Add to scene (RichTextLabel preferred)
+@onready var item_info_label = $UI/ItemInfoLabel
+
+# Category tabs
+var tab_container: HBoxContainer
+var all_tab: Button
+var consumables_tab: Button
+var weapons_tab: Button
+var armor_tab: Button
 
 func _ready():
 	print("ShopScene: _ready called")
+	
+	setup_tabs()
 	
 	if buy_button:
 		buy_button.connect("pressed", Callable(self, "_on_buy_pressed"))
@@ -42,10 +40,6 @@ func _ready():
 	if sell_item_list:
 		sell_item_list.connect("item_selected", Callable(self, "_on_sell_item_selected"))
 	
-	# Load items
-	for item_id in shop_inventory:
-		shop_inventory[item_id].item = ItemManager.get_item(item_id)
-	
 	player_character = CharacterManager.get_current_character()
 	if player_character == null:
 		print("Error: No character selected")
@@ -56,13 +50,118 @@ func _ready():
 	refresh_sell_items()
 	clear_item_info()
 
+func setup_tabs():
+	"""Setup category filter tabs"""
+	tab_container = HBoxContainer.new()
+	tab_container.position = Vector2(32, 8)
+	
+	all_tab = Button.new()
+	all_tab.text = "All"
+	all_tab.custom_minimum_size = Vector2(80, 32)
+	all_tab.pressed.connect(func(): _on_category_changed(ItemCategory.ALL))
+	tab_container.add_child(all_tab)
+	
+	consumables_tab = Button.new()
+	consumables_tab.text = "Consumables"
+	consumables_tab.custom_minimum_size = Vector2(100, 32)
+	consumables_tab.pressed.connect(func(): _on_category_changed(ItemCategory.CONSUMABLES))
+	tab_container.add_child(consumables_tab)
+	
+	weapons_tab = Button.new()
+	weapons_tab.text = "Weapons"
+	weapons_tab.custom_minimum_size = Vector2(90, 32)
+	weapons_tab.pressed.connect(func(): _on_category_changed(ItemCategory.WEAPONS))
+	tab_container.add_child(weapons_tab)
+	
+	armor_tab = Button.new()
+	armor_tab.text = "Armor"
+	armor_tab.custom_minimum_size = Vector2(80, 32)
+	armor_tab.pressed.connect(func(): _on_category_changed(ItemCategory.ARMOR))
+	tab_container.add_child(armor_tab)
+	
+	add_child(tab_container)
+	
+	_update_tab_visuals()
+
+func _on_category_changed(category: ItemCategory):
+	"""Switch to different category"""
+	current_category = category
+	_update_tab_visuals()
+	refresh_shop_display()
+	clear_item_info()
+
+func _update_tab_visuals():
+	"""Highlight active tab"""
+	var tabs = [all_tab, consumables_tab, weapons_tab, armor_tab]
+	for i in range(tabs.size()):
+		if tabs[i]:
+			if i == current_category:
+				tabs[i].modulate = Color(1.2, 1.2, 0.8)  # Highlighted
+			else:
+				tabs[i].modulate = Color(1, 1, 1)  # Normal
+
 func refresh_shop_display():
 	if item_list:
 		item_list.clear()
-		for item_id in shop_inventory:
-			var item_data = shop_inventory[item_id]
-			if item_data.item != null:
-				item_list.add_item("%s - %d copper" % [item_data.item.name, item_data.price])
+		
+		var index = 0
+		
+		# Add consumables if showing ALL or CONSUMABLES
+		if current_category == ItemCategory.ALL or current_category == ItemCategory.CONSUMABLES:
+			for item_id in ShopManager.consumable_inventory:
+				var item = ShopManager.get_consumable_item(item_id)
+				if item:
+					var price = ShopManager.get_consumable_price(item_id)
+					item_list.add_item("%s - %d copper" % [item.name, price])
+					# Store item data in metadata
+					item_list.set_item_metadata(index, {
+						"type": "consumable",
+						"id": item_id,
+						"item": item,
+						"price": price
+					})
+					index += 1
+		
+		# Add equipment if showing ALL, WEAPONS, or ARMOR
+		if current_category in [ItemCategory.ALL, ItemCategory.WEAPONS, ItemCategory.ARMOR]:
+			var equipment_list = ShopManager.get_equipment_list()
+			for equip_data in equipment_list:
+				var equipment = equip_data["equipment"]
+				var price = equip_data["price"]
+				var key = equip_data["key"]
+				
+				# Filter by weapon/armor if specific category selected
+				var should_show = false
+				if current_category == ItemCategory.ALL:
+					should_show = true
+				elif current_category == ItemCategory.WEAPONS:
+					# Weapons are main_hand or off_hand slots
+					should_show = equipment.slot in ["main_hand", "off_hand"]
+				elif current_category == ItemCategory.ARMOR:
+					# Armor is head, chest, hands, legs, feet slots
+					should_show = equipment.slot in ["head", "chest", "hands", "legs", "feet"]
+				
+				if should_show:
+					var display_text = "%s [%s] - %d copper" % [
+						equipment.name,
+						equipment.rarity.capitalize(),
+						price
+					]
+					
+					item_list.add_item(display_text)
+					
+					# Color by rarity
+					var rarity_color = Color(equipment.get_rarity_color())
+					item_list.set_item_custom_fg_color(index, rarity_color)
+					
+					# Store equipment data in metadata
+					item_list.set_item_metadata(index, {
+						"type": "equipment",
+						"key": key,
+						"item": equipment,
+						"price": price
+					})
+					index += 1
 	
 	if player_currency_label and player_character:
 		player_currency_label.text = "Your Gold: %s" % player_character.currency.get_formatted()
@@ -89,19 +188,21 @@ func refresh_sell_items():
 				index += 1
 
 func _on_shop_item_selected(index: int):
-	var item_id = shop_inventory.keys()[index]
-	var item_data = shop_inventory[item_id]
-	var item = item_data.item
-	print("shop item selected")
-	display_item_info(item, item_data.price, true)
+	var metadata = item_list.get_item_metadata(index)
+	if not metadata:
+		return
+	
+	var item = metadata["item"]
+	var price = metadata["price"]
+	
+	print("Shop item selected: %s" % item.name)
+	display_item_info(item, price, true)
 
 func _on_sell_item_selected(index: int):
 	var item_id = player_character.inventory.items.keys()[index]
 	var item = player_character.inventory.items[item_id].item
 	
 	display_item_info(item, item.value / 2, false)
-
-# In ShopScene.gd, update the display_item_info function:
 
 func display_item_info(item: Item, price: int, is_buying: bool):
 	if not item_info_label:
@@ -117,10 +218,9 @@ func display_item_info(item: Item, price: int, is_buying: bool):
 			info_text = item.get_full_description()
 			info_text += "\n\n"
 		else:
-			# FIXED: Show consumable details properly
+			# Show consumable details
 			info_text = "[b]%s[/b]\n\n%s\n\n" % [item.name, item.description]
 			
-			# Show consumable-specific info
 			if item.item_type == Item.ItemType.CONSUMABLE:
 				info_text += "[color=cyan][b]Consumable Effect:[/b][/color]\n"
 				
@@ -150,14 +250,13 @@ func display_item_info(item: Item, price: int, is_buying: bool):
 		
 		item_info_label.text = info_text
 	else:
-		# Fallback for regular Label
 		info_text = "%s\n\n%s\n\n" % [item.name, item.description]
 		if is_buying:
 			info_text += "Buy Price: %d copper" % price
 		else:
 			info_text += "Sell Price: %d copper" % price
 		item_info_label.text = info_text
-		
+
 func clear_item_info():
 	if item_info_label:
 		item_info_label.text = "Select an item to view details"
@@ -166,16 +265,52 @@ func _on_buy_pressed():
 	var selected_items = item_list.get_selected_items()
 	if selected_items.size() > 0:
 		var item_index = selected_items[0]
-		var item_id = shop_inventory.keys()[item_index]
-		var item_data = shop_inventory[item_id]
+		var metadata = item_list.get_item_metadata(item_index)
 		
-		if player_character.currency.copper >= item_data.price:
-			player_character.currency.subtract(item_data.price)
-			player_character.inventory.add_item(item_data.item)
-			refresh_shop_display()
-			refresh_sell_items()
-		else:
+		if not metadata:
+			print("ShopScene: No metadata for selected item")
+			return
+		
+		var price = metadata["price"]
+		
+		# Check if player can afford
+		if player_character.currency.copper < price:
 			print("Not enough gold!")
+			var dialog = AcceptDialog.new()
+			dialog.dialog_text = "Not enough gold!"
+			dialog.title = "Cannot Purchase"
+			add_child(dialog)
+			dialog.popup_centered()
+			return
+		
+		# Handle purchase based on type
+		if metadata["type"] == "consumable":
+			# Consumable purchase (unlimited stock)
+			var item = metadata["item"]
+			player_character.currency.subtract(price)
+			player_character.inventory.add_item(item)
+			print("ShopScene: Purchased consumable: %s" % item.name)
+		
+		elif metadata["type"] == "equipment":
+			# Equipment purchase (one-time)
+			var equipment = metadata["item"]
+			var key = metadata["key"]
+			
+			# Deduct currency
+			player_character.currency.subtract(price)
+			
+			# Add to inventory
+			player_character.inventory.add_item(equipment, 1)
+			
+			# Remove from shop
+			ShopManager.purchase_equipment(key)
+			
+			print("ShopScene: Purchased equipment: %s" % equipment.name)
+		
+		# Refresh displays
+		refresh_shop_display()
+		refresh_sell_items()
+		clear_item_info()
 
 func _on_sell_pressed():
 	var selected_items = sell_item_list.get_selected_items()
@@ -211,7 +346,3 @@ func _on_sell_all_pressed():
 func _on_exit_pressed():
 	CharacterManager.save_character(player_character)
 	SceneManager.change_to_town(player_character)
-
-func _on_item_selected(_index):
-	if buy_button:
-		buy_button.disabled = false

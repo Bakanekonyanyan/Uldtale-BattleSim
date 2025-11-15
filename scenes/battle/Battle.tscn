@@ -18,39 +18,39 @@ script = ExtResource("2_emwda")
 
 [node name="PlayerInfo" type="Label" parent="BattleUIController"]
 offset_left = 64.0
-offset_top = 144.0
+offset_top = 96.0
 offset_right = 304.0
-offset_bottom = 240.0
+offset_bottom = 192.0
 
 [node name="EnemyInfo" type="Label" parent="BattleUIController"]
 offset_left = 384.0
-offset_top = 144.0
+offset_top = 96.0
 offset_right = 624.0
-offset_bottom = 240.0
+offset_bottom = 192.0
 
 [node name="TurnLabel" type="Label" parent="BattleUIController"]
-offset_left = 152.0
+offset_left = 168.0
 offset_top = 72.0
-offset_right = 400.0
+offset_right = 424.0
 offset_bottom = 95.0
 
 [node name="ActionButtons" type="VBoxContainer" parent="BattleUIController"]
 offset_left = 72.0
 offset_top = 312.0
-offset_right = 272.0
-offset_bottom = 576.0
+offset_right = 384.0
+offset_bottom = 688.0
 
 [node name="WaveLabel" type="Label" parent="BattleUIController"]
-offset_left = 56.0
+offset_left = 64.0
 offset_top = 40.0
-offset_right = 200.0
+offset_right = 208.0
 offset_bottom = 66.0
 text = "Wave: "
 
 [node name="FloorLabel" type="Label" parent="BattleUIController"]
-offset_left = 432.0
+offset_left = 384.0
 offset_top = 40.0
-offset_right = 600.0
+offset_right = 552.0
 offset_bottom = 66.0
 text = "Floor: "
 

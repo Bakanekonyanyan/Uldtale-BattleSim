@@ -54,8 +54,8 @@ color = Color(0.541176, 0.541176, 0.541176, 1)
 blend_mode = 2
 
 [node name="PointLight2D6" type="PointLight2D" parent="."]
-position = Vector2(792, 360)
-scale = Vector2(8.72, 8)
+position = Vector2(589.28, 360)
+scale = Vector2(12.9433, 8)
 color = Color(0.933333, 0.72549, 0.658824, 1)
 energy = 0.74
 texture = SubResource("GradientTexture2D_6u54x")
@@ -118,48 +118,49 @@ base_pulse_duration = 1.0
 [node name="ItemList" type="ItemList" parent="UI"]
 light_mask = 0
 offset_left = 32.0
-offset_top = 24.0
-offset_right = 282.0
-offset_bottom = 274.0
+offset_top = 64.0
+offset_right = 480.0
+offset_bottom = 314.0
 
 [node name="SellItemList" type="ItemList" parent="UI"]
 light_mask = 0
-offset_left = 408.0
-offset_top = 24.0
-offset_right = 658.0
-offset_bottom = 274.0
+offset_left = 32.0
+offset_top = 392.0
+offset_right = 480.0
+offset_bottom = 642.0
 select_mode = 1
 
 [node name="BuyButton" type="Button" parent="UI"]
 light_mask = 0
-offset_left = 40.0
-offset_top = 296.0
-offset_right = 78.0
-offset_bottom = 327.0
+offset_left = 496.0
+offset_top = 64.0
+offset_right = 676.0
+offset_bottom = 124.0
 text = "Buy"
 
 [node name="ExitButton" type="Button" parent="UI"]
 light_mask = 0
-offset_left = 176.0
-offset_top = 296.0
-offset_right = 213.0
-offset_bottom = 327.0
-text = "Exit"
+offset_left = 968.0
+offset_top = 576.0
+offset_right = 1148.0
+offset_bottom = 636.0
+text = "Back to Town
+"
 
 [node name="SellButton" type="Button" parent="UI"]
 light_mask = 0
-offset_left = 416.0
-offset_top = 296.0
-offset_right = 454.0
-offset_bottom = 327.0
+offset_left = 496.0
+offset_top = 408.0
+offset_right = 676.0
+offset_bottom = 468.0
 text = "Sell"
 
 [node name="SellAllButton" type="Button" parent="UI"]
 light_mask = 0
 offset_left = 496.0
-offset_top = 296.0
-offset_right = 615.0
-offset_bottom = 327.0
+offset_top = 552.0
+offset_right = 676.0
+offset_bottom = 612.0
 text = "Sell All of Item
 "
 
@@ -174,6 +175,6 @@ text = "Currency: "
 [node name="ItemInfoLabel" type="RichTextLabel" parent="UI"]
 offset_left = 696.0
 offset_top = 24.0
-offset_right = 996.0
-offset_bottom = 424.0
+offset_right = 1128.0
+offset_bottom = 576.0
 bbcode_enabled = true
