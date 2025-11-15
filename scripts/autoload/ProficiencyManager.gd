@@ -1,6 +1,5 @@
-# ProficiencyManager.gd
+# ProficiencyManager.gd - UPDATED to show all types with 0/max
 # Handles weapon and armor proficiency progression
-# Responsibility: Track usage, calculate bonuses, level-up checks
 
 class_name ProficiencyManager
 extends RefCounted
@@ -153,45 +152,61 @@ func get_uses_for_next_level(level: int) -> int:
 		return -1
 	return LEVEL_THRESHOLDS[level - 1]
 
-# === DISPLAY ===
+# === DISPLAY (UPDATED) ===
 
 func get_weapon_proficiency_string(weapon_type: String) -> String:
-	"""Get formatted proficiency info for display"""
-	if not weapon_proficiencies.has(weapon_type):
-		return "%s: Level 1 (0 uses)" % weapon_type.capitalize()
+	"""Get formatted proficiency info for display - ALWAYS shows level 1 if not tracked"""
+	var uses = get_weapon_proficiency_uses(weapon_type)
+	var level = get_weapon_proficiency_level(weapon_type)
+	var level_str = _get_level_string(level)
+	var bonus = int(WEAPON_DAMAGE_BONUS.get(level, 0.0) * 100)
 	
-	var prof = weapon_proficiencies[weapon_type]
-	var level_str = _get_level_string(prof["level"])
-	var bonus = int(WEAPON_DAMAGE_BONUS.get(prof["level"], 0.0) * 100)
+	# Format weapon type name nicely
+	var display_name = _format_weapon_type_name(weapon_type)
 	
-	if prof["level"] >= MAX_LEVEL:
+	if level >= MAX_LEVEL:
 		return "%s: Level %s (+%d%% damage)" % [
-			weapon_type.capitalize(), level_str, bonus
+			display_name, level_str, bonus
 		]
 	
-	var next_threshold = LEVEL_THRESHOLDS[prof["level"] - 1]
+	var next_threshold = LEVEL_THRESHOLDS[level - 1]
 	return "%s: Level %s (+%d%% damage) [%d/%d uses]" % [
-		weapon_type.capitalize(), level_str, bonus, prof["uses"], next_threshold
+		display_name, level_str, bonus, uses, next_threshold
 	]
 
 func get_armor_proficiency_string(armor_type: String) -> String:
-	"""Get formatted proficiency info for display"""
-	if not armor_proficiencies.has(armor_type):
-		return "%s: Level 1 (0 uses)" % armor_type.capitalize()
+	"""Get formatted proficiency info for display - ALWAYS shows level 1 if not tracked"""
+	var uses = get_armor_proficiency_uses(armor_type)
+	var level = get_armor_proficiency_level(armor_type)
+	var level_str = _get_level_string(level)
+	var bonus = int(ARMOR_EFFECTIVENESS_BONUS.get(level, 0.0) * 100)
 	
-	var prof = armor_proficiencies[armor_type]
-	var level_str = _get_level_string(prof["level"])
-	var bonus = int(ARMOR_EFFECTIVENESS_BONUS.get(prof["level"], 0.0) * 100)
+	# Format armor type name nicely
+	var display_name = armor_type.capitalize()
 	
-	if prof["level"] >= MAX_LEVEL:
+	if level >= MAX_LEVEL:
 		return "%s: Level %s (+%d%% armor)" % [
-			armor_type.capitalize(), level_str, bonus
+			display_name, level_str, bonus
 		]
 	
-	var next_threshold = LEVEL_THRESHOLDS[prof["level"] - 1]
+	var next_threshold = LEVEL_THRESHOLDS[level - 1]
 	return "%s: Level %s (+%d%% armor) [%d/%d uses]" % [
-		armor_type.capitalize(), level_str, bonus, prof["uses"], next_threshold
+		display_name, level_str, bonus, uses, next_threshold
 	]
+
+func _format_weapon_type_name(weapon_type: String) -> String:
+	"""Format weapon type for display"""
+	match weapon_type:
+		"one_handed":
+			return "One-Handed"
+		"two_handed":
+			return "Two-Handed"
+		"shield":
+			return "Shield"
+		"source":
+			return "Source (Tome/Talisman/Fetish/Relic)"
+		_:
+			return weapon_type.capitalize()
 
 func get_all_weapon_proficiencies() -> Array:
 	"""Get list of all weapon proficiencies for display"""

@@ -1,0 +1,212 @@
+[gd_scene load_steps=8 format=3 uid="uid://bpsdxtedxk5ci"]
+
+[ext_resource type="Script" uid="uid://cbbjuj47fn46k" path="res://scenes/StatusScene.gd" id="1_7td2w"]
+[ext_resource type="Texture2D" uid="uid://cr2guw71lqnyd" path="res://assets/Images/backgrounds/TownScene.png" id="2_e64pj"]
+[ext_resource type="Script" uid="uid://41clvjbu24gn" path="res://scripts/PointLight2D.gd" id="3_eklxd"]
+
+[sub_resource type="Environment" id="Environment_8klv0"]
+background_mode = 3
+tonemap_mode = 3
+glow_enabled = true
+glow_normalized = true
+glow_intensity = 1.27
+glow_bloom = 0.15
+glow_blend_mode = 0
+
+[sub_resource type="Gradient" id="Gradient_bb138"]
+offsets = PackedFloat32Array(0, 0.663366)
+colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_rh2k8"]
+gradient = SubResource("Gradient_bb138")
+fill_from = Vector2(0.5, 0.25)
+fill_to = Vector2(0.5, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_v5aw0"]
+gradient = SubResource("Gradient_bb138")
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+
+[node name="StatusScene" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_7td2w")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.501961, 0.423529, 0.423529, 1)
+position = Vector2(560, 312)
+scale = Vector2(0.85, 0.85)
+texture = ExtResource("2_e64pj")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_8klv0")
+
+[node name="DirectionalLight2D" type="DirectionalLight2D" parent="."]
+position = Vector2(528, 0)
+color = Color(0.541176, 0.541176, 0.541176, 1)
+blend_mode = 2
+
+[node name="PointLight2D6" type="PointLight2D" parent="."]
+position = Vector2(560, 344)
+scale = Vector2(12, 7.16667)
+color = Color(0.933333, 0.72549, 0.658824, 1)
+energy = 0.74
+texture = SubResource("GradientTexture2D_rh2k8")
+texture_scale = 1.5
+script = ExtResource("3_eklxd")
+min_energy = 0.25
+max_energy = 0.75
+base_pulse_duration = 4.0
+randomness = 0.5
+
+[node name="PointLight2D" type="PointLight2D" parent="."]
+position = Vector2(808, 64)
+color = Color(0.933333, 0.72549, 0.658824, 1)
+energy = 1.5
+texture = SubResource("GradientTexture2D_v5aw0")
+texture_scale = 1.5
+script = ExtResource("3_eklxd")
+
+[node name="PointLight2D7" type="PointLight2D" parent="."]
+position = Vector2(176, 384)
+color = Color(0.933333, 0.72549, 0.658824, 1)
+energy = 0.75
+texture = SubResource("GradientTexture2D_v5aw0")
+texture_scale = 5.35
+script = ExtResource("3_eklxd")
+min_energy = 0.15
+max_energy = 0.75
+
+[node name="PointLight2D8" type="PointLight2D" parent="."]
+position = Vector2(968, 360)
+color = Color(0.933333, 0.72549, 0.658824, 1)
+energy = 0.75
+texture = SubResource("GradientTexture2D_v5aw0")
+texture_scale = 5.35
+script = ExtResource("3_eklxd")
+min_energy = 0.15
+max_energy = 0.75
+
+[node name="PointLight2D2" type="PointLight2D" parent="."]
+position = Vector2(304, -16)
+color = Color(0.933333, 0.72549, 0.658824, 1)
+energy = 1.5
+texture = SubResource("GradientTexture2D_v5aw0")
+texture_scale = 1.5
+script = ExtResource("3_eklxd")
+
+[node name="PointLight2D3" type="PointLight2D" parent="."]
+position = Vector2(896, 176)
+color = Color(0.933333, 0.72549, 0.658824, 1)
+energy = 0.75
+texture = SubResource("GradientTexture2D_v5aw0")
+script = ExtResource("3_eklxd")
+max_energy = 0.75
+base_pulse_duration = 1.5
+randomness = 0.4
+
+[node name="PointLight2D4" type="PointLight2D" parent="."]
+position = Vector2(552, 88)
+color = Color(0.933333, 0.72549, 0.658824, 1)
+energy = 0.75
+texture = SubResource("GradientTexture2D_v5aw0")
+script = ExtResource("3_eklxd")
+max_energy = 0.75
+base_pulse_duration = 1.5
+randomness = 0.3
+
+[node name="PointLight2D5" type="PointLight2D" parent="."]
+position = Vector2(640, 144)
+color = Color(0.933333, 0.72549, 0.658824, 1)
+energy = 0.25
+texture = SubResource("GradientTexture2D_v5aw0")
+texture_scale = 0.75
+script = ExtResource("3_eklxd")
+min_energy = 0.25
+max_energy = 0.5
+base_pulse_duration = 1.0
+
+[node name="NameLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 56.0
+offset_top = 8.0
+offset_right = 111.0
+offset_bottom = 31.0
+text = "Name: "
+
+[node name="ClassLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 56.0
+offset_top = 40.0
+offset_right = 105.0
+offset_bottom = 66.0
+text = "Class: "
+
+[node name="LevelLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 248.0
+offset_top = 8.0
+offset_right = 297.0
+offset_bottom = 34.0
+text = "Level: "
+
+[node name="XPLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 248.0
+offset_top = 32.0
+offset_right = 297.0
+offset_bottom = 58.0
+text = "XP:"
+
+[node name="PrimaryAttributes" type="Label" parent="."]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 80.0
+offset_right = 216.0
+offset_bottom = 106.0
+text = "Primary Attributes: "
+
+[node name="SecondaryAttributes" type="Label" parent="."]
+layout_mode = 0
+offset_left = 312.0
+offset_top = 80.0
+offset_right = 484.0
+offset_bottom = 106.0
+text = "Secondary Attributes: "
+
+[node name="EquipmentInfo" type="RichTextLabel" parent="."]
+layout_mode = 0
+offset_left = 632.0
+offset_top = 72.0
+offset_right = 1082.0
+offset_bottom = 98.0
+bbcode_enabled = true
+text = "Equipment:"
+fit_content = true
+
+[node name="SkillsInfo" type="RichTextLabel" parent="."]
+layout_mode = 0
+offset_left = 56.0
+offset_top = 392.0
+offset_right = 588.0
+offset_bottom = 692.0
+bbcode_enabled = true
+text = "Skills:"
+scroll_following = true
+
+[node name="ProficiencyInfo" type="RichTextLabel" parent="."]
+layout_mode = 0
+offset_left = 640.0
+offset_top = 320.0
+offset_right = 1172.0
+offset_bottom = 704.0
+bbcode_enabled = true
+scroll_following = true
+
+[node name="ExitButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 576.0
+offset_top = 16.0
+offset_right = 613.0
+offset_bottom = 47.0
+text = "Exit"
