@@ -235,18 +235,25 @@ func _on_next_floor():
 		var dungeon_data = DungeonStateManager.get_battle_data()
 		current_scene.start_dungeon(dungeon_data)
 
-func save_reward_state(rewards: Dictionary, xp_gained: int, rewards_collected: bool, collected_items: Dictionary):
+
+func save_reward_state(rewards: Dictionary, xp_gained: int, rewards_collected: bool, collected_items: Dictionary, auto_rewards_given: bool = false):
 	"""Save reward state before navigating away from RewardScene"""
 	saved_reward_data = {
 		"rewards": rewards.duplicate(true),  # Deep copy
 		"xp_gained": xp_gained,
 		"rewards_collected": rewards_collected,
+		"collected_items": collected_items.duplicate(),  # Deep copy
+		"auto_rewards_given": auto_rewards_given,  # CRITICAL FIX: Save this flag
 		# Also save dungeon context
 		"is_boss_fight": DungeonStateManager.is_boss_fight,
 		"current_floor": DungeonStateManager.current_floor,
 		"max_floor": DungeonStateManager.max_floor
 	}
-	print("SceneManager: Saved reward state - collected: %s, xp: %d" % [rewards_collected, xp_gained])
+	print("SceneManager: Saved reward state - collected: %s, xp: %d, auto_given: %s" % [
+		rewards_collected, 
+		xp_gained,
+		auto_rewards_given
+	])
 
 func get_saved_reward_state():
 	"""Get saved reward state when returning to RewardScene"""

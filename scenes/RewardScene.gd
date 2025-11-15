@@ -1,4 +1,5 @@
-# RewardScene.gd - ItemList-based reward collection system
+# RewardScene.gd - FIXED
+# Fixes: State persistence, duplication prevention, proper restoration
 
 extends Control
 
@@ -15,8 +16,11 @@ var max_floor: int = 25
 var setup_complete = false
 var xp_gained: int = 0
 
-# Track collected items
+# Track collected items - this is the SOURCE OF TRUTH
 var collected_items: Dictionary = {}  # item_key -> true
+
+# NEW: Track if auto-rewards were already given
+var auto_rewards_given: bool = false
 
 @onready var reward_label: RichTextLabel = $UI/RewardLabel
 @onready var continue_button: Button = $UI/ContinueButton
@@ -25,14 +29,15 @@ var collected_items: Dictionary = {}  # item_key -> true
 @onready var equip_button = $UI/EquipmentButton
 @onready var use_consumable_button = $UI/InventoryButton
 
-# NEW: ItemList-based UI
-var reward_items_list: ItemList
-var item_info_label: RichTextLabel
-var accept_button: Button
-var accept_all_button: Button
-var dispose_button: Button
-var dispose_all_button: Button
-var auto_rewards_label: Label
+# ItemList-based UI (now from .tscn)
+@onready var reward_items_list: ItemList = $UI/RewardItemsList
+@onready var item_info_label: RichTextLabel = $UI/ItemInfoLabel
+@onready var accept_button: Button = $UI/AcceptButton
+@onready var accept_all_button: Button = $UI/AcceptAllButton
+@onready var dispose_button: Button = $UI/DisposeButton
+@onready var dispose_all_button: Button = $UI/DisposeAllButton
+@onready var auto_rewards_label: Label = $UI/AutoRewardsLabel
+@onready var collection_container: Control = $UI/CollectionContainer  # NEW: Container for all collection UI
 
 func _ready():
 	print("RewardScene: _ready called")
@@ -43,8 +48,15 @@ func _ready():
 		rewards = saved_state.rewards
 		xp_gained = saved_state.xp_gained
 		
+		# CRITICAL FIX: Restore collected_items
 		if saved_state.has("collected_items"):
 			collected_items = saved_state.collected_items
+			print("RewardScene: Restored %d collected items" % collected_items.size())
+		
+		# CRITICAL FIX: Restore auto_rewards_given state
+		if saved_state.has("auto_rewards_given"):
+			auto_rewards_given = saved_state.auto_rewards_given
+			print("RewardScene: Auto rewards already given: %s" % auto_rewards_given)
 		
 		if saved_state.has("is_boss_fight"):
 			is_boss_fight = saved_state.is_boss_fight
@@ -53,7 +65,7 @@ func _ready():
 		if saved_state.has("max_floor"):
 			max_floor = saved_state.max_floor
 		
-		print("RewardScene: Restored saved state")
+		print("RewardScene: Restored saved state with %d collected items" % collected_items.size())
 		_connect_signals_to_scene_manager()
 	
 	call_deferred("deferred_setup")
@@ -162,7 +174,7 @@ func setup_item_list_ui():
 func set_rewards(new_rewards: Dictionary):
 	print("RewardScene: set_rewards called")
 	rewards = new_rewards
-	collected_items.clear()
+	# DON'T clear collected_items here - preserve existing state
 	
 	if is_inside_tree():
 		display_rewards()
@@ -196,7 +208,7 @@ func display_rewards():
 		print("RewardScene: UI not ready yet")
 		return
 	
-	print("RewardScene: Displaying rewards")
+	print("RewardScene: Displaying rewards (%d collected)" % collected_items.size())
 	
 	# Show auto-collected rewards
 	var auto_text = "Auto-Collected:\n"
@@ -204,6 +216,8 @@ func display_rewards():
 		auto_text += "+%d XP\n" % xp_gained
 	if rewards.has("currency"):
 		auto_text += "+%d Gold" % rewards["currency"]
+	if auto_rewards_given:
+		auto_text += " [Already Collected]"
 	
 	auto_rewards_label.text = auto_text
 	
@@ -354,7 +368,7 @@ func _on_accept_selected_pressed():
 		print("Accepted: %s" % equipment.name)
 	
 	# Save and refresh
-	SaveManager.save_game(player_character)
+	_save_state_and_character()
 	display_rewards()
 	item_info_label.text = "Select an item to view details"
 	accept_button.disabled = true
@@ -390,11 +404,11 @@ func _on_accept_all_pressed():
 					collected_items[equip_key] = true
 					print("Accepted: %s" % equipment.name)
 	
-	# Add auto rewards
+	# Add auto rewards (only once)
 	_add_auto_rewards()
 	
 	# Save and refresh
-	SaveManager.save_game(player_character)
+	_save_state_and_character()
 	display_rewards()
 	item_info_label.text = "All items collected!"
 
@@ -428,6 +442,7 @@ func _on_dispose_selected_pressed():
 			collected_items[metadata["key"]] = true
 		
 		print("Disposed: %s" % item.name)
+		_save_state_and_character()
 		display_rewards()
 		item_info_label.text = "Item disposed"
 		dialog.queue_free()
@@ -459,7 +474,7 @@ func _on_dispose_all_pressed():
 		# Add auto rewards
 		_add_auto_rewards()
 		
-		SaveManager.save_game(player_character)
+		_save_state_and_character()
 		display_rewards()
 		item_info_label.text = "All items disposed"
 		print("All items disposed")
@@ -469,7 +484,11 @@ func _on_dispose_all_pressed():
 	dialog.canceled.connect(func(): dialog.queue_free())
 
 func _add_auto_rewards():
-	"""Add XP and currency automatically"""
+	"""Add XP and currency automatically (only once)"""
+	if auto_rewards_given:
+		print("RewardScene: Auto rewards already given, skipping")
+		return
+	
 	if rewards.has("currency"):
 		player_character.currency.add(rewards["currency"])
 		print("Added currency: ", rewards["currency"])
@@ -480,8 +499,9 @@ func _add_auto_rewards():
 		
 		if player_character.level > old_level:
 			call_deferred("show_level_up_overlay")
-		
-		xp_gained = 0
+	
+	auto_rewards_given = true
+	print("RewardScene: Auto rewards given, flag set")
 
 func _all_items_collected() -> bool:
 	"""Check if all items have been collected/disposed"""
@@ -533,6 +553,13 @@ func show_level_up_overlay():
 	if dispose_all_button:
 		dispose_all_button.visible = true
 
+# CRITICAL FIX: Save state before navigation
+func _save_state_and_character():
+	"""Save both reward state and character data"""
+	SaveManager.save_game(player_character)
+	SceneManager.save_reward_state(rewards, xp_gained, _all_items_collected(), collected_items, auto_rewards_given)
+	print("RewardScene: Saved state - %d collected, auto_given=%s" % [collected_items.size(), auto_rewards_given])
+
 func _on_continue_pressed():
 	if not _all_items_collected():
 		show_collection_prompt("continue")
@@ -542,6 +569,7 @@ func _on_continue_pressed():
 	
 	rewards.clear()
 	collected_items.clear()
+	auto_rewards_given = false
 	SceneManager.clear_saved_reward_state()
 	
 	SceneManager.reward_scene_active = false
@@ -557,6 +585,7 @@ func _on_next_floor_pressed():
 	
 	rewards.clear()
 	collected_items.clear()
+	auto_rewards_given = false
 	SceneManager.clear_saved_reward_state()
 	
 	SaveManager.save_game(player_character)
@@ -571,6 +600,7 @@ func _on_quit_pressed():
 	
 	rewards.clear()
 	collected_items.clear()
+	auto_rewards_given = false
 	SceneManager.clear_saved_reward_state()
 	
 	SaveManager.save_game(player_character)
@@ -578,12 +608,14 @@ func _on_quit_pressed():
 	SceneManager.change_to_town(player_character)
 
 func _on_equip_pressed():
-	SceneManager.save_reward_state(rewards, xp_gained, false, collected_items)
+	# CRITICAL FIX: Save state with auto_rewards_given flag
+	SceneManager.save_reward_state(rewards, xp_gained, _all_items_collected(), collected_items, auto_rewards_given)
 	SceneManager.reward_scene_active = true
 	SceneManager.push_scene("res://scenes/EquipmentScene.tscn", player_character)
 
 func _on_use_consumable_pressed():
-	SceneManager.save_reward_state(rewards, xp_gained, false, collected_items)
+	# CRITICAL FIX: Save state with auto_rewards_given flag
+	SceneManager.save_reward_state(rewards, xp_gained, _all_items_collected(), collected_items, auto_rewards_given)
 	SceneManager.reward_scene_active = true
 	SceneManager.push_scene("res://scenes/InventoryScene.tscn", player_character)
 
