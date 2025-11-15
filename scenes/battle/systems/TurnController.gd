@@ -72,7 +72,11 @@ func advance_phase():
 func end_current_turn():
 	"""End current turn and start next"""
 	var current = turn_queue[0]
-	current.reset_defense() # Reset defensive stance
+	current.reset_defense()
+	
+	# Reset armor tracking flag
+	if current.has_meta("armor_tracked_this_turn"):
+		current.remove_meta("armor_tracked_this_turn")
 	
 	emit_signal("turn_ended", current)
 	

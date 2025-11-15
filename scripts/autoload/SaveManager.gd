@@ -179,6 +179,7 @@ func save_game(player: CharacterData):
 				equip_data["flavor_text"] = equipped_item.flavor_text
 			
 			save_data["equipment"][slot] = equip_data
+			save_data["proficiency_data"] = player.proficiency_manager.get_save_data()
 			
 	var file = FileAccess.open(get_save_file_path(player.name), FileAccess.WRITE)
 	file.store_string(JSON.stringify(save_data))
@@ -246,7 +247,11 @@ func load_game(character_name: String) -> CharacterData:
 		player.add_skills(save_data["skills"])
 	else:
 		print("Warning: Skills data not found or invalid")
-
+	
+	# Handle Proficiencies
+	if "proficiency_data" in save_data:
+		player.proficiency_manager.load_save_data(save_data["proficiency_data"])
+	
 	# Load inventory
 	if "inventory" in save_data:
 		for item_key in save_data["inventory"]:

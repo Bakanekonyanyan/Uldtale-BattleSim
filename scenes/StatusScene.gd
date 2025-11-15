@@ -10,6 +10,7 @@ var current_character: CharacterData
 @onready var secondary_attributes = $SecondaryAttributes if has_node("SecondaryAttributes") else null
 @onready var equipment_info = $EquipmentInfo if has_node("EquipmentInfo") else null
 @onready var skills_info = $SkillsInfo if has_node("SkillsInfo") else null
+@onready var prof_info = $ProficiencyInfo if has_node("ProficiencyInfo") else null
 @onready var exit_button = $ExitButton if has_node("ExitButton") else null
 @onready var xp_label = $XPLabel
 
@@ -155,6 +156,25 @@ func update_status():
 		else:
 			skills_info.text = skills_text
 	
+	# NEW: Display proficiencies
+	if current_character.proficiency_manager:
+		var prof_text = "\n\n[b][color=cyan]Proficiencies:[/color][/b]\n\n"
+		
+		# Weapon proficiencies
+		var weapon_profs = current_character.proficiency_manager.get_all_weapon_proficiencies()
+		if not weapon_profs.is_empty():
+			prof_text += "[b]Weapons:[/b]\n"
+			for prof_str in weapon_profs:
+				prof_text += "  " + prof_str + "\n"
+		
+		# Armor proficiencies
+		var armor_profs = current_character.proficiency_manager.get_all_armor_proficiencies()
+		if not armor_profs.is_empty():
+			prof_text += "\n[b]Armor:[/b]\n"
+			for prof_str in armor_profs:
+				prof_text += "  " + prof_str + "\n"
+		prof_info.text += prof_text
+		
 	print("StatusScene: update_status completed")
 
 func set_label_text(label: Label, text: String):

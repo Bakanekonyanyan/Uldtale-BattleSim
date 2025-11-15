@@ -21,12 +21,14 @@ offset_left = 64.0
 offset_top = 96.0
 offset_right = 304.0
 offset_bottom = 192.0
+autowrap_mode = 2
 
 [node name="EnemyInfo" type="Label" parent="BattleUIController"]
 offset_left = 384.0
 offset_top = 96.0
 offset_right = 624.0
 offset_bottom = 192.0
+autowrap_mode = 2
 
 [node name="TurnLabel" type="Label" parent="BattleUIController"]
 offset_left = 168.0

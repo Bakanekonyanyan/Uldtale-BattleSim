@@ -11,7 +11,7 @@ class_name CharacterData
 var status_manager: StatusEffectManager
 var buff_manager: BuffDebuffManager
 var skill_manager: SkillProgressionManager
-
+var proficiency_manager: ProficiencyManager
 # === BASIC INFO ===
 @export var name: String
 @export var race: String
@@ -103,7 +103,7 @@ func _init(p_name: String = "", p_race: String = "", p_class: String = ""):
 	status_manager = StatusEffectManager.new(self)
 	buff_manager = BuffDebuffManager.new(self)
 	skill_manager = SkillProgressionManager.new(self)
-
+	proficiency_manager = ProficiencyManager.new(self)
 # === STATS CALCULATION ===
 
 func calculate_secondary_attributes():
@@ -179,16 +179,35 @@ func is_alive() -> bool:
 func get_attack_power() -> int:
 	var base = attack_power
 	if equipment["main_hand"]:
-		base += equipment["main_hand"].damage
-		if "bonus_damage" in equipment["main_hand"]:
-			base += equipment["main_hand"].bonus_damage
+		var weapon = equipment["main_hand"]
+		var weapon_damage = weapon.damage
+		
+		# NEW: Apply proficiency bonus
+		if proficiency_manager:
+			var prof_mult = proficiency_manager.get_weapon_damage_multiplier(weapon.type)
+			weapon_damage = int(weapon_damage * prof_mult)
+		
+		base += weapon_damage
+		if "bonus_damage" in weapon:
+			base += weapon.bonus_damage
+	
 	return int(base)
 
 func get_defense() -> int:
 	var total = defense
+	
 	for slot in equipment:
 		if equipment[slot] and equipment[slot].armor_value:
-			total += equipment[slot].armor_value
+			var armor = equipment[slot]
+			var armor_value = armor.armor_value
+			
+			# NEW: Apply proficiency bonus
+			if proficiency_manager and armor.type in ["cloth", "leather", "mail", "plate"]:
+				var prof_mult = proficiency_manager.get_armor_effectiveness_multiplier(armor.type)
+				armor_value = int(armor_value * prof_mult)
+			
+			total += armor_value
+	
 	return total
 
 # === EQUIPMENT ===
@@ -366,8 +385,19 @@ func update_max_floor_cleared(floor: int):
 		print("New max floor: %d" % max_floor_cleared)
 
 func take_damage(amount: float, attacker: CharacterData = null):
-	"""Take damage with reflection support"""
+	"""Take damage with armor proficiency tracking"""
 	
+	# NEW: Track armor proficiency (once per turn to avoid spam)
+	if proficiency_manager and not has_meta("armor_tracked_this_turn"):
+		for slot in ["head", "chest", "hands", "legs", "feet"]:
+			if equipment[slot] and equipment[slot] is Equipment:
+				var armor = equipment[slot]
+				if armor.type in ["cloth", "leather", "mail", "plate"]:
+					var prof_msg = proficiency_manager.use_armor(armor.type)
+					if prof_msg != "":
+						print(prof_msg)
+		
+		set_meta("armor_tracked_this_turn", true)
 	# Store attacker for reflection
 	if attacker:
 		last_attacker = attacker
@@ -406,6 +436,12 @@ func attack(target: CharacterData) -> String:
 	var base_damage = get_attack_power() * 0.5 * momentum_mult
 	var resistance = target.get_defense()
 	
+	# NEW: Track weapon proficiency
+	var prof_msg = ""
+	if equipment["main_hand"] and equipment["main_hand"] is Equipment:
+		var weapon = equipment["main_hand"]
+		prof_msg = proficiency_manager.use_weapon(weapon.type)
+	
 	# Rolls
 	if randf() >= accuracy:
 		return "%s's attack missed!" % name
@@ -440,6 +476,11 @@ func attack(target: CharacterData) -> String:
 	restore_sp(sp_restore)
 	
 	var result = "%s attacks %s for %d damage" % [name, target.name, damage]
+	
+	if prof_msg != "":
+		result += "\n" + prof_msg
+	
+	return result
 	
 	if momentum_mult > 1.0:
 		result += " (+%d%% momentum)" % int((momentum_mult - 1.0) * 100)
