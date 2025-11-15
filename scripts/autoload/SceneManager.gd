@@ -235,7 +235,7 @@ func _on_next_floor():
 		var dungeon_data = DungeonStateManager.get_battle_data()
 		current_scene.start_dungeon(dungeon_data)
 
-func save_reward_state(rewards: Dictionary, xp_gained: int, rewards_collected: bool):
+func save_reward_state(rewards: Dictionary, xp_gained: int, rewards_collected: bool, collected_items: Dictionary):
 	"""Save reward state before navigating away from RewardScene"""
 	saved_reward_data = {
 		"rewards": rewards.duplicate(true),  # Deep copy

@@ -78,13 +78,14 @@ offset_bottom = 264.0
 bbcode_enabled = true
 
 [node name="ContinueButton" type="Button" parent="UI"]
-offset_left = 336.0
+offset_left = 768.0
 offset_top = 64.0
-offset_right = 415.0
+offset_right = 847.0
 offset_bottom = 95.0
 text = "Continue"
 
 [node name="AcceptRewardButton" type="Button" parent="UI"]
+visible = false
 offset_left = 88.0
 offset_top = 288.0
 offset_right = 219.0
@@ -92,29 +93,29 @@ offset_bottom = 319.0
 text = "Accept Rewards"
 
 [node name="NextFloorButton" type="Button" parent="UI"]
-offset_left = 336.0
+offset_left = 768.0
 offset_top = 112.0
-offset_right = 425.0
+offset_right = 857.0
 offset_bottom = 143.0
 text = "Next Floor"
 
 [node name="QuitButton" type="Button" parent="UI"]
-offset_left = 336.0
+offset_left = 768.0
 offset_top = 160.0
-offset_right = 378.0
+offset_right = 880.0
 offset_bottom = 191.0
 text = "Back to Town"
 
 [node name="EquipmentButton" type="Button" parent="UI"]
-offset_left = 528.0
+offset_left = 960.0
 offset_top = 112.0
-offset_right = 621.0
+offset_right = 1053.0
 offset_bottom = 143.0
 text = "Equipment"
 
 [node name="InventoryButton" type="Button" parent="UI"]
-offset_left = 528.0
+offset_left = 960.0
 offset_top = 64.0
-offset_right = 611.0
+offset_right = 1043.0
 offset_bottom = 95.0
 text = "Inventory"

@@ -21,13 +21,15 @@ var consumable_inventory: Dictionary = {
 # Equipment: one-time purchases, removed when bought
 var equipment_inventory: Dictionary = {}
 
+# NEW: Buyback system (cleared when floor changes)
+var buyback_inventory: Dictionary = {}  # item_key -> {item: Item/Equipment, price: int, quantity: int}
+var last_floor: int = 0
+
 # Track if shop has been initialized
 var shop_initialized: bool = false
 
 func _ready():
 	initialize_shop()
-	# Don't auto-initialize - let game flow handle it
-	pass
 
 func initialize_shop():
 	"""Initialize shop with starting equipment - call once per game"""
@@ -77,27 +79,22 @@ func _add_common_weapons():
 	for weapon_id in weapon_ids:
 		var equipment = ItemManager.create_equipment_for_floor(weapon_id, 1)
 		if equipment:
-			# Force common rarity
 			equipment.rarity = "common"
 			equipment.item_level = 1
-			
-			# Recalculate with common rarity
-			equipment.damage = equipment.damage  # Keep base damage
-			equipment.armor_value = equipment.armor_value  # Keep base armor
-			equipment.stat_modifiers = {}  # No modifiers for common
+			equipment.damage = equipment.damage
+			equipment.armor_value = equipment.armor_value
+			equipment.stat_modifiers = {}
 			equipment.status_effect_type = Skill.StatusEffect.NONE
 			equipment.status_effect_chance = 0.0
 			equipment.bonus_damage = 0
 			
-			# Reset name to base (no fancy prefixes/suffixes)
 			var template = ItemManager.get_equipment_template(weapon_id)
 			if template.has("name"):
 				equipment.name = template["name"]
 			
-			# Calculate sell price (base value)
 			var price = equipment.value
 			price = (price / 2.5) 
-			# Store with unique key
+			
 			var unique_key = "%s_%d" % [weapon_id, Time.get_ticks_msec()]
 			equipment_inventory[unique_key] = {
 				"equipment": equipment,
@@ -135,11 +132,8 @@ func _add_common_armor():
 	for armor_id in armor_ids:
 		var equipment = ItemManager.create_equipment_for_floor(armor_id, 1)
 		if equipment:
-			# Force common rarity
 			equipment.rarity = "common"
 			equipment.item_level = 1
-			
-			# Recalculate with common rarity
 			equipment.damage = equipment.damage
 			equipment.armor_value = equipment.armor_value
 			equipment.stat_modifiers = {}
@@ -147,7 +141,6 @@ func _add_common_armor():
 			equipment.status_effect_chance = 0.0
 			equipment.bonus_damage = 0
 			
-			# Reset name to base
 			var template = ItemManager.get_equipment_template(armor_id)
 			if template.has("name"):
 				equipment.name = template["name"]
@@ -194,13 +187,88 @@ func purchase_equipment(item_key: String) -> bool:
 		print("ShopManager: Equipment out of stock: %s" % item_key)
 		return false
 	
-	# Remove from shop inventory (one-time purchase)
 	equipment_inventory.erase(item_key)
 	print("ShopManager: Sold equipment: %s" % item_data["equipment"].name)
 	return true
 
+# === NEW: BUYBACK SYSTEM ===
+
+func add_to_buyback(item: Variant, sell_price: int, quantity: int = 1):
+	"""Add item to buyback inventory"""
+	var buyback_key: String
+	
+	if item is Equipment:
+		# Equipment: use inventory_key or generate unique key
+		buyback_key = item.inventory_key if item.inventory_key != "" else "%s_%d" % [item.id, Time.get_ticks_msec()]
+	else:
+		# Consumables/materials: use item ID
+		buyback_key = item.id
+	
+	# Calculate buyback price (sell price * 1.5, rounded up)
+	var buyback_price = int(ceil(sell_price * 1.5))
+	
+	if buyback_inventory.has(buyback_key):
+		# Stack consumables/materials
+		if not (item is Equipment):
+			buyback_inventory[buyback_key]["quantity"] += quantity
+	else:
+		buyback_inventory[buyback_key] = {
+			"item": item,
+			"price": buyback_price,
+			"quantity": quantity
+		}
+	
+	print("ShopManager: Added to buyback - %s (x%d) for %d copper" % [item.name, quantity, buyback_price])
+
+func get_buyback_list() -> Array:
+	"""Get list of items available for buyback"""
+	var items = []
+	for key in buyback_inventory:
+		items.append({
+			"key": key,
+			"item": buyback_inventory[key]["item"],
+			"price": buyback_inventory[key]["price"],
+			"quantity": buyback_inventory[key]["quantity"]
+		})
+	return items
+
+func buyback_item(item_key: String, quantity: int = 1) -> Dictionary:
+	"""Buy back an item from buyback inventory"""
+	if not buyback_inventory.has(item_key):
+		return {"success": false, "message": "Item not in buyback"}
+	
+	var buyback_data = buyback_inventory[item_key]
+	
+	if buyback_data["quantity"] < quantity:
+		return {"success": false, "message": "Not enough quantity"}
+	
+	# Calculate total price
+	var total_price = buyback_data["price"] * quantity
+	
+	# Reduce quantity
+	buyback_data["quantity"] -= quantity
+	
+	# Remove if quantity reaches 0
+	if buyback_data["quantity"] <= 0:
+		buyback_inventory.erase(item_key)
+	
+	return {
+		"success": true,
+		"item": buyback_data["item"],
+		"price": total_price,
+		"quantity": quantity
+	}
+
+func clear_buyback_on_floor_change(new_floor: int):
+	"""Clear buyback inventory when floor changes"""
+	if new_floor != last_floor:
+		print("ShopManager: Floor changed from %d to %d - clearing buyback" % [last_floor, new_floor])
+		buyback_inventory.clear()
+		last_floor = new_floor
+
 func reset_shop():
 	"""Reset shop inventory (for new game/testing)"""
 	equipment_inventory.clear()
+	buyback_inventory.clear()
 	shop_initialized = false
 	print("ShopManager: Shop inventory reset")
