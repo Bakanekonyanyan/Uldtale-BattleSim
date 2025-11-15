@@ -1,13 +1,10 @@
 # res://scenes/battle/components/ui/BattleUIController.gd
-# Handles all battle UI updates and player input
-# Replaces BattleUIManager with scene-based approach
-
-extends Node  # FIXED: Changed from RefCounted to Node
+extends Node
 class_name BattleUIController
 
 signal action_selected(action: BattleAction)
 
-# UI Node references - set via @export or in _ready()
+# UI Node references
 @export var player_info_label: Label
 @export var enemy_info_label: Label
 @export var turn_label: Label
@@ -23,11 +20,12 @@ signal action_selected(action: BattleAction)
 var player: CharacterData
 var enemy: CharacterData
 var ui_locked: bool = false
+var is_initialized: bool = false  # ✅ NEW: Track initialization state
 
 func _ready():
 	print("BattleUIController: Ready")
 	
-	# FIXED: These are direct children, use $NodeName
+	# Get node references
 	if not player_info_label:
 		player_info_label = $PlayerInfo
 	if not enemy_info_label:
@@ -51,19 +49,27 @@ func _ready():
 	if not inventory_menu:
 		inventory_menu = $InventoryMenu
 	
-	# Debug: Log which nodes were found
-	print("BattleUIController: Found nodes:")
-	print("  player_info_label: ", player_info_label != null)
-	print("  enemy_info_label: ", enemy_info_label != null)
-	print("  turn_label: ", turn_label != null)
-	print("  combat_log: ", combat_log != null)
-	print("  action_buttons: ", action_buttons != null)
+	# ✅ NEW: Force all UI elements visible immediately
+	_force_ui_visible()
+	
+	print("BattleUIController: All nodes ready")
 
-# ✅ NEW: UI locking state
+func _force_ui_visible():
+	"""Ensure all UI elements are visible and ready"""
+	var nodes = [
+		player_info_label, enemy_info_label, turn_label,
+		combat_log, xp_label, action_buttons,
+		wave_label, floor_label, dungeon_description_label
+	]
+	
+	for node in nodes:
+		if node:
+			node.visible = true
+			node.modulate = Color(1, 1, 1, 1)  # Full opacity
+
 func lock_ui():
 	"""Lock all player input during action processing"""
 	if ui_locked:
-		print("BattleUIController: Already locked")
 		return
 	
 	ui_locked = true
@@ -77,25 +83,44 @@ func unlock_ui():
 	
 	ui_locked = false
 	print("BattleUIController: UI UNLOCKED")
-	# Note: Don't auto-enable actions - let the orchestrator decide when
 
 func is_ui_locked() -> bool:
-	"""Check if UI is currently locked"""
 	return ui_locked
 
 func initialize(p_player: CharacterData, p_enemy: CharacterData):
 	"""Initialize with battle participants"""
 	player = p_player
 	enemy = p_enemy
-	print("BattleUIController: Initialized for %s vs %s" % [player.name, enemy.name])
+	print("BattleUIController: Initializing for %s vs %s" % [player.name, enemy.name])
 	
 	# Connect inventory menu if it exists
 	if inventory_menu and inventory_menu.has_signal("item_selected"):
 		if not inventory_menu.is_connected("item_selected", Callable(self, "_on_inventory_item_selected")):
 			inventory_menu.connect("item_selected", Callable(self, "_on_inventory_item_selected"))
 	
-	update_character_info(player,enemy)
+	# ✅ NEW: Force immediate UI update with data
+	_force_initial_display()
+	
+	is_initialized = true
+	print("BattleUIController: Initialization complete")
+
+func _force_initial_display():
+	"""Force all UI elements to display with initial data"""
+	# Update all displays immediately
+	update_character_info(player, enemy)
 	update_xp_display()
+	update_debug_display()
+	update_turn_display("Battle starting...")
+	
+	# Force text to render
+	if player_info_label:
+		player_info_label.queue_redraw()
+	if enemy_info_label:
+		enemy_info_label.queue_redraw()
+	if turn_label:
+		turn_label.queue_redraw()
+	
+	print("BattleUIController: Forced initial display")
 
 # === DISPLAY UPDATES ===
 
@@ -103,25 +128,31 @@ func update_turn_display(text: String):
 	"""Update turn status message"""
 	if turn_label:
 		turn_label.text = text
+		turn_label.queue_redraw()  # ✅ Force redraw
 
 func update_xp_display():
 	"""Update XP progress display"""
 	if xp_label and player:
 		xp_label.text = "XP: %d / %d" % [player.xp, LevelSystem.calculate_xp_for_level(player.level)]
+		xp_label.queue_redraw()  # ✅ Force redraw
 
 func update_dungeon_info(wave: int, floor: int, description: String):
 	"""Update dungeon context displays"""
 	if wave_label:
 		wave_label.text = "Wave: %d" % wave
+		wave_label.queue_redraw()
 	if floor_label:
 		floor_label.text = "Floor: %d" % floor
+		floor_label.queue_redraw()
 	if dungeon_description_label:
 		dungeon_description_label.text = description
+		dungeon_description_label.queue_redraw()
 
 func add_combat_log(message: String, color: String = "white"):
 	"""Add colored message to combat log"""
 	if combat_log:
 		combat_log.append_text("[color=%s]%s[/color]\n" % [color, message])
+		combat_log.queue_redraw()
 
 # === ACTION SETUP ===
 
@@ -129,18 +160,14 @@ func setup_player_actions(item_action_used: bool):
 	"""Setup player action buttons"""
 	clear_action_buttons()
 	
-	# Base actions
 	_add_action_button("Attack", func(): emit_signal("action_selected", BattleAction.attack(player, enemy)))
 	_add_action_button("Defend", func(): emit_signal("action_selected", BattleAction.defend(player)))
 	
-	# Items button
 	var item_text = "Items (Used)" if item_action_used else "Items (Bonus Action)"
 	_add_action_button(item_text, func(): _show_inventory())
 	
-	# View equipment
 	_add_action_button("View Enemy Equipment", func(): _show_enemy_equipment())
 	
-	# Skills
 	_add_skill_buttons()
 
 func _add_skill_buttons():
@@ -187,23 +214,19 @@ func _add_action_button(text: String, callback: Callable):
 	button.text = text
 	button.custom_minimum_size = Vector2(180, 40)
 	
-	# ✅ FIX: Wrap callback to check lock state
 	button.pressed.connect(func():
 		if is_ui_locked():
 			print("BattleUIController: Button press ignored - UI locked")
 			return
 		
-		# Lock UI immediately when button is pressed
 		lock_ui()
-		
-		# Execute the actual callback
 		callback.call()
 	)
 	
 	action_buttons.add_child(button)
 
 func _add_disabled_button(text: String):
-	"""Add a disabled button (for skills on cooldown, etc)"""
+	"""Add a disabled button"""
 	if not action_buttons:
 		return
 	
@@ -223,9 +246,8 @@ func enable_actions():
 	"""Enable all action buttons"""
 	if action_buttons:
 		for button in action_buttons.get_children():
-			if button is Button:
-				# Don't re-enable buttons that are disabled for other reasons (cooldown, resources)
-				pass
+			if button is Button and not button.disabled:
+				button.disabled = false
 
 func disable_actions():
 	"""Disable all action buttons"""
@@ -296,30 +318,30 @@ func _get_enemy_equipment_text() -> String:
 			text += "[b]%s:[/b] Empty\n" % slot_name
 	return text
 
-func update_character_info(player: CharacterData, enemy: CharacterData):
-	"""Update player and enemy info displays - FIXED debuff display"""
-	if player_info_label and player:
-		# QOL: Fix debuff display (show single - not --)
-		var status_str = _get_clean_status_string(player)
+func update_character_info(p_player: CharacterData, p_enemy: CharacterData):
+	"""Update player and enemy info displays"""
+	if player_info_label and p_player:
+		var status_str = _get_clean_status_string(p_player)
 		
 		player_info_label.text = "Player: %s\nHP: %d/%d\nMP: %d/%d\nSP: %d/%d\n%s" % [
-			player.name, player.current_hp, player.max_hp,
-			player.current_mp, player.max_mp,
-			player.current_sp, player.max_sp,
+			p_player.name, p_player.current_hp, p_player.max_hp,
+			p_player.current_mp, p_player.max_mp,
+			p_player.current_sp, p_player.max_sp,
 			status_str
 		]
+		player_info_label.queue_redraw()  # ✅ Force redraw
 	
-	if enemy_info_label and enemy:
-		var status_str = _get_clean_status_string(enemy)
+	if enemy_info_label and p_enemy:
+		var status_str = _get_clean_status_string(p_enemy)
 		
 		enemy_info_label.text = "Enemy: %s\nHP: %d/%d\nMP: %d/%d\nSP: %d/%d\n%s" % [
-			enemy.name, enemy.current_hp, enemy.max_hp,
-			enemy.current_mp, enemy.max_mp,
-			enemy.current_sp, enemy.max_sp,
+			p_enemy.name, p_enemy.current_hp, p_enemy.max_hp,
+			p_enemy.current_mp, p_enemy.max_mp,
+			p_enemy.current_sp, p_enemy.max_sp,
 			status_str
 		]
+		enemy_info_label.queue_redraw()  # ✅ Force redraw
 	
-	# QOL: Update debug log with secondary stats
 	if debug_log:
 		update_debug_display()
 
@@ -344,18 +366,18 @@ func _get_clean_status_string(character: CharacterData) -> String:
 			var duration = buff_mgr.buffs[attr].duration
 			effects.append("%s +%d (%d)" % [attr_name, value, duration])
 	
-	# Debuffs - FIXED: show single - not --
+	# Debuffs
 	if buff_mgr and buff_mgr.has_debuffs():
 		for attr in buff_mgr.debuffs:
 			var attr_name = Skill.AttributeTarget.keys()[attr]
 			var value = buff_mgr.debuffs[attr].value
 			var duration = buff_mgr.debuffs[attr].duration
-			effects.append("%s -%d (%d)" % [attr_name, value, duration])  # Single - now
+			effects.append("%s -%d (%d)" % [attr_name, value, duration])
 	
 	return "Status: " + (", ".join(effects) if not effects.is_empty() else "Normal")
 
 func update_debug_display():
-	"""QOL: Fixed - now shows secondary stats"""
+	"""Update debug display with secondary stats"""
 	if not debug_log:
 		return
 	
@@ -379,6 +401,7 @@ func update_debug_display():
 	debug_log.append_text("Defense: %d | Armor Pen: %.1f%%\n" % [
 		enemy.get_defense(), enemy.armor_penetration * 100
 	])
+	debug_log.queue_redraw()
 
 func display_result(result: ActionResult):
 	"""Display action result with appropriate color - QOL: Better skill display"""
