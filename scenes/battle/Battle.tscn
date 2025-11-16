@@ -83,6 +83,12 @@ offset_right = 1168.0
 offset_bottom = 264.0
 scale = Vector2(1, 1.36)
 
+[node name="ColorRect" type="ColorRect" parent="BattleUIController/CombatLogWindow"]
+layout_mode = 0
+offset_right = 464.0
+offset_bottom = 200.0
+color = Color(0.116617, 0.118965, 0.183853, 0.886275)
+
 [node name="CombatLog" type="RichTextLabel" parent="BattleUIController"]
 offset_left = 704.0
 offset_top = 64.0
@@ -104,6 +110,14 @@ offset_left = 768.0
 offset_top = 384.0
 offset_right = 1168.0
 offset_bottom = 632.0
+
+[node name="DebugLog" type="RichTextLabel" parent="BattleUIController"]
+offset_left = 768.0
+offset_top = 384.0
+offset_right = 1168.0
+offset_bottom = 632.0
+bbcode_enabled = true
+scroll_following = true
 
 [node name="InventoryMenu" type="Control" parent="BattleUIController"]
 layout_mode = 3

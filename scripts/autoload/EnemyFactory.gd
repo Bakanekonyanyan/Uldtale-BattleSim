@@ -32,7 +32,7 @@ func set_dungeon_race(floor: int):
 	if floor != current_floor:
 		current_floor = floor
 		var non_playable_races = races["non_playable"].keys()
-		dungeon_race = non_playable_races[randi() % non_playable_races.size()]
+		dungeon_race = non_playable_races[RandomManager.randi() % non_playable_races.size()]
 		current_dungeon_race = dungeon_race
 		print("Floor %d - Current dungeon race set to: %s" % [floor, current_dungeon_race])
 	else:
@@ -64,7 +64,7 @@ func create_enemy(level: int = 1, floor: int = 1, wave: int = 1, momentum_level:
 	print("5. races['non_playable'][current_dungeon_race] type: ", typeof(races["non_playable"][current_dungeon_race]))
 	
 	var enemy_classes = classes["non_playable"].keys()
-	var chosen_class = enemy_classes[randi() % enemy_classes.size()]
+	var chosen_class = enemy_classes[RandomManager.randi() % enemy_classes.size()]
 	
 	print("6. chosen_class: ", chosen_class)
 	print("7. classes['non_playable'][chosen_class] type: ", typeof(classes["non_playable"][chosen_class]))
@@ -76,6 +76,11 @@ func create_enemy(level: int = 1, floor: int = 1, wave: int = 1, momentum_level:
 	
 	setup_character(enemy, chosen_class, "non_playable", current_dungeon_race, race_data)
 	enemy.name = "%s %s" % [current_dungeon_race, chosen_class]
+
+	# ✅ ADD THIS: Initialize elemental resistances for enemies
+	if enemy.elemental_resistances == null:
+		enemy.elemental_resistances = ElementalResistanceManager.new(enemy)
+	enemy.initialize_racial_elementals(true)
 
 	enemy.level = level
 	for _i in range(level - 1):
@@ -103,7 +108,7 @@ func create_boss(floor: int = 1, wave: int = 1, momentum_level: int = 0) -> Char
 	var king_data = classes["boss"]["King"]
 	
 	var minion_classes = ["Shaman", "Brute", "Minion"]
-	var chosen_minion = minion_classes[randi() % minion_classes.size()]
+	var chosen_minion = minion_classes[RandomManager.randi() % minion_classes.size()]
 	var minion_data = classes["non_playable"][chosen_minion]
 	var race_data = races["non_playable"][current_dungeon_race]
 	
@@ -143,6 +148,11 @@ func create_boss(floor: int = 1, wave: int = 1, momentum_level: int = 0) -> Char
 	
 	if combined_skills.size() > 0:
 		boss.add_skills(combined_skills)
+	
+	# ✅ ADD THIS: Initialize elemental resistances for boss
+	if boss.elemental_resistances == null:
+		boss.elemental_resistances = ElementalResistanceManager.new(boss)
+	boss.initialize_racial_elementals(true)
 	
 	apply_enemy_scaling(boss, floor, wave, true, momentum_level)
 	give_enemy_equipment(boss, floor, true)
@@ -266,7 +276,7 @@ func give_enemy_equipment(enemy: CharacterData, floor: int, is_boss: bool = fals
 		enemy.set_meta("equipped_items", [])
 	
 	for slot in available_slots:
-		if is_boss or randf() < equipment_chance:
+		if is_boss or RandomManager.randf() < equipment_chance:
 			var item = null
 			
 			if slot == "main_hand":
@@ -312,11 +322,11 @@ func give_enemy_items(enemy: CharacterData, floor: int, is_boss: bool = false, m
 	var total_chance = (base_item_chance + momentum_bonus) * boss_multiplier
 	
 	var item_count = 0
-	if randf() < total_chance:
+	if RandomManager.randf() < total_chance:
 		item_count = 1
-	if randf() < total_chance * 0.5:
+	if RandomManager.randf() < total_chance * 0.5:
 		item_count += 1
-	if randf() < total_chance * 0.25:
+	if RandomManager.randf() < total_chance * 0.25:
 		item_count += 1
 	
 	var available_items = []
@@ -339,7 +349,7 @@ func give_enemy_items(enemy: CharacterData, floor: int, is_boss: bool = false, m
 	
 	for i in range(item_count):
 		if available_items.size() > 0:
-			var item_id = available_items[randi() % available_items.size()]
+			var item_id = available_items[RandomManager.randi() % available_items.size()]
 			var item = ItemManager.get_item(item_id)
 			if item:
 				var quantity = 1 + int(floor / 5)

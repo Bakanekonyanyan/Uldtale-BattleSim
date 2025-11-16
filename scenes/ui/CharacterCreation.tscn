@@ -38,12 +38,13 @@ offset_right = 244.0
 offset_bottom = 316.0
 tooltip_text = "Class"
 
-[node name="StatsLabel" type="Label" parent="."]
+[node name="InfoDisplay" type="RichTextLabel" parent="."]
 layout_mode = 0
 offset_left = 384.0
-offset_top = 72.0
-offset_right = 832.0
+offset_top = 64.0
+offset_right = 848.0
 offset_bottom = 640.0
+bbcode_enabled = true
 
 [node name="CreateButton" type="Button" parent="."]
 layout_mode = 0
@@ -55,9 +56,9 @@ text = "Create Character"
 
 [node name="QuitButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 896.0
-offset_top = 512.0
-offset_right = 1076.0
-offset_bottom = 572.0
+offset_left = 904.0
+offset_top = 576.0
+offset_right = 1084.0
+offset_bottom = 636.0
 text = "Back to Character Selection"
 autowrap_mode = 2

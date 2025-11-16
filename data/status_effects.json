@@ -1,7 +1,7 @@
 {
 	"POISON": {
 		"damage_type": "hp_percent",
-		"damage_value": 0.2,
+		"damage_value": 0.15,
 		"message": "{name} took {damage} poison damage"
 	},
 	"BURN": {
@@ -21,17 +21,44 @@
 	"FREEZE": {
 		"damage_type": "none",
 		"stat_modifiers": {
-			"dexterity": -2,
-			"agility": -2,
-			"arcane": -2
+			"dexterity": -3,
+			"agility": -3
 		},
 		"stun_chance": 0.25,
-		"message": "{name} is frozen, reducing their defense"
+		"message": "{name} is frozen, reducing movement and precision"
 	},
 	"BLEED": {
 		"damage_type": "hp_percent",
 		"damage_value": 0.125,
+		"stat_modifiers": {
+			"vitality": -2,
+			"endurance": -2
+		},
 		"message": "{name} bleeds for {damage} damage"
+	},
+	"CONFUSED": {
+		"damage_type": "none",
+		"stat_modifiers": {
+			"intelligence": -4,
+			"mind": -3
+		},
+		"accuracy_reduction": 0.3,
+		"message": "{name} is confused, reducing accuracy and mental clarity"
+	},
+	"BLIND": {
+		"damage_type": "none",
+		"stat_modifiers": {
+			"dexterity": -3
+		},
+		"accuracy_reduction": 0.5,
+		"dodge_reduction": 0.3,
+		"message": "{name} is blinded, severely reducing accuracy"
+	},
+	"SLEEP": {
+		"damage_type": "none",
+		"stun_chance": 1.0,
+		"break_on_damage": true,
+		"message": "{name} is asleep and cannot act"
 	},
 	"REGENERATION": {
 		"damage_type": "heal_percent",

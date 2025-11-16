@@ -5,6 +5,7 @@ var races = {}
 var classes = {}
 var boss_stat_multiplier = 1.5  # Bosses will have 50% more stats
 
+
 func _ready():
 	load_data()
 
@@ -19,12 +20,12 @@ func create_boss() -> CharacterData:
 	
 	# Randomly select a race from all available races (playable and non-playable)
 	var all_races = races["playable"].keys() + races["non_playable"].keys()
-	var race_name = all_races[randi() % all_races.size()]
+	var race_name = all_races[RandomManager.randi() % all_races.size()]
 	var race_data = races["playable"].get(race_name, races["non_playable"].get(race_name))
 	
 	# Randomly select a class from all available classes
 	var all_classes = classes["playable"].keys() + classes["non_playable"].keys()
-	var chosen_class_name = all_classes[randi() % all_classes.size()]
+	var chosen_class_name = all_classes[RandomManager.randi() % all_classes.size()]
 	var class_data = classes["playable"].get(chosen_class_name, classes["non_playable"].get(chosen_class_name))
 	
 	# Set boss name

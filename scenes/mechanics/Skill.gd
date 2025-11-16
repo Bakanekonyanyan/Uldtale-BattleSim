@@ -2,6 +2,7 @@
 class_name Skill
 extends Resource
 
+
 enum SkillType { DAMAGE, HEAL, BUFF, DEBUFF, RESTORE, INFLICT_STATUS, DRAIN }
 enum TargetType { SELF, ALLY, ENEMY, ALL_ALLIES, ALL_ENEMIES }
 enum AttributeTarget { 
@@ -17,9 +18,37 @@ enum AttributeTarget {
 	AGILITY, 
 	FORTITUDE 
 }
-enum StatusEffect { NONE, POISON, BURN, FREEZE, SHOCK, REGENERATION, ENRAGED, REFLECT }
+enum StatusEffect { 
+	NONE, 
+	POISON,       # Earth element
+	BURN,         # Fire element
+	FREEZE,       # Ice element
+	BLEED,        # Wind element
+	SHOCK,        # Lightning element
+	CONFUSED,     # Holy element
+	BLIND,        # Holy/Dark element
+	SLEEP,        # Dark element
+	REGENERATION, # Buff effect
+	ENRAGED,      # Buff effect
+	REFLECT       # Buff effect
+}
 enum AbilityType { PHYSICAL, MAGICAL }
 enum DrainTarget {HP, MP, SP }
+enum ElementType {
+	NONE,
+	EARTH,
+	FIRE,
+	ICE,
+	WIND,
+	LIGHTNING,
+	HOLY,
+	DARK,
+	PHYSICAL  # Non-elemental physical damage
+}
+
+# Add this as an export variable
+@export var element: ElementType = ElementType.NONE
+@export var elements: Array = []
 
 @export var ability_type: AbilityType
 @export var name: String
@@ -58,6 +87,20 @@ static func create_from_dict(data: Dictionary) -> Skill:
 	skill.ability_type = AbilityType[data.ability_type.to_upper()]
 	skill.type = SkillType[data.type.to_upper()]
 	skill.target = TargetType[data.target.to_upper()]
+	
+	# ✅ PARSE ELEMENTS - supports both single string and array
+	skill.elements = []
+	if data.has("elements") and data.elements is Array:
+		# New plural array format: "elements": ["FIRE", "HOLY"]
+		for elem_str in data.elements:
+			if elem_str != "" and elem_str != "NONE" and ElementType.has(elem_str.to_upper()):
+				skill.elements.append(ElementType[elem_str.to_upper()])
+	elif data.has("element"):
+		# Handle single element for backward compatibility
+		var elem_data = data.element
+		if elem_data is String and elem_data != "" and elem_data != "NONE":
+			if ElementType.has(elem_data.to_upper()):
+				skill.elements.append(ElementType[elem_data.to_upper()])
 	
 	# Parse attribute_targets - handles multiple formats
 	skill.attribute_targets = []
@@ -190,14 +233,29 @@ func deal_damage(user: CharacterData, targets: Array):
 	
 	var momentum_multiplier = MomentumSystem.get_damage_multiplier()
 	
+	# ✅ Convert skill elements to ElementalDamage.Element array
+	var elemental_types = []
+	for elem in elements:
+		if elem != ElementType.NONE and elem != ElementType.PHYSICAL:
+			match elem:
+				ElementType.EARTH: elemental_types.append(ElementalDamage.Element.EARTH)
+				ElementType.FIRE: elemental_types.append(ElementalDamage.Element.FIRE)
+				ElementType.ICE: elemental_types.append(ElementalDamage.Element.ICE)
+				ElementType.WIND: elemental_types.append(ElementalDamage.Element.WIND)
+				ElementType.LIGHTNING: elemental_types.append(ElementalDamage.Element.LIGHTNING)
+				ElementType.HOLY: elemental_types.append(ElementalDamage.Element.HOLY)
+				ElementType.DARK: elemental_types.append(ElementalDamage.Element.DARK)
+	
+	var elemental_results = []  # Store results for each element
+	
 	for t in targets:
 		var base_damage = power + (user.attack_power if ability_type == AbilityType.PHYSICAL else user.spell_power)
 		base_damage *= momentum_multiplier
 		
 		var resistance = (t.toughness if ability_type == AbilityType.PHYSICAL else t.spell_ward)
-		var accuracy_check = randf() < user.accuracy
-		var dodge_check = randf() < t.dodge
-		var crit_check = randf() < user.critical_hit_rate
+		var accuracy_check = RandomManager.randf() < user.accuracy
+		var dodge_check = RandomManager.randf() < t.dodge
+		var crit_check = RandomManager.randf() < user.critical_hit_rate
 		
 		if not accuracy_check:
 			return "%s's attack missed!" % user.name
@@ -207,28 +265,123 @@ func deal_damage(user: CharacterData, targets: Array):
 		
 		var damage = max(1, base_damage - resistance)
 		
+		# ✅ APPLY ELEMENTAL DAMAGE FOR EACH ELEMENT
+		if not elemental_types.is_empty() and t.elemental_resistances:
+			var total_multiplier = 1.0
+			var is_weak = false
+			var is_resistant = false
+			
+			# Apply each element's modifiers
+			for elemental_type in elemental_types:
+				var attacker_bonus = user.get_elemental_damage_bonus(elemental_type)
+				var target_resistance = t.get_elemental_resistance(elemental_type)
+				var target_weakness = t.get_elemental_weakness(elemental_type)
+				
+				var elem_result = ElementalDamage.calculate_elemental_damage(
+					1.0,  # Use 1.0 to get just the multiplier
+					elemental_type,
+					attacker_bonus,
+					target_resistance,
+					target_weakness
+				)
+				
+				# Combine multipliers (multiplicative)
+				total_multiplier *= elem_result.multiplier
+				
+				if elem_result.is_weak:
+					is_weak = true
+				if elem_result.is_resistant:
+					is_resistant = true
+			
+			damage *= total_multiplier
+			
+			# Store combined result
+			elemental_results.append({
+				"damage": damage,
+				"is_weak": is_weak,
+				"is_resistant": is_resistant,
+				"elements": elemental_types
+			})
+		
 		if crit_check:
-			damage *= 1.5 + randf() * 0.5
+			damage *= 1.5 + RandomManager.randf() * 0.5
 			was_crit = true
 		
-		t.take_damage(damage)
+		t.take_damage(damage, user)
 		total_damage += damage
 		
-		# NEW: Apply all status effects
+		# Apply status effects
 		for effect in status_effects:
 			if effect != StatusEffect.NONE:
 				t.apply_status_effect(effect, duration)
 	
-	var result = "%s dealt %.1f damage to %d target(s)" % [name, total_damage, targets.size()]
+	# Build result message
+	var result = ""
+	
+	if was_crit:
+		result = "Critical hit! "
+	
+	# ✅ BUILD ELEMENTAL MESSAGE WITH DAMAGE BREAKDOWN
+	if not elemental_results.is_empty():
+		var elem_result = elemental_results[0]
+		
+		# Build element names string
+		var element_names = []
+		for elem in elem_result.elements:
+			element_names.append(ElementalDamage.get_element_name(elem))
+		
+		var element_str = " + ".join(element_names) if element_names.size() > 1 else element_names[0]
+		
+		# Get color from first element
+		var color = ElementalDamage.get_element_color(elem_result.elements[0])
+		
+		# Calculate base damage (before elemental modifiers)
+		var base_only = power + (user.attack_power if ability_type == AbilityType.PHYSICAL else user.spell_power)
+		base_only *= momentum_multiplier
+		base_only = max(1, base_only - (targets[0].toughness if ability_type == AbilityType.PHYSICAL else targets[0].spell_ward))
+		
+		var elemental_bonus = int(total_damage - base_only)
+		
+		# Show damage breakdown
+		if elemental_bonus > 0:
+			result += "%s dealt [color=%s]%d (%+d) %s damage[/color] to %s" % [
+				user.name,
+				color,
+				int(total_damage),
+				elemental_bonus,
+				element_str,
+				targets[0].name if targets.size() == 1 else "%d enemies" % targets.size()
+			]
+		elif elemental_bonus < 0:
+			result += "%s dealt [color=%s]%d (%d) %s damage[/color] to %s" % [
+				user.name,
+				color,
+				int(total_damage),
+				elemental_bonus,
+				element_str,
+				targets[0].name if targets.size() == 1 else "%d enemies" % targets.size()
+			]
+		else:
+			result += "%s dealt [color=%s]%d %s damage[/color] to %s" % [
+				user.name,
+				color,
+				int(total_damage),
+				element_str,
+				targets[0].name if targets.size() == 1 else "%d enemies" % targets.size()
+			]
+		
+		if elem_result.is_weak:
+			result += " [color=orange](WEAK!)[/color]"
+		elif elem_result.is_resistant:
+			result += " [color=cyan](RESIST)[/color]"
+	else:
+		result += "%s dealt %d damage to %d target(s)" % [name, int(total_damage), targets.size()]
 	
 	if momentum_multiplier > 1.0:
 		var bonus_pct = int((momentum_multiplier - 1.0) * 100)
 		result += " (+%d%% momentum)" % bonus_pct
 	
-	if was_crit:
-		result = "Critical hit! " + result
-	
-	# NEW: List all status effects applied
+	# List status effects applied
 	if not status_effects.is_empty():
 		var effect_names = []
 		for effect in status_effects:

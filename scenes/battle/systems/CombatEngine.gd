@@ -82,19 +82,19 @@ func _execute_attack(action: BattleAction) -> ActionResult:
 	var resistance = target.get_defense()
 	
 	# Accuracy check
-	if randf() >= attacker.accuracy:
+	if RandomManager.randf() >= attacker.accuracy:
 		return ActionResult.missed_attack(attacker, target)
 	
 	# Dodge check
-	if randf() < target.dodge:
+	if RandomManager.randf() < target.dodge:
 		return ActionResult.dodged_attack(attacker, target)
 	
 	# Calculate damage
-	var is_crit = randf() < attacker.critical_hit_rate
+	var is_crit = RandomManager.randf() < attacker.critical_hit_rate
 	var damage = max(1, base_damage - resistance)
 	
 	if is_crit:
-		damage *= 1.5 + randf() * 0.5
+		damage *= 1.5 + RandomManager.randf() * 0.5
 	
 	damage = round(damage)
 	

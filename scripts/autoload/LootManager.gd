@@ -1,6 +1,7 @@
 # LootManager.gd
 extends Node
 
+
 enum Rarity {COMMON, UNCOMMON, RARE, EPIC, LEGENDARY, SET}
 
 const RARITY_COLORS = {
@@ -33,7 +34,7 @@ const RARITY_MULTIPLIERS = {
 const SET_SLOTS = ["head", "chest", "hands", "legs", "feet", "main_hand", "off_hand"]
 
 func determine_rarity() -> Rarity:
-	var roll = randf()
+	var roll = RandomManager.randf()
 	if roll < 0.6:
 		return Rarity.COMMON
 	elif roll < 0.8:

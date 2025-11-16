@@ -391,7 +391,18 @@ func load_game(character_name: String) -> CharacterData:
 	print("Loaded inventory items: ", player.inventory.items.keys())
 	print("Loaded stash items: ", player.stash.items.keys())
 	
+	# ✅ ADD THIS AFTER ALL CHARACTER DATA IS LOADED:
+	# Initialize elemental resistances if not already present
+	if player.elemental_resistances == null:
+		player.elemental_resistances = ElementalResistanceManager.new(player)
+	
+	# Initialize racial elementals (this will populate the elemental data)
+	if player.race != "":
+		player.initialize_racial_elementals(true)
+	
+	# Recalculate stats to ensure everything is up to date
 	player.calculate_secondary_attributes()
+	
 	return player
 
 func get_all_characters() -> Array:
@@ -404,10 +415,17 @@ func get_all_characters() -> Array:
 			if not dir.current_is_dir() and file_name.ends_with(".json"):
 				var character = load_game(file_name.get_basename())
 				if character:
+					# ✅ ENSURE ELEMENTAL SYSTEM IS INITIALIZED
+					if character.elemental_resistances == null:
+						character.elemental_resistances = ElementalResistanceManager.new(character)
+				
+					if character.race != "":
+						character.initialize_racial_elementals(true)
+						
 					characters.append(character)
 			file_name = dir.get_next()
 	return characters
-	
+
 func delete_character(character_name: String):
 	var file_name = SAVE_DIR + character_name + ".json"
 	if FileAccess.file_exists(file_name):

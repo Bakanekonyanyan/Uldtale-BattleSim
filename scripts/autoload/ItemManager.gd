@@ -9,6 +9,7 @@ var consumables = {}
 var materials = {}
 var equipment_templates = {}  # Base templates (never modified)
 
+
 func _ready():
 	load_consumables()
 	load_materials()
@@ -106,12 +107,12 @@ func get_all_items() -> Dictionary:
 
 func get_random_consumable() -> String:
 	if consumables.size() > 0:
-		return consumables.keys()[randi() % consumables.size()]
+		return consumables.keys()[RandomManager.randi() % consumables.size()]
 	return ""
 
 func get_random_material() -> String:
 	if materials.size() > 0:
-		return materials.keys()[randi() % materials.size()]
+		return materials.keys()[RandomManager.randi() % materials.size()]
 	return ""
 	
 func get_random_weapon(category: String = "") -> String:
@@ -121,7 +122,7 @@ func get_random_weapon(category: String = "") -> String:
 			available_weapons = available_weapons.filter(func(weapon_id): return weapons[weapon_id].type == category)
 		
 		if available_weapons.size() > 0:
-			return available_weapons[randi() % available_weapons.size()]
+			return available_weapons[RandomManager.randi() % available_weapons.size()]
 	return ""
 
 func get_random_armor(type: String = "", slot: String = "") -> String:
@@ -133,13 +134,13 @@ func get_random_armor(type: String = "", slot: String = "") -> String:
 			available_armors = available_armors.filter(func(armor_id): return armors[armor_id].slot == slot)
 		
 		if available_armors.size() > 0:
-			return available_armors[randi() % available_armors.size()]
+			return available_armors[RandomManager.randi() % available_armors.size()]
 	return ""
 
 func get_random_equipment() -> String:
 	var all_equipment = weapons.keys() + armors.keys()
 	if all_equipment.size() > 0:
-		return all_equipment[randi() % all_equipment.size()]
+		return all_equipment[RandomManager.randi() % all_equipment.size()]
 	return ""
 
 func filter_array(arr: Array, condition: Callable) -> Array:

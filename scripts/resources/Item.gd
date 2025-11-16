@@ -13,6 +13,7 @@ enum ConsumableType { DAMAGE, HEAL, BUFF, DEBUFF, RESTORE, CURE }
 @export var stackable: bool = false
 @export var max_stack: int = 1
 
+
 # For consumables
 @export var consumable_type: ConsumableType
 @export var effect_power: int
@@ -152,7 +153,7 @@ func deal_damage(user: CharacterData, targets: Array) -> String:
 		# Apply status effect if present
 		if status_effect != Skill.StatusEffect.NONE:
 			if poison_chance < 1.0:
-				if randf() <= poison_chance:
+				if RandomManager.randf() <= poison_chance:
 					target.apply_status_effect(status_effect, effect_duration)
 					return "%s dealt %d damage and inflicted %s!" % [
 						name, total_damage, Skill.StatusEffect.keys()[status_effect]

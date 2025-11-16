@@ -5,6 +5,7 @@
 class_name RarityGenerator
 extends RefCounted
 
+
 const RARITY_CHANCES = {
 	"common": 0.50,
 	"uncommon": 0.75,
@@ -49,7 +50,7 @@ const PRIMARY_STATS = [
 
 func roll_rarity() -> String:
 	"""Roll random rarity tier"""
-	var roll = randf()
+	var roll = RandomManager.randf()
 	
 	if roll < 0.50: return "common"
 	elif roll < 0.75: return "uncommon"
@@ -85,7 +86,7 @@ func generate_modifiers(rarity: String, ilvl: int) -> Dictionary:
 		"magic":
 			result.stat_modifiers = _roll_stat_modifiers(2, ilvl, false)
 		"rare":
-			if randf() < 0.3:
+			if RandomManager.randf() < 0.3:
 				result.stat_modifiers = _roll_stat_modifiers(2, ilvl, false)
 				result.status_effect = _roll_status_effect()
 				result.status_chance = _calculate_status_chance(rarity, ilvl)
@@ -99,7 +100,7 @@ func generate_modifiers(rarity: String, ilvl: int) -> Dictionary:
 			result.stat_modifiers = _roll_stat_modifiers(3, ilvl, true)
 			result.status_effect = _roll_status_effect()
 			result.status_chance = _calculate_status_chance(rarity, ilvl)
-			result.bonus_damage = int((5 + ilvl * 0.5) * (1 + randf() * 0.5))
+			result.bonus_damage = int((5 + ilvl * 0.5) * (1 + RandomManager.randf() * 0.5))
 	
 	return result
 
@@ -117,7 +118,7 @@ func _roll_stat_modifiers(count: int, ilvl: int, unique: bool) -> Dictionary:
 		if available.is_empty():
 			break
 		
-		var stat_idx = randi() % available.size()
+		var stat_idx = RandomManager.randi() % available.size()
 		var stat = available[stat_idx]
 		var value = randi_range(min_val, max_val)
 		
@@ -141,7 +142,7 @@ func _roll_status_effect() -> Skill.StatusEffect:
 		Skill.StatusEffect.POISON,
 		Skill.StatusEffect.SHOCK
 	]
-	return effects[randi() % effects.size()]
+	return effects[RandomManager.randi() % effects.size()]
 
 func _calculate_status_chance(rarity: String, ilvl: int) -> float:
 	"""Calculate status proc chance based on rarity and ilvl"""

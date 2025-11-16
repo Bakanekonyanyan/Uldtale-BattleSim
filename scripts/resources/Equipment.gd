@@ -39,6 +39,7 @@ var rarity_generator: RarityGenerator
 var equipment_namer: EquipmentNamer
 var equipment_scaler: EquipmentScaler
 
+
 func _init(data: Dictionary):
 	# Initialize managers
 	rarity_generator = RarityGenerator.new()
@@ -156,7 +157,7 @@ func remove_stat_modifiers(character: CharacterData):
 			character.set(stat_name, character.get(stat_name) - stat_modifiers[stat])
 
 func try_apply_status_effect(target: CharacterData) -> bool:
-	if status_effect_type != Skill.StatusEffect.NONE and randf() < status_effect_chance:
+	if status_effect_type != Skill.StatusEffect.NONE and RandomManager.randf() < status_effect_chance:
 		target.apply_status_effect(status_effect_type, 3)
 		return true
 	return false

@@ -14,5 +14,76 @@
 	"value": 5,
 	"stackable": true,
 	"max_stack": 999
+	},
+  "bogblossom_petal": {
+	"name": "Bogblossom Petal",
+	"description": "Used to craft Antidote Herbs. A swamp flower with natural toxin-eating properties.",
+	"item_type": "MATERIAL",
+	"value": 8,
+	"stackable": true,
+	"max_stack": 999
+  },
+
+  "frostroot_chunk": {
+	"name": "Frostroot Chunk",
+	"description": "Used to craft Coolroot Gel. A cold cavern root known for its burn-soothing qualities.",
+	"item_type": "MATERIAL",
+	"value": 10,
+	"stackable": true,
+	"max_stack": 999
+  },
+
+  "embershard_fragment": {
+	"name": "Embershard Fragment",
+	"description": "Used to craft Warmth Charms. A mineral shard that emits soft natural heat.",
+	"item_type": "MATERIAL",
+	"value": 12,
+	"stackable": true,
+	"max_stack": 999
+  },
+
+  "bloodvine_fiber": {
+	"name": "Bloodvine Fiber",
+	"description": "Used to craft Coagulant Bandages. Fibers from a plant that magically clots wounds.",
+	"item_type": "MATERIAL",
+	"value": 6,
+	"stackable": true,
+	"max_stack": 999
+  },
+
+  "voltslate_pebble": {
+	"name": "Voltslate Pebble",
+	"description": "Used to craft Grounding Stones. A stone that naturally absorbs electrical charge.",
+	"item_type": "MATERIAL",
+	"value": 9,
+	"stackable": true,
+	"max_stack": 999
+  },
+
+  "mindglass_shard": {
+	"name": "Mindglass Shard",
+	"description": "Used to craft Clarity Droplets. A crystal that resonates with mental focus.",
+	"item_type": "MATERIAL",
+	"value": 11,
+	"stackable": true,
+	"max_stack": 999
+  },
+
+  "glowcap_mushroom": {
+	"name": "Glowcap Mushroom",
+	"description": "Used to craft Glowcap Salve. A bioluminescent mushroom that restores magical sight.",
+	"item_type": "MATERIAL",
+	"value": 7,
+	"stackable": true,
+	"max_stack": 999
+  },
+
+  "rousepepper_seeds": {
+	"name": "Rousepepper Seeds",
+	"description": "Used to craft Awakening Spice. Hot seeds that snap the senses awake.",
+	"item_type": "MATERIAL",
+	"value": 5,
+	"stackable": true,
+	"max_stack": 999
   }
 }

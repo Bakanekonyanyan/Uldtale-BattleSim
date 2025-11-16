@@ -3,6 +3,8 @@ extends Node
 
 signal battle_completed(player_won: bool, xp_gained: int)
 
+var rand_manager = RandomManager 
+
 # Battle systems
 var combat_engine: CombatEngine
 var turn_controller: TurnController

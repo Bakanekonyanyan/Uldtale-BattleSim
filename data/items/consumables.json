@@ -174,5 +174,132 @@
 	"effect_percent": 0.35,
 	"effect_duration": 0,
 	"combat_usable": true
+  },
+  "antidote_herb": {
+	"name": "Antidote Herb",
+	"description": "Cures Poison. A crushed healing plant used to purge toxins.",
+	"item_type": "CONSUMABLE",
+	"value": 40,
+	"stackable": true,
+	"max_stack": 99,
+	"consumable_type": "CURE",
+	"status_effect": "POISON",
+	"is_percentage_based": false,
+	"effect_power": 0,
+	"effect_percent": 0,
+	"effect_duration": 0,
+	"combat_usable": true
+  },
+
+  "coolroot_gel": {
+	"name": "Coolroot Gel",
+	"description": "Cures Burn. A soothing gel harvested from frost-resistant roots.",
+	"item_type": "CONSUMABLE",
+	"value": 50,
+	"stackable": true,
+	"max_stack": 99,
+	"consumable_type": "CURE",
+	"status_effect": "BURN",
+	"is_percentage_based": false,
+	"effect_power": 0,
+	"effect_percent": 0,
+	"effect_duration": 0,
+	"combat_usable": true
+  },
+
+  "warmth_charm": {
+	"name": "Warmth Charm",
+	"description": "Cures Freeze. A small heated charm that warms the body instantly.",
+	"item_type": "CONSUMABLE",
+	"value": 60,
+	"stackable": true,
+	"max_stack": 50,
+	"consumable_type": "CURE",
+	"status_effect": "FREEZE",
+	"is_percentage_based": false,
+	"effect_power": 0,
+	"effect_percent": 0,
+	"effect_duration": 0,
+	"combat_usable": true
+  },
+
+  "coagulant_bandage": {
+	"name": "Coagulant Bandage",
+	"description": "Stops Bleeding. Alchemically treated bandages that seal wounds quickly.",
+	"item_type": "CONSUMABLE",
+	"value": 40,
+	"stackable": true,
+	"max_stack": 50,
+	"consumable_type": "CURE",
+	"status_effect": "BLEED",
+	"is_percentage_based": false,
+	"effect_power": 0,
+	"effect_percent": 0,
+	"effect_duration": 0,
+	"combat_usable": true
+  },
+
+  "grounding_stone": {
+	"name": "Grounding Stone",
+	"description": "Cures Shock. Disperses built-up electrical energy from the body.",
+	"item_type": "CONSUMABLE",
+	"value": 55,
+	"stackable": true,
+	"max_stack": 99,
+	"consumable_type": "CURE",
+	"status_effect": "SHOCK",
+	"is_percentage_based": false,
+	"effect_power": 0,
+	"effect_percent": 0,
+	"effect_duration": 0,
+	"combat_usable": true
+  },
+
+  "clarity_droplet": {
+	"name": "Clarity Droplet",
+	"description": "Cures Confusion. A condensed mana bead that restores mental clarity.",
+	"item_type": "CONSUMABLE",
+	"value": 65,
+	"stackable": true,
+	"max_stack": 50,
+	"consumable_type": "CURE",
+	"status_effect": "CONFUSED",
+	"is_percentage_based": false,
+	"effect_power": 0,
+	"effect_percent": 0,
+	"effect_duration": 0,
+	"combat_usable": true
+  },
+
+  "glowcap_salve": {
+	"name": "Glowcap Salve",
+	"description": "Cures Blindness. Made from luminescent mushrooms that restore sight.",
+	"item_type": "CONSUMABLE",
+	"value": 70,
+	"stackable": true,
+	"max_stack": 50,
+	"consumable_type": "CURE",
+	"status_effect": "BLIND",
+	"is_percentage_based": false,
+	"effect_power": 0,
+	"effect_percent": 0,
+	"effect_duration": 0,
+	"combat_usable": true
+  },
+
+  "awakening_spice": {
+	"name": "Awakening Spice",
+	"description": "Cures Sleep. A pungent powder that jolts the senses awake.",
+	"item_type": "CONSUMABLE",
+	"value": 30,
+	"stackable": true,
+	"max_stack": 99,
+	"consumable_type": "CURE",
+	"status_effect": "SLEEP",
+	"is_percentage_based": false,
+	"effect_power": 0,
+	"effect_percent": 0,
+	"effect_duration": 0,
+	"combat_usable": true
   }
 }

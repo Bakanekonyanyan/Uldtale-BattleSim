@@ -12,6 +12,9 @@ var status_manager: StatusEffectManager
 var buff_manager: BuffDebuffManager
 var skill_manager: SkillProgressionManager
 var proficiency_manager: ProficiencyManager
+var elemental_resistances: ElementalResistanceManager
+
+
 # === BASIC INFO ===
 @export var name: String
 @export var race: String
@@ -56,6 +59,7 @@ var spell_power_type: String = "intelligence"
 var is_defending: bool = false
 var is_stunned: bool = false
 var last_attacker: CharacterData = null
+
 
 # === LEGACY ACCESSORS (for backward compatibility) ===
 var skills: Array:
@@ -104,7 +108,22 @@ func _init(p_name: String = "", p_race: String = "", p_class: String = ""):
 	buff_manager = BuffDebuffManager.new(self)
 	skill_manager = SkillProgressionManager.new(self)
 	proficiency_manager = ProficiencyManager.new(self)
-# === STATS CALCULATION ===
+	elemental_resistances = ElementalResistanceManager.new(self)  # ADD THIS LINE
+
+# Add this method (replaces the one I suggested before)
+func initialize_racial_elementals(load_from_race_data: bool = true):
+	"""Initialize elemental modifiers from race data using RaceElementalData autoload"""
+	if not load_from_race_data or race.is_empty():
+		return
+	
+	if not elemental_resistances:
+		push_error("CharacterData.initialize_racial_elementals: elemental_resistances manager not initialized!")
+		return
+	
+	# Use the autoload singleton to apply racial data
+	RaceElementalData.apply_to_character(self, race, is_player)
+	
+	print("[ELEMENTAL] Initialized racial elementals for %s (%s)" % [name, race])
 
 func calculate_secondary_attributes():
 	"""Recalculate all derived stats"""
@@ -337,7 +356,7 @@ func level_up():
 
 func distribute_enemy_points():
 	for _i in range(3):
-		var attr = randi() % 10
+		var attr = RandomManager.randi() % 10
 		match attr:
 			0: vitality += 1
 			1: strength += 1
@@ -467,16 +486,16 @@ func attack(target: CharacterData) -> String:
 	var resistance = target.get_defense()
 	
 	# Combat rolls
-	if randf() >= accuracy:
+	if RandomManager.randf() >= accuracy:
 		return "%s's attack missed!" % name
-	if randf() < target.dodge:
+	if RandomManager.randf() < target.dodge:
 		return "%s dodged the attack!" % target.name
 	
-	var is_crit = randf() < critical_hit_rate
+	var is_crit = RandomManager.randf() < critical_hit_rate
 	var damage = max(1, base_damage - resistance)
 	
 	if is_crit:
-		damage *= 1.5 + randf() * 0.5
+		damage *= 1.5 + RandomManager.randf() * 0.5
 	
 	damage = round(damage)
 	
@@ -545,3 +564,43 @@ func debug_proficiency_status():
 			print("  - %s" % prof)
 	
 	print("========================")
+
+# === ELEMENTAL RESISTANCE DELEGATES ===
+
+func get_elemental_resistance(element: ElementalDamage.Element) -> float:
+	"""Get total resistance to an element"""
+	if not elemental_resistances:
+		return 0.0
+	return elemental_resistances.get_total_resistance(element)
+
+func get_elemental_weakness(element: ElementalDamage.Element) -> float:
+	"""Get total weakness to an element"""
+	if not elemental_resistances:
+		return 0.0
+	return elemental_resistances.get_total_weakness(element)
+
+func get_elemental_damage_bonus(element: ElementalDamage.Element) -> float:
+	"""Get damage bonus for an element"""
+	if not elemental_resistances:
+		return 0.0
+	return elemental_resistances.get_total_damage_bonus(element)
+
+func add_temp_elemental_resistance(element: ElementalDamage.Element, value: float):
+	"""Add temporary resistance (from buffs/equipment)"""
+	if elemental_resistances:
+		elemental_resistances.add_temp_resistance(element, value)
+
+func add_temp_elemental_weakness(element: ElementalDamage.Element, value: float):
+	"""Add temporary weakness (from debuffs)"""
+	if elemental_resistances:
+		elemental_resistances.add_temp_weakness(element, value)
+
+func add_temp_elemental_damage_bonus(element: ElementalDamage.Element, value: float):
+	"""Add temporary damage bonus (from buffs/equipment)"""
+	if elemental_resistances:
+		elemental_resistances.add_temp_damage_bonus(element, value)
+
+func clear_temp_elemental_modifiers():
+	"""Clear all temporary elemental modifiers"""
+	if elemental_resistances:
+		elemental_resistances.clear_temp_modifiers()

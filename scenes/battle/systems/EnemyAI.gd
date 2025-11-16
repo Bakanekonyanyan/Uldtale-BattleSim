@@ -42,7 +42,7 @@ func decide_action() -> BattleAction:
 	
 	# === ITEM USAGE (Proactive) ===
 	var item_chance = 0.1 + (current_floor * 0.02) + (momentum_level * 0.05)
-	if randf() < item_chance:
+	if RandomManager.randf() < item_chance:
 		var item_action = _try_use_item_smart()
 		if item_action:
 			return item_action
@@ -54,13 +54,13 @@ func decide_action() -> BattleAction:
 			return defensive_action
 	
 	# === BUFF/DEBUFF PRIORITY (If unbuffed/player unbuffed) ===
-	if randf() < 0.6:  # 60% chance to consider buffs
+	if RandomManager.randf() < 0.6:  # 60% chance to consider buffs
 		var buff_action = _try_buff_or_debuff()
 		if buff_action:
 			return buff_action
 	
 	# === OFFENSIVE SKILLS (Primary damage dealer) ===
-	if randf() < 0.75:
+	if RandomManager.randf() < 0.75:
 		var skill_action = _try_use_damage_skill()
 		if skill_action:
 			return skill_action
@@ -157,7 +157,7 @@ func _try_buff_or_debuff() -> BattleAction:
 	"""Apply buffs/debuffs strategically"""
 	
 	# Prioritize debuffing player if they're strong
-	if not player.buff_manager.has_debuffs() and randf() < 0.6:
+	if not player.buff_manager.has_debuffs() and RandomManager.randf() < 0.6:
 		var debuff_skill = _find_debuff_skill()
 		if debuff_skill and _can_afford_skill(debuff_skill):
 			print("EnemyAI: Applying debuff to player")

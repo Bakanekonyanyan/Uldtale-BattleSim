@@ -1,4 +1,4 @@
-# scenes/ui/CharacterCreation.gd
+# CharacterCreation.gd - UPDATED with comprehensive race/class info
 extends Control
 
 var races = {}
@@ -7,12 +7,11 @@ var classes = {}
 @onready var name_input = $NameInput
 @onready var race_option = $RaceOption
 @onready var class_option = $ClassOption
-@onready var stats_label = $StatsLabel
+@onready var info_display = $InfoDisplay  # RichTextLabel for detailed info
 @onready var create_button = $CreateButton
 @onready var cancel_button = $QuitButton
 
-# QOL: Starting resources
-const STARTING_GOLD = 100  # 100 copper = 1 silver
+const STARTING_GOLD = 100
 
 func _ready():
 	load_data()
@@ -35,21 +34,26 @@ func setup_ui():
 	create_button.connect("pressed", Callable(self, "_on_create_pressed"))
 	cancel_button.connect("pressed", Callable(self, "_on_cancel_pressed"))
 	
-	update_stats()
+	update_info_display()
 
 func _on_cancel_pressed():
 	SceneManager.change_scene("res://scenes/ui/CharacterSelection.tscn")
 
 func _on_race_selected(_index):
-	update_stats()
+	update_info_display()
 
 func _on_class_selected(_index):
-	update_stats()
+	update_info_display()
 
-func update_stats():
-	var selected_race = races["playable"][race_option.get_item_text(race_option.selected)]
-	var selected_class = classes["playable"][class_option.get_item_text(class_option.selected)]
+func update_info_display():
+	"""Show comprehensive race + class combo information"""
+	var race_name = race_option.get_item_text(race_option.selected)
+	var u_class_name = class_option.get_item_text(class_option.selected)
 	
+	var selected_race = races["playable"][race_name]
+	var selected_class = classes["playable"][u_class_name]
+	
+	# Calculate final attributes
 	var vitality = selected_class.base_vit + selected_race.vit_mod
 	var strength = selected_class.base_str + selected_race.str_mod
 	var dexterity = selected_class.base_dex + selected_race.dex_mod
@@ -61,9 +65,128 @@ func update_stats():
 	var agility = selected_class.base_agi + selected_race.agi_mod
 	var fortitude = selected_class.base_for + selected_race.for_mod
 	
-	stats_label.text = "VIT: %d\nSTR: %d\nDEX: %d\nINT: %d\nFAI: %d\nMND: %d\nEND: %d\nARC: %d\nAGI: %d\nFOR: %d" % [
-		vitality, strength, dexterity, intelligence, faith, mind, endurance, arcane, agility, fortitude
-	]
+	# Build comprehensive info text
+	var info_text = ""
+	
+	# === HEADER ===
+	info_text += "[center][b][color=gold]%s %s[/color][/b][/center]\n\n" % [race_name, u_class_name]
+	
+	# === PRIMARY ATTRIBUTES ===
+	info_text += "[b][color=cyan]Primary Attributes:[/color][/b]\n"
+	info_text += "Vitality: %d | Strength: %d | Dexterity: %d\n" % [vitality, strength, dexterity]
+	info_text += "Intelligence: %d | Faith: %d | Mind: %d\n" % [intelligence, faith, mind]
+	info_text += "Endurance: %d | Arcane: %d | Agility: %d | Fortitude: %d\n\n" % [endurance, arcane, agility, fortitude]
+	
+	# === SECONDARY ATTRIBUTES (calculated) ===
+	info_text += "[b][color=cyan]Calculated Stats:[/color][/b]\n"
+	var max_hp = vitality * 8 + strength * 3
+	var max_mp = mind * 5 + intelligence * 3
+	var max_sp = endurance * 5 + agility * 3
+	info_text += "HP: %d | MP: %d | SP: %d\n\n" % [max_hp, max_mp, max_sp]
+	
+	# === ELEMENTAL AFFINITIES ===
+	info_text += "[b][color=orange]Elemental Affinities:[/color][/b]\n\n"
+	
+	# Get elemental data from race
+	var elemental_data = RaceElementalData.get_race_elemental_data(race_name, true)
+	
+	# DAMAGE DEALT LIST
+	info_text += "[b][color=yellow]Damage Bonuses:[/color][/b]\n"
+	var has_damage_bonus = false
+	for element in ElementalDamage.Element.values():
+		if element == ElementalDamage.Element.NONE:
+			continue
+		
+		var element_name = ElementalDamage.get_element_name(element)
+		var element_key = ElementalDamage.Element.keys()[element]
+		var color = ElementalDamage.get_element_color(element)
+		
+		var bonus = 0.0
+		if elemental_data.has("damage_bonuses") and elemental_data.damage_bonuses.has(element_key):
+			bonus = float(elemental_data.damage_bonuses[element_key])
+		
+		if bonus > 0.0:
+			info_text += "  [color=%s]%s:[/color] [color=lime]+%d%% damage[/color]\n" % [color, element_name, int(bonus * 100)]
+			has_damage_bonus = true
+	
+	if not has_damage_bonus:
+		info_text += "  [color=gray]No damage bonuses[/color]\n"
+	
+	info_text += "\n"
+	
+	# RESISTANCES AND WEAKNESSES LIST
+	info_text += "[b][color=cyan]Resistances & Weaknesses:[/color][/b]\n"
+	var has_resistance_data = false
+	for element in ElementalDamage.Element.values():
+		if element == ElementalDamage.Element.NONE:
+			continue
+		
+		var element_name = ElementalDamage.get_element_name(element)
+		var element_key = ElementalDamage.Element.keys()[element]
+		var color = ElementalDamage.get_element_color(element)
+		
+		var resist = 0.0
+		var weak = 0.0
+		
+		if elemental_data.has("resistances") and elemental_data.resistances.has(element_key):
+			resist = float(elemental_data.resistances[element_key])
+		if elemental_data.has("weaknesses") and elemental_data.weaknesses.has(element_key):
+			weak = float(elemental_data.weaknesses[element_key])
+		
+		# Only show if there's a modifier
+		if resist > 0.0 or weak > 0.0:
+			var line = "  [color=%s]%s:[/color] " % [color, element_name]
+			
+			if resist > 0.0:
+				line += "[color=cyan]-%d%% damage taken[/color]" % int(resist * 100)
+			if weak > 0.0:
+				line += "[color=orange]+%d%% damage taken[/color]" % int(weak * 100)
+			
+			info_text += line + "\n"
+			has_resistance_data = true
+	
+	if not has_resistance_data:
+		info_text += "  [color=gray]Normal resistance to all elements[/color]\n"
+	
+	info_text += "\n"
+	
+	# === SKILLS ===
+	if selected_class.has("skills") and selected_class.skills.size() > 0:
+		info_text += "[b][color=cyan]Starting Skills:[/color][/b]\n"
+		for skill_name in selected_class.skills:
+			info_text += "  • %s\n" % skill_name
+		info_text += "\n"
+	
+	# === EQUIPMENT PROFICIENCIES ===
+	info_text += "[b][color=cyan]Equipment Proficiencies:[/color][/b]\n"
+	
+	# Get available equipment for this class
+	var temp_char = CharacterData.new()
+	temp_char.character_class = u_class_name
+	
+	if temp_char.proficiency_manager:
+		var weapons = temp_char.proficiency_manager.get_available_weapon_types()
+		var armors = temp_char.proficiency_manager.get_available_armor_types()
+		
+		if not weapons.is_empty():
+			info_text += "[color=yellow]Weapons:[/color] "
+			info_text += ", ".join(weapons.map(func(w): return w.capitalize())) + "\n"
+		
+		if not armors.is_empty():
+			info_text += "[color=yellow]Armor:[/color] "
+			info_text += ", ".join(armors.map(func(a): return a.capitalize())) + "\n"
+	
+	# === POWER TYPES ===
+	info_text += "\n[b][color=cyan]Combat Style:[/color][/b]\n"
+	info_text += "Attack Power: [color=yellow]%s[/color]-based\n" % selected_class.attack_power_type.capitalize()
+	info_text += "Spell Power: [color=yellow]%s[/color]-based\n" % selected_class.spell_power_type.capitalize()
+	
+	# Display the text
+	if info_display and info_display is RichTextLabel:
+		info_display.bbcode_enabled = true
+		info_display.text = info_text
+	elif info_display:
+		info_display.text = info_text
 
 func _on_create_pressed():
 	if name_input.text.strip_edges().is_empty():
@@ -100,6 +223,9 @@ func _on_create_pressed():
 	
 	print("Skills added to new character: ", new_character.skills)
 	
+	# ✅ CRITICAL: Initialize racial elemental modifiers BEFORE calculating stats
+	new_character.initialize_racial_elementals(true)
+	
 	new_character.calculate_secondary_attributes()
 	
 	# Initialize current values to max
@@ -107,7 +233,7 @@ func _on_create_pressed():
 	new_character.current_mp = new_character.max_mp
 	new_character.current_sp = new_character.max_sp
 	
-	# QOL: Give starting gold
+	# Starting gold
 	new_character.currency.copper = STARTING_GOLD
 	print("New character starting with %d copper (%s)" % [STARTING_GOLD, new_character.currency.get_formatted()])
 	

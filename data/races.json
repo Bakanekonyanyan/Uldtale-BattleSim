@@ -3,39 +3,115 @@
 	"Human": {
 	  "vit_mod": 0, "str_mod": 0, "dex_mod": 0, "int_mod": 0, 
 	  "fai_mod": 0, "mnd_mod": 0, "end_mod": 0, "arc_mod": 0, 
-	  "agi_mod": 0, "for_mod": 0
+	  "agi_mod": 0, "for_mod": 0,
+	  "elemental_resistances": {
+		"HOLY": 0.1
+	  },
+	  "elemental_weaknesses": {},
+	  "elemental_damage_bonuses": {
+		"HOLY": 0.1
+	  }
 	},
 	"Elf": {
 	  "vit_mod": -1, "str_mod": -1, "dex_mod": 2, "int_mod": 1, 
 	  "fai_mod": 0, "mnd_mod": 1, "end_mod": -1, "arc_mod": 1, 
-	  "agi_mod": 2, "for_mod": -1
+	  "agi_mod": 2, "for_mod": -1,
+	  "elemental_resistances": {
+		"WIND": 0.2,
+		"EARTH": 0.15
+	  },
+	  "elemental_weaknesses": {
+		"FIRE": 0.2,
+		"DARK": 0.1
+	  },
+	  "elemental_damage_bonuses": {
+		"WIND": 0.15,
+		"EARTH": 0.1
+	  }
 	},
 	"Dwarf": {
 	  "vit_mod": 2, "str_mod": 2, "dex_mod": -1, "int_mod": -1, 
 	  "fai_mod": 1, "mnd_mod": 0, "end_mod": 2, "arc_mod": -1, 
-	  "agi_mod": -1, "for_mod": 3
+	  "agi_mod": -1, "for_mod": 3,
+	  "elemental_resistances": {
+		"FIRE": 0.3,
+		"EARTH": 0.25
+	  },
+	  "elemental_weaknesses": {
+		"ICE": 0.15,
+		"LIGHTNING": 0.1
+	  },
+	  "elemental_damage_bonuses": {
+		"FIRE": 0.2,
+		"EARTH": 0.15
+	  }
 	},
 	"Orc": {
 	  "vit_mod": 2, "str_mod": 3, "dex_mod": -1, "int_mod": -2, 
 	  "fai_mod": 0, "mnd_mod": -1, "end_mod": 2, "arc_mod": -2, 
-	  "agi_mod": 0, "for_mod": 2
+	  "agi_mod": 0, "for_mod": 2,
+	  "elemental_resistances": {
+		"FIRE": 0.2,
+		"EARTH": 0.15
+	  },
+	  "elemental_weaknesses": {
+		"HOLY": 0.25,
+		"ICE": 0.1
+	  },
+	  "elemental_damage_bonuses": {
+		"FIRE": 0.15
+	  }
 	}
   },
   "non_playable": {
 	"Goblin": {
 	  "vit_mod": -1, "str_mod": 0, "dex_mod": 2, "int_mod": -1, 
 	  "fai_mod": -1, "mnd_mod": 0, "end_mod": 0, "arc_mod": -1, 
-	  "agi_mod": 2, "for_mod": -1
+	  "agi_mod": 2, "for_mod": -1,
+	  "elemental_resistances": {
+		"EARTH": 0.2,
+		"DARK": 0.15
+	  },
+	  "elemental_weaknesses": {
+		"FIRE": 0.25,
+		"HOLY": 0.2
+	  },
+	  "elemental_damage_bonuses": {
+		"EARTH": 0.1
+	  }
 	},
 	"Troll": {
 	  "vit_mod": 3, "str_mod": 3, "dex_mod": -2, "int_mod": -2, 
 	  "fai_mod": -1, "mnd_mod": -1, "end_mod": 2, "arc_mod": -2, 
-	  "agi_mod": -1, "for_mod": 3
+	  "agi_mod": -1, "for_mod": 3,
+	  "elemental_resistances": {
+		"EARTH": 0.3,
+		"DARK": 0.2
+	  },
+	  "elemental_weaknesses": {
+		"FIRE": 0.5,
+		"HOLY": 0.3
+	  },
+	  "elemental_damage_bonuses": {
+		"EARTH": 0.15
+	  }
 	},
 	"Fairy": {
 	  "vit_mod": -2, "str_mod": -2, "dex_mod": 2, "int_mod": 3, 
 	  "fai_mod": 2, "mnd_mod": 2, "end_mod": -2, "arc_mod": 3, 
-	  "agi_mod": 3, "for_mod": -2
+	  "agi_mod": 3, "for_mod": -2,
+	  "elemental_resistances": {
+		"WIND": 0.4,
+		"HOLY": 0.3
+	  },
+	  "elemental_weaknesses": {
+		"DARK": 0.3,
+		"EARTH": 0.15
+	  },
+	  "elemental_damage_bonuses": {
+		"WIND": 0.25,
+		"HOLY": 0.2
+	  }
 	}
   }
 }

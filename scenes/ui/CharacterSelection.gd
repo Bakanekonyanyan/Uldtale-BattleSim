@@ -1,10 +1,11 @@
-# scenes/ui/CharacterSelection.gd
+# CharacterSelection.gd - UPDATED with equipment and detailed stats preview
 extends Control
 
 var character_list = []
 var selected_character: CharacterData = null
 
 @onready var character_container = $MainContainer/ScrollContainer/CharacterContainer
+@onready var character_preview = $CharacterPreview  # RichTextLabel for detailed preview
 @onready var create_new_button = $CreateNewButton
 @onready var load_saved_game_button = $LoadSavedGameButton
 @onready var start_new_game_button = $StartNewGameButton
@@ -33,10 +34,10 @@ func _ready():
 	load_saved_game_button.disabled = true
 	start_new_game_button.disabled = true
 	
-	# QOL: Auto-select first character if list is not empty
+	# Auto-select first character if list is not empty
 	if not character_list.is_empty():
 		_on_character_selected(character_list[0])
-		
+		update_character_preview()
 
 func _on_quit_button_pressed():
 	get_tree().quit()
@@ -45,19 +46,18 @@ func _on_character_selected(character):
 	selected_character = character
 	CharacterManager.set_current_character(character)
 	print("Selected character: ", character.name)
-	print("Inventory items: ", character.inventory.items)
 	
 	# Enable start new game button
 	start_new_game_button.disabled = false
 	
-	# Check if a save exists for this character
+	# Check if a save exists
 	if SaveManager.save_exists(character.name):
 		load_saved_game_button.disabled = false
 	else:
 		load_saved_game_button.disabled = true
 	
-	# QOL: Highlight the selected character button
 	_highlight_selected_character()
+	update_character_preview()
 
 func _highlight_selected_character():
 	"""Visual feedback for selected character"""
@@ -65,17 +65,141 @@ func _highlight_selected_character():
 	for child in character_container.get_children():
 		if child is HBoxContainer:
 			var select_button = child.get_child(0)
-			if character_list[index] == selected_character:
-				# Highlight selected
-				select_button.modulate = Color(2.5, 2.8, 2.2)  # Slight yellow tint
+			if index < character_list.size() and character_list[index] == selected_character:
+				select_button.modulate = Color(2.5, 2.8, 2.2)
 			else:
-				# Normal color
 				select_button.modulate = Color(1, 1, 1)
 			index += 1
 
+func update_character_preview():
+	"""Show detailed character information including equipment"""
+	if not selected_character or not character_preview:
+		return
+	
+	var char = selected_character
+	var preview_text = ""
+	
+	# === HEADER ===
+	preview_text += "[center][b][color=gold]%s[/color][/b]\n" % char.name
+	preview_text += "[color=cyan]Level %d %s %s[/color][/center]\n\n" % [char.level, char.race, char.character_class]
+	
+	# === STATS SUMMARY ===
+	preview_text += "[b][color=cyan]Stats:[/color][/b]\n"
+	preview_text += "HP: %d/%d | MP: %d/%d | SP: %d/%d\n" % [
+		char.current_hp, char.max_hp,
+		char.current_mp, char.max_mp,
+		char.current_sp, char.max_sp
+	]
+	preview_text += "Attack: %d | Spell: %d | Defense: %d\n\n" % [
+		char.get_attack_power(), char.spell_power, char.get_defense()
+	]
+	
+	# === EQUIPMENT ===
+	preview_text += "[b][color=cyan]Equipment:[/color][/b]\n"
+	var has_equipment = false
+	
+	for slot in ["main_hand", "off_hand", "head", "chest", "hands", "legs", "feet"]:
+		var item = char.equipment[slot]
+		if item:
+			has_equipment = true
+			var color = item.get_rarity_color()
+			var slot_name = slot.capitalize().replace("_", " ")
+			
+			var item_line = "%s: [color=%s]%s[/color]" % [slot_name, color, item.name]
+			
+			# Add key stats
+			if item.damage > 0:
+				item_line += " ([color=yellow]%d dmg[/color])" % item.damage
+			if item.armor_value > 0:
+				item_line += " ([color=cyan]%d armor[/color])" % item.armor_value
+			
+			# Show item level and rarity
+			if item.get("item_level"):
+				item_line += " [color=gray]iLvl %d[/color]" % item.item_level
+			
+			preview_text += item_line + "\n"
+	
+	if not has_equipment:
+		preview_text += "[color=gray]No equipment[/color]\n"
+	
+	preview_text += "\n"
+	
+	# === ELEMENTAL AFFINITIES (if initialized) ===
+	if char.get("elemental_resistances") != null:
+		preview_text += "[b][color=orange]Elemental Affinities:[/color][/b]\n\n"
+		
+		# DAMAGE BONUSES LIST
+		preview_text += "[b][color=yellow]Damage Bonuses:[/color][/b]\n"
+		for element in ElementalDamage.Element.values():
+			if element == ElementalDamage.Element.NONE:
+				continue
+			
+			var elem_name = ElementalDamage.get_element_name(element)
+			var elem_color = ElementalDamage.get_element_color(element)
+			var bonus = char.get_elemental_damage_bonus(element)
+			
+			var line = "  [color=%s]%s:[/color] " % [elem_color, elem_name]
+			
+			if bonus > 0.0:
+				line += "[color=lime]+%d%% damage[/color]" % int(bonus * 100)
+			else:
+				line += "[color=gray]Normal[/color]"
+			
+			preview_text += line + "\n"
+		
+		preview_text += "\n"
+		
+		# RESISTANCES & WEAKNESSES LIST
+		preview_text += "[b][color=cyan]Resistances & Weaknesses:[/color][/b]\n"
+		for element in ElementalDamage.Element.values():
+			if element == ElementalDamage.Element.NONE:
+				continue
+			
+			var elem_name = ElementalDamage.get_element_name(element)
+			var elem_color = ElementalDamage.get_element_color(element)
+			var resist = char.get_elemental_resistance(element)
+			var weak = char.get_elemental_weakness(element)
+			
+			var line = "  [color=%s]%s:[/color] " % [elem_color, elem_name]
+			
+			if resist > 0.0:
+				line += "[color=cyan]-%d%% damage taken[/color]" % int(resist * 100)
+			elif weak > 0.0:
+				line += "[color=orange]+%d%% damage taken[/color]" % int(weak * 100)
+			else:
+				line += "[color=gray]Normal[/color]"
+			
+			preview_text += line + "\n"
+		
+		preview_text += "\n"
+	
+	# === PROGRESS ===
+	if char.get("current_floor"):
+		preview_text += "[b][color=cyan]Progress:[/color][/b]\n"
+		preview_text += "Floor: %d | Max Cleared: %d\n" % [char.current_floor, char.max_floor_cleared]
+		preview_text += "XP: %d / %d\n\n" % [char.xp, LevelSystem.calculate_xp_for_level(char.level)]
+	
+	# === CURRENCY ===
+	if char.currency:
+		preview_text += "[b][color=gold]Currency:[/color][/b] %s\n\n" % char.currency.get_formatted()
+	
+	# === SKILLS ===
+	if char.skills and char.skills.size() > 0:
+		preview_text += "[b][color=cyan]Skills:[/color][/b] "
+		var skill_names = []
+		for skill_name in char.skills:
+			skill_names.append(skill_name)
+		preview_text += ", ".join(skill_names) + "\n"
+	
+	# Display preview
+	if character_preview is RichTextLabel:
+		character_preview.bbcode_enabled = true
+		character_preview.text = preview_text
+	elif character_preview:
+		character_preview.text = preview_text
+
 func _on_start_new_game_pressed():
 	if selected_character:
-		# Check if save exists
 		if SaveManager.save_exists(selected_character.name):
 			show_new_game_warning()
 		else:
@@ -86,7 +210,7 @@ func _on_start_new_game_pressed():
 func show_new_game_warning():
 	var dialog = ConfirmationDialog.new()
 	dialog.title = "Overwrite Save?"
-	dialog.dialog_text = "Starting a new game will DELETE your existing save for %s!\n\nAre you sure you want to continue?" % selected_character.name
+	dialog.dialog_text = "Starting a new game will DELETE your existing save for %s!\n\nAre you sure?" % selected_character.name
 	dialog.ok_button_text = "Yes, Delete Save"
 	dialog.cancel_button_text = "Cancel"
 	add_child(dialog)
@@ -153,11 +277,17 @@ func _delete_character(character):
 	load_characters()
 	setup_ui()
 	
-	# QOL: If deleted character was selected, clear selection
+	# If deleted character was selected, clear selection
 	if selected_character == character:
 		selected_character = null
 		start_new_game_button.disabled = true
 		load_saved_game_button.disabled = true
+		
+		# Clear preview
+		if character_preview:
+			if character_preview is RichTextLabel:
+				character_preview.bbcode_enabled = true
+			character_preview.text = "[center][color=gray]No character selected[/color][/center]"
 		
 		# Auto-select first character if any remain
 		if not character_list.is_empty():

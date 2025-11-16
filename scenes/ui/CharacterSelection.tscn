@@ -20,7 +20,7 @@ layout_mode = 0
 offset_left = 40.0
 offset_top = 64.0
 offset_right = 392.0
-offset_bottom = 104.0
+offset_bottom = 128.0
 
 [node name="ScrollContainer" type="VBoxContainer" parent="MainContainer"]
 layout_mode = 2
@@ -61,3 +61,11 @@ offset_top = 192.0
 offset_right = 1012.0
 offset_bottom = 252.0
 text = "Start New Game"
+
+[node name="CharacterPreview" type="RichTextLabel" parent="."]
+layout_mode = 0
+offset_left = 280.0
+offset_top = 168.0
+offset_right = 792.0
+offset_bottom = 680.0
+bbcode_enabled = true

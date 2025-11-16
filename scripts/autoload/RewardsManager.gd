@@ -4,6 +4,7 @@
 
 extends Node
 
+
 signal rewards_calculated(rewards: Dictionary)
 
 func calculate_battle_rewards(battle_data: Dictionary) -> Dictionary:
@@ -32,7 +33,7 @@ func calculate_battle_rewards(battle_data: Dictionary) -> Dictionary:
 		for item in equipped_items:
 			if item is Equipment:
 				var drop_chance = get_equipment_drop_chance(item.rarity, is_boss, momentum_level)
-				if randf() < drop_chance:
+				if RandomManager.randf() < drop_chance:
 					rewards["equipment_instances"].append(item)
 					print("RewardsManager: Dropped equipment - %s (ilvl %d)" % [item.name, item.item_level])
 	
@@ -89,7 +90,7 @@ func get_equipment_drop_chance(rarity: String, is_boss: bool, momentum_level: in
 
 func add_random_item_to_rewards(rewards: Dictionary, item_type: String, chance: float, floor: int = 1):
 	"""Add random items - for equipment, creates instances; for consumables, stores keys"""
-	if randf() < chance:
+	if RandomManager.randf() < chance:
 		var item_id = ""
 		match item_type:
 			"consumable": 

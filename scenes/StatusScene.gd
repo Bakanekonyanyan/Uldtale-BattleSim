@@ -1,4 +1,4 @@
-# StatusScene.gd - UPDATED for specific equipment proficiencies
+# StatusScene.gd - UPDATED with Elemental System Display
 extends Control
 
 var current_character: CharacterData
@@ -6,14 +6,15 @@ var current_character: CharacterData
 @onready var name_label = $NameLabel if has_node("NameLabel") else null
 @onready var class_label = $ClassLabel if has_node("ClassLabel") else null
 @onready var level_label = $LevelLabel if has_node("LevelLabel") else null
+@onready var race_label = $RaceLabel if has_node("RaceLabel") else null
 @onready var primary_attributes = $PrimaryAttributes if has_node("PrimaryAttributes") else null
 @onready var secondary_attributes = $SecondaryAttributes if has_node("SecondaryAttributes") else null
+@onready var elemental_info = $ElementalInfo if has_node("ElementalInfo") else null
 @onready var equipment_info = $EquipmentInfo if has_node("EquipmentInfo") else null
 @onready var skills_info = $SkillsInfo if has_node("SkillsInfo") else null
 @onready var prof_info = $ProficiencyInfo if has_node("ProficiencyInfo") else null
 @onready var exit_button = $ExitButton if has_node("ExitButton") else null
 @onready var xp_label = $XPLabel
-
 
 func _ready():
 	print("StatusScene: _ready called")
@@ -37,73 +38,178 @@ func update_status():
 		return
 	
 	set_label_text(name_label, "Name: " + str(current_character.name))
+	set_label_text(race_label, "Race: " + str(current_character.race))
 	set_label_text(class_label, "Class: " + str(current_character.character_class))
 	set_label_text(level_label, "Level: " + str(current_character.level))
 	
-	if primary_attributes:
-		set_label_text(primary_attributes, """
-		Vitality: %d
-		Strength: %d
-		Dexterity: %d
-		Intelligence: %d
-		Faith: %d
-		Mind: %d
-		Endurance: %d
-		Arcane: %d
-		Agility: %d
-		Fortitude: %d
-		""" % [
+	# ✅ COMBINED: Primary, Secondary, and Elemental Info
+	if elemental_info and current_character.get("elemental_resistances") != null:
+		var info_text = ""
+		
+		# === PRIMARY ATTRIBUTES ===
+		info_text += "[b][color=cyan]Primary Attributes:[/color][/b]\n"
+		info_text += "Vitality: %d | Strength: %d | Dexterity: %d\n" % [
 			current_character.vitality,
 			current_character.strength,
-			current_character.dexterity,
+			current_character.dexterity
+		]
+		info_text += "Intelligence: %d | Faith: %d | Mind: %d\n" % [
 			current_character.intelligence,
 			current_character.faith,
-			current_character.mind,
+			current_character.mind
+		]
+		info_text += "Endurance: %d | Arcane: %d\n" % [
 			current_character.endurance,
-			current_character.arcane,
+			current_character.arcane
+		]
+		info_text += "Agility: %d | Fortitude: %d\n\n" % [
 			current_character.agility,
 			current_character.fortitude
-		])
-	else:
-		print("Error: PrimaryAttributes node not found")
-	
-	if secondary_attributes:
-		set_label_text(secondary_attributes, """
-		HP: %d / %d
-		MP: %d / %d
-		Attack Power: %d
-		Spell Power: %d
-		Defense: %d
-		Toughness: %.2f
-		Dodge: %.2f%%
-		Spell Ward: %.2f
-		Accuracy: %.2f%%
-		Crit Rate: %.2f%%
-		""" % [
+		]
+		
+		# === SECONDARY ATTRIBUTES ===
+		info_text += "[b][color=cyan]Secondary Attributes:[/color][/b]\n"
+		info_text += "HP: %d / %d | MP: %d / %d | SP: %d / %d\n" % [
 			current_character.current_hp,
 			current_character.max_hp,
 			current_character.current_mp,
 			current_character.max_mp,
+			current_character.current_sp,
+			current_character.max_sp
+		]
+		info_text += "Attack Power: %d | Spell Power: %d\n" % [
 			current_character.get_attack_power(),
-			current_character.spell_power,
+			current_character.spell_power
+		]
+		info_text += "Defense: %d | Toughness: %.2f\n" % [
 			current_character.get_defense(),
-			current_character.toughness,
+			current_character.toughness
+		]
+		info_text += "Dodge: %.1f%% | Spell Ward: %.2f\n" % [
 			current_character.dodge * 100,
-			current_character.spell_ward,
+			current_character.spell_ward
+		]
+		info_text += "Accuracy: %.1f%% | Crit Rate: %.1f%%\n\n" % [
 			current_character.accuracy * 100,
 			current_character.critical_hit_rate * 100
-		])
+		]
+		
+		# === ELEMENTAL AFFINITIES ===
+		info_text += "[b][color=orange]Elemental Affinities:[/color][/b]\n\n"
+		
+		# Show ALL elements with their values
+		for element in ElementalDamage.Element.values():
+			if element == ElementalDamage.Element.NONE:
+				continue
+			
+			var element_name = ElementalDamage.get_element_name(element)
+			var color = ElementalDamage.get_element_color(element)
+			var resist = current_character.get_elemental_resistance(element)
+			var weak = current_character.get_elemental_weakness(element)
+			var bonus = current_character.get_elemental_damage_bonus(element)
+			
+			# Build element line
+			var line = "[color=%s]%s:[/color]" % [color, element_name]
+			
+			var stats = []
+			if resist > 0.0:
+				stats.append("[color=cyan]-%d%% dmg taken[/color]" % int(resist * 100))
+			if weak > 0.0:
+				stats.append("[color=orange]+%d%% dmg taken[/color]" % int(weak * 100))
+			if bonus > 0.0:
+				stats.append("[color=lime]+%d%% dmg dealt[/color]" % int(bonus * 100))
+			
+			if stats.is_empty():
+				line += " [color=gray]Normal[/color]"
+			else:
+				line += " " + ", ".join(stats)
+			
+			info_text += line + "\n"
+		
+		if elemental_info is RichTextLabel:
+			elemental_info.bbcode_enabled = true
+			elemental_info.text = info_text
+		else:
+			elemental_info.text = info_text
+	elif elemental_info:
+		# For old characters without elemental system
+		var info_text = ""
+		
+		# === PRIMARY ATTRIBUTES ===
+		info_text += "[b][color=cyan]Primary Attributes:[/color][/b]\n"
+		info_text += "Vitality: %d | Strength: %d | Dexterity: %d\n" % [
+			current_character.vitality,
+			current_character.strength,
+			current_character.dexterity
+		]
+		info_text += "Intelligence: %d | Faith: %d | Mind: %d\n" % [
+			current_character.intelligence,
+			current_character.faith,
+			current_character.mind
+		]
+		info_text += "Endurance: %d | Arcane: %d\n" % [
+			current_character.endurance,
+			current_character.arcane
+		]
+		info_text += "Agility: %d | Fortitude: %d\n\n" % [
+			current_character.agility,
+			current_character.fortitude
+		]
+		
+		# === SECONDARY ATTRIBUTES ===
+		info_text += "[b][color=cyan]Secondary Attributes:[/color][/b]\n"
+		info_text += "HP: %d / %d | MP: %d / %d | SP: %d / %d\n" % [
+			current_character.current_hp,
+			current_character.max_hp,
+			current_character.current_mp,
+			current_character.max_mp,
+			current_character.current_sp,
+			current_character.max_sp
+		]
+		info_text += "Attack Power: %d | Spell Power: %d\n" % [
+			current_character.get_attack_power(),
+			current_character.spell_power
+		]
+		info_text += "Defense: %d | Toughness: %.2f\n" % [
+			current_character.get_defense(),
+			current_character.toughness
+		]
+		info_text += "Dodge: %.1f%% | Spell Ward: %.2f\n" % [
+			current_character.dodge * 100,
+			current_character.spell_ward
+		]
+		info_text += "Accuracy: %.1f%% | Crit Rate: %.1f%%\n\n" % [
+			current_character.accuracy * 100,
+			current_character.critical_hit_rate * 100
+		]
+		
+		info_text += "[color=gray][i]Elemental system not initialized for this character[/i][/color]"
+		
+		if elemental_info is RichTextLabel:
+			elemental_info.bbcode_enabled = true
+			elemental_info.text = info_text
+		else:
+			elemental_info.text = info_text
 	
+	# Equipment
 	if equipment_info:
-		var equipment_text = "Equipment:\n"
+		var equipment_text = "[b][color=cyan]Equipment:[/color][/b]\n\n"
 		for slot in current_character.equipment:
 			var item = current_character.equipment[slot]
 			var slot_name = slot.capitalize().replace("_", " ")
 			if item:
 				var color = item.get_rarity_color()
-				equipment_text += "%s: [color=%s]%s[/color] [%s]\n" % [slot_name, color, item.name, item.rarity.capitalize()]
+				var item_text = "%s: [color=%s]%s[/color] [%s]" % [slot_name, color, item.name, item.rarity.capitalize()]
+				
+				# Show key stats
+				if item.damage > 0:
+					item_text += " (%d dmg)" % item.damage
+				if item.armor_value > 0:
+					item_text += " (%d armor)" % item.armor_value
+				
+				equipment_text += item_text + "\n"
 			else:
-				equipment_text += "%s: Empty\n" % slot_name
+				equipment_text += "%s: [color=gray]Empty[/color]\n" % slot_name
 		
 		if equipment_info is RichTextLabel:
 			equipment_info.bbcode_enabled = true
@@ -114,9 +220,9 @@ func update_status():
 	if xp_label:
 		xp_label.text = "XP: %d / %d" % [current_character.xp, LevelSystem.calculate_xp_for_level(current_character.level)]
 	
-	# Display skills with levels and progress
+	# Skills
 	if skills_info:
-		var skills_text = "[b]Skills:[/b]\n"
+		var skills_text = "[b][color=cyan]Skills:[/color][/b]\n"
 		for skill_name in current_character.skills:
 			var skill = current_character.get_skill_instance(skill_name)
 			if skill:
@@ -127,7 +233,7 @@ func update_status():
 					progress_text = " (%d/%d uses)" % [skill.uses, next_threshold]
 				
 				skills_text += "\n[b]%s[/b] - Level %s%s\n" % [skill.name, level_str, progress_text]
-				skills_text += "  %s\n" % skill.description
+				skills_text += "  [color=gray]%s[/color]\n" % skill.description
 				
 				# Show skill stats
 				if skill.type in [Skill.SkillType.DAMAGE, Skill.SkillType.HEAL, Skill.SkillType.RESTORE]:
@@ -151,35 +257,31 @@ func update_status():
 		else:
 			skills_info.text = skills_text
 	
-	# ✅ UPDATED: Display specific equipment proficiencies
+	# Proficiencies
 	if prof_info and current_character.proficiency_manager:
 		var prof_text = "[b][color=cyan]Proficiencies:[/color][/b]\n\n"
 		
 		var prof_mgr = current_character.proficiency_manager
 		
-		# Get available weapon types based on class
+		# Get available weapon types
 		var available_weapons = prof_mgr.get_available_weapon_types()
 		
-		# Weapon proficiencies
 		prof_text += "[b]Weapons & Off-Hand:[/b]\n"
 		if available_weapons.is_empty():
-			prof_text += "  No weapons available for this class\n"
+			prof_text += "  [color=gray]No weapons available[/color]\n"
 		else:
-			# Sort for consistent display
 			available_weapons.sort()
 			for weapon_key in available_weapons:
 				var prof_str = prof_mgr.get_weapon_proficiency_string(weapon_key)
 				prof_text += "  " + prof_str + "\n"
 		
-		# Get available armor types based on class
+		# Get available armor types
 		var available_armors = prof_mgr.get_available_armor_types()
 		
-		# Armor proficiencies
 		prof_text += "\n[b]Armor:[/b]\n"
 		if available_armors.is_empty():
-			prof_text += "  No armor available for this class\n"
+			prof_text += "  [color=gray]No armor available[/color]\n"
 		else:
-			# Sort for consistent display
 			available_armors.sort()
 			for armor_type in available_armors:
 				var prof_str = prof_mgr.get_armor_proficiency_string(armor_type)
@@ -190,17 +292,13 @@ func update_status():
 			prof_info.text = prof_text
 		else:
 			prof_info.text = prof_text
-		
-		print("StatusScene: Proficiency display updated with available equipment types")
-	elif not prof_info:
-		print("StatusScene: WARNING - prof_info node not found!")
-	elif not current_character.proficiency_manager:
-		print("StatusScene: WARNING - proficiency_manager is null!")
 	
 	print("StatusScene: update_status completed")
 
-func set_label_text(label: Label, text: String):
+func set_label_text(label, text: String):
 	if label:
+		if label is RichTextLabel:
+			label.bbcode_enabled = true
 		label.text = text
 	else:
 		print("Warning: Attempted to set text on a null label")

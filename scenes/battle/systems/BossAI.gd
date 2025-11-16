@@ -226,7 +226,7 @@ func _enraged_behavior() -> BattleAction:
 	print("BossAI: ENRAGED ACTION!")
 	
 	# 80% chance to use skill, 20% attack
-	if randf() < 0.8:
+	if RandomManager.randf() < 0.8:
 		var best_skill = _find_strongest_available_skill()
 		if best_skill:
 			print("BossAI: Enraged skill - %s" % best_skill.name)

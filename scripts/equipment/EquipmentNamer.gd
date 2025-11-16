@@ -5,6 +5,7 @@
 class_name EquipmentNamer
 extends RefCounted
 
+
 const STAT_PREFIXES = {
 	Skill.AttributeTarget.VITALITY: ["Stalwart", "Enduring", "Resilient", "Vigorous", "Hardy"],
 	Skill.AttributeTarget.STRENGTH: ["Crushing", "Mighty", "Titanic", "Brutal", "Overwhelming"],
@@ -79,7 +80,7 @@ func generate_name(data: Dictionary) -> Dictionary:
 	# Status prefix
 	if status != Skill.StatusEffect.NONE and STATUS_DESCRIPTORS.has(status):
 		var descriptors = STATUS_DESCRIPTORS[status]
-		prefixes.append(descriptors[randi() % descriptors.size()])
+		prefixes.append(descriptors[RandomManager.randi() % descriptors.size()])
 	
 	# Primary stat prefix
 	if not stat_mods.is_empty():
@@ -87,7 +88,7 @@ func generate_name(data: Dictionary) -> Dictionary:
 		var primary = sorted[0]["stat"]
 		if STAT_PREFIXES.has(primary):
 			var options = STAT_PREFIXES[primary]
-			prefixes.append(options[randi() % options.size()])
+			prefixes.append(options[RandomManager.randi() % options.size()])
 	
 	# Secondary stat prefix (epic/legendary only)
 	if rarity in ["epic", "legendary"] and stat_mods.size() > 1:
@@ -95,13 +96,13 @@ func generate_name(data: Dictionary) -> Dictionary:
 		var secondary = sorted[1]["stat"]
 		if SECONDARY_PREFIXES.has(secondary):
 			var options = SECONDARY_PREFIXES[secondary]
-			prefixes.append(options[randi() % options.size()])
+			prefixes.append(options[RandomManager.randi() % options.size()])
 	
 	# Build suffix
 	var suffix = ""
 	if rarity in ["rare", "epic", "legendary"]:
 		var verbs = pantheon_data["verbs"]
-		suffix = "of " + verbs[randi() % verbs.size()]
+		suffix = "of " + verbs[RandomManager.randi() % verbs.size()]
 	
 	# Combine
 	var full_name = " ".join(prefixes)
@@ -130,7 +131,7 @@ func _choose_pantheon(status: Skill.StatusEffect) -> String:
 		return STATUS_PANTHEON_MAP[status]
 	
 	var keys = PANTHEON_NAMES.keys()
-	return keys[randi() % keys.size()]
+	return keys[RandomManager.randi() % keys.size()]
 
 func _sort_stats(stat_mods: Dictionary) -> Array:
 	"""Sort stat modifiers by value"""

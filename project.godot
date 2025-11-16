@@ -13,6 +13,7 @@ config_version=5
 config/name="Battlsim"
 run/main_scene="uid://cnb6kqb10ei67"
 config/features=PackedStringArray("4.4", "GL Compatibility")
+run/low_processor_mode=true
 config/icon="res://icon.svg"
 
 [autoload]
@@ -31,6 +32,8 @@ RewardsManager="*res://scripts/autoload/RewardsManager.gd"
 MomentumSystem="*res://scripts/autoload/MomentumSystem.gd"
 ShopManager="*res://scripts/autoload/ShopManager.gd"
 DungeonStateManager="*res://scripts/autoload/DungeonStateManager.gd"
+RaceElementalData="*res://scripts/autoload/RaceElementalData.gd"
+RandomManager="*res://scripts/autoload/RandomManager.gd"
 
 [display]
 

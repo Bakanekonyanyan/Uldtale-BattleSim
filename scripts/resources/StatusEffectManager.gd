@@ -8,6 +8,7 @@ extends RefCounted
 var character: CharacterData
 var active_effects: Dictionary = {}  # StatusEffect enum -> turns remaining
 
+
 func _init(owner_character: CharacterData):
 	character = owner_character
 
@@ -108,7 +109,7 @@ func _process_effect_damage(effect: Skill.StatusEffect) -> String:
 	
 	# Stun chance
 	if data.has("stun_chance"):
-		if randf() < float(data.stun_chance):
+		if RandomManager.randf() < float(data.stun_chance):
 			character.is_stunned = true
 			message += "%s is stunned!\n" % character.name
 	
@@ -159,7 +160,7 @@ func _fallback_damage(effect: Skill.StatusEffect) -> String:
 			var dmg = character.max_hp / 15
 			character.take_damage(dmg)
 			message = "%s took %d shock damage\n" % [character.name, dmg]
-			if randf() < 0.2:
+			if RandomManager.randf() < 0.2:
 				character.is_stunned = true
 				message += "%s is stunned!\n" % character.name
 		Skill.StatusEffect.FREEZE:

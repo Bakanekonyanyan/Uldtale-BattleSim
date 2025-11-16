@@ -452,25 +452,103 @@ func update_debug_display():
 		return
 	
 	debug_log.clear()
+	
+	# === PLAYER STATS ===
 	debug_log.append_text("[b][color=cyan]PLAYER STATS[/color][/b]\n")
 	debug_log.append_text("ATK Power: %.1f | Spell Power: %.1f\n" % [player.get_attack_power(), player.spell_power])
-	debug_log.append_text("Toughness: %.1f | Spell Ward: %.1f\n" % [player.toughness, player.spell_ward])
-	debug_log.append_text("Accuracy: %.1f%% | Dodge: %.1f%% | Crit: %.1f%%\n" % [
-		player.accuracy * 100, player.dodge * 100, player.critical_hit_rate * 100
-	])
-	debug_log.append_text("Defense: %d | Armor Pen: %.1f%%\n\n" % [
+	debug_log.append_text("Defense: %d | Armor Pen: %.1f%%\n" % [
 		player.get_defense(), player.armor_penetration * 100
 	])
+	debug_log.append_text("Toughness: %.1f | Spell Ward: %.1f\n" % [player.toughness, player.spell_ward])
+	debug_log.append_text("Accuracy: %.1f%% | Dodge: %.1f%% | Crit: %.1f%%\n\n" % [
+		player.accuracy * 100, player.dodge * 100, player.critical_hit_rate * 100
+	])
 	
+	# === PLAYER ELEMENTAL AFFINITIES ===
+	if player.elemental_resistances:
+		debug_log.append_text("[b][color=yellow]PLAYER ELEMENTAL DAMAGE:[/color][/b]\n")
+		for element in ElementalDamage.Element.values():
+			if element == ElementalDamage.Element.NONE:
+				continue
+			var bonus = player.get_elemental_damage_bonus(element)
+			if bonus > 0.0:
+				var elem_name = ElementalDamage.get_element_name(element)
+				var color = ElementalDamage.get_element_color(element)
+				debug_log.append_text("[color=%s]%s: +%d%%[/color]\n" % [color, elem_name, int(bonus * 100)])
+		
+		debug_log.append_text("\n[b][color=cyan]PLAYER RESISTANCES:[/color][/b]\n")
+		for element in ElementalDamage.Element.values():
+			if element == ElementalDamage.Element.NONE:
+				continue
+			var resist = player.get_elemental_resistance(element)
+			var weak = player.get_elemental_weakness(element)
+			
+			if resist > 0.0 or weak > 0.0:
+				var elem_name = ElementalDamage.get_element_name(element)
+				var color = ElementalDamage.get_element_color(element)
+				
+				if resist > 0.0:
+					debug_log.append_text("[color=%s]%s: -%d%% taken[/color]\n" % [color, elem_name, int(resist * 100)])
+				elif weak > 0.0:
+					debug_log.append_text("[color=%s]%s: +%d%% taken[/color]\n" % [color, elem_name, int(weak * 100)])
+		
+		debug_log.append_text("\n")
+	
+	# === ENEMY STATS ===
 	debug_log.append_text("[b][color=red]ENEMY STATS[/color][/b]\n")
 	debug_log.append_text("ATK Power: %.1f | Spell Power: %.1f\n" % [enemy.get_attack_power(), enemy.spell_power])
-	debug_log.append_text("Toughness: %.1f | Spell Ward: %.1f\n" % [enemy.toughness, enemy.spell_ward])
-	debug_log.append_text("Accuracy: %.1f%% | Dodge: %.1f%% | Crit: %.1f%%\n" % [
-		enemy.accuracy * 100, enemy.dodge * 100, enemy.critical_hit_rate * 100
-	])
 	debug_log.append_text("Defense: %d | Armor Pen: %.1f%%\n" % [
 		enemy.get_defense(), enemy.armor_penetration * 100
 	])
+	debug_log.append_text("Toughness: %.1f | Spell Ward: %.1f\n" % [enemy.toughness, enemy.spell_ward])
+	debug_log.append_text("Accuracy: %.1f%% | Dodge: %.1f%% | Crit: %.1f%%\n\n" % [
+		enemy.accuracy * 100, enemy.dodge * 100, enemy.critical_hit_rate * 100
+	])
+	
+	# === ENEMY ELEMENTAL AFFINITIES ===
+	if enemy.elemental_resistances:
+		debug_log.append_text("[b][color=yellow]ENEMY ELEMENTAL DAMAGE:[/color][/b]\n")
+		for element in ElementalDamage.Element.values():
+			if element == ElementalDamage.Element.NONE:
+				continue
+			var bonus = enemy.get_elemental_damage_bonus(element)
+			if bonus > 0.0:
+				var elem_name = ElementalDamage.get_element_name(element)
+				var color = ElementalDamage.get_element_color(element)
+				debug_log.append_text("[color=%s]%s: +%d%%[/color]\n" % [color, elem_name, int(bonus * 100)])
+		
+		debug_log.append_text("\n[b][color=orange]ENEMY WEAKNESSES:[/color][/b]\n")
+		var has_weakness = false
+		for element in ElementalDamage.Element.values():
+			if element == ElementalDamage.Element.NONE:
+				continue
+			var weak = enemy.get_elemental_weakness(element)
+			
+			if weak > 0.0:
+				var elem_name = ElementalDamage.get_element_name(element)
+				var color = ElementalDamage.get_element_color(element)
+				debug_log.append_text("[color=%s]%s: +%d%% taken[/color]\n" % [color, elem_name, int(weak * 100)])
+				has_weakness = true
+		
+		if not has_weakness:
+			debug_log.append_text("[color=gray]None[/color]\n")
+		
+		debug_log.append_text("\n[b][color=cyan]ENEMY RESISTANCES:[/color][/b]\n")
+		var has_resistance = false
+		for element in ElementalDamage.Element.values():
+			if element == ElementalDamage.Element.NONE:
+				continue
+			var resist = enemy.get_elemental_resistance(element)
+			
+			if resist > 0.0:
+				var elem_name = ElementalDamage.get_element_name(element)
+				var color = ElementalDamage.get_element_color(element)
+				debug_log.append_text("[color=%s]%s: -%d%% taken[/color]\n" % [color, elem_name, int(resist * 100)])
+				has_resistance = true
+		
+		if not has_resistance:
+			debug_log.append_text("[color=gray]None[/color]\n")
+	
 	debug_log.queue_redraw()
 
 func display_result(result: ActionResult):
@@ -488,3 +566,4 @@ func display_result(result: ActionResult):
 	
 	update_character_info(player,enemy)
 	update_xp_display()
+	update_debug_display()
