@@ -9,20 +9,19 @@ enum ConsumableType { DAMAGE, HEAL, BUFF, DEBUFF, RESTORE, CURE }
 @export var name: String
 @export var description: String
 @export var item_type: ItemType
-@export var value: int  # Value in copper
+@export var value: int
 @export var stackable: bool = false
 @export var max_stack: int = 1
-
 
 # For consumables
 @export var consumable_type: ConsumableType
 @export var effect_power: int
 @export var effect_duration: int
 @export var status_effect: Skill.StatusEffect = Skill.StatusEffect.NONE
-@export var buff_type: String = ""  # ATTACK, DODGE, etc.
-@export var poison_chance: float = 1.0  # For special items like dung
+@export var buff_type: String = ""
+@export var poison_chance: float = 1.0
 @export var combat_usable: bool = false
-@export var effect_percent: float = 0.0  # 0.0-1.0 (0%-100%)
+@export var effect_percent: float = 0.0
 @export var is_percentage_based: bool = false
 
 static func create_from_dict(item_id: String, data: Dictionary) -> Item:
@@ -39,21 +38,17 @@ static func create_from_dict(item_id: String, data: Dictionary) -> Item:
 		item.consumable_type = ConsumableType[data.consumable_type]
 		item.combat_usable = data.get("combat_usable", false)
 		
-		# NEW: Check if percentage-based
 		item.is_percentage_based = data.get("is_percentage_based", false)
 		
 		if item.is_percentage_based:
-			# Use percentage value (0.0-1.0)
 			item.effect_percent = data.get("effect_percent", 0.0)
-			item.effect_power = 0  # Not used for percentage
+			item.effect_power = 0
 		else:
-			# Use fixed value (legacy)
 			item.effect_power = data.effect_power
 			item.effect_percent = 0.0
 		
 		item.effect_duration = data.effect_duration
 		
-		# Status effects
 		if data.has("status_effect"):
 			item.status_effect = Skill.StatusEffect[data.status_effect]
 		
@@ -90,10 +85,8 @@ func heal(user: CharacterData, targets: Array) -> String:
 		var heal_amount = 0
 		
 		if is_percentage_based:
-			# NEW: Percentage-based healing
 			heal_amount = int(target.max_hp * effect_percent)
 		else:
-			# LEGACY: Fixed value
 			heal_amount = effect_power
 		
 		target.heal(heal_amount)
@@ -113,15 +106,12 @@ func restore(user: CharacterData, targets: Array) -> String:
 		var restore_amount = 0
 		
 		if is_percentage_based:
-			# NEW: Percentage-based restoration
-			# Restore both MP and SP
 			var mp_restore = int(target.max_mp * effect_percent)
 			var sp_restore = int(target.max_sp * effect_percent)
 			target.restore_mp(mp_restore)
 			target.restore_sp(sp_restore)
 			restore_amount = mp_restore + sp_restore
 		else:
-			# LEGACY: Fixed value (just MP)
 			target.restore_mp(effect_power)
 			restore_amount = effect_power
 		
@@ -141,16 +131,13 @@ func deal_damage(user: CharacterData, targets: Array) -> String:
 		var damage = 0
 		
 		if is_percentage_based:
-			# NEW: Percentage-based damage (of MAX HP)
 			damage = int(target.max_hp * effect_percent)
 		else:
-			# LEGACY: Fixed damage
 			damage = effect_power
 		
 		target.take_damage(damage)
 		total_damage += damage
 		
-		# Apply status effect if present
 		if status_effect != Skill.StatusEffect.NONE:
 			if poison_chance < 1.0:
 				if RandomManager.randf() <= poison_chance:
@@ -165,16 +152,44 @@ func deal_damage(user: CharacterData, targets: Array) -> String:
 				]
 	
 	return "%s dealt %d damage to %d target(s)" % [name, total_damage, targets.size()]
-	
+
+# ✅ FIX: Corrected buff application using buff_manager and effect_percent
 func apply_buff(user: CharacterData, targets: Array) -> String:
+	print("[ITEM DEBUG] apply_buff called: %s | buff_type=%s | effect_percent=%.2f | effect_power=%d | duration=%d" % [
+		name, buff_type, effect_percent, effect_power, effect_duration
+	])
+	
+	var buff_value = 0
+	if is_percentage_based:
+		# Use effect_percent for percentage-based buffs
+		buff_value = int(effect_percent * 100)  # Convert 0.5 → 50
+	else:
+		buff_value = effect_power
+	
 	for target in targets:
 		if buff_type == "ATTACK":
-			target.apply_buff(Skill.AttributeTarget.STRENGTH, effect_power, effect_duration)
+			# Apply STRENGTH buff via buff_manager
+			target.apply_buff(Skill.AttributeTarget.STRENGTH, buff_value, effect_duration)
+			print("[ITEM DEBUG] Applied STRENGTH buff: +%d for %d turns" % [buff_value, effect_duration])
+		
 		elif buff_type == "DODGE":
-			# Temporarily increase dodge chance
-			target.dodge += effect_power / 100.0
-			# You may want to track this separately to remove later
-	return "%s applied %s buff to %d target(s) for %d turns" % [name, buff_type, targets.size(), effect_duration]
+			# ✅ FIX: Use buff_manager for AGILITY (affects dodge calculation)
+			# OR use a custom dodge buff if your BuffDebuffManager supports it
+			# For now, we'll use AGILITY as it affects dodge:
+			target.apply_buff(Skill.AttributeTarget.AGILITY, buff_value, effect_duration)
+			print("[ITEM DEBUG] Applied AGILITY buff (dodge): +%d for %d turns" % [buff_value, effect_duration])
+		
+		else:
+			print("[ITEM DEBUG] WARNING: Unknown buff_type '%s'" % buff_type)
+	
+	if is_percentage_based:
+		return "%s applied %s buff (+%.0f%%) to %d target(s) for %d turns" % [
+			name, buff_type, effect_percent * 100, targets.size(), effect_duration
+		]
+	else:
+		return "%s applied %s buff (+%d) to %d target(s) for %d turns" % [
+			name, buff_type, buff_value, targets.size(), effect_duration
+		]
 
 func apply_debuff(user: CharacterData, targets: Array) -> String:
 	for target in targets:
@@ -182,15 +197,58 @@ func apply_debuff(user: CharacterData, targets: Array) -> String:
 			target.apply_status_effect(status_effect, effect_duration)
 	return "%s applied debuff to %d target(s)" % [name, targets.size()]
 
+# ✅ FIX: Corrected cure logic to use status_manager properly
 func cure_status(user: CharacterData, targets: Array) -> String:
-	for target in targets:
-		# Clear all status effects
-		target.status_effects.clear()
-		# Also heal if specified
-		if effect_power > 0:
-			target.heal(effect_power)
+	print("[ITEM DEBUG] cure_status called: %s | status_effect=%s | effect_power=%d | is_percentage=%s" % [
+		name, 
+		Skill.StatusEffect.keys()[status_effect] if status_effect != Skill.StatusEffect.NONE else "ALL",
+		effect_power,
+		is_percentage_based
+	])
 	
-	if effect_power > 0:
-		return "%s cured all status effects and healed %d HP!" % [name, effect_power]
+	var heal_amount = 0
+	if is_percentage_based and effect_percent > 0:
+		# Calculate heal from percentage (e.g., holy_water)
+		heal_amount = int(targets[0].max_hp * effect_percent) if not targets.is_empty() else 0
+	elif effect_power > 0:
+		heal_amount = effect_power
+	
+	for target in targets:
+		# Check if specific status effect is defined (antidote, coolroot, etc.)
+		if status_effect != Skill.StatusEffect.NONE:
+			# ✅ FIX: Use status_manager to remove specific effect
+			if target.status_manager and target.status_manager.active_effects.has(status_effect):
+				var msg = target.status_manager.remove_effect(status_effect)
+				print("[ITEM DEBUG] Removed specific effect: %s" % msg)
+			else:
+				print("[ITEM DEBUG] Target does not have %s" % Skill.StatusEffect.keys()[status_effect])
+		else:
+			# Clear ALL status effects (e.g., holy_water)
+			# ✅ FIX: Use status_manager instead of deprecated property
+			if target.status_manager:
+				target.status_manager.clear_all_effects()
+				print("[ITEM DEBUG] Cleared all status effects")
+		
+		# Apply healing if specified
+		if heal_amount > 0:
+			target.heal(heal_amount)
+			print("[ITEM DEBUG] Healed %d HP" % heal_amount)
+	
+	# Build result message
+	var result = ""
+	if status_effect != Skill.StatusEffect.NONE:
+		# Specific cure
+		result = "%s cured %s" % [name, Skill.StatusEffect.keys()[status_effect]]
 	else:
-		return "%s cured all status effects!" % name
+		# Cure all
+		result = "%s cured all status effects" % name
+	
+	if heal_amount > 0:
+		if is_percentage_based:
+			result += " and healed %.0f%% HP (%d HP)!" % [effect_percent * 100, heal_amount]
+		else:
+			result += " and healed %d HP!" % heal_amount
+	else:
+		result += "!"
+	
+	return result

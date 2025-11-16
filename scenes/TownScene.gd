@@ -12,6 +12,8 @@ var current_character: CharacterData
 @onready var stash_button = $UI/StashButton
 @onready var character_select_button = $UI/CharacterSelectButton
 @onready var quit_button = $UI/QuitButton
+@onready var arena_button = $UI/ArenaButton
+
 
 func _ready():
 	if shop_button:
@@ -30,6 +32,8 @@ func _ready():
 		character_select_button.connect("pressed", Callable(self, "_on_charselect_pressed"))
 	if quit_button:
 		quit_button.connect("pressed", Callable(self, "_on_quit_pressed"))
+	if arena_button:
+		arena_button.connect("pressed", Callable(self, "_on_arena_pressed"))
 		
 	update_ui()
 
@@ -194,3 +198,7 @@ func _on_quit_pressed():
 
 func _on_charselect_pressed():
 	SceneManager.change_scene("res://scenes/ui/CharacterSelection.tscn")
+
+func _on_arena_pressed():
+	SceneManager.change_to_arena(current_character)
+	

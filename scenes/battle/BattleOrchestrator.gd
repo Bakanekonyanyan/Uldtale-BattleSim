@@ -10,6 +10,9 @@ var combat_engine: CombatEngine
 var turn_controller: TurnController
 var enemy_ai: EnemyAI
 var ui_controller: BattleUIController
+var network_sync: BattleNetworkSync
+var is_pvp_mode := false  # Set to true for arena battles
+
 
 # Battle context
 var player: CharacterData
@@ -19,10 +22,14 @@ var current_wave: int
 var current_floor: int
 var max_floor: int
 var dungeon_description: String
-
-# ✅ FIX: Track both item and main action
 var item_action_used: bool = false
 var main_action_taken: bool = false
+
+# ✅ FIX: Track action flags per character
+var player_item_used: bool = false
+var player_main_action_taken: bool = false
+var enemy_item_used: bool = false
+var enemy_main_action_taken: bool = false
 
 func _ready():
 	ui_controller = get_node_or_null("BattleUIController")
@@ -36,7 +43,9 @@ func start_battle():
 	if not _validate_setup():
 		return
 	
-	print("BattleOrchestrator: Starting battle - %s vs %s" % [player.name, enemy.name])
+	print("BattleOrchestrator: Starting battle - %s vs %s (PvP: %s)" % [
+		player.name, enemy.name, is_pvp_mode
+	])
 	
 	# Initialize systems
 	combat_engine = CombatEngine.new()
@@ -46,20 +55,31 @@ func start_battle():
 	add_child(turn_controller)
 	turn_controller.initialize(player, enemy)
 	
-	# ✅ NEW: Use BossAI for boss battles, regular AI for normal enemies
-	if is_boss_battle:
-		enemy_ai = BossAI.new()
-		print("BattleOrchestrator: Using BOSS AI")
+	# ✅ NEW: Initialize network sync if PvP
+	if is_pvp_mode:
+		network_sync = BattleNetworkSync.new()
+		network_sync.initialize(self, true)
+		print("BattleOrchestrator: Network sync enabled")
+	
+	# ✅ MODIFIED: Use regular AI only in PvE mode
+	if not is_pvp_mode:
+		if is_boss_battle:
+			enemy_ai = BossAI.new()
+			print("BattleOrchestrator: Using BOSS AI")
+		else:
+			enemy_ai = EnemyAI.new()
+			print("BattleOrchestrator: Using regular AI")
+		
+		enemy_ai.initialize(enemy, player, current_floor)
 	else:
-		enemy_ai = EnemyAI.new()
-		print("BattleOrchestrator: Using regular AI")
+		print("BattleOrchestrator: PvP mode - no AI")
 	
-	enemy_ai.initialize(enemy, player, current_floor)
-	
+	# ✅ CRITICAL: Connect signals
 	turn_controller.turn_started.connect(_on_turn_started)
 	turn_controller.turn_ended.connect(_on_turn_ended)
 	turn_controller.turn_skipped.connect(_on_turn_skipped)
 	
+	# ✅ CRITICAL: Initialize UI
 	if ui_controller:
 		ui_controller.initialize(player, enemy)
 		ui_controller.action_selected.connect(_on_action_selected)
@@ -67,20 +87,29 @@ func start_battle():
 		ui_controller.update_character_info(player, enemy)
 		ui_controller.update_xp_display()
 		ui_controller.update_debug_display()
-		ui_controller.update_dungeon_info(current_wave, current_floor, dungeon_description)
+		
+		# ✅ NEW: Hide wave/floor in PvP mode
+		if is_pvp_mode:
+			ui_controller.hide_dungeon_info()
+		else:
+			ui_controller.update_dungeon_info(current_wave, current_floor, dungeon_description)
 		
 		print("BattleOrchestrator: UI initialized and updated")
 	else:
 		push_error("BattleOrchestrator: ui_controller is null!")
 		return
 	
+	# ✅ CRITICAL: Initialize resources
 	_initialize_resources()
 	
+	# ✅ CRITICAL: Wait for UI ready
 	await _wait_for_ui_ready()
 	
+	# ✅ CRITICAL: Setup initial UI state
 	ui_controller.setup_player_actions(false, false)
 	ui_controller.disable_actions()
 	
+	# ✅ CRITICAL: Start first turn
 	turn_controller.start_first_turn()
 
 func _wait_for_ui_ready():
@@ -115,9 +144,18 @@ func _initialize_resources():
 func _on_turn_started(character: CharacterData, is_player: bool):
 	print("BattleOrchestrator: Turn started - %s" % character.name)
 	
+	# Update UI
 	if ui_controller:
 		ui_controller.update_character_info(player, enemy)
 		ui_controller.update_turn_display("%s's turn" % character.name)
+	
+	# ✅ NEW: Notify network sync
+	if is_pvp_mode and network_sync:
+		network_sync.on_turn_started(character, is_player)
+		
+		# In PvP, if it's not my turn, just wait
+		if not network_sync.is_my_turn:
+			return  # Network sync handles opponent turns
 	
 	# Reset action flags for player
 	if is_player:
@@ -125,8 +163,7 @@ func _on_turn_started(character: CharacterData, is_player: bool):
 		main_action_taken = false
 		print("BattleOrchestrator: Reset action flags for player turn")
 	
-	# === NEW: ARMOR PROFICIENCY TRACKING ===
-	# Track all equipped armor pieces at turn start
+	# === ARMOR PROFICIENCY TRACKING ===
 	if character.proficiency_manager:
 		var armor_slots = ["head", "chest", "hands", "legs", "feet"]
 		for slot in armor_slots:
@@ -137,12 +174,6 @@ func _on_turn_started(character: CharacterData, is_player: bool):
 					if prof_msg != "":
 						ui_controller.add_combat_log(prof_msg, "cyan")
 						print("[PROFICIENCY LEVEL UP!] %s" % prof_msg)
-					
-					# Debug: Show progress
-					var uses = character.proficiency_manager.get_armor_proficiency_uses(armor.type)
-					var level = character.proficiency_manager.get_armor_proficiency_level(armor.type)
-					var next_threshold = character.proficiency_manager.get_uses_for_next_level(level)
-					print("[PROFICIENCY] %s armor: %d/%d uses (Level %d)" % [armor.type, uses, next_threshold, level])
 	
 	# Process status effects
 	var status_message = combat_engine.process_status_effects(character)
@@ -151,10 +182,12 @@ func _on_turn_started(character: CharacterData, is_player: bool):
 		ui_controller.update_character_info(player, enemy)
 		await get_tree().create_timer(1.0).timeout
 	
+	# Check if character died from status
 	if not combat_engine.is_alive(character):
 		_handle_death(character)
 		return
 	
+	# Check if stunned
 	if character.is_stunned:
 		var stun_msg = "%s is stunned and loses their turn!" % character.name
 		turn_controller.skip_turn(character, "stunned")
@@ -163,14 +196,14 @@ func _on_turn_started(character: CharacterData, is_player: bool):
 		await get_tree().create_timer(1.0).timeout
 		return
 	
+	# Advance to action phase
 	turn_controller.advance_phase()
 	
+	# ✅ CRITICAL: Setup turn based on who it is
 	if is_player:
 		_setup_player_turn()
 	else:
 		_execute_enemy_turn()
-
-
 
 func _on_turn_ended(character: CharacterData):
 	print("BattleOrchestrator: Turn ended - %s" % character.name)
@@ -192,7 +225,11 @@ func _setup_player_turn():
 func _on_action_selected(action: BattleAction):
 	print("BattleOrchestrator: Action selected - %s" % action.get_description())
 	
-	# ✅ FIX: Handle item as bonus action
+	# ✅ NEW: Send to network in PvP
+	if is_pvp_mode and network_sync:
+		network_sync.on_action_selected(action)
+	
+	# ✅ MODIFIED: Handle item as bonus action
 	if action.type == BattleAction.ActionType.ITEM:
 		if item_action_used:
 			ui_controller.add_combat_log("You've already used an item this turn!", "red")
@@ -237,6 +274,14 @@ func _execute_item_action(action: BattleAction):
 func _execute_enemy_turn():
 	print("BattleOrchestrator: Enemy's turn")
 	
+	# ✅ NEW: In PvP, opponent actions come via network
+	if is_pvp_mode:
+		ui_controller.add_combat_log("Opponent's turn", "red")
+		ui_controller.update_turn_display("Waiting for opponent...")
+		# Network sync will handle receiving the action
+		return
+	
+	# PvE: Use AI
 	ui_controller.add_combat_log("Enemy's turn", "red")
 	ui_controller.update_turn_display("Enemy is acting...")
 	
@@ -297,14 +342,56 @@ func _handle_victory():
 	print("BattleOrchestrator: Player victory!")
 	ui_controller.disable_actions()
 	
+	# ✅ NEW: Notify network in PvP
+	if is_pvp_mode and network_sync:
+		network_sync.on_battle_end(true)
+		
+		# Show victory message
+		await get_tree().create_timer(1.0).timeout
+		
+		var dialog = AcceptDialog.new()
+		dialog.dialog_text = "Victory!"
+		dialog.ok_button_text = "Return to Town"
+		add_child(dialog)
+		dialog.popup_centered()
+		
+		await dialog.confirmed
+		dialog.queue_free()
+		
+		# Return to town
+		SceneManager.change_scene("res://scenes/TownScene.tscn")
+		return
+	
+	# PvE: Normal flow with XP
 	var xp = enemy.level * 50 * current_floor
 	await get_tree().create_timer(1.0).timeout
-	
 	_show_battle_complete_dialog(xp)
 
 func _handle_defeat():
 	print("BattleOrchestrator: Player defeated!")
 	ui_controller.disable_actions()
+	
+	# ✅ NEW: Notify network in PvP
+	if is_pvp_mode and network_sync:
+		network_sync.on_battle_end(false)
+		
+		# Show defeat message
+		await get_tree().create_timer(1.0).timeout
+		
+		var dialog = AcceptDialog.new()
+		dialog.dialog_text = "Defeat..."
+		dialog.ok_button_text = "Return to Town"
+		add_child(dialog)
+		dialog.popup_centered()
+		
+		await dialog.confirmed
+		dialog.queue_free()
+		
+		# Return to town
+		SceneManager.change_scene("res://scenes/TownScene.tscn")
+		return
+	
+	# PvE: Normal flow
 	await get_tree().create_timer(1.0).timeout
 	emit_signal("battle_completed", false, 0)
 
@@ -375,8 +462,6 @@ func set_dungeon_info(boss_fight: bool, wave: int, floor: int, _max_floor:int, d
 		push_warning("BattleOrchestrator: Description was type %d, converted to String" % typeof(description))
 		
 	call_deferred("_deferred_start_battle")
-
-# Add this to BattleOrchestrator.gd
 
 func _deferred_start_battle():
 	print("BattleOrchestrator: _deferred_start_battle called")
@@ -467,3 +552,30 @@ func debug_proficiency_status():
 			print("  %s" % prof)
 	
 	print("================================\n")
+
+# === PVP SETUP FUNCTION ===
+
+func setup_pvp_battle(local_player: CharacterData, remote_opponent: CharacterData):
+	"""Setup battle in PvP mode"""
+	print("BattleOrchestrator: setup_pvp_battle called")
+	print("  - Local player: %s (Level %d)" % [local_player.name, local_player.level])
+	print("  - Remote opponent: %s (Level %d)" % [remote_opponent.name, remote_opponent.level])
+	
+	is_pvp_mode = true
+	player = local_player
+	enemy = remote_opponent
+	
+	# Reset for battle
+	player.reset_for_new_battle()
+	enemy.reset_for_new_battle()
+	
+	# Set dummy dungeon info
+	current_wave = 1
+	current_floor = 1
+	dungeon_description = "Arena PvP Battle"
+	is_boss_battle = false
+	
+	print("BattleOrchestrator: PvP battle configured, calling start_battle()...")
+	
+	# ✅ CRITICAL FIX: Call start_battle() deferred to let scene initialize
+	call_deferred("start_battle")

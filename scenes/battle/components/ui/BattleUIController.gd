@@ -36,7 +36,7 @@ func _ready():
 	if not combat_log:
 		combat_log = $CombatLog
 	if not debug_log:
-		debug_log = $DebugWindow/DebugText
+		debug_log = $DebugWindow/DebugLog
 	if not xp_label:
 		xp_label = $XPLabel
 	if not action_buttons:
@@ -567,3 +567,14 @@ func display_result(result: ActionResult):
 	update_character_info(player,enemy)
 	update_xp_display()
 	update_debug_display()
+
+func hide_dungeon_info():
+	"""Hide wave/floor/description labels for PvP battles"""
+	if wave_label:
+		wave_label.visible = false
+	if floor_label:
+		floor_label.visible = false
+	if dungeon_description_label:
+		dungeon_description_label.visible = false
+	
+	print("BattleUIController: Dungeon info hidden (PvP mode)")

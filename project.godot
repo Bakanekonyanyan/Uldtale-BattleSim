@@ -34,6 +34,7 @@ ShopManager="*res://scripts/autoload/ShopManager.gd"
 DungeonStateManager="*res://scripts/autoload/DungeonStateManager.gd"
 RaceElementalData="*res://scripts/autoload/RaceElementalData.gd"
 RandomManager="*res://scripts/autoload/RandomManager.gd"
+ArenaNetworkManager="*res://scripts/network/ArenaNetworkManager.gd"
 
 [display]
 

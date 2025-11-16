@@ -13,7 +13,7 @@ func start_as_host():
 
 func start_as_client(seed: int):
 	is_host = false
-	RandomManager.set_seed(seed)
+	RandomManager.seed = seed
 	emit_signal("match_started", seed)
 
 func send_action(action: Dictionary):

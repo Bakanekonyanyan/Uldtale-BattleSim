@@ -101,6 +101,9 @@ func change_to_inventory(character: CharacterData) -> void:
 func change_to_stash(character: CharacterData) -> void:
 	push_scene("res://scenes/StashScene.tscn", character)
 
+func change_to_arena(character: CharacterData) -> void:
+	push_scene("res://scenes/arena/ArenaLobby.tscn", character)
+
 func change_to_main_menu() -> void:
 	MomentumSystem.reset_momentum()
 	DungeonStateManager.end_dungeon()
