@@ -6,6 +6,7 @@ extends Item
 class_name Equipment
 
 # === CORE PROPERTIES ===
+var key: String = ""  # Unique identifier for proficiency tracking (e.g., "short_sword", "buckler")
 var damage: int = 0
 var armor_value: int = 0
 var attribute_target: Variant
@@ -57,26 +58,6 @@ func _init(data: Dictionary):
 
 # === INITIALIZATION PATHS ===
 
-func _load_base_data(data: Dictionary):
-	"""Load common base properties"""
-	id = data.get("id", "")
-	name = data.get("name", "")
-	description = data.get("description", "")
-	value = data.get("value", 0)
-	damage = data.get("damage", 0)
-	armor_value = data.get("armor_value", 0)
-	attribute_target = data.get("attribute_target", "")
-	attribute_increase = data.get("attribute_increase", 0)
-	type = data.get("type", "")
-	slot = data.get("slot", "")
-	class_restriction = data.get("class_restriction", [])
-	effects = data.get("effects", {})
-	inventory_key = data.get("inventory_key", "")
-	item_level = data.get("item_level", 1)
-	base_item_level = data.get("base_item_level", 1)
-	
-	item_type = Item.ItemType.WEAPON if type == "weapon" else Item.ItemType.ARMOR
-
 func _is_saved_equipment(data: Dictionary) -> bool:
 	"""Check if this is loaded from save file"""
 	return data.has("stat_modifiers") and not data["stat_modifiers"].is_empty()
@@ -84,33 +65,6 @@ func _is_saved_equipment(data: Dictionary) -> bool:
 func _is_already_generated(data: Dictionary) -> bool:
 	"""Check if this was already generated"""
 	return data.get("rarity_applied", false) == true
-
-func _load_from_save(data: Dictionary):
-	"""Restore from save data"""
-	print("Equipment: Loading from save - %s (ilvl %d)" % [name, item_level])
-	rarity = data.get("rarity", "common")
-	rarity_applied = true
-	damage = data.get("damage", damage)
-	armor_value = data.get("armor_value", armor_value)
-	
-	# Restore modifiers (convert string keys to enum)
-	if "stat_modifiers" in data:
-		stat_modifiers = {}
-		for key in data["stat_modifiers"]:
-			if typeof(key) == TYPE_STRING and Skill.AttributeTarget.has(key):
-				stat_modifiers[Skill.AttributeTarget[key]] = data["stat_modifiers"][key]
-			elif typeof(key) == TYPE_INT:
-				stat_modifiers[key] = data["stat_modifiers"][key]
-	
-	# Restore other properties
-	status_effect_chance = data.get("status_effect_chance", 0.0)
-	status_effect_type = data.get("status_effect_type", Skill.StatusEffect.NONE)
-	bonus_damage = data.get("bonus_damage", 0)
-	item_prefix = data.get("item_prefix", "")
-	item_suffix = data.get("item_suffix", "")
-	flavor_text = data.get("flavor_text", "")
-	if "name" in data:
-		name = data["name"]
 
 func _load_generated(data: Dictionary):
 	"""Load already-generated equipment"""
@@ -287,12 +241,86 @@ func _get_slot_display_name() -> String:
 		_:
 			return slot.capitalize()
 
-# === SAVE/LOAD ===
+# Add this to Equipment.gd _load_base_data() method
 
+func _load_base_data(data: Dictionary):
+	"""Load common base properties"""
+	id = data.get("id", "")
+	name = data.get("name", "")
+	description = data.get("description", "")
+	value = data.get("value", 0)
+	damage = data.get("damage", 0)
+	armor_value = data.get("armor_value", 0)
+	attribute_target = data.get("attribute_target", "")
+	attribute_increase = data.get("attribute_increase", 0)
+	type = data.get("type", "")
+	slot = data.get("slot", "")
+	class_restriction = data.get("class_restriction", [])
+	effects = data.get("effects", {})
+	inventory_key = data.get("inventory_key", "")
+	item_level = data.get("item_level", 1)
+	base_item_level = data.get("base_item_level", 1)
+	
+	# === CRITICAL: Always set proficiency key ===
+	# Priority: data["key"] > inventory_key > id (cleaned) > derived from name
+	key = data.get("key", "")
+	
+	if key == "":
+		# Try inventory_key
+		if inventory_key != "" and inventory_key != null:
+			key = inventory_key
+		# Try id (strip prefixes)
+		elif id != "" and id != null:
+			key = id.replace("weapon_", "").replace("armor_", "").replace("shield_", "").replace("source_", "")
+		else:
+			# Last resort: derive from name
+			var clean_name = name.to_lower().replace(" ", "_")
+			# Remove common prefixes/suffixes
+			clean_name = clean_name.replace("the_", "").replace("a_", "").replace("an_", "")
+			key = clean_name
+	
+	print("Equipment: Set proficiency key '%s' for '%s' (id: %s, inv_key: %s)" % [key, name, id, inventory_key])
+	
+	item_type = Item.ItemType.WEAPON if type == "weapon" else Item.ItemType.ARMOR
+
+# Also update _load_from_save to preserve the key
+func _load_from_save(data: Dictionary):
+	"""Restore from save data"""
+	print("Equipment: Loading from save - %s (ilvl %d)" % [name, item_level])
+	rarity = data.get("rarity", "common")
+	rarity_applied = true
+	damage = data.get("damage", damage)
+	armor_value = data.get("armor_value", armor_value)
+	
+	# NEW: Restore the key
+	if "key" in data and data["key"] != "":
+		key = data["key"]
+	
+	# Restore modifiers (convert string keys to enum)
+	if "stat_modifiers" in data:
+		stat_modifiers = {}
+		for stat_key in data["stat_modifiers"]:
+			if typeof(stat_key) == TYPE_STRING and Skill.AttributeTarget.has(stat_key):
+				stat_modifiers[Skill.AttributeTarget[stat_key]] = data["stat_modifiers"][stat_key]
+			elif typeof(stat_key) == TYPE_INT:
+				stat_modifiers[stat_key] = data["stat_modifiers"][stat_key]
+	
+	# Restore other properties
+	status_effect_chance = data.get("status_effect_chance", 0.0)
+	status_effect_type = data.get("status_effect_type", Skill.StatusEffect.NONE)
+	bonus_damage = data.get("bonus_damage", 0)
+	item_prefix = data.get("item_prefix", "")
+	item_suffix = data.get("item_suffix", "")
+	flavor_text = data.get("flavor_text", "")
+	if "name" in data:
+		name = data["name"]
+
+# Update get_save_data to include key
 func get_save_data() -> Dictionary:
 	return {
 		"id": id,
 		"name": name,
+		"key": key,  # NEW: Save the proficiency key
 		"rarity": rarity,
 		"rarity_applied": rarity_applied,
 		"item_level": item_level,

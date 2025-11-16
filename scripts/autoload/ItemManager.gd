@@ -1,5 +1,5 @@
-# res://scripts/autoload/ItemManager.gd
-# ItemManager.gd
+# ItemManager.gd - FIXED: Add proficiency keys during loading
+
 extends Node
 
 var items = {}
@@ -7,7 +7,6 @@ var weapons = {}
 var armors = {}
 var consumables = {}
 var materials = {}
-# NEW: Separate templates from instances
 var equipment_templates = {}  # Base templates (never modified)
 
 func _ready():
@@ -50,10 +49,10 @@ func load_weapons():
 					var weapon_data = json[hand_type][weapon_category][weapon_id]
 					if typeof(weapon_data) == TYPE_DICTIONARY:
 						weapon_data["id"] = weapon_id
-						# Store as template (never modified)
+						weapon_data["key"] = weapon_id  # NEW: Add proficiency key
 						equipment_templates[weapon_id] = weapon_data
-						# Don't create Equipment instance yet
 						weapons[weapon_id] = weapon_data
+						print("ItemManager: Loaded weapon '%s' with key '%s'" % [weapon_data.get("name", ""), weapon_id])
 
 func load_armors():
 	var file = FileAccess.open("res://data/items/armors.json", FileAccess.READ)
@@ -65,16 +64,23 @@ func load_armors():
 			for armor_id in json[armor_type][slot]:
 				var armor_data = json[armor_type][slot][armor_id]
 				armor_data["id"] = armor_id
+				armor_data["key"] = armor_id  # NEW: Add proficiency key
 				equipment_templates[armor_id] = armor_data
 				armors[armor_id] = armor_data
+				print("ItemManager: Loaded armor '%s' with key '%s'" % [armor_data.get("name", ""), armor_id])
 
 func create_equipment_instance(item_id: String) -> Equipment:
 	"""Creates a NEW equipment instance with fresh random rolls"""
 	if not equipment_templates.has(item_id):
+		print("ItemManager: Template not found for: ", item_id)
 		return null
 	
 	# Create NEW instance from template data
 	var template_data = equipment_templates[item_id].duplicate(true)
+	
+	# IMPORTANT: Keep the key during duplication
+	if not template_data.has("key"):
+		template_data["key"] = item_id
 	
 	# CRITICAL: Mark as NEW (no rarity pre-assigned)
 	template_data.erase("rarity")
@@ -135,14 +141,14 @@ func get_random_equipment() -> String:
 	if all_equipment.size() > 0:
 		return all_equipment[randi() % all_equipment.size()]
 	return ""
-# Helper function to filter arrays
+
 func filter_array(arr: Array, condition: Callable) -> Array:
 	var result = []
 	for item in arr:
 		if condition.call(item):
 			result.append(item)
 	return result
-# Add these debug functions
+
 func print_consumables():
 	print("Available consumables: ", consumables.keys())
 
@@ -157,6 +163,10 @@ func create_equipment_for_floor(item_id: String, floor: int) -> Equipment:
 	
 	var template_data = equipment_templates[item_id].duplicate(true)
 	
+	# IMPORTANT: Preserve the proficiency key
+	if not template_data.has("key"):
+		template_data["key"] = item_id
+	
 	# CRITICAL: Add floor context
 	template_data["floor_number"] = floor
 	
@@ -165,7 +175,7 @@ func create_equipment_for_floor(item_id: String, floor: int) -> Equipment:
 	template_data.erase("rarity_applied")
 	template_data.erase("stat_modifiers")
 	
-	print("ItemManager: Creating equipment for floor %d: %s" % [floor, item_id])
+	print("ItemManager: Creating equipment for floor %d: %s (key: %s)" % [floor, item_id, template_data["key"]])
 	
 	# This will trigger generation in Equipment._init()
 	return Equipment.new(template_data)

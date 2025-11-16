@@ -60,7 +60,7 @@ func setup_attribute_buttons():
 		attribute_labels[attr] = label
 		
 		var minus_button = Button.new()
-		minus_button.custom_minimum_size = Vector2(20, 10)
+		minus_button.custom_minimum_size = Vector2(80, 40)
 		minus_button.text = "-"
 		# 1. Create a StyleBox for the visual style
 		var style_normal = StyleBoxFlat.new()
@@ -87,7 +87,7 @@ func setup_attribute_buttons():
 		hbox.add_child(minus_button)
 		
 		var plus_button = Button.new()
-		plus_button.custom_minimum_size = Vector2(20, 10)
+		plus_button.custom_minimum_size = Vector2(80, 40)
 		plus_button.text = "+"
 		# 2. Set the color (e.g., to a light blue)
 		style_normal.bg_color = Color("4472c4") # Hex color for a shade of blue

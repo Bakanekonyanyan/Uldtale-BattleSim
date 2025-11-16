@@ -117,12 +117,32 @@ func _on_turn_started(character: CharacterData, is_player: bool):
 		ui_controller.update_character_info(player, enemy)
 		ui_controller.update_turn_display("%s's turn" % character.name)
 	
-	# ✅ FIX: Reset BOTH action flags at turn start
+	# Reset action flags for player
 	if is_player:
 		item_action_used = false
 		main_action_taken = false
 		print("BattleOrchestrator: Reset action flags for player turn")
 	
+	# === NEW: ARMOR PROFICIENCY TRACKING ===
+	# Track all equipped armor pieces at turn start
+	if character.proficiency_manager:
+		var armor_slots = ["head", "chest", "hands", "legs", "feet"]
+		for slot in armor_slots:
+			if character.equipment[slot] and character.equipment[slot] is Equipment:
+				var armor = character.equipment[slot]
+				if armor.type in ["cloth", "leather", "mail", "plate"]:
+					var prof_msg = character.proficiency_manager.use_armor(armor.type)
+					if prof_msg != "":
+						ui_controller.add_combat_log(prof_msg, "cyan")
+						print("[PROFICIENCY LEVEL UP!] %s" % prof_msg)
+					
+					# Debug: Show progress
+					var uses = character.proficiency_manager.get_armor_proficiency_uses(armor.type)
+					var level = character.proficiency_manager.get_armor_proficiency_level(armor.type)
+					var next_threshold = character.proficiency_manager.get_uses_for_next_level(level)
+					print("[PROFICIENCY] %s armor: %d/%d uses (Level %d)" % [armor.type, uses, next_threshold, level])
+	
+	# Process status effects
 	var status_message = combat_engine.process_status_effects(character)
 	if status_message:
 		ui_controller.add_combat_log(status_message, "purple")
@@ -147,6 +167,8 @@ func _on_turn_started(character: CharacterData, is_player: bool):
 		_setup_player_turn()
 	else:
 		_execute_enemy_turn()
+
+
 
 func _on_turn_ended(character: CharacterData):
 	print("BattleOrchestrator: Turn ended - %s" % character.name)
@@ -404,3 +426,42 @@ func _deferred_start_battle():
 	
 	print("BattleOrchestrator: Starting battle now...")
 	start_battle()
+
+func debug_proficiency_status():
+	"""Debug command to check proficiency status"""
+	if not player or not player.proficiency_manager:
+		print("[DEBUG] No player or proficiency manager!")
+		return
+	
+	print("\n=== PLAYER PROFICIENCY DEBUG ===")
+	
+	# Check weapon
+	if player.equipment["main_hand"]:
+		var weapon = player.equipment["main_hand"]
+		print("Main Hand: %s" % weapon.name)
+		print("  Key: '%s'" % weapon.key)
+		
+		if weapon.key != "":
+			var uses = player.proficiency_manager.get_weapon_proficiency_uses(weapon.key)
+			var level = player.proficiency_manager.get_weapon_proficiency_level(weapon.key)
+			var next = player.proficiency_manager.get_uses_for_next_level(level)
+			print("  Proficiency: Level %d (%d/%d uses)" % [level, uses, next])
+	
+	# Check all tracked proficiencies
+	print("\nAll Weapon Proficiencies:")
+	var all_weapons = player.proficiency_manager.get_all_weapon_proficiencies()
+	if all_weapons.is_empty():
+		print("  (none)")
+	else:
+		for prof in all_weapons:
+			print("  %s" % prof)
+	
+	print("\nAll Armor Proficiencies:")
+	var all_armor = player.proficiency_manager.get_all_armor_proficiencies()
+	if all_armor.is_empty():
+		print("  (none)")
+	else:
+		for prof in all_armor:
+			print("  %s" % prof)
+	
+	print("================================\n")

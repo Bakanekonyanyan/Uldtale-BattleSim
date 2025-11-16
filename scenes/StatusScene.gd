@@ -1,4 +1,4 @@
-# StatusScene.gd - FIXED PROFICIENCY DISPLAY
+# StatusScene.gd - UPDATED for specific equipment proficiencies
 extends Control
 
 var current_character: CharacterData
@@ -151,34 +151,47 @@ func update_status():
 		else:
 			skills_info.text = skills_text
 	
-	# ✅ FIX: Display proficiencies with ALL possible types
+	# ✅ UPDATED: Display specific equipment proficiencies
 	if prof_info and current_character.proficiency_manager:
 		var prof_text = "[b][color=cyan]Proficiencies:[/color][/b]\n\n"
 		
-		# Get equipped weapon/armor types to determine what to show
-		var available_weapon_types = _get_available_weapon_types()
-		var available_armor_types = _get_available_armor_types()
+		var prof_mgr = current_character.proficiency_manager
+		
+		# Get available weapon types based on class
+		var available_weapons = prof_mgr.get_available_weapon_types()
 		
 		# Weapon proficiencies
-		prof_text += "[b]Weapons:[/b]\n"
-		for weapon_type in available_weapon_types:
-			var prof_str = current_character.proficiency_manager.get_weapon_proficiency_string(weapon_type)
-			prof_text += "  " + prof_str + "\n"
+		prof_text += "[b]Weapons & Off-Hand:[/b]\n"
+		if available_weapons.is_empty():
+			prof_text += "  No weapons available for this class\n"
+		else:
+			# Sort for consistent display
+			available_weapons.sort()
+			for weapon_key in available_weapons:
+				var prof_str = prof_mgr.get_weapon_proficiency_string(weapon_key)
+				prof_text += "  " + prof_str + "\n"
+		
+		# Get available armor types based on class
+		var available_armors = prof_mgr.get_available_armor_types()
 		
 		# Armor proficiencies
 		prof_text += "\n[b]Armor:[/b]\n"
-		for armor_type in available_armor_types:
-			var prof_str = current_character.proficiency_manager.get_armor_proficiency_string(armor_type)
-			prof_text += "  " + prof_str + "\n"
+		if available_armors.is_empty():
+			prof_text += "  No armor available for this class\n"
+		else:
+			# Sort for consistent display
+			available_armors.sort()
+			for armor_type in available_armors:
+				var prof_str = prof_mgr.get_armor_proficiency_string(armor_type)
+				prof_text += "  " + prof_str + "\n"
 		
-		# ✅ FIX: Set the text instead of appending
 		if prof_info is RichTextLabel:
 			prof_info.bbcode_enabled = true
 			prof_info.text = prof_text
 		else:
 			prof_info.text = prof_text
 		
-		print("StatusScene: Proficiency display updated")
+		print("StatusScene: Proficiency display updated with available equipment types")
 	elif not prof_info:
 		print("StatusScene: WARNING - prof_info node not found!")
 	elif not current_character.proficiency_manager:
@@ -194,56 +207,3 @@ func set_label_text(label: Label, text: String):
 
 func _on_exit_pressed():
 	SceneManager.change_to_town(current_character)
-
-func _get_available_weapon_types() -> Array:
-	"""Get list of weapon types to display (equipped + tracked proficiencies)"""
-	var types = []
-	
-	# Add equipped weapon type
-	if current_character.equipment["main_hand"]:
-		var weapon = current_character.equipment["main_hand"]
-		if weapon is Equipment and weapon.type not in types:
-			types.append(weapon.type)
-	
-	if current_character.equipment["off_hand"]:
-		var off_hand = current_character.equipment["off_hand"]
-		if off_hand is Equipment and off_hand.type not in types:
-			types.append(off_hand.type)
-	
-	# Add any weapon types with proficiency progress
-	var prof_mgr = current_character.proficiency_manager
-	if prof_mgr:
-		for weapon_type in prof_mgr.weapon_proficiencies.keys():
-			if weapon_type not in types:
-				types.append(weapon_type)
-	
-	# If no types found, show common weapon types
-	if types.is_empty():
-		types = ["one_handed", "two_handed", "shield", "source"]
-	
-	return types
-
-func _get_available_armor_types() -> Array:
-	"""Get list of armor types to display (equipped + tracked proficiencies)"""
-	var types = []
-	
-	# Add equipped armor types
-	for slot in ["head", "chest", "hands", "legs", "feet"]:
-		if current_character.equipment[slot]:
-			var armor = current_character.equipment[slot]
-			if armor is Equipment and armor.type in ["cloth", "leather", "mail", "plate"]:
-				if armor.type not in types:
-					types.append(armor.type)
-	
-	# Add any armor types with proficiency progress
-	var prof_mgr = current_character.proficiency_manager
-	if prof_mgr:
-		for armor_type in prof_mgr.armor_proficiencies.keys():
-			if armor_type not in types:
-				types.append(armor_type)
-	
-	# If no types found, show all armor types
-	if types.is_empty():
-		types = ["cloth", "leather", "mail", "plate"]
-	
-	return types

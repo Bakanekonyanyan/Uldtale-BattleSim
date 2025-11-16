@@ -10,7 +10,7 @@
 		"attribute_increase": 2,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
 		  "dodge": 0,
 		  "crit": 0,
@@ -27,7 +27,7 @@
 		"attribute_increase": 3,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
 		  "dodge": -5,
 		  "crit": 0,
@@ -44,7 +44,7 @@
 		"attribute_increase": 2,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
 		  "dodge": 0,
 		  "crit": 5,
@@ -61,7 +61,7 @@
 		"attribute_increase": 2,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
 		  "dodge": 5,
 		  "crit": 10,
@@ -78,7 +78,7 @@
 		"attribute_increase": 1,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
 		  "dodge": 2,
 		  "crit": 15,
@@ -95,7 +95,7 @@
 		"attribute_increase": 2,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
 		  "dodge": -3,
 		  "crit": 0,
@@ -112,7 +112,7 @@
 		"attribute_increase": 3,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
 		  "dodge": -4,
 		  "crit": 0,
@@ -129,7 +129,7 @@
 		"attribute_increase": 2,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
 		  "dodge": 3,
 		  "crit": 5,
@@ -142,11 +142,11 @@
 		"description": "A magical scepter with average damage that increases spell power.",
 		"value": 160,
 		"damage": 9,
-		"attribute_target": "intelligence",
+		"attribute_target": "faith",
 		"attribute_increase": 3,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Cleric","Necromancer","Shaman","Mage","King"],
 		"effects": {
 		  "dodge": 0,
 		  "crit": 0,
@@ -163,14 +163,14 @@
 		"attribute_increase": 4,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Cleric","Necromancer","Shaman","Mage","King"],
 		"effects": {
 		  "dodge": 0,
 		  "crit": 8,
 		  "spell_power_increase": 15
-		}
-	  },
+		},
 		"rarity": ""
+	  }
 	},
 	"two_handed": {
 	  "greatsword": {
@@ -182,7 +182,7 @@
 		"attribute_increase": 5,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
 		"effects": {
 		  "dodge": -8,
 		  "crit": 0,
@@ -199,12 +199,13 @@
 		"attribute_increase": 4,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
 		"effects": {
 		  "dodge": -7,
 		  "crit": 0,
 		  "armor_penetration": 20
-		}
+		},
+		"rarity": ""
 	  },
 	  "curved_greatsword": {
 		"name": "Curved Greatsword",
@@ -215,7 +216,7 @@
 		"attribute_increase": 5,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon"],
+		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
 		"effects": {
 		  "dodge": 5,
 		  "crit": 3,
@@ -232,7 +233,7 @@
 		"attribute_increase": 5,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
 		"effects": {
 		  "dodge": -6,
 		  "crit": 10,
@@ -249,7 +250,7 @@
 		"attribute_increase": 6,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
 		"effects": {
 		  "dodge": -9,
 		  "crit": 0,
@@ -266,7 +267,7 @@
 		"attribute_increase": 5,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
 		"effects": {
 		  "dodge": -8,
 		  "crit": 15,
@@ -283,7 +284,7 @@
 		"attribute_increase": 4,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
 		"effects": {
 		  "dodge": -7,
 		  "crit": 8,
@@ -300,7 +301,7 @@
 		"attribute_increase": 7,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": [],
+		"class_restriction": ["Cleric","Necromancer","Shaman","Mage","King"],
 		"effects": {
 		  "dodge": -6,
 		  "crit": 5,
@@ -321,7 +322,7 @@
 		"attribute_increase": 1,
 		"type": "shield",
 		"slot": "off_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
 		  "dodge": -2
 		},
@@ -336,7 +337,7 @@
 		"attribute_increase": 2,
 		"type": "shield",
 		"slot": "off_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
 		  "dodge": -4
 		},
@@ -351,12 +352,12 @@
 		"attribute_increase": 3,
 		"type": "shield",
 		"slot": "off_hand",
-		"class_restriction": [],
+		"class_restriction": ["Paladin", "Brute", "King"],
 		"effects": {
 		  "dodge": -6
-		}
-	  },
+		},
 		"rarity": ""
+	  }
 	},
 	"source": {
 	  "tome": {
@@ -368,7 +369,7 @@
 		"attribute_increase": [3, 5],
 		"type": "source",
 		"slot": "off_hand",
-		"class_restriction": ["Necromancer"],
+		"class_restriction": ["Necromancer","Mage","King"],
 		"effects": {},
 		"rarity": ""
 	  },
@@ -409,7 +410,7 @@
 		"attribute_increase": [3, 5],
 		"type": "source",
 		"slot": "off_hand",
-		"class_restriction": ["Cleric"],
+		"class_restriction": ["Cleric", "Shaman", "King"],
 		"effects": {},
 		"rarity": ""
 	  }

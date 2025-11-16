@@ -43,7 +43,40 @@ func _execute_attack(action: BattleAction) -> ActionResult:
 	if not is_alive(target):
 		return ActionResult.failure_msg("%s is already defeated" % target.name)
 	
-	# Get momentum multiplier
+	# === WEAPON PROFICIENCY TRACKING ===
+	var prof_level_up_msg = ""
+	if attacker.equipment.has("main_hand") and attacker.equipment["main_hand"]:
+		var weapon = attacker.equipment["main_hand"]
+		
+		if weapon is Equipment and attacker.proficiency_manager:
+			# Ensure weapon has a valid key
+			if weapon.key == "" or weapon.key == null:
+				print("[COMBAT] Weapon '%s' missing key, attempting to get from helper..." % weapon.name)
+				weapon.key = EquipmentKeyHelper.get_equipment_key(weapon)
+				print("[COMBAT] Helper returned key: '%s'" % weapon.key)
+			
+			# Track proficiency if we have a valid key
+			if weapon.key != "" and weapon.key != null:
+				print("[COMBAT] Tracking proficiency for weapon: %s" % weapon.key)
+				prof_level_up_msg = attacker.proficiency_manager.use_weapon(weapon.key)
+				
+				# DEBUG: Always show current proficiency progress
+				var uses = attacker.proficiency_manager.get_weapon_proficiency_uses(weapon.key)
+				var level = attacker.proficiency_manager.get_weapon_proficiency_level(weapon.key)
+				var next_threshold = attacker.proficiency_manager.get_uses_for_next_level(level)
+				print("[PROFICIENCY] %s: %d/%d uses (Level %d)" % [weapon.key, uses, next_threshold, level])
+				
+				if prof_level_up_msg != "":
+					print("[PROFICIENCY LEVEL UP!] %s" % prof_level_up_msg)
+			else:
+				print("[COMBAT ERROR] Could not determine weapon key for '%s'" % weapon.name)
+		else:
+			if not (weapon is Equipment):
+				print("[COMBAT ERROR] main_hand weapon is not Equipment type")
+			if not attacker.proficiency_manager:
+				print("[COMBAT ERROR] Attacker has no proficiency_manager")
+	
+	# === MOMENTUM & DAMAGE CALCULATION ===
 	var momentum_mult = MomentumSystem.get_damage_multiplier()
 	var base_damage = attacker.get_attack_power() * 0.5 * momentum_mult
 	var resistance = target.get_defense()
@@ -64,9 +97,11 @@ func _execute_attack(action: BattleAction) -> ActionResult:
 		damage *= 1.5 + randf() * 0.5
 	
 	damage = round(damage)
-	target.take_damage(damage)
 	
-	# Try to apply weapon status effect
+	# Apply damage (pass attacker for reflection mechanics)
+	target.take_damage(damage, attacker)
+	
+	# === STATUS EFFECT FROM WEAPON ===
 	var status_msg = ""
 	if attacker.equipment["main_hand"] and attacker.equipment["main_hand"] is Equipment:
 		var weapon = attacker.equipment["main_hand"]
@@ -76,15 +111,19 @@ func _execute_attack(action: BattleAction) -> ActionResult:
 					if weapon.try_apply_status_effect(target):
 						status_msg = " and applied %s" % Skill.StatusEffect.keys()[weapon.status_effect_type]
 	
-	# Resource regeneration
+	# === RESOURCE REGENERATION ===
 	var mp_restore = int(attacker.max_mp * 0.08)
 	var sp_restore = int(attacker.max_sp * 0.08)
 	attacker.restore_mp(mp_restore)
 	attacker.restore_sp(sp_restore)
 	
-	# Build result
+	# === BUILD RESULT ===
 	var result = ActionResult.attack_result(attacker, target, int(damage), is_crit)
 	result.message += " and restores %d MP, %d SP%s" % [mp_restore, sp_restore, status_msg]
+	
+	# Add proficiency level-up message to result if it occurred
+	if prof_level_up_msg != "":
+		result.level_up_message = prof_level_up_msg
 	
 	return result
 

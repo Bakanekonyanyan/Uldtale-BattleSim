@@ -182,10 +182,12 @@ func get_attack_power() -> int:
 		var weapon = equipment["main_hand"]
 		var weapon_damage = weapon.damage
 		
-		# NEW: Apply proficiency bonus
+		# NEW: Apply proficiency bonus using specific weapon key
 		if proficiency_manager:
-			var prof_mult = proficiency_manager.get_weapon_damage_multiplier(weapon.type)
-			weapon_damage = int(weapon_damage * prof_mult)
+			var weapon_key = EquipmentKeyHelper.get_equipment_key(weapon)
+			if weapon_key != "":
+				var prof_mult = proficiency_manager.get_weapon_damage_multiplier(weapon_key)
+				weapon_damage = int(weapon_damage * prof_mult)
 		
 		base += weapon_damage
 		if "bonus_damage" in weapon:
@@ -384,20 +386,50 @@ func update_max_floor_cleared(floor: int):
 		max_floor_cleared = floor
 		print("New max floor: %d" % max_floor_cleared)
 
-func take_damage(amount: float, attacker: CharacterData = null):
-	"""Take damage with armor proficiency tracking"""
+# =============================================
+# UPDATE ATTACK TO PASS ATTACKER
+# =============================================
+# Add these methods to CharacterData.gd for complete proficiency tracking
+
+func track_weapon_proficiency():
+	"""Track weapon proficiency usage"""
+	if not equipment["main_hand"] or not proficiency_manager:
+		return
 	
-	# NEW: Track armor proficiency (once per turn to avoid spam)
-	if proficiency_manager and not has_meta("armor_tracked_this_turn"):
-		for slot in ["head", "chest", "hands", "legs", "feet"]:
-			if equipment[slot] and equipment[slot] is Equipment:
-				var armor = equipment[slot]
-				if armor.type in ["cloth", "leather", "mail", "plate"]:
-					var prof_msg = proficiency_manager.use_armor(armor.type)
-					if prof_msg != "":
-						print(prof_msg)
-		
-		set_meta("armor_tracked_this_turn", true)
+	var weapon = equipment["main_hand"]
+	if not weapon is Equipment:
+		return
+	
+	var weapon_key = EquipmentKeyHelper.get_equipment_key(weapon)
+	if weapon_key != "":
+		var msg = proficiency_manager.use_weapon(weapon_key)
+		if msg != "":
+			print("[PROFICIENCY] %s" % msg)
+
+func track_armor_proficiency():
+	"""Track armor proficiency - call this when taking damage"""
+	if not proficiency_manager:
+		return
+	
+	# Track each equipped armor piece
+	var armor_slots = ["head", "chest", "hands", "legs", "feet"]
+	for slot in armor_slots:
+		if equipment[slot] and equipment[slot] is Equipment:
+			var armor = equipment[slot]
+			if armor.type in ["cloth", "leather", "mail", "plate"]:
+				var msg = proficiency_manager.use_armor(armor.type)
+				if msg != "":
+					print("[PROFICIENCY] %s" % msg)
+					# Only show one armor level up per damage instance
+					break
+
+# UPDATED take_damage to track armor proficiency
+func take_damage(amount: float, attacker: CharacterData = null):
+	"""Take damage with reflection mechanics and armor proficiency tracking"""
+	
+	# Track armor proficiency when taking damage
+	track_armor_proficiency()
+	
 	# Store attacker for reflection
 	if attacker:
 		last_attacker = attacker
@@ -406,7 +438,7 @@ func take_damage(amount: float, attacker: CharacterData = null):
 	if is_defending:
 		amount *= 0.5
 	
-	# ✅ REFLECTION MECHANIC
+	# REFLECTION MECHANIC
 	if last_attacker and last_attacker != self:
 		var reflection = status_manager.get_total_reflection()
 		
@@ -423,12 +455,10 @@ func take_damage(amount: float, attacker: CharacterData = null):
 	current_hp -= int(amount)
 	current_hp = max(0, current_hp)
 
-# =============================================
-# UPDATE ATTACK TO PASS ATTACKER
-# =============================================
+# UPDATED attack() method - place this in CharacterData.gd
 
 func attack(target: CharacterData) -> String:
-	"""Execute basic attack with attacker tracking"""
+	"""Execute basic attack - NOTE: Proficiency tracking happens in CombatEngine"""
 	if not target or not is_instance_valid(target):
 		return "%s's attack failed - no valid target!" % name
 	
@@ -436,13 +466,7 @@ func attack(target: CharacterData) -> String:
 	var base_damage = get_attack_power() * 0.5 * momentum_mult
 	var resistance = target.get_defense()
 	
-	# NEW: Track weapon proficiency
-	var prof_msg = ""
-	if equipment["main_hand"] and equipment["main_hand"] is Equipment:
-		var weapon = equipment["main_hand"]
-		prof_msg = proficiency_manager.use_weapon(weapon.type)
-	
-	# Rolls
+	# Combat rolls
 	if randf() >= accuracy:
 		return "%s's attack missed!" % name
 	if randf() < target.dodge:
@@ -456,7 +480,7 @@ func attack(target: CharacterData) -> String:
 	
 	damage = round(damage)
 	
-	# ✅ PASS ATTACKER TO take_damage()
+	# Apply damage (pass attacker for reflection)
 	target.take_damage(damage, self)
 	
 	# Status effect from weapon
@@ -475,12 +499,8 @@ func attack(target: CharacterData) -> String:
 	restore_mp(mp_restore)
 	restore_sp(sp_restore)
 	
+	# Build message
 	var result = "%s attacks %s for %d damage" % [name, target.name, damage]
-	
-	if prof_msg != "":
-		result += "\n" + prof_msg
-	
-	return result
 	
 	if momentum_mult > 1.0:
 		result += " (+%d%% momentum)" % int((momentum_mult - 1.0) * 100)
@@ -491,3 +511,37 @@ func attack(target: CharacterData) -> String:
 		result = "Critical hit! " + result
 	
 	return result
+
+func debug_proficiency_status():
+	"""Print current proficiency status for debugging"""
+	if not proficiency_manager:
+		print("[PROFICIENCY] ERROR: No proficiency manager!")
+		return
+	
+	print("=== PROFICIENCY DEBUG ===")
+	
+	# Check weapon
+	if equipment["main_hand"]:
+		var weapon = equipment["main_hand"]
+		print("Main Hand Weapon: %s" % weapon.name)
+		print("  - Type: %s" % (weapon.get_class() if weapon.has_method("get_class") else "Unknown"))
+		print("  - Key: '%s'" % (weapon.key if "key" in weapon else "NO KEY PROPERTY"))
+		
+		if weapon is Equipment and weapon.key != "":
+			var uses = proficiency_manager.get_weapon_proficiency_uses(weapon.key)
+			var level = proficiency_manager.get_weapon_proficiency_level(weapon.key)
+			var next = proficiency_manager.get_uses_for_next_level(level)
+			print("  - Proficiency: Level %d (%d/%d uses)" % [level, uses, next])
+	else:
+		print("No weapon equipped")
+	
+	# Show all tracked proficiencies
+	print("\nAll Weapon Proficiencies:")
+	var all_profs = proficiency_manager.get_all_weapon_proficiencies()
+	if all_profs.is_empty():
+		print("  (none tracked yet)")
+	else:
+		for prof in all_profs:
+			print("  - %s" % prof)
+	
+	print("========================")
