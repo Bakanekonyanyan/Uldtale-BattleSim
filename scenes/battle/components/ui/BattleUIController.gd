@@ -453,76 +453,93 @@ func update_debug_display():
 	
 	debug_log.clear()
 	
-	# === PLAYER STATS ===
+	# Determine which character is which from local perspective
+	var local_char = player
+	var opponent_char = enemy
+	
+	# === PLAYER STATS (Local Character) ===
 	debug_log.append_text("[b][color=cyan]PLAYER STATS[/color][/b]\n")
-	debug_log.append_text("ATK Power: %.1f | Spell Power: %.1f\n" % [player.get_attack_power(), player.spell_power])
+	debug_log.append_text("ATK Power: %.1f | Spell Power: %.1f\n" % [local_char.get_attack_power(), local_char.spell_power])
 	debug_log.append_text("Defense: %d | Armor Pen: %.1f%%\n" % [
-		player.get_defense(), player.armor_penetration * 100
+		local_char.get_defense(), local_char.armor_penetration * 100
 	])
-	debug_log.append_text("Toughness: %.1f | Spell Ward: %.1f\n" % [player.toughness, player.spell_ward])
+	debug_log.append_text("Toughness: %.1f | Spell Ward: %.1f\n" % [local_char.toughness, local_char.spell_ward])
 	debug_log.append_text("Accuracy: %.1f%% | Dodge: %.1f%% | Crit: %.1f%%\n\n" % [
-		player.accuracy * 100, player.dodge * 100, player.critical_hit_rate * 100
+		local_char.accuracy * 100, local_char.dodge * 100, local_char.critical_hit_rate * 100
 	])
 	
 	# === PLAYER ELEMENTAL AFFINITIES ===
-	if player.elemental_resistances:
+	if local_char.elemental_resistances:
 		debug_log.append_text("[b][color=yellow]PLAYER ELEMENTAL DAMAGE:[/color][/b]\n")
+		var has_damage_bonus = false
 		for element in ElementalDamage.Element.values():
 			if element == ElementalDamage.Element.NONE:
 				continue
-			var bonus = player.get_elemental_damage_bonus(element)
+			var bonus = local_char.get_elemental_damage_bonus(element)
 			if bonus > 0.0:
 				var elem_name = ElementalDamage.get_element_name(element)
 				var color = ElementalDamage.get_element_color(element)
 				debug_log.append_text("[color=%s]%s: +%d%%[/color]\n" % [color, elem_name, int(bonus * 100)])
+				has_damage_bonus = true
+		if not has_damage_bonus:
+			debug_log.append_text("[color=gray]None[/color]\n")
 		
 		debug_log.append_text("\n[b][color=cyan]PLAYER RESISTANCES:[/color][/b]\n")
+		var has_resist_or_weak = false
 		for element in ElementalDamage.Element.values():
 			if element == ElementalDamage.Element.NONE:
 				continue
-			var resist = player.get_elemental_resistance(element)
-			var weak = player.get_elemental_weakness(element)
+			var resist = local_char.get_elemental_resistance(element)
+			var weak = local_char.get_elemental_weakness(element)
 			
-			if resist > 0.0 or weak > 0.0:
+			if resist > 0.0:
 				var elem_name = ElementalDamage.get_element_name(element)
 				var color = ElementalDamage.get_element_color(element)
-				
-				if resist > 0.0:
-					debug_log.append_text("[color=%s]%s: -%d%% taken[/color]\n" % [color, elem_name, int(resist * 100)])
-				elif weak > 0.0:
-					debug_log.append_text("[color=%s]%s: +%d%% taken[/color]\n" % [color, elem_name, int(weak * 100)])
+				debug_log.append_text("[color=%s]%s: -%d%% taken[/color]\n" % [color, elem_name, int(resist * 100)])
+				has_resist_or_weak = true
+			elif weak > 0.0:
+				var elem_name = ElementalDamage.get_element_name(element)
+				var color = ElementalDamage.get_element_color(element)
+				debug_log.append_text("[color=%s]%s: +%d%% taken[/color]\n" % [color, elem_name, int(weak * 100)])
+				has_resist_or_weak = true
+		if not has_resist_or_weak:
+			debug_log.append_text("[color=gray]None[/color]\n")
 		
 		debug_log.append_text("\n")
 	
-	# === ENEMY STATS ===
+	# === ENEMY STATS (Opponent Character) ===
 	debug_log.append_text("[b][color=red]ENEMY STATS[/color][/b]\n")
-	debug_log.append_text("ATK Power: %.1f | Spell Power: %.1f\n" % [enemy.get_attack_power(), enemy.spell_power])
+	debug_log.append_text("ATK Power: %.1f | Spell Power: %.1f\n" % [opponent_char.get_attack_power(), opponent_char.spell_power])
 	debug_log.append_text("Defense: %d | Armor Pen: %.1f%%\n" % [
-		enemy.get_defense(), enemy.armor_penetration * 100
+		opponent_char.get_defense(), opponent_char.armor_penetration * 100
 	])
-	debug_log.append_text("Toughness: %.1f | Spell Ward: %.1f\n" % [enemy.toughness, enemy.spell_ward])
+	debug_log.append_text("Toughness: %.1f | Spell Ward: %.1f\n" % [opponent_char.toughness, opponent_char.spell_ward])
 	debug_log.append_text("Accuracy: %.1f%% | Dodge: %.1f%% | Crit: %.1f%%\n\n" % [
-		enemy.accuracy * 100, enemy.dodge * 100, enemy.critical_hit_rate * 100
+		opponent_char.accuracy * 100, opponent_char.dodge * 100, opponent_char.critical_hit_rate * 100
 	])
 	
 	# === ENEMY ELEMENTAL AFFINITIES ===
-	if enemy.elemental_resistances:
+	if opponent_char.elemental_resistances:
 		debug_log.append_text("[b][color=yellow]ENEMY ELEMENTAL DAMAGE:[/color][/b]\n")
+		var has_damage_bonus = false
 		for element in ElementalDamage.Element.values():
 			if element == ElementalDamage.Element.NONE:
 				continue
-			var bonus = enemy.get_elemental_damage_bonus(element)
+			var bonus = opponent_char.get_elemental_damage_bonus(element)
 			if bonus > 0.0:
 				var elem_name = ElementalDamage.get_element_name(element)
 				var color = ElementalDamage.get_element_color(element)
 				debug_log.append_text("[color=%s]%s: +%d%%[/color]\n" % [color, elem_name, int(bonus * 100)])
+				has_damage_bonus = true
+		if not has_damage_bonus:
+			debug_log.append_text("[color=gray]None[/color]\n")
 		
 		debug_log.append_text("\n[b][color=orange]ENEMY WEAKNESSES:[/color][/b]\n")
 		var has_weakness = false
 		for element in ElementalDamage.Element.values():
 			if element == ElementalDamage.Element.NONE:
 				continue
-			var weak = enemy.get_elemental_weakness(element)
+			var weak = opponent_char.get_elemental_weakness(element)
 			
 			if weak > 0.0:
 				var elem_name = ElementalDamage.get_element_name(element)
@@ -538,7 +555,7 @@ func update_debug_display():
 		for element in ElementalDamage.Element.values():
 			if element == ElementalDamage.Element.NONE:
 				continue
-			var resist = enemy.get_elemental_resistance(element)
+			var resist = opponent_char.get_elemental_resistance(element)
 			
 			if resist > 0.0:
 				var elem_name = ElementalDamage.get_element_name(element)
@@ -548,15 +565,21 @@ func update_debug_display():
 		
 		if not has_resistance:
 			debug_log.append_text("[color=gray]None[/color]\n")
+	else:
+		debug_log.append_text("[color=gray]No elemental data available[/color]\n")
 	
 	debug_log.queue_redraw()
 
-func display_result(result: ActionResult):
+# ✅ FIXED: Accept optional action parameter for actor context
+func display_result(result: ActionResult, action: BattleAction = null):
 	var color = result.get_log_color()
 	
-	if result.actor and result.message.find("used") == -1:
+	# ✅ Get actor from action if provided, otherwise try to infer from message
+	var actor = action.actor if action else null
+	
+	if actor and result.message.find("used") == -1:
 		var prefix = ""
-		if result.actor == player:
+		if actor == player:
 			prefix = "[color=yellow]Player:[/color] "
 		else:
 			prefix = "[color=red]Enemy:[/color] "
@@ -564,7 +587,7 @@ func display_result(result: ActionResult):
 	else:
 		add_combat_log(result.message, color)
 	
-	update_character_info(player,enemy)
+	update_character_info(player, enemy)
 	update_xp_display()
 	update_debug_display()
 

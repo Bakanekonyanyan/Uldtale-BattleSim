@@ -10,11 +10,11 @@ signal match_ended(winner_id: int)
 signal action_received(peer_id: int, action: Dictionary)
 
 const DEFAULT_PORT := 7777
-const MAX_CLIENTS := 1  # 1v1 only
+const MAX_CLIENTS := 1
 
 var peer: ENetMultiplayerPeer
 var is_host := false
-var players := {}  # peer_id -> player_info
+var players := {}
 var local_player_id := 1
 var match_seed := 0
 
@@ -39,14 +39,12 @@ func create_server(port: int = DEFAULT_PORT) -> bool:
 	is_host = true
 	local_player_id = multiplayer.get_unique_id()
 	
-	# Host is player 1 - initialize as NOT ready
 	players[local_player_id] = {
 		"character": CharacterManager.get_current_character(),
 		"ready": false
 	}
 	
 	print("[ARENA NET] Server created on port %d (ID: %d)" % [port, local_player_id])
-	print("[ARENA NET] Host must call set_ready() when ready")
 	return true
 
 # === CLIENT ===
@@ -84,10 +82,7 @@ func _on_peer_connected(id: int):
 	print("[ARENA NET] Peer connected: %d" % id)
 	
 	if is_host:
-		# Generate match seed for deterministic gameplay
 		match_seed = RandomManager.new_game_seed()
-		
-		# Request client's character data
 		rpc_id(id, "_receive_match_setup", match_seed)
 
 func _on_peer_disconnected(id: int):
@@ -97,7 +92,6 @@ func _on_peer_disconnected(id: int):
 		players.erase(id)
 		emit_signal("player_disconnected", id)
 	
-	# End match if opponent leaves
 	if not is_host:
 		disconnect_from_match()
 
@@ -105,7 +99,6 @@ func _on_connected_to_server():
 	print("[ARENA NET] Connected to server successfully")
 	local_player_id = multiplayer.get_unique_id()
 	
-	# Register ourselves locally first
 	var character = CharacterManager.get_current_character()
 	players[local_player_id] = {
 		"character": character,
@@ -113,9 +106,7 @@ func _on_connected_to_server():
 	}
 	print("[ARENA NET] Registered self (ID: %d) locally" % local_player_id)
 	
-	# Send our character to host
 	rpc_id(1, "_register_player", local_player_id, _serialize_character(character))
-	
 	emit_signal("connection_success")
 
 func _on_connection_failed():
@@ -133,7 +124,6 @@ func _on_server_disconnected():
 func _register_player(peer_id: int, character_data: Dictionary):
 	print("[ARENA NET] Player registered: %d" % peer_id)
 	
-	# Deserialize character
 	var character = _deserialize_character(character_data)
 	
 	players[peer_id] = {
@@ -142,16 +132,13 @@ func _register_player(peer_id: int, character_data: Dictionary):
 	}
 	
 	print("[ARENA NET] Players dict now has %d players: %s" % [players.size(), players.keys()])
-	
 	emit_signal("player_connected", peer_id, players[peer_id])
 	
-	# If we're the host and client just registered, send our character back
 	if is_host and peer_id != local_player_id:
 		print("[ARENA NET] Sending host character to client %d" % peer_id)
 		var host_character = players[local_player_id].character
 		rpc_id(peer_id, "_receive_host_character", local_player_id, _serialize_character(host_character))
 	
-	# If we have 2 players, can start match
 	if players.size() == 2:
 		print("[ARENA NET] Both players connected, ready to start")
 
@@ -175,11 +162,6 @@ func _receive_match_setup(seed: int):
 	match_seed = seed
 	RandomManager.seed = seed
 	
-	# Register host (peer 1) in our local players dict
-	# We'll receive their full character data via _sync_opponent_character
-	print("[ARENA NET] Waiting for host character data...")
-	
-	# Send our character to host
 	var character = CharacterManager.get_current_character()
 	rpc_id(1, "_register_player", local_player_id, _serialize_character(character))
 
@@ -190,29 +172,21 @@ func _player_ready(peer_id: int):
 	if players.has(peer_id):
 		players[peer_id].ready = true
 		print("[ARENA NET] Player %d is now ready" % peer_id)
-	else:
-		print("[ARENA NET] WARNING: Player %d not found in players dict!" % peer_id)
 	
-	# Debug: Show all player ready states
-	for pid in players:
-		print("[ARENA NET] Player %d ready: %s" % [pid, players[pid].ready])
-	
-	# Check if both players ready
 	if _all_players_ready():
 		print("[ARENA NET] All players ready, starting match...")
 		_start_match()
-	else:
-		print("[ARENA NET] Waiting for more players... (%d/%d ready)" % [_count_ready_players(), players.size()])
 
 @rpc("any_peer", "call_local", "reliable")
 func _start_match_signal(is_host_flag: bool):
 	print("[ARENA NET] Match starting! (is_host: %s)" % is_host_flag)
 	emit_signal("match_started", is_host_flag)
 
-@rpc("any_peer", "unreliable")
+# ✅ CRITICAL FIX: Changed to reliable to prevent duplicate/lost actions
+@rpc("any_peer", "call_remote", "reliable")
 func _send_action(action_data: Dictionary):
 	var sender_id = multiplayer.get_remote_sender_id()
-	print("[ARENA NET] Action received from %d: %s" % [sender_id, action_data])
+	print("[ARENA NET] Action received from %d (timestamp: %d)" % [sender_id, action_data.get("timestamp", 0)])
 	emit_signal("action_received", sender_id, action_data)
 
 @rpc("any_peer", "call_local", "reliable")
@@ -223,29 +197,32 @@ func _end_match(winner_id: int):
 # === PUBLIC API ===
 
 func set_ready():
-	"""Call this when player is ready to start"""
 	if multiplayer.multiplayer_peer:
 		rpc("_player_ready", local_player_id)
 
 func send_action(action: Dictionary):
 	"""Send combat action to opponent"""
 	if multiplayer.multiplayer_peer:
+		print("[ARENA NET] Sending action to opponent (timestamp: %d)" % action.get("timestamp", 0))
 		rpc("_send_action", action)
 
+func send_battle_end(winner_id: int):
+	"""Send battle end notification to opponent"""
+	if multiplayer.multiplayer_peer:
+		print("[ARENA NET] Sending battle end, winner: %d" % winner_id)
+		rpc("_end_match", winner_id)
+
 func end_match(winner_id: int):
-	"""Call this to end the match"""
 	if multiplayer.multiplayer_peer:
 		rpc("_end_match", winner_id)
 
 func get_opponent_id() -> int:
-	"""Get the opponent's peer ID"""
 	for peer_id in players:
 		if peer_id != local_player_id:
 			return peer_id
 	return -1
 
 func get_opponent_character() -> CharacterData:
-	"""Get opponent's character"""
 	var opponent_id = get_opponent_id()
 	if opponent_id != -1 and players.has(opponent_id):
 		return players[opponent_id].character
@@ -255,26 +232,15 @@ func get_opponent_character() -> CharacterData:
 
 func _all_players_ready() -> bool:
 	if players.size() < 2:
-		print("[ARENA NET] Not enough players: %d/2" % players.size())
 		return false
 	
 	for pid in players:
 		if not players[pid].ready:
-			print("[ARENA NET] Player %d not ready yet" % pid)
 			return false
 	
-	print("[ARENA NET] All %d players are ready!" % players.size())
 	return true
 
-func _count_ready_players() -> int:
-	var count = 0
-	for player_info in players.values():
-		if player_info.ready:
-			count += 1
-	return count
-
 func _start_match():
-	"""Called when both players are ready"""
 	print("[ARENA NET] Starting match with seed %d" % match_seed)
 	RandomManager.seed = match_seed
 	rpc("_start_match_signal", is_host)
@@ -284,17 +250,14 @@ func _start_match():
 func _serialize_character(character: CharacterData) -> Dictionary:
 	"""Convert CharacterData to network-safe Dictionary"""
 	
-	# Serialize skills - handle both Skill objects and strings
 	var serialized_skills = []
 	for skill in character.skills:
 		if skill == null:
-			continue  # Skip null skills
+			continue
 		elif skill is String:
 			serialized_skills.append(skill)
 		elif skill is Skill:
 			serialized_skills.append(skill.name)
-		else:
-			print("[ARENA NET] Warning: Unknown skill type: %s" % typeof(skill))
 	
 	return {
 		"name": character.name,
@@ -319,15 +282,15 @@ func _serialize_character(character: CharacterData) -> Dictionary:
 		"max_mp": character.max_mp,
 		"max_sp": character.max_sp,
 		
-		# Skills (array of skill names)
+		# Skills
 		"skills": serialized_skills,
 		
-		# Equipment (simplified)
+		# ✅ FIXED: Complete equipment serialization
 		"equipment": _serialize_equipment(character.equipment)
 	}
 
 func _serialize_equipment(equipment: Dictionary) -> Dictionary:
-	"""Serialize equipment dictionary"""
+	"""✅ FIXED: Complete equipment serialization including stat modifiers"""
 	var result = {}
 	
 	for slot in equipment:
@@ -336,7 +299,6 @@ func _serialize_equipment(equipment: Dictionary) -> Dictionary:
 		if item == null:
 			continue
 		
-		# Handle Equipment objects
 		if item is Equipment:
 			result[slot] = {
 				"id": item.id,
@@ -347,18 +309,30 @@ func _serialize_equipment(equipment: Dictionary) -> Dictionary:
 				"damage": item.damage,
 				"armor_value": item.armor_value,
 				"rarity": item.rarity,
-				"item_level": item.item_level
+				"item_level": item.item_level,
+				
+				# ✅ NEW: Serialize stat modifiers
+				"stat_modifiers": item.stat_modifiers,
+				"status_effect_type": item.status_effect_type,
+				"status_effect_chance": item.status_effect_chance,
+				"bonus_damage": item.bonus_damage,
+				
+				# ✅ NEW: Serialize naming
+				"item_prefix": item.item_prefix,
+				"item_suffix": item.item_suffix,
+				"flavor_text": item.flavor_text,
+				
+				# ✅ NEW: Mark as already generated
+				"rarity_applied": item.rarity_applied,
+				"base_item_level": item.base_item_level
 			}
-		# Handle pre-serialized data
 		elif item is Dictionary:
 			result[slot] = item
-		else:
-			print("[ARENA NET] Warning: Unknown equipment type in slot %s: %s" % [slot, typeof(item)])
 	
 	return result
 
 func _deserialize_character(data: Dictionary) -> CharacterData:
-	"""Reconstruct CharacterData from Dictionary"""
+	"""✅ FIXED: Reconstruct CharacterData with equipment"""
 	var character = CharacterData.new()
 	
 	character.name = data.name
@@ -393,7 +367,7 @@ func _deserialize_character(data: Dictionary) -> CharacterData:
 	character.proficiency_manager = ProficiencyManager.new(character)
 	character.elemental_resistances = ElementalResistanceManager.new(character)
 	
-	# Skills - filter out empty/null strings
+	# Skills
 	if data.has("skills"):
 		var valid_skills = []
 		for skill_name in data.skills:
@@ -403,7 +377,37 @@ func _deserialize_character(data: Dictionary) -> CharacterData:
 		if not valid_skills.is_empty():
 			character.skill_manager.add_skills(valid_skills)
 	
-	# Recalculate derived stats
+	# ✅ CRITICAL FIX: Deserialize equipment
+	if data.has("equipment"):
+		_deserialize_equipment(character, data.equipment)
+	
+	# Recalculate with equipment bonuses
 	character.calculate_secondary_attributes()
 	
+	print("[ARENA NET] Deserialized character: %s (Level %d)" % [character.name, character.level])
+	print("  - HP: %d/%d" % [character.current_hp, character.max_hp])
+	print("  - Equipment slots: %s" % [character.equipment.keys()])
+	
 	return character
+
+func _deserialize_equipment(character: CharacterData, equipment_data: Dictionary):
+	"""✅ NEW: Deserialize equipment and apply to character"""
+	
+	for slot in equipment_data:
+		var item_data = equipment_data[slot]
+		
+		if item_data is Dictionary and not item_data.is_empty():
+			# Reconstruct Equipment object
+			var equipment = Equipment.new(item_data)
+			
+			# Apply to character WITHOUT triggering inventory removal
+			character.equipment[slot] = equipment
+			equipment.apply_effects(character)
+			
+			if equipment.has_method("apply_stat_modifiers"):
+				equipment.apply_stat_modifiers(character)
+			
+			print("[ARENA NET] Deserialized %s: %s (dmg=%d, armor=%d, mods=%d)" % [
+				slot, equipment.name, equipment.damage, equipment.armor_value, 
+				equipment.stat_modifiers.size()
+			])

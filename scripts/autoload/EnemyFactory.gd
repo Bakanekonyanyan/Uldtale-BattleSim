@@ -40,7 +40,7 @@ func set_dungeon_race(floor: int):
 
 func create_enemy(level: int = 1, floor: int = 1, wave: int = 1, momentum_level: int = 0) -> CharacterData:
 	var enemy = CharacterData.new()
-	
+	level = floor
 	# ✅ FIX: Ensure dungeon race is set
 	if current_dungeon_race == "" or current_dungeon_race == null:
 		print("WARNING: Dungeon race not set, setting now for floor %d" % floor)
@@ -82,7 +82,7 @@ func create_enemy(level: int = 1, floor: int = 1, wave: int = 1, momentum_level:
 		enemy.elemental_resistances = ElementalResistanceManager.new(enemy)
 	enemy.initialize_racial_elementals(true)
 
-	enemy.level = level
+	enemy.level = level + 1
 	for _i in range(level - 1):
 		enemy.level_up()
 	
@@ -167,12 +167,12 @@ func create_boss(floor: int = 1, wave: int = 1, momentum_level: int = 0) -> Char
 	return boss
 
 func apply_enemy_scaling(enemy: CharacterData, floor: int, wave: int, is_boss: bool = false, momentum_level: int = 0):
-	var floor_bonus = floor - 1
-	var wave_multiplier = 1.0 + (0.10 * wave)
+	var floor_bonus = floor + (0.25 * floor)
+	var wave_multiplier = 1.0 + (0.25 * wave)
 	
 	var momentum_multiplier = 1.0
 	if momentum_level > 0:
-		momentum_multiplier = 1.0 + (momentum_level * 0.05)
+		momentum_multiplier = 1.0 + (momentum_level * 0.10)
 	
 	var total_multiplier = wave_multiplier * momentum_multiplier
 	
@@ -248,15 +248,15 @@ func setup_character(character: CharacterData, character_class: String, class_ty
 func get_available_equipment_slots(floor: int, is_boss: bool) -> Array:
 	var slots = ["main_hand"]
 	
-	if floor >= 2:
+	if floor >= 1:
 		slots.append("chest")
-	if floor >= 3:
+	if floor >= 2:
 		slots.append("head")
-	if floor >= 4:
+	if floor >= 3:
 		slots.append("legs")
-	if floor >= 5:
+	if floor >= 4:
 		slots.append("hands")
-	if floor >= 6:
+	if floor >= 5:
 		slots.append("feet")
 	
 	if is_boss and slots.size() < 6:
@@ -270,7 +270,7 @@ func get_available_equipment_slots(floor: int, is_boss: bool) -> Array:
 
 func give_enemy_equipment(enemy: CharacterData, floor: int, is_boss: bool = false):
 	var available_slots = get_available_equipment_slots(floor, is_boss)
-	var equipment_chance = 0.7 if not is_boss else 1.0
+	var equipment_chance = 0.8 if not is_boss else 1.0
 	
 	if not enemy.has_meta("equipped_items"):
 		enemy.set_meta("equipped_items", [])
@@ -316,9 +316,9 @@ func get_rarity_tier(rarity: String) -> int:
 		_: return 0
 
 func give_enemy_items(enemy: CharacterData, floor: int, is_boss: bool = false, momentum_level: int = 0):
-	var base_item_chance = 0.3 + (floor * 0.05)
+	var base_item_chance = 0.5 + (floor * 0.1)
 	var momentum_bonus = momentum_level * 0.1
-	var boss_multiplier = 2.0 if is_boss else 1.0
+	var boss_multiplier = 3.0 if is_boss else 1.5
 	var total_chance = (base_item_chance + momentum_bonus) * boss_multiplier
 	
 	var item_count = 0

@@ -57,6 +57,7 @@ func _ready():
 	# Connect UI signals
 	setup_ui_signals()
 	_connect_signals_to_scene_manager()
+	update_button_visibility()
 
 func setup_ui_signals():
 	"""Connect all UI signals"""

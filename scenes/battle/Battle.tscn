@@ -112,6 +112,7 @@ offset_right = 1168.0
 offset_bottom = 632.0
 
 [node name="DebugLog" type="RichTextLabel" parent="BattleUIController/DebugWindow"]
+layout_mode = 0
 offset_right = 400.0
 offset_bottom = 248.0
 bbcode_enabled = true

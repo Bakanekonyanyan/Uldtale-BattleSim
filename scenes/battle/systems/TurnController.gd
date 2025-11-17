@@ -17,6 +17,8 @@ var enemy: CharacterData
 var turn_queue: Array[CharacterData] = []
 var current_phase: TurnPhase = TurnPhase.STATUS_EFFECTS
 var turn_number: int = 0
+var is_pvp_mode: bool = false
+
 
 func initialize(p_player: CharacterData, p_enemy: CharacterData):
 	"""Initialize turn order based on agility"""
@@ -69,22 +71,26 @@ func advance_phase():
 	
 	emit_signal("phase_changed", current_phase)
 
+# Replace the end_current_turn() function starting at line 80:
 func end_current_turn():
-	"""End current turn and start next"""
-	var current = turn_queue[0]
-	current.reset_defense()
+	"""End the current turn and start next"""
+	if current_phase != TurnPhase.ACTION:
+		push_warning("TurnController: Trying to end turn in wrong phase")
+		return
 	
-	# Reset armor tracking flag
-	if current.has_meta("armor_tracked_this_turn"):
-		current.remove_meta("armor_tracked_this_turn")
+	var current_actor = get_current_actor()
+	print("TurnController: Ending turn - %s" % current_actor.name)
 	
-	emit_signal("turn_ended", current)
+	emit_signal("turn_ended", current_actor)
 	
-	# Rotate queue
+	# ✅ REMOVE PvP check - always advance
+	# Rotate turn queue and start next turn
 	turn_queue.push_back(turn_queue.pop_front())
-	
-	# Start next turn
 	_start_turn(turn_queue[0])
+
+# Add this method at the end of the file (around line 150)
+func set_pvp_mode(enabled: bool):
+	is_pvp_mode = enabled
 
 func skip_turn(character: CharacterData, reason: String):
 	"""Skip character's turn (stunned, etc)"""

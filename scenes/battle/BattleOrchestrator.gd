@@ -11,8 +11,8 @@ var turn_controller: TurnController
 var enemy_ai: EnemyAI
 var ui_controller: BattleUIController
 var network_sync: BattleNetworkSync
-var is_pvp_mode := false  # Set to true for arena battles
-
+var is_pvp_mode := false
+var battle_started := false  # ✅ NEW: Guard against double initialization
 
 # Battle context
 var player: CharacterData
@@ -40,6 +40,11 @@ func _ready():
 	print("BattleOrchestrator: Ready")
 
 func start_battle():
+	# ✅ CRITICAL: Prevent double initialization
+	if battle_started:
+		print("BattleOrchestrator: Battle already started, ignoring duplicate call")
+		return
+	
 	if not _validate_setup():
 		return
 	
@@ -54,6 +59,21 @@ func start_battle():
 	turn_controller = TurnController.new()
 	add_child(turn_controller)
 	turn_controller.initialize(player, enemy)
+	
+	if is_pvp_mode:
+		turn_controller.set_pvp_mode(true)
+	
+	var player_agility = player.agility
+	var enemy_agility = enemy.agility
+	
+	if player_agility > enemy_agility:
+		ui_controller.add_combat_log("%s wins initiative! (Agility: %.1f vs %.1f)" % [player.name, player_agility, enemy_agility], "cyan")
+		ui_controller.add_combat_log("%s goes first!" % player.name, "cyan")
+	elif enemy_agility > player_agility:
+		ui_controller.add_combat_log("%s wins initiative! (Agility: %.1f vs %.1f)" % [enemy.name, enemy_agility, player_agility], "red")
+		ui_controller.add_combat_log("%s goes first!" % enemy.name, "red")
+	else:
+		ui_controller.add_combat_log("Initiative tied! (Agility: %.1f) - Random turn order" % player_agility, "yellow")
 	
 	# ✅ NEW: Initialize network sync if PvP
 	if is_pvp_mode:
@@ -74,12 +94,10 @@ func start_battle():
 	else:
 		print("BattleOrchestrator: PvP mode - no AI")
 	
-	# ✅ CRITICAL: Connect signals
 	turn_controller.turn_started.connect(_on_turn_started)
 	turn_controller.turn_ended.connect(_on_turn_ended)
 	turn_controller.turn_skipped.connect(_on_turn_skipped)
 	
-	# ✅ CRITICAL: Initialize UI
 	if ui_controller:
 		ui_controller.initialize(player, enemy)
 		ui_controller.action_selected.connect(_on_action_selected)
@@ -88,7 +106,6 @@ func start_battle():
 		ui_controller.update_xp_display()
 		ui_controller.update_debug_display()
 		
-		# ✅ NEW: Hide wave/floor in PvP mode
 		if is_pvp_mode:
 			ui_controller.hide_dungeon_info()
 		else:
@@ -99,17 +116,16 @@ func start_battle():
 		push_error("BattleOrchestrator: ui_controller is null!")
 		return
 	
-	# ✅ CRITICAL: Initialize resources
 	_initialize_resources()
-	
-	# ✅ CRITICAL: Wait for UI ready
 	await _wait_for_ui_ready()
 	
-	# ✅ CRITICAL: Setup initial UI state
 	ui_controller.setup_player_actions(false, false)
 	ui_controller.disable_actions()
 	
-	# ✅ CRITICAL: Start first turn
+	# ✅ CRITICAL: Mark as started ONLY after everything is initialized
+	battle_started = true
+	print("BattleOrchestrator: Battle successfully started, flag set")
+	
 	turn_controller.start_first_turn()
 
 func _wait_for_ui_ready():
@@ -144,20 +160,13 @@ func _initialize_resources():
 func _on_turn_started(character: CharacterData, is_player: bool):
 	print("BattleOrchestrator: Turn started - %s" % character.name)
 	
-	# Update UI
 	if ui_controller:
 		ui_controller.update_character_info(player, enemy)
 		ui_controller.update_turn_display("%s's turn" % character.name)
 	
-	# ✅ NEW: Notify network sync
 	if is_pvp_mode and network_sync:
 		network_sync.on_turn_started(character, is_player)
-		
-		# In PvP, if it's not my turn, just wait
-		if not network_sync.is_my_turn:
-			return  # Network sync handles opponent turns
 	
-	# Reset action flags for player
 	if is_player:
 		item_action_used = false
 		main_action_taken = false
@@ -175,12 +184,30 @@ func _on_turn_started(character: CharacterData, is_player: bool):
 						ui_controller.add_combat_log(prof_msg, "cyan")
 						print("[PROFICIENCY LEVEL UP!] %s" % prof_msg)
 	
-	# Process status effects
-	var status_message = combat_engine.process_status_effects(character)
-	if status_message:
-		ui_controller.add_combat_log(status_message, "purple")
-		ui_controller.update_character_info(player, enemy)
-		await get_tree().create_timer(1.0).timeout
+	# ✅ CRITICAL FIX: In PvP, only process status effects for MY character
+	# Opponent's status effects are handled by them and synced via network
+	var should_process_status = true
+	if is_pvp_mode and network_sync:
+		# Only process if this is my character
+		should_process_status = (character.get_instance_id() == network_sync.my_character.get_instance_id())
+		print("[BATTLE ORCH] PvP status check: character=%s, my_char=%s, process=%s" % [
+			character.get_instance_id(), network_sync.my_character.get_instance_id(), should_process_status
+		])
+	
+	if should_process_status:
+		var status_result = combat_engine.process_status_effects(character)
+		if status_result and status_result.message != "":
+			ui_controller.add_combat_log(status_result.message, "purple")
+			ui_controller.update_character_info(player, enemy)
+			
+			# ✅ NEW: In PvP, send status damage to opponent
+			if is_pvp_mode and network_sync:
+				print("[BATTLE ORCH] Syncing status effect result to opponent")
+				network_sync.send_status_damage(character, status_result)
+			
+			await get_tree().create_timer(1.0).timeout
+	else:
+		print("[BATTLE ORCH] Skipping local status processing - waiting for opponent's data")
 	
 	# Check if character died from status
 	if not combat_engine.is_alive(character):
@@ -196,10 +223,11 @@ func _on_turn_started(character: CharacterData, is_player: bool):
 		await get_tree().create_timer(1.0).timeout
 		return
 	
-	# Advance to action phase
 	turn_controller.advance_phase()
 	
-	# ✅ CRITICAL: Setup turn based on who it is
+	if is_pvp_mode and network_sync and not network_sync.is_my_turn:
+		return
+	
 	if is_player:
 		_setup_player_turn()
 	else:
@@ -216,8 +244,6 @@ func _on_turn_skipped(character: CharacterData, reason: String):
 
 func _setup_player_turn():
 	print("BattleOrchestrator: Player's turn")
-	
-	# ✅ FIX: Pass both flags to UI
 	ui_controller.setup_player_actions(item_action_used, main_action_taken)
 	ui_controller.unlock_ui()
 	ui_controller.enable_actions()
@@ -225,11 +251,7 @@ func _setup_player_turn():
 func _on_action_selected(action: BattleAction):
 	print("BattleOrchestrator: Action selected - %s" % action.get_description())
 	
-	# ✅ NEW: Send to network in PvP
-	if is_pvp_mode and network_sync:
-		network_sync.on_action_selected(action)
-	
-	# ✅ MODIFIED: Handle item as bonus action
+	# ✅ CRITICAL: Handle item as bonus action - sync to network but don't end turn
 	if action.type == BattleAction.ActionType.ITEM:
 		if item_action_used:
 			ui_controller.add_combat_log("You've already used an item this turn!", "red")
@@ -241,30 +263,88 @@ func _on_action_selected(action: BattleAction):
 	
 	# ✅ FIX: All other actions are "main actions"
 	if main_action_taken:
-		ui_controller.add_combat_log("You've already taken your main action!", "red")
+		ui_controller.add_combat_log("You've already taken your action!", "red")
 		ui_controller.unlock_ui()
 		ui_controller.enable_actions()
 		return
 	
-	# Execute main action (ends turn)
+	ui_controller.disable_actions()
 	_execute_action(action, true)
+
+func _execute_action(action: BattleAction, is_player: bool):
+	print("BattleOrchestrator: Executing MAIN action - %s" % action.get_description())
+	
+	# ✅ CRITICAL: Execute FIRST, then send result to network
+	var result = combat_engine.execute_action(action)
+	
+	# ✅ CRITICAL FIX: Ensure result is valid before sending
+	if not result:
+		push_error("[BATTLE ORCH] Combat engine returned null result!")
+		return
+	
+	# ✅ NEW: Debug log the result before sending
+	print("[BATTLE ORCH] Action result: damage=%d, healing=%d, sp=%d, mp=%d" % [
+		result.damage if "damage" in result else 0,
+		result.healing if "healing" in result else 0, 
+		result.sp_cost if "sp_cost" in result else 0,
+		result.mp_cost if "mp_cost" in result else 0
+	])
+	
+	# ✅ CRITICAL: Send action AND RESULT to network in PvP (AFTER execution)
+	if is_pvp_mode and network_sync and is_player:
+		print("[BATTLE ORCH] Sending action to network sync...")
+		network_sync.on_action_selected(action, result)
+		print("[BATTLE ORCH] Main action + result synced to network")
+	
+	# ✅ FIXED: Pass action to display_result so it has actor context
+	ui_controller.display_result(result, action)
+	
+	if result.has_level_up():
+		ui_controller.add_combat_log(result.level_up_message, "cyan")
+	
+	if is_player:
+		main_action_taken = true
+		print("BattleOrchestrator: Main action taken - turn ending")
+	
+	await get_tree().create_timer(1.5).timeout
+	
+	if _check_battle_end():
+		return
+	
+	# End turn - this advances to next player
+	turn_controller.end_current_turn()
 
 func _execute_item_action(action: BattleAction):
 	print("BattleOrchestrator: Executing item as bonus action")
 	
 	var result = combat_engine.execute_action(action)
-	ui_controller.display_result(result)
+	
+	# ✅ NEW: Debug log the result
+	if result:
+		print("[BATTLE ORCH] Item result: damage=%d, healing=%d" % [
+			result.damage if "damage" in result else 0,
+			result.healing if "healing" in result else 0
+		])
+	
+	# ✅ FIXED: Pass action to display_result so it has actor context
+	ui_controller.display_result(result, action)
+	
+	# ✅ CRITICAL: Send item AND RESULT to network AFTER execution
+	if is_pvp_mode and network_sync:
+		print("[BATTLE ORCH] Sending item action to network...")
+		network_sync.on_action_selected(action, result)
+		print("BattleOrchestrator: Item action + result synced to network")
 	
 	await get_tree().create_timer(0.5).timeout
 	
-	# ✅ FIX: Mark item used but NOT main action
+	# Mark item used but NOT main action
 	item_action_used = true
 	print("BattleOrchestrator: Item used - player can still take main action")
 	
 	if _check_battle_end():
 		return
 	
-	# ✅ FIX: Refresh UI with both flags
+	# Refresh UI with both flags - turn continues
 	ui_controller.setup_player_actions(item_action_used, main_action_taken)
 	ui_controller.unlock_ui()
 	ui_controller.enable_actions()
@@ -294,30 +374,6 @@ func _execute_enemy_turn():
 	var action = enemy_ai.decide_action()
 	_execute_action(action, false)
 
-# === ACTION EXECUTION ===
-
-func _execute_action(action: BattleAction, is_player: bool):
-	print("BattleOrchestrator: Executing action - %s" % action.get_description())
-	
-	var result = combat_engine.execute_action(action)
-	
-	ui_controller.display_result(result)
-	
-	if result.has_level_up():
-		ui_controller.add_combat_log(result.level_up_message, "cyan")
-	
-	# ✅ FIX: Mark main action taken if player
-	if is_player:
-		main_action_taken = true
-		print("BattleOrchestrator: Main action taken - turn ending")
-	
-	await get_tree().create_timer(1.5).timeout
-	
-	if _check_battle_end():
-		return
-	
-	turn_controller.end_current_turn()
-
 # === BATTLE END ===
 
 func _handle_death(character: CharacterData):
@@ -342,24 +398,10 @@ func _handle_victory():
 	print("BattleOrchestrator: Player victory!")
 	ui_controller.disable_actions()
 	
-	# ✅ NEW: Notify network in PvP
+	# ✅ FIX: In PvP, notify opponent first, then wait for sync
 	if is_pvp_mode and network_sync:
 		network_sync.on_battle_end(true)
-		
-		# Show victory message
-		await get_tree().create_timer(1.0).timeout
-		
-		var dialog = AcceptDialog.new()
-		dialog.dialog_text = "Victory!"
-		dialog.ok_button_text = "Return to Town"
-		add_child(dialog)
-		dialog.popup_centered()
-		
-		await dialog.confirmed
-		dialog.queue_free()
-		
-		# Return to town
-		SceneManager.change_scene("res://scenes/TownScene.tscn")
+		# Network sync will handle the rest (dialog, save, return to town)
 		return
 	
 	# PvE: Normal flow with XP
@@ -371,24 +413,10 @@ func _handle_defeat():
 	print("BattleOrchestrator: Player defeated!")
 	ui_controller.disable_actions()
 	
-	# ✅ NEW: Notify network in PvP
+	# ✅ FIX: In PvP, notify opponent first, then wait for sync
 	if is_pvp_mode and network_sync:
 		network_sync.on_battle_end(false)
-		
-		# Show defeat message
-		await get_tree().create_timer(1.0).timeout
-		
-		var dialog = AcceptDialog.new()
-		dialog.dialog_text = "Defeat..."
-		dialog.ok_button_text = "Return to Town"
-		add_child(dialog)
-		dialog.popup_centered()
-		
-		await dialog.confirmed
-		dialog.queue_free()
-		
-		# Return to town
-		SceneManager.change_scene("res://scenes/TownScene.tscn")
+		# Network sync will handle the rest (dialog, save, return to town)
 		return
 	
 	# PvE: Normal flow
@@ -558,8 +586,12 @@ func debug_proficiency_status():
 func setup_pvp_battle(local_player: CharacterData, remote_opponent: CharacterData):
 	"""Setup battle in PvP mode"""
 	print("BattleOrchestrator: setup_pvp_battle called")
-	print("  - Local player: %s (Level %d)" % [local_player.name, local_player.level])
-	print("  - Remote opponent: %s (Level %d)" % [remote_opponent.name, remote_opponent.level])
+	print("  - Local player: %s (Level %d, HP: %d/%d)" % [
+		local_player.name, local_player.level, local_player.current_hp, local_player.max_hp
+	])
+	print("  - Remote opponent: %s (Level %d, HP: %d/%d)" % [
+		remote_opponent.name, remote_opponent.level, remote_opponent.current_hp, remote_opponent.max_hp
+	])
 	
 	is_pvp_mode = true
 	player = local_player
@@ -569,13 +601,99 @@ func setup_pvp_battle(local_player: CharacterData, remote_opponent: CharacterDat
 	player.reset_for_new_battle()
 	enemy.reset_for_new_battle()
 	
+	if not enemy.elemental_resistances:
+		enemy.elemental_resistances = ElementalResistanceManager.new(enemy)
+	
+	enemy.calculate_secondary_attributes()
+	
 	# Set dummy dungeon info
 	current_wave = 1
 	current_floor = 1
 	dungeon_description = "Arena PvP Battle"
 	is_boss_battle = false
 	
-	print("BattleOrchestrator: PvP battle configured, calling start_battle()...")
+	print("BattleOrchestrator: PvP battle configured")
+	print("  - Player instance ID: %s" % player.get_instance_id())
+	print("  - Enemy instance ID: %s" % enemy.get_instance_id())
 	
-	# ✅ CRITICAL FIX: Call start_battle() deferred to let scene initialize
 	call_deferred("start_battle")
+
+func debug_character_references():
+	"""Debug to verify all character references point to same objects"""
+	print("\n=== CHARACTER REFERENCE DEBUG ===")
+	
+	if not is_pvp_mode:
+		print("Not in PvP mode")
+		return
+	
+	var local_char = CharacterManager.get_current_character()
+	var network_opponent_id = network_sync.network.get_opponent_id()
+	var network_opponent = network_sync.network.players.get(network_opponent_id, {}).get("character", null)
+	
+	print("orchestrator.player: %s (%s)" % [player.name, player.get_instance_id()])
+	print("orchestrator.enemy: %s (%s)" % [enemy.name, enemy.get_instance_id()])
+	print("CharacterManager.current: %s (%s)" % [local_char.name, local_char.get_instance_id()])
+	
+	if network_opponent:
+		print("Network opponent: %s (%s)" % [network_opponent.name, network_opponent.get_instance_id()])
+	
+	print("\nPlayer HP: %d/%d" % [player.current_hp, player.max_hp])
+	print("Enemy HP: %d/%d" % [enemy.current_hp, enemy.max_hp])
+	
+	if player == local_char:
+		print("✅ player == CharacterManager.current")
+	else:
+		print("❌ player != CharacterManager.current - THIS IS THE BUG!")
+	
+	if network_opponent and enemy.get_instance_id() == network_opponent.get_instance_id():
+		print("✅ enemy == network opponent")
+	else:
+		print("❌ enemy != network opponent - THIS IS THE BUG!")
+	
+	print("=================================\n")
+
+func debug_stat_comparison():
+	"""Debug function to compare local vs opponent stats"""
+	print("\n=== STAT COMPARISON DEBUG ===")
+	
+	print("\nLOCAL PLAYER (%s):" % player.name)
+	print("  Base Stats:")
+	print("    STR: %d, DEX: %d, INT: %d" % [player.strength, player.dexterity, player.intelligence])
+	print("    VIT: %d, AGI: %d" % [player.vitality, player.agility])
+	
+	print("  Equipment:")
+	for slot in player.equipment:
+		var item = player.equipment[slot]
+		if item:
+			print("    [%s] %s (dmg=%d, armor=%d, mods=%d)" % [
+				slot, item.name, item.damage, item.armor_value, item.stat_modifiers.size()
+			])
+			for stat in item.stat_modifiers:
+				print("      +%d %s" % [item.stat_modifiers[stat], Skill.AttributeTarget.keys()[stat]])
+	
+	print("  Calculated:")
+	print("    Attack Power: %d" % player.get_attack_power())
+	print("    Defense: %d" % player.get_defense())
+	print("    Max HP: %d" % player.max_hp)
+	
+	print("\nOPPONENT (%s):" % enemy.name)
+	print("  Base Stats:")
+	print("    STR: %d, DEX: %d, INT: %d" % [enemy.strength, enemy.dexterity, enemy.intelligence])
+	print("    VIT: %d, AGI: %d" % [enemy.vitality, enemy.agility])
+	
+	print("  Equipment:")
+	for slot in enemy.equipment:
+		var item = enemy.equipment[slot]
+		if item:
+			print("    [%s] %s (dmg=%d, armor=%d, mods=%d)" % [
+				slot, item.name, item.damage, item.armor_value, item.stat_modifiers.size()
+			])
+			for stat in item.stat_modifiers:
+				print("      +%d %s" % [item.stat_modifiers[stat], Skill.AttributeTarget.keys()[stat]])
+	
+	print("  Calculated:")
+	print("    Attack Power: %d" % enemy.get_attack_power())
+	print("    Defense: %d" % enemy.get_defense())
+	print("    Max HP: %d" % enemy.max_hp)
+	
+	print("=================================\n")

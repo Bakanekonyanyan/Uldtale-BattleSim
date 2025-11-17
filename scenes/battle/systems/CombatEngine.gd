@@ -200,10 +200,36 @@ func _execute_item(action: BattleAction) -> ActionResult:
 
 # === STATUS EFFECTS ===
 
-func process_status_effects(character: CharacterData) -> String:
-	"""Process status effects at start of turn"""
+func process_status_effects(character: CharacterData) -> ActionResult:
+	"""Process status effects at start of turn - returns ActionResult with accurate damage/healing"""
+	
+	# Reduce cooldowns first
 	character.reduce_cooldowns()
-	return character.update_status_effects()
+	
+	# Store HP before status effects
+	var hp_before = character.current_hp
+	
+	# Apply status effects and get message
+	var message = character.update_status_effects()
+	
+	# Calculate actual damage/healing by comparing HP
+	var hp_after = character.current_hp
+	var hp_change = hp_after - hp_before
+	
+	var damage = 0
+	var healing = 0
+	
+	if hp_change < 0:
+		damage = abs(hp_change)
+	elif hp_change > 0:
+		healing = hp_change
+	
+	print("[COMBAT ENGINE] Status effects - HP: %d -> %d (dmg: %d, heal: %d)" % [
+		hp_before, hp_after, damage, healing
+	])
+	
+	# Create ActionResult with accurate values
+	return ActionResult.status_effect_result(character, damage, healing, message)
 
 # === BATTLE STATE ===
 
