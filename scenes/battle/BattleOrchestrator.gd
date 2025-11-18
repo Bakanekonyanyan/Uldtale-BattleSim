@@ -12,7 +12,7 @@ var enemy_ai: EnemyAI
 var ui_controller: BattleUIController
 var network_sync: BattleNetworkSync
 var is_pvp_mode := false
-var battle_started := false  # ✅ NEW: Guard against double initialization
+var battle_started := false
 
 # Battle context
 var player: CharacterData
@@ -40,12 +40,15 @@ func _ready():
 	print("BattleOrchestrator: Ready")
 
 func start_battle():
-	# ✅ CRITICAL: Prevent double initialization
+	# ✅ CRITICAL FIX: Set flag IMMEDIATELY to prevent race condition
 	if battle_started:
 		print("BattleOrchestrator: Battle already started, ignoring duplicate call")
 		return
+	battle_started = true
+	print("BattleOrchestrator: Battle start flag set - preventing duplicates")
 	
 	if not _validate_setup():
+		battle_started = false  # Reset if validation fails
 		return
 	
 	print("BattleOrchestrator: Starting battle - %s vs %s (PvP: %s)" % [
@@ -114,6 +117,7 @@ func start_battle():
 		print("BattleOrchestrator: UI initialized and updated")
 	else:
 		push_error("BattleOrchestrator: ui_controller is null!")
+		battle_started = false  # Reset if UI init fails
 		return
 	
 	_initialize_resources()
@@ -122,9 +126,7 @@ func start_battle():
 	ui_controller.setup_player_actions(false, false)
 	ui_controller.disable_actions()
 	
-	# ✅ CRITICAL: Mark as started ONLY after everything is initialized
-	battle_started = true
-	print("BattleOrchestrator: Battle successfully started, flag set")
+	print("BattleOrchestrator: Battle successfully initialized")
 	
 	turn_controller.start_first_turn()
 

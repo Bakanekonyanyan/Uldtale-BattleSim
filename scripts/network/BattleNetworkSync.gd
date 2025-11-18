@@ -16,7 +16,7 @@ var awaiting_turn_sync: bool = false
 var last_status_damage_timestamp: int = 0
 var last_item_timestamp: int = 0
 var last_action_timestamp: int = 0
-var last_turn_end_timestamp: int = 0  # ✅ NEW: Prevent ending turn twice
+var last_turn_end_timestamp: int = 0
 
 # ✅ NEW: Store which character belongs to which peer
 var local_player_id: int = 0
@@ -91,19 +91,24 @@ func _on_network_action_received(peer_id: int, action_data: Dictionary):
 	var is_status_damage = (action_type == -2)
 	var timestamp = action_data.get("timestamp", 0)
 	
-	# ✅ CRITICAL: Per-type duplicate detection
+	# ✅ CRITICAL FIX: Unified duplicate detection - check ALL timestamps
 	if timestamp > 0:
+		var is_duplicate = false
+		
 		if is_status_damage and timestamp == last_status_damage_timestamp:
-			print("[BATTLE SYNC] DUPLICATE status damage - Ignoring (timestamp: %d)" % timestamp)
-			return
+			is_duplicate = true
+			print("[BATTLE SYNC] ❌ DUPLICATE status damage detected - Ignoring (timestamp: %d)" % timestamp)
 		elif is_item and timestamp == last_item_timestamp:
-			print("[BATTLE SYNC] DUPLICATE item - Ignoring (timestamp: %d)" % timestamp)
-			return
+			is_duplicate = true
+			print("[BATTLE SYNC] ❌ DUPLICATE item detected - Ignoring (timestamp: %d)" % timestamp)
 		elif not is_item and not is_status_damage and timestamp == last_action_timestamp:
-			print("[BATTLE SYNC] DUPLICATE action - Ignoring (timestamp: %d)" % timestamp)
+			is_duplicate = true
+			print("[BATTLE SYNC] ❌ DUPLICATE action detected - Ignoring (timestamp: %d)" % timestamp)
+		
+		if is_duplicate:
 			return
 		
-		# Mark as processed
+		# Update timestamps AFTER duplicate check passes
 		if is_status_damage:
 			last_status_damage_timestamp = timestamp
 		elif is_item:
@@ -201,7 +206,7 @@ func _apply_opponent_action_result(data: Dictionary):
 	var mp_gain = data.get("mp_gain", 0)
 	var message = data.get("message", "")
 	var status_effects = data.get("status_effects", [])
-	var status_effects_removed = data.get("status_effects_removed", [])  # ✅ NEW
+	var status_effects_removed = data.get("status_effects_removed", [])
 	var buffs_debuffs = data.get("buffs_debuffs", [])
 	
 	# Apply costs to actor
@@ -336,16 +341,16 @@ func _apply_opponent_action_result(data: Dictionary):
 	if battle_result != "ongoing":
 		return
 	
-	# Only end turn for main actions, not items
+	# ✅ CRITICAL FIX: Only end turn for MAIN ACTIONS, not items
+	# AND only if we haven't already ended this turn
 	if not is_item:
-		# ✅ CRITICAL: Prevent ending turn twice for same action
 		var timestamp = data.get("timestamp", 0)
 		if timestamp > 0 and timestamp == last_turn_end_timestamp:
-			print("[BATTLE SYNC] Turn already ended for timestamp %d - skipping" % timestamp)
+			print("[BATTLE SYNC] ❌ Turn already ended for timestamp %d - skipping duplicate" % timestamp)
 			return
 		last_turn_end_timestamp = timestamp
 		
-		print("[BATTLE SYNC] Opponent main action complete - ending their turn")
+		print("[BATTLE SYNC] ✅ Opponent main action complete - ending their turn")
 		orchestrator.turn_controller.end_current_turn()
 	else:
 		print("[BATTLE SYNC] Opponent item complete - NO turn change")
@@ -458,7 +463,7 @@ func _serialize_action_result(action: BattleAction, result) -> Dictionary:
 		"target_is_opponent": false,
 		"is_drain": false,
 		"status_effects": [],
-		"status_effects_removed": [],  # ✅ NEW: Track removed effects
+		"status_effects_removed": [],
 		"buffs_debuffs": []
 	}
 	

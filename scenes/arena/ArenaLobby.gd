@@ -28,6 +28,7 @@ extends Control
 @onready var cancel_waiting_button = $UI/WaitingPanel/CancelButton
 
 var network: ArenaNetworkManager
+var match_started := false  # ✅ NEW: Prevent duplicate match starts
 
 func _ready():
 	print("[ARENA LOBBY] Initializing...")
@@ -210,6 +211,12 @@ func _on_player_disconnected(peer_id: int):
 	_show_main_menu()
 
 func _on_match_started(is_host: bool):
+	# ✅ CRITICAL FIX: Prevent duplicate match starts
+	if match_started:
+		print("[ARENA LOBBY] ❌ Match already started - ignoring duplicate signal")
+		return
+	match_started = true
+	
 	print("[ARENA LOBBY] Match starting! (is_host: %s)" % is_host)
 	
 	# Get opponent character
@@ -217,6 +224,7 @@ func _on_match_started(is_host: bool):
 	
 	if not opponent:
 		push_error("[ARENA LOBBY] ERROR: No opponent character found!")
+		match_started = false  # Reset flag on error
 		return
 	
 	print("[ARENA LOBBY] Opponent character loaded: %s (Level %d)" % [opponent.name, opponent.level])
@@ -225,6 +233,7 @@ func _on_match_started(is_host: bool):
 	var battle_scene = load("res://scenes/battle/Battle.tscn")
 	if not battle_scene:
 		push_error("[ARENA LOBBY] Battle.tscn not found!")
+		match_started = false  # Reset flag on error
 		return
 	
 	var battle = battle_scene.instantiate()
@@ -236,6 +245,8 @@ func _on_match_started(is_host: bool):
 	
 	if not orchestrator:
 		push_error("[ARENA LOBBY] Failed to get BattleOrchestrator!")
+		battle.queue_free()
+		match_started = false  # Reset flag on error
 		return
 	
 	# Verify it's the right type
@@ -244,6 +255,7 @@ func _on_match_started(is_host: bool):
 		push_error("  Node type: %s" % orchestrator.get_class())
 		push_error("  Script: %s" % orchestrator.get_script())
 		battle.queue_free()
+		match_started = false  # Reset flag on error
 		return
 	
 	print("[ARENA LOBBY] BattleOrchestrator found, setting up PvP battle...")
@@ -253,6 +265,7 @@ func _on_match_started(is_host: bool):
 	if not local_player:
 		push_error("[ARENA LOBBY] No local player character!")
 		battle.queue_free()
+		match_started = false  # Reset flag on error
 		return
 	
 	print("[ARENA LOBBY] Local player: %s (Level %d)" % [local_player.name, local_player.level])

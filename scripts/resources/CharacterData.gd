@@ -259,8 +259,10 @@ func unequip_item(slot: String) -> Equipment:
 	var item = equipment[slot]
 	if item:
 		item.remove_effects(self)
-		if item.has_method("remove_stat_modifiers"):
-			item.remove_stat_modifiers(self)
+	# ADD THIS LINE - remove stat modifiers too
+	if item.has_method("remove_stat_modifiers"):
+		item.remove_stat_modifiers(self)
+
 		equipment[slot] = null
 		inventory.add_item(item, 1)
 		calculate_secondary_attributes()

@@ -177,7 +177,7 @@ func _player_ready(peer_id: int):
 		print("[ARENA NET] All players ready, starting match...")
 		_start_match()
 
-@rpc("any_peer", "call_local", "reliable")
+@rpc("any_peer", "call_remote", "reliable")
 func _start_match_signal(is_host_flag: bool):
 	print("[ARENA NET] Match starting! (is_host: %s)" % is_host_flag)
 	emit_signal("match_started", is_host_flag)
@@ -243,7 +243,13 @@ func _all_players_ready() -> bool:
 func _start_match():
 	print("[ARENA NET] Starting match with seed %d" % match_seed)
 	RandomManager.seed = match_seed
-	rpc("_start_match_signal", is_host)
+	
+	# Send to opponent(s) - they will receive !is_host
+	rpc("_start_match_signal", !is_host)
+	
+	# Emit locally with correct is_host value
+	print("[ARENA NET] Match starting! (is_host: %s)" % is_host)
+	emit_signal("match_started", is_host)
 
 # === CHARACTER SERIALIZATION ===
 

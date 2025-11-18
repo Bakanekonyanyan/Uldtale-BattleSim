@@ -34,9 +34,8 @@ func _ready():
 	
 	setup_tabs()
 	
-	if buy_button:
-		buy_button.text = "Buy Selected"  # Updated text
-		buy_button.connect("pressed", Callable(self, "_on_buy_pressed"))
+	if not buy_button.pressed.is_connected(_on_buy_pressed):
+		buy_button.pressed.connect(_on_buy_pressed)
 	if exit_button:
 		exit_button.connect("pressed", Callable(self, "_on_exit_pressed"))
 	if item_list:
@@ -319,31 +318,15 @@ func _on_buy_pressed():
 	if selected_items.is_empty():
 		return
 	
-	# ✅ Cache metadata BEFORE processing
+	# Cache metadata BEFORE processing
 	var items_to_buy = []
+	var total_cost = 0
+	
 	for item_index in selected_items:
 		var metadata = item_list.get_item_metadata(item_index)
 		if metadata:
 			items_to_buy.append(metadata)
-	
-	# Calculate and validate total
-	var total_cost = 0
-	for item_data in items_to_buy:
-		total_cost += item_data["price"]
-	
-	if player_character.currency.copper < total_cost:
-		# show error dialog
-		return
-	
-	# Calculate total cost
-	for item_index in selected_items:
-		var metadata = item_list.get_item_metadata(item_index)
-		if not metadata:
-			continue
-		
-		var price = metadata["price"]
-		total_cost += price
-		items_to_buy.append(metadata)
+			total_cost += metadata["price"]
 	
 	# Check if player can afford
 	if player_character.currency.copper < total_cost:
@@ -392,8 +375,6 @@ func _on_buy_pressed():
 	print("Purchased %d items for %d copper" % [items_to_buy.size(), total_cost])
 
 # NEW: Batch sell selected items (one of each)
-# === FIXED: Batch sell functions ===
-
 func _on_sell_pressed():
 	"""Sell selected items (one of each) - FIXED"""
 	var selected_items = sell_item_list.get_selected_items()
