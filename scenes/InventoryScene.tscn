@@ -128,17 +128,21 @@ base_pulse_duration = 1.0
 
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="CapacityLabel" type="Label" parent="UI"]
+[node name="CapacityLabel" type="RichTextLabel" parent="UI"]
 offset_left = 32.0
 offset_top = 8.0
-offset_right = 302.0
-offset_bottom = 34.0
+offset_right = 632.0
+offset_bottom = 40.0
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
 
 [node name="TabContainer" type="HBoxContainer" parent="UI"]
 offset_left = 32.0
-offset_top = 40.0
-offset_right = 632.0
-offset_bottom = 72.0
+offset_top = 48.0
+offset_right = 932.0
+offset_bottom = 108.0
+theme_override_constants/separation = 4
 
 [node name="AllTab" type="Button" parent="UI/TabContainer"]
 custom_minimum_size = Vector2(180, 60)
@@ -169,7 +173,9 @@ text = "Materials"
 offset_left = 32.0
 offset_top = 128.0
 offset_right = 560.0
-offset_bottom = 448.0
+offset_bottom = 560.0
+theme_override_constants/line_separation = 4
+theme_override_font_sizes/font_size = 18
 
 [node name="UseButton" type="Button" parent="UI"]
 visible = false
@@ -191,8 +197,10 @@ text = "Back"
 offset_left = 576.0
 offset_top = 128.0
 offset_right = 1152.0
-offset_bottom = 528.0
+offset_bottom = 560.0
+theme_override_font_sizes/normal_font_size = 16
+theme_override_font_sizes/bold_font_size = 20
 bbcode_enabled = true
 text = "Select an item to view details"
 fit_content = true
-autowrap_mode = 0
+autowrap_mode = 3

@@ -53,47 +53,37 @@ func initialize_shop():
 func _add_common_weapons():
 	"""Add one of each common weapon type"""
 	var weapon_ids = [
-		"short_sword",
-		"longsword",
-		"katana",
-		"wakizashi",
-		"dagger",
-		"mace",
-		"axe",
-		"spear",
-		"scepter",
-		"staff",
-		"greatsword",
-		"lance",
-		"curved_greatsword",
-		"great_katana",
-		"great_hammer",
-		"great_axe",
-		"halberd",
-		"great_staff",
-		"buckler",
-		"shield",
-		"great_shield"
+		"short_sword", "longsword", "katana", "wakizashi", "dagger",
+		"mace", "axe", "spear", "scepter", "staff", "greatsword",
+		"lance", "curved_greatsword", "great_katana", "great_hammer",
+		"great_axe", "halberd", "great_staff", "buckler", "shield", "great_shield"
 	]
 	
 	for weapon_id in weapon_ids:
-		var equipment = ItemManager.create_equipment_for_floor(weapon_id, 1)
+		# Get the template data
+		var template = ItemManager.get_equipment_template(weapon_id)
+		if template.is_empty():
+			print("ShopManager: Template not found for %s" % weapon_id)
+			continue
+		
+		# Create a modified copy for common shop items
+		var shop_data = template.duplicate(true)
+		shop_data["rarity"] = "common"
+		shop_data["rarity_applied"] = true
+		shop_data["item_level"] = 1
+		shop_data["floor_number"] = 1
+		shop_data["stat_modifiers"] = {}
+		shop_data["status_effect_type"] = Skill.StatusEffect.NONE
+		shop_data["status_effect_chance"] = 0.0
+		shop_data["bonus_damage"] = 0
+		shop_data["key"] = weapon_id  # Ensure key is set
+		
+		# Now create the equipment with pre-configured data
+		var equipment = Equipment.new(shop_data)
+		
 		if equipment:
-			equipment.rarity = "common"
-			equipment.item_level = 1
-			equipment.damage = equipment.damage
-			equipment.armor_value = equipment.armor_value
-			equipment.stat_modifiers = {}
-			equipment.status_effect_type = Skill.StatusEffect.NONE
-			equipment.status_effect_chance = 0.0
-			equipment.bonus_damage = 0
-			
-			var template = ItemManager.get_equipment_template(weapon_id)
-			if template.has("name"):
-				equipment.name = template["name"]
-			
-			var price = equipment.value
-			price = (price / 2.5) 
+			# Calculate price
+			var price = int(equipment.value / 2.5)
 			
 			var unique_key = "%s_%d" % [weapon_id, Time.get_ticks_msec()]
 			equipment_inventory[unique_key] = {
@@ -102,49 +92,41 @@ func _add_common_weapons():
 				"quantity": 1
 			}
 			
-			print("ShopManager: Added %s (common) for %d copper" % [equipment.name, price])
+			print("ShopManager: Added %s (common) for %d copper" % [equipment.display_name, price])
 
 func _add_common_armor():
 	"""Add one of each common armor piece"""
 	var armor_ids = [
-		"cloth_cap",
-		"cloth_robe",
-		"cloth_gloves",
-		"cloth_pants",
-		"cloth_shoes",
-		"leather_helm",
-		"leather_armor",
-		"leather_gloves",
-		"leather_leggings",
-		"leather_boots",
-		"mail_coif",
-		"mail_hauberk",
-		"mail_gauntlets",
-		"mail_chausses",
-		"mail_boots",
-		"plate_helm",
-		"plate_armor",
-		"plate_gauntlets",
-		"plate_greaves",
-		"plate_sabatons"
+		"cloth_cap", "cloth_robe", "cloth_gloves", "cloth_pants", "cloth_shoes",
+		"leather_helm", "leather_armor", "leather_gloves", "leather_leggings", "leather_boots",
+		"mail_coif", "mail_hauberk", "mail_gauntlets", "mail_chausses", "mail_boots",
+		"plate_helm", "plate_armor", "plate_gauntlets", "plate_greaves", "plate_sabatons"
 	]
 	
 	for armor_id in armor_ids:
-		var equipment = ItemManager.create_equipment_for_floor(armor_id, 1)
+		# Get the template data
+		var template = ItemManager.get_equipment_template(armor_id)
+		if template.is_empty():
+			print("ShopManager: Template not found for %s" % armor_id)
+			continue
+		
+		# Create a modified copy for common shop items
+		var shop_data = template.duplicate(true)
+		shop_data["rarity"] = "common"
+		shop_data["rarity_applied"] = true
+		shop_data["item_level"] = 1
+		shop_data["floor_number"] = 1
+		shop_data["stat_modifiers"] = {}
+		shop_data["status_effect_type"] = Skill.StatusEffect.NONE
+		shop_data["status_effect_chance"] = 0.0
+		shop_data["bonus_damage"] = 0
+		shop_data["key"] = armor_id  # Ensure key is set
+		
+		# Now create the equipment with pre-configured data
+		var equipment = Equipment.new(shop_data)
+		
 		if equipment:
-			equipment.rarity = "common"
-			equipment.item_level = 1
-			equipment.damage = equipment.damage
-			equipment.armor_value = equipment.armor_value
-			equipment.stat_modifiers = {}
-			equipment.status_effect_type = Skill.StatusEffect.NONE
-			equipment.status_effect_chance = 0.0
-			equipment.bonus_damage = 0
-			
-			var template = ItemManager.get_equipment_template(armor_id)
-			if template.has("name"):
-				equipment.name = template["name"]
-			
+			# Calculate price
 			var price = equipment.value
 			
 			var unique_key = "%s_%d" % [armor_id, Time.get_ticks_msec()]
@@ -154,7 +136,7 @@ func _add_common_armor():
 				"quantity": 1
 			}
 			
-			print("ShopManager: Added %s (common) for %d copper" % [equipment.name, price])
+			print("ShopManager: Added %s (common) for %d copper" % [equipment.display_name, price])
 
 func get_consumable_item(item_id: String) -> Item:
 	"""Get consumable item (unlimited stock)"""
@@ -188,7 +170,7 @@ func purchase_equipment(item_key: String) -> bool:
 		return false
 	
 	equipment_inventory.erase(item_key)
-	print("ShopManager: Sold equipment: %s" % item_data["equipment"].name)
+	print("ShopManager: Sold equipment: %s" % item_data["equipment"].display_name)
 	return true
 
 # === NEW: BUYBACK SYSTEM ===
@@ -218,7 +200,7 @@ func add_to_buyback(item: Variant, sell_price: int, quantity: int = 1):
 			"quantity": quantity
 		}
 	
-	print("ShopManager: Added to buyback - %s (x%d) for %d copper" % [item.name, quantity, buyback_price])
+	print("ShopManager: Added to buyback - %s (x%d) for %d copper" % [item.display_name, quantity, buyback_price])
 
 func get_buyback_list() -> Array:
 	"""Get list of items available for buyback"""

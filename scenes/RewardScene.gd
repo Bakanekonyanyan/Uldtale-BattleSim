@@ -1,4 +1,4 @@
-# RewardScene.gd - FIXED: Proper initialization order
+# RewardScene.gd - ENHANCED UX/UI
 extends Control
 
 signal rewards_accepted
@@ -29,7 +29,7 @@ var auto_rewards_given: bool = false
 @onready var accept_all_button: Button = $UI/CollectionContainer/ButtonContainer/AcceptAllButton
 @onready var dispose_button: Button = $UI/CollectionContainer/ButtonContainer/DisposeButton
 @onready var dispose_all_button: Button = $UI/CollectionContainer/ButtonContainer/DisposeAllButton
-@onready var auto_rewards_label: Label = $UI/AutoRewardsLabel
+@onready var auto_rewards_label: RichTextLabel = $UI/AutoRewardsLabel
 @onready var collection_container: Control = $UI/CollectionContainer
 
 func _ready():
@@ -143,14 +143,19 @@ func display_rewards():
 	
 	print("RewardScene: Displaying rewards (%d collected)" % collected_items.size())
 	
-	# Show auto-collected rewards
-	var auto_text = "Auto-Collected:\n"
+	# Enhanced auto-collected rewards display
+	var auto_text = "[center][b][color=#FFD700]═══ AUTO-COLLECTED REWARDS ═══[/color][/b][/center]\n\n"
+	
 	if xp_gained > 0:
-		auto_text += "+%d XP\n" % xp_gained
+		auto_text += "[color=#88FF88]✦ +%d XP[/color]\n" % xp_gained
+	
 	if rewards.has("currency"):
-		auto_text += "+%d Gold" % rewards["currency"]
+		auto_text += "[color=#FFD700]💰 +%d Gold[/color]\n" % rewards["currency"]
+	
 	if auto_rewards_given:
-		auto_text += " [Already Collected]"
+		auto_text += "\n[color=#66DD66][i]✓ Collected[/i][/color]"
+	else:
+		auto_text += "\n[color=#FFAA44][i]⏳ Will be collected when you proceed[/i][/color]"
 	
 	auto_rewards_label.text = auto_text
 
@@ -164,7 +169,7 @@ func display_rewards():
 		print("RewardScene: No collectable items - skipping ItemList population")
 		return
 	
-	# Populate ItemList
+	# Populate ItemList with enhanced formatting
 	reward_items_list.clear()
 	var index = 0
 	
@@ -178,10 +183,7 @@ func display_rewards():
 			var quantity = rewards[item_id]
 			var collected = collected_items.has(item_id)
 			
-			var display_text = "%s (x%d)" % [item.name, quantity]
-			if collected:
-				display_text += " [Collected]"
-			
+			var display_text = _format_reward_item(item, quantity, collected)
 			reward_items_list.add_item(display_text)
 			
 			reward_items_list.set_item_metadata(index, {
@@ -206,10 +208,7 @@ func display_rewards():
 				var equip_key = "equip_%d" % i
 				var collected = collected_items.has(equip_key)
 				
-				var display_text = "%s [ilvl %d]" % [equipment.name, equipment.item_level]
-				if collected:
-					display_text += " [Collected]"
-				
+				var display_text = _format_reward_item(equipment, 1, collected)
 				reward_items_list.add_item(display_text)
 				
 				if not collected:
@@ -229,6 +228,26 @@ func display_rewards():
 	
 	print("RewardScene: Populated ItemList with %d items" % index)
 
+func _format_reward_item(item: Item, quantity: int, collected: bool) -> String:
+	"""Format reward item display for better readability"""
+	var display = ""
+	
+	if item is Equipment:
+		display = "%s  [%s]  (ilvl %d)" % [
+			item.display_name,
+			item.rarity.capitalize(),
+			item.item_level
+		]
+	else:
+		display = "%s" % item.display_name
+		if quantity > 1:
+			display += "  ×%d" % quantity
+	
+	if collected:
+		display += "  [✓ Collected]"
+	
+	return display
+
 func _on_reward_item_clicked(index: int, _at_position: Vector2, _mouse_button_index: int):
 	print("Reward item clicked at index: ", index)
 	
@@ -243,32 +262,38 @@ func _on_reward_item_clicked(index: int, _at_position: Vector2, _mouse_button_in
 	display_item_info(metadata["item"])
 
 func display_item_info(item: Item):
+	"""Enhanced item info display"""
 	var info_text = ""
 	
 	if item is Equipment:
 		info_text = item.get_full_description()
 	else:
-		info_text = "[b]%s[/b]\n\n%s\n\n" % [item.name, item.description]
+		info_text = "[center][b][color=#FFD700]%s[/color][/b][/center]\n" % item.display_name
+		info_text += "[color=#CCCCCC]%s[/color]\n\n" % item.description
 		
 		if item.item_type == Item.ItemType.CONSUMABLE:
-			info_text += "[color=cyan][b]Effect:[/b][/color]\n"
+			info_text += "[color=#00DDFF][b]═══ EFFECT ═══[/b][/color]\n"
 			
 			match item.consumable_type:
 				Item.ConsumableType.DAMAGE:
-					info_text += "  Deals %d damage\n" % item.effect_power
+					info_text += "[color=#FF6666]⚔ Deals %d damage[/color]\n" % item.effect_power
 					if item.status_effect != Skill.StatusEffect.NONE:
 						var effect_name = Skill.StatusEffect.keys()[item.status_effect]
-						info_text += "  Inflicts [color=purple]%s[/color] for %d turns\n" % [effect_name, item.effect_duration]
+						info_text += "[color=#BB88FF]✦ Inflicts %s for %d turns[/color]\n" % [effect_name, item.effect_duration]
 				Item.ConsumableType.HEAL:
-					info_text += "  Restores %d HP\n" % item.effect_power
+					info_text += "[color=#66FF66]❤ Restores %d HP[/color]\n" % item.effect_power
 				Item.ConsumableType.RESTORE:
-					info_text += "  Restores %d MP/SP\n" % item.effect_power
+					info_text += "[color=#6666FF]✦ Restores %d MP/SP[/color]\n" % item.effect_power
 				Item.ConsumableType.BUFF:
-					info_text += "  Increases %s by %d for %d turns\n" % [item.buff_type, item.effect_power, item.effect_duration]
+					info_text += "[color=#FFDD66]↑ Increases %s by %d for %d turns[/color]\n" % [item.buff_type, item.effect_power, item.effect_duration]
 				Item.ConsumableType.CURE:
-					info_text += "  Cures all status effects\n"
+					info_text += "[color=#66FFDD]✚ Cures all status effects[/color]\n"
 					if item.effect_power > 0:
-						info_text += "  Restores %d HP\n" % item.effect_power
+						info_text += "[color=#66FF66]❤ Restores %d HP[/color]\n" % item.effect_power
+		
+		# Show value
+		if item.value > 0:
+			info_text += "\n[color=#FFD700]Value: %d copper[/color]" % item.value
 	
 	item_info_label.text = info_text
 
@@ -289,17 +314,17 @@ func _on_accept_selected_pressed():
 		var quantity = metadata["quantity"]
 		player_character.inventory.add_item(item, quantity)
 		collected_items[metadata["id"]] = true
-		print("Accepted: %dx %s" % [quantity, item.name])
+		print("Accepted: %dx %s" % [quantity, item.display_name])
 	
 	elif metadata["type"] == "equipment":
 		var equipment = metadata["item"]
 		player_character.inventory.add_item(equipment, 1)
 		collected_items[metadata["key"]] = true
-		print("Accepted: %s" % equipment.name)
+		print("Accepted: %s" % equipment.display_name)
 	
 	_save_state_and_character()
 	display_rewards()
-	item_info_label.text = "Select an item to view details"
+	item_info_label.text = "[center][color=#888888][i]Select an item to view details[/i][/color][/center]"
 	accept_button.disabled = true
 	dispose_button.disabled = true
 
@@ -316,7 +341,7 @@ func _on_accept_all_pressed():
 				var quantity = rewards[item_id]
 				player_character.inventory.add_item(item, quantity)
 				collected_items[item_id] = true
-				print("Accepted: %dx %s" % [quantity, item.name])
+				print("Accepted: %dx %s" % [quantity, item.display_name])
 	
 	if rewards.has("equipment_instances"):
 		var equipment_list = rewards["equipment_instances"]
@@ -328,12 +353,12 @@ func _on_accept_all_pressed():
 				if equipment is Equipment:
 					player_character.inventory.add_item(equipment, 1)
 					collected_items[equip_key] = true
-					print("Accepted: %s" % equipment.name)
+					print("Accepted: %s" % equipment.display_name)
 	
 	_add_auto_rewards()
 	_save_state_and_character()
 	display_rewards()
-	item_info_label.text = "All items collected!"
+	item_info_label.text = "[center][color=#66FF66][b]✓ All items collected![/b][/color][/center]"
 
 func _on_dispose_selected_pressed():
 	var selected = reward_items_list.get_selected_items()
@@ -349,7 +374,7 @@ func _on_dispose_selected_pressed():
 	var item = metadata["item"]
 	var dialog = ConfirmationDialog.new()
 	dialog.title = "Dispose Item?"
-	dialog.dialog_text = "Are you sure you want to dispose of %s?" % item.name
+	dialog.dialog_text = "Are you sure you want to dispose of %s?" % item.display_name
 	dialog.ok_button_text = "Yes, Dispose"
 	dialog.cancel_button_text = "Cancel"
 	add_child(dialog)
@@ -361,10 +386,10 @@ func _on_dispose_selected_pressed():
 		elif metadata["type"] == "equipment":
 			collected_items[metadata["key"]] = true
 		
-		print("Disposed: %s" % item.name)
+		print("Disposed: %s" % item.display_name)
 		_save_state_and_character()
 		display_rewards()
-		item_info_label.text = "Item disposed"
+		item_info_label.text = "[center][color=#FF8888][i]Item disposed[/i][/color][/center]"
 		dialog.queue_free()
 	)
 	
@@ -392,7 +417,7 @@ func _on_dispose_all_pressed():
 		_add_auto_rewards()
 		_save_state_and_character()
 		display_rewards()
-		item_info_label.text = "All items disposed"
+		item_info_label.text = "[center][color=#FF8888][i]All items disposed[/i][/color][/center]"
 		print("All items disposed")
 		dialog.queue_free()
 	)

@@ -11,7 +11,7 @@ func track_equipment(equipment: Equipment, location: String):
 	
 	if not tracked_equipment.has(instance_id):
 		tracked_equipment[instance_id] = {
-			"name": equipment.name,
+			"name": equipment.display_name,
 			"ilvl": equipment.item_level,
 			"rarity": equipment.rarity,
 			"damage": equipment.damage,
@@ -27,7 +27,7 @@ func track_equipment(equipment: Equipment, location: String):
 	
 	print("EquipmentDebug: [%s] %s (ilvl %d, instance %d) at %s" % [
 		location,
-		equipment.name,
+		equipment.display_name,
 		equipment.item_level,
 		instance_id,
 		Time.get_ticks_msec()
@@ -38,7 +38,7 @@ func verify_no_changes(equipment: Equipment, location: String) -> bool:
 	var instance_id = equipment.get_instance_id()
 	
 	if not tracked_equipment.has(instance_id):
-		print("EquipmentDebug: WARNING - Equipment not tracked: ", equipment.name)
+		print("EquipmentDebug: WARNING - Equipment not tracked: ", equipment.display_name)
 		return false
 	
 	var original = tracked_equipment[instance_id]
@@ -64,7 +64,7 @@ func verify_no_changes(equipment: Equipment, location: String) -> bool:
 	
 	if not changed:
 		print("EquipmentDebug: VERIFIED - %s unchanged at %s ✓" % [
-			equipment.name, location
+			equipment.display_name, location
 		])
 	
 	return not changed
@@ -74,7 +74,7 @@ func print_flow(equipment: Equipment):
 	var instance_id = equipment.get_instance_id()
 	
 	if not tracked_equipment.has(instance_id):
-		print("EquipmentDebug: No flow data for: ", equipment.name)
+		print("EquipmentDebug: No flow data for: ", equipment.display_name)
 		return
 	
 	var data = tracked_equipment[instance_id]

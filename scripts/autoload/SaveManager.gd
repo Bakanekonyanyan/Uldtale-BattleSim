@@ -61,7 +61,7 @@ func save_game(player: CharacterData):
 				"quantity": item_data.quantity,
 				"is_equipment": true,
 				"base_id": item.id,
-				"name": item.name,
+				"name": item.display_name,
 				"rarity": item.rarity,
 				"rarity_applied": item.rarity_applied,
 				"damage": item.damage,
@@ -107,7 +107,7 @@ func save_game(player: CharacterData):
 				"quantity": item_data.quantity,
 				"is_equipment": true,
 				"base_id": item.id,
-				"name": item.name,
+				"name": item.display_name,
 				"rarity": item.rarity,
 				"rarity_applied": item.rarity_applied,
 				"damage": item.damage,
@@ -149,7 +149,7 @@ func save_game(player: CharacterData):
 			var equipped_item = player.equipment[slot]
 			var equip_data = {
 				"id": equipped_item.id,
-				"name": equipped_item.name,
+				"name": equipped_item.display_name,
 				"rarity": equipped_item.rarity,
 				"rarity_applied": equipped_item.rarity_applied,
 				"damage": equipped_item.damage,
@@ -239,7 +239,7 @@ func load_game(character_name: String) -> CharacterData:
 		print("Warning: Skills data not found or invalid for character: ", character_name)
 	
 	if "skill_levels" in save_data and typeof(save_data["skill_levels"]) == TYPE_DICTIONARY:
-		player.skill_manager.skill_levels = save_data["skill_levels"]  # ✅ Use skill_manager
+		player.skill_manager.skill_levels = save_data["skill_levels"]  #  Use skill_manager
 		print("Loaded skill levels: ", player.skill_manager.skill_levels)
 
 	# Handle skills separately - this will now use the loaded skill_levels
@@ -287,13 +287,13 @@ func load_game(character_name: String) -> CharacterData:
 					if "flavor_text" in item_data:
 						base_item.flavor_text = item_data["flavor_text"]
 					if "name" in item_data:
-						base_item.name = item_data["name"]
+						base_item.display_name = item_data["name"]
 					
 					player.inventory.items[item_key] = {
 						"item": base_item,
 						"quantity": item_data["quantity"]
 					}
-					print("Loaded equipment to inventory: ", base_item.name, " with stat_modifiers: ", base_item.stat_modifiers)
+					print("Loaded equipment to inventory: ", base_item.display_name, " with stat_modifiers: ", base_item.stat_modifiers)
 			else:
 				var item = ItemManager.get_item(item_key)
 				if item:
@@ -334,13 +334,13 @@ func load_game(character_name: String) -> CharacterData:
 					if "flavor_text" in item_data:
 						base_item.flavor_text = item_data["flavor_text"]
 					if "name" in item_data:
-						base_item.name = item_data["name"]
+						base_item.display_name = item_data["name"]
 					
 					player.stash.items[item_key] = {
 						"item": base_item,
 						"quantity": item_data["quantity"]
 					}
-					print("Loaded equipment to stash: ", base_item.name)
+					print("Loaded equipment to stash: ", base_item.display_name)
 			else:
 				var item = ItemManager.get_item(item_key)
 				if item:
@@ -380,18 +380,18 @@ func load_game(character_name: String) -> CharacterData:
 					if "flavor_text" in equip_data:
 						item.flavor_text = equip_data["flavor_text"]
 					if "name" in equip_data:
-						item.name = equip_data["name"]
+						item.display_name = equip_data["name"]
 					
 					player.equipment[slot] = item
 					item.apply_effects(player)
 					if item.has_method("apply_stat_modifiers"):
 						item.apply_stat_modifiers(player)
-					print("Loaded equipped item: ", item.name, " with stat_modifiers: ", item.stat_modifiers)
+					print("Loaded equipped item: ", item.display_name, " with stat_modifiers: ", item.stat_modifiers)
 	
 	print("Loaded inventory items: ", player.inventory.items.keys())
 	print("Loaded stash items: ", player.stash.items.keys())
 	
-	# ✅ ADD THIS AFTER ALL CHARACTER DATA IS LOADED:
+	#  ADD THIS AFTER ALL CHARACTER DATA IS LOADED:
 	# Initialize elemental resistances if not already present
 	if player.elemental_resistances == null:
 		player.elemental_resistances = ElementalResistanceManager.new(player)
@@ -415,7 +415,7 @@ func get_all_characters() -> Array:
 			if not dir.current_is_dir() and file_name.ends_with(".json"):
 				var character = load_game(file_name.get_basename())
 				if character:
-					# ✅ ENSURE ELEMENTAL SYSTEM IS INITIALIZED
+					#  ENSURE ELEMENTAL SYSTEM IS INITIALIZED
 					if character.elemental_resistances == null:
 						character.elemental_resistances = ElementalResistanceManager.new(character)
 				

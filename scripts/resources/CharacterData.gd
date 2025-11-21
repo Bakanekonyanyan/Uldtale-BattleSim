@@ -133,17 +133,39 @@ func calculate_secondary_attributes():
 		var enum_val = Skill.AttributeTarget[stat.to_upper()]
 		eff[stat] = buff_manager.get_effective_attribute(enum_val)
 	
+	#  CRITICAL: Store old max values BEFORE recalculating
+	var old_max_hp = max_hp
+	var old_max_mp = max_mp
+	var old_max_sp = max_sp
+	
 	# Resource pools
 	max_hp = vitality * 8 + strength * 3
 	max_mp = mind * 5 + intelligence * 3
 	max_sp = endurance * 5 + agility * 3
 	
-	# Initialize if needed
-	if current_hp == 0 or current_hp > max_hp:
+	#  CRITICAL FIX: Only initialize if resources are ZERO (new character)
+	# DO NOT reset if they just exceed max (happens with buffs/debuffs)
+	# Only initialize HP on first calculation (when max_hp was 0)
+	if max_hp > 0 and old_max_hp == 0 and current_hp == 0:
+		# First time calculating stats - initialize to full
 		current_hp = max_hp
-	if current_mp == 0 or current_mp > max_mp:
+		print("[CHAR] First initialization - HP set to %d" % max_hp)
+	elif current_hp > max_hp:
+		# Stat debuff reduced max HP below current - clamp down
+		current_hp = max_hp
+		print("[CHAR] Clamped HP from above to new max: %d" % max_hp)
+		# else: Leave current_hp as-is (including 0 for dead characters)
+
+	# Same logic for MP
+	if max_mp > 0 and old_max_mp == 0 and current_mp == 0:
 		current_mp = max_mp
-	if current_sp == 0 or current_sp > max_sp:
+	elif current_mp > max_mp:
+		current_mp = max_mp
+
+	# Same logic for SP
+	if max_sp > 0 and old_max_sp == 0 and current_sp == 0:
+		current_sp = max_sp
+	elif current_sp > max_sp:
 		current_sp = max_sp
 	
 	# Defensive
@@ -171,6 +193,49 @@ func calculate_secondary_attributes():
 		"arcane":
 			spell_power = eff.arcane * 2 + eff.intelligence + eff.faith
 
+#  FIX 2: heal() - Add logging and return actual heal amount
+func heal(amount: int) -> int:
+	"""Heal the character, returns actual amount healed"""
+	var hp_before = current_hp
+	var max_heal = max_hp - current_hp
+	var actual_heal = min(amount, max_heal)
+	
+	current_hp += actual_heal
+	current_hp = min(current_hp, max_hp)  # Safety clamp
+	
+	var hp_after = current_hp
+	
+	print("[HEAL] %s: %d → %d (+%d requested, +%d actual, max: %d)" % [
+		name, hp_before, hp_after, amount, actual_heal, max_hp
+	])
+	
+	return actual_heal
+
+#  FIX 3: restore_mp - Add logging
+func restore_mp(amount: int) -> int:
+	"""Restore MP, returns actual amount restored"""
+	var mp_before = current_mp
+	var max_restore = max_mp - current_mp
+	var actual_restore = min(amount, max_restore)
+	
+	current_mp += actual_restore
+	current_mp = min(current_mp, max_mp)
+	
+	print("[RESTORE MP] %s: %d → %d (+%d)" % [name, mp_before, current_mp, actual_restore])
+	return actual_restore
+
+#  FIX 4: restore_sp - Add logging
+func restore_sp(amount: int) -> int:
+	"""Restore SP, returns actual amount restored"""
+	var sp_before = current_sp
+	var max_restore = max_sp - current_sp
+	var actual_restore = min(amount, max_restore)
+	
+	current_sp += actual_restore
+	current_sp = min(current_sp, max_sp)
+	
+	print("[RESTORE SP] %s: %d → %d (+%d)" % [name, sp_before, current_sp, actual_restore])
+	return actual_restore
 # === COMBAT ===
 
 func defend() -> String:
@@ -180,19 +245,10 @@ func defend() -> String:
 func reset_defense():
 	is_defending = false
 
-func heal(amount: int):
-	current_hp += amount
-	current_hp = min(current_hp, max_hp)
-
-func restore_mp(amount: int):
-	current_mp += amount
-	current_mp = min(current_mp, max_mp)
-
-func restore_sp(amount: int):
-	current_sp += amount
-	current_sp = min(current_sp, max_sp)
-
 func is_alive() -> bool:
+	# Safety: Ensure HP never goes negative
+	if current_hp < 0:
+		current_hp = 0
 	return current_hp > 0
 
 func get_attack_power() -> int:
@@ -235,7 +291,7 @@ func get_defense() -> int:
 
 func equip_item(item: Equipment) -> Equipment:
 	if not item.can_equip(self):
-		print("Cannot equip %s - class restriction" % item.name)
+		print("Cannot equip %s - class restriction" % item.display_name)
 		return null
 	
 	var old_item = equipment[item.slot]
@@ -397,7 +453,7 @@ func reset_for_new_game():
 	current_mp = max_mp
 	current_sp = max_sp
 	inventory.clear()
-	currency.copper = 0
+	currency.copper = 500
 	for slot in equipment:
 		equipment[slot] = null
 	level = 1
@@ -444,9 +500,14 @@ func track_armor_proficiency():
 					# Only show one armor level up per damage instance
 					break
 
-# UPDATED take_damage to track armor proficiency
 func take_damage(amount: float, attacker: CharacterData = null):
 	"""Take damage with reflection mechanics and armor proficiency tracking"""
+	
+	#  CRITICAL FIX: Clamp HP to 0 minimum, never allow negative HP
+	if current_hp <= 0:
+		current_hp = 0
+		print("[TAKE_DAMAGE] %s already dead, ignoring damage" % name)
+		return
 	
 	# Track armor proficiency when taking damage
 	track_armor_proficiency()
@@ -474,9 +535,11 @@ func take_damage(amount: float, attacker: CharacterData = null):
 	
 	# Apply damage
 	current_hp -= int(amount)
-	current_hp = max(0, current_hp)
-
-# UPDATED attack() method - place this in CharacterData.gd
+	
+	#  CRITICAL: Always clamp to [0, max_hp] range
+	current_hp = clamp(current_hp, 0, max_hp)
+	
+	print("[TAKE_DAMAGE] %s took %d damage. HP: %d/%d" % [name, int(amount), current_hp, max_hp])
 
 func attack(target: CharacterData) -> String:
 	"""Execute basic attack - NOTE: Proficiency tracking happens in CombatEngine"""

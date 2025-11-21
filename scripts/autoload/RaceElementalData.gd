@@ -21,7 +21,7 @@ func load_data():
 		var result = JSON.parse_string(file.get_as_text())
 		if typeof(result) == TYPE_DICTIONARY:
 			race_data = result
-			print("✅ Loaded race elemental data from races.json")
+			print(" Loaded race elemental data from races.json")
 			print("   Playable races: ", race_data.get("playable", {}).keys())
 			print("   NPC races: ", race_data.get("non_playable", {}).keys())
 		else:

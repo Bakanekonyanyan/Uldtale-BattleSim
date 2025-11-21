@@ -1,5 +1,5 @@
 # scripts/autoload/MomentumSystem.gd
-# FIXED: Proper bonus reward calculation with equipment rerolling
+# FIXED: Preserve loot during reset, clear after bonus calculation
 
 extends Node
 
@@ -30,20 +30,33 @@ func gain_momentum() -> void:
 		print("Momentum increased to: ", current_momentum)
 
 func reset_momentum() -> void:
-	"""Clear accumulated loot on reset"""
+	"""Reset momentum but PRESERVE accumulated loot for bonus calculation"""
 	if current_momentum > 0:
-		print("Momentum reset from: ", current_momentum)
+		print("Momentum reset from %d (loot preserved: %d currency, %d equipment)" % [
+			current_momentum,
+			momentum_loot_accumulated.currency,
+			momentum_loot_accumulated.equipment_instances.size()
+		])
 		current_momentum = 0
 		
-		# Clear accumulated loot
-		momentum_loot_accumulated = {
-			"currency": 0,
-			"equipment_instances": [],
-			"consumables": {},
-			"materials": {}
-		}
+		#  CRITICAL: DON'T clear accumulated loot here
+		# It will be cleared after get_momentum_bonus_rewards() is called
 		
 		emit_signal("momentum_changed", current_momentum)
+
+func clear_accumulated_loot() -> void:
+	"""Clear accumulated loot after bonus rewards have been generated"""
+	print("MomentumSystem: Clearing accumulated loot (%d currency, %d equipment)" % [
+		momentum_loot_accumulated.currency,
+		momentum_loot_accumulated.equipment_instances.size()
+	])
+	
+	momentum_loot_accumulated = {
+		"currency": 0,
+		"equipment_instances": [],
+		"consumables": {},
+		"materials": {}
+	}
 
 func get_momentum() -> int:
 	return current_momentum
@@ -116,11 +129,11 @@ func accumulate_loot(rewards: Dictionary) -> void:
 
 func get_momentum_bonus_rewards(current_floor: int) -> Dictionary:
 	"""Generate bonus rewards from accumulated loot"""
-	if current_momentum < 3:
+	if current_momentum < 3 and momentum_loot_accumulated.currency == 0:
+		print("MomentumSystem: No accumulated loot or momentum too low")
 		return {}
 	
 	print("=== CALCULATING MOMENTUM BONUS REWARDS ===")
-	print("Momentum Level: %d" % current_momentum)
 	print("Accumulated Currency: %d" % momentum_loot_accumulated.currency)
 	print("Accumulated Equipment: %d pieces" % momentum_loot_accumulated.equipment_instances.size())
 	
@@ -146,19 +159,21 @@ func get_momentum_bonus_rewards(current_floor: int) -> Dictionary:
 		for i in range(keep_count):
 			bonus_rewards.equipment_instances.append(sorted_equipment[i])
 			print("  Kept: %s (ilvl %d, %s)" % [
-				sorted_equipment[i].name,
+				sorted_equipment[i].display_name,
 				sorted_equipment[i].item_level,
 				sorted_equipment[i].rarity
 			])
 		
 		# Reroll remaining items with improved rarity and ilvl
+		# Use momentum from accumulated loot (stored before reset)
+		var momentum_for_reroll = max(3, int(momentum_loot_accumulated.currency / 100))  # Estimate from currency
 		for i in range(reroll_count):
 			var original = sorted_equipment[keep_count + i]
-			var improved = _reroll_equipment_improved(original, current_floor)
+			var improved = _reroll_equipment_improved(original, current_floor, momentum_for_reroll)
 			bonus_rewards.equipment_instances.append(improved)
 			print("  Rerolled: %s -> %s (ilvl %d->%d, %s->%s)" % [
-				original.name,
-				improved.name,
+				original.display_name,
+				improved.display_name,
 				original.item_level,
 				improved.item_level,
 				original.rarity,
@@ -173,24 +188,24 @@ func get_momentum_bonus_rewards(current_floor: int) -> Dictionary:
 	
 	return bonus_rewards
 
-func _reroll_equipment_improved(original_equipment: Equipment, current_floor: int) -> Equipment:
+func _reroll_equipment_improved(original_equipment: Equipment, current_floor: int, momentum_level: int) -> Equipment:
 	"""Reroll equipment with improved ilvl and rarity"""
-	# Get original equipment template
-	var item_id = original_equipment.item_id
+	var item_id = original_equipment.id
 	
 	# Boost ilvl by momentum level
-	var boosted_floor = current_floor + current_momentum
+	var boosted_floor = current_floor + momentum_level
 	
 	# Create new instance with boosted floor
 	var new_equipment = ItemManager.create_equipment_for_floor(item_id, boosted_floor)
 	
 	if new_equipment:
 		# Force upgrade rarity by 1-2 tiers based on momentum
-		var rarity_boost = 1 if current_momentum < 6 else 2
+		var rarity_boost = 1 if momentum_level < 6 else 2
 		new_equipment.rarity = _upgrade_rarity(new_equipment.rarity, rarity_boost)
 		
 		# Recalculate stats with new rarity
-		new_equipment._apply_rarity_bonuses()
+		if new_equipment.has_method("_apply_rarity_bonuses"):
+			new_equipment._apply_rarity_bonuses()
 		
 		print("    Reroll details: Floor %d -> %d, Rarity boost: +%d" % [
 			current_floor,

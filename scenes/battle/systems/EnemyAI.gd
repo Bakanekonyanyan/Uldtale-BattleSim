@@ -163,12 +163,18 @@ func _try_buff_or_debuff() -> BattleAction:
 			print("EnemyAI: Applying debuff to player")
 			return BattleAction.skill(enemy, debuff_skill, [player])
 	
-	# Buff self if not buffed
+	#  FIX: Buff allies based on skill target type
 	if not enemy.buff_manager.has_buffs():
 		var buff_skill = _find_buff_skill()
 		if buff_skill and _can_afford_skill(buff_skill):
-			print("EnemyAI: Buffing self")
-			return BattleAction.skill(enemy, buff_skill, [enemy])
+			#  Check if skill targets ALL_ALLIES
+			if buff_skill.target == Skill.TargetType.ALL_ALLIES:
+				print("EnemyAI: Buffing all allies with %s" % buff_skill.name)
+				# Pass empty array - CombatEngine will resolve via get_allies_for_character()
+				return BattleAction.skill(enemy, buff_skill, [])
+			else:
+				print("EnemyAI: Buffing self with %s" % buff_skill.name)
+				return BattleAction.skill(enemy, buff_skill, [enemy])
 	
 	return null
 

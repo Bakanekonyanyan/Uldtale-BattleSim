@@ -104,7 +104,7 @@
 		"slot": "head",
 		"class_restriction": [],
 		"effects": {
-		  "dodge": -1
+		  "dodge": -0.01
 		},
 		"rarity": ""
 	  }
@@ -121,7 +121,7 @@
 		"slot": "chest",
 		"class_restriction": [],
 		"effects": {
-		  "dodge": -2
+		  "dodge": -0.02
 		},
 		"rarity": ""
 	  }
@@ -138,7 +138,7 @@
 		"slot": "hands",
 		"class_restriction": [],
 		"effects": {
-		  "dodge": -1
+		  "dodge": -0.01
 		},
 		"rarity": ""
 	  }
@@ -155,7 +155,7 @@
 		"slot": "legs",
 		"class_restriction": [],
 		"effects": {
-		  "dodge": -1
+		  "dodge": -0.01
 		},
 		"rarity": ""
 	  }
@@ -172,7 +172,7 @@
 		"slot": "feet",
 		"class_restriction": [],
 		"effects": {
-		  "dodge": -1
+		  "dodge": -0.01
 		},
 		"rarity": ""
 	  }
@@ -189,9 +189,9 @@
 		"attribute_increase": 1,
 		"type": "mail",
 		"slot": "head",
-		"class_restriction": ["Myrmidon","Paladin"],
+		"class_restriction": ["Myrmidon","Paladin","Samurai","Brute","Shaman","King"],
 		"effects": {
-		  "dodge": -2
+		  "dodge": -0.02
 		},
 		"rarity": ""
 	  }
@@ -206,9 +206,9 @@
 		"attribute_increase": 2,
 		"type": "mail",
 		"slot": "chest",
-		"class_restriction": ["Myrmidon","Paladin"],
+		"class_restriction": ["Myrmidon","Paladin","Samurai","Brute","Shaman","King"],
 		"effects": {
-		  "dodge": -4
+		  "dodge": -0.04
 		},
 		"rarity": ""
 	  }
@@ -223,9 +223,9 @@
 		"attribute_increase": 1,
 		"type": "mail",
 		"slot": "hands",
-		"class_restriction": ["Myrmidon","Paladin"],
+		"class_restriction": ["Myrmidon","Paladin","Samurai","Brute","Shaman","King"],
 		"effects": {
-		  "dodge": -2
+		  "dodge": -0.02
 		},
 		"rarity": ""
 	  }
@@ -240,9 +240,9 @@
 		"attribute_increase": 2,
 		"type": "mail",
 		"slot": "legs",
-		"class_restriction": ["Myrmidon","Paladin"],
+		"class_restriction": ["Myrmidon","Paladin","Samurai","Brute","Shaman","King"],
 		"effects": {
-		  "dodge": -3
+		  "dodge": -0.03
 		},
 		"rarity": ""
 	  }
@@ -257,9 +257,9 @@
 		"attribute_increase": 1,
 		"type": "mail",
 		"slot": "feet",
-		"class_restriction": ["Myrmidon","Paladin"],
+		"class_restriction": ["Myrmidon","Paladin","Samurai","Brute","Shaman","King"],
 		"effects": {
-		  "dodge": -2
+		  "dodge": -0.02
 		},
 		"rarity": ""
 	  }
@@ -276,9 +276,9 @@
 		"attribute_increase": 2,
 		"type": "plate",
 		"slot": "head",
-		"class_restriction": ["Paladin"],
+		"class_restriction": ["Myrmidon","Paladin","Samurai","Brute","Shaman","King"],
 		"effects": {
-		  "dodge": -4
+		  "dodge": -0.04
 		},
 		"rarity": ""
 	  }
@@ -293,9 +293,9 @@
 		"attribute_increase": 3,
 		"type": "plate",
 		"slot": "chest",
-		"class_restriction": ["Paladin"],
+		"class_restriction": ["Paladin","Brute","King"],
 		"effects": {
-		  "dodge": -8
+		  "dodge": -0.08
 		},
 		"rarity": ""
 	  }
@@ -310,9 +310,9 @@
 		"attribute_increase": 2,
 		"type": "plate",
 		"slot": "hands",
-		"class_restriction": ["Paladin"],
+		"class_restriction": ["Paladin","Brute","King"],
 		"effects": {
-		  "dodge": -4
+		  "dodge": -0.04
 		},
 		"rarity": ""
 	  }
@@ -327,9 +327,9 @@
 		"attribute_increase": 3,
 		"type": "plate",
 		"slot": "legs",
-		"class_restriction": ["Paladin"],
+		"class_restriction": ["Paladin","Brute","King"],
 		"effects": {
-		  "dodge": -6
+		  "dodge": -0.06
 		},
 		"rarity": ""
 	  }
@@ -344,9 +344,9 @@
 		"attribute_increase": 2,
 		"type": "plate",
 		"slot": "feet",
-		"class_restriction": ["Paladin"],
+		"class_restriction": ["Paladin","Brute","King"],
 		"effects": {
-		  "dodge": -4
+		  "dodge": -0.04
 		},
 		"rarity": ""
 	  }

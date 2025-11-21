@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://dr87k53pojeod"]
+
+[ext_resource type="Texture2D" uid="uid://bbahx6rb5bqhc" path="res://assets/Images/enemies/Goblin.png" id="1_6dbvi"]
+
+[node name="GoblinSprite" type="Node2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("1_6dbvi")

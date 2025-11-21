@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://bni07fxtkkmbw"]
+
+[ext_resource type="Texture2D" uid="uid://bpfese3bb8pe4" path="res://assets/Images/enemies/Fairy.png" id="1_j6ncp"]
+
+[node name="FairySprite" type="Node2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("1_j6ncp")

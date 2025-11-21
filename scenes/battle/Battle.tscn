@@ -1,34 +1,46 @@
-[gd_scene load_steps=5 format=3 uid="uid://52o8rbghf0jb"]
+[gd_scene load_steps=8 format=3 uid="uid://52o8rbghf0jb"]
 
 [ext_resource type="Script" uid="uid://c3nk7wcu6mtgy" path="res://scenes/battle/BattleOrchestrator.gd" id="1_w6b63"]
 [ext_resource type="Texture2D" uid="uid://cpndw8q8cse38" path="res://assets/Images/backgrounds/WaveBackground.png" id="2_18p0q"]
 [ext_resource type="Script" uid="uid://dl6y0b4t8nfu0" path="res://scenes/battle/components/ui/BattleUIController.gd" id="2_emwda"]
 [ext_resource type="Script" uid="uid://bcptvq3l2acql" path="res://scenes/battle/InventoryMenu.gd" id="2_ng7cs"]
+[ext_resource type="PackedScene" uid="uid://bt415s868mear" path="res://scenes/battle/components/TargetSelector.tscn" id="5_target"]
+[ext_resource type="Script" uid="uid://dg5gj1bg1m3h1" path="res://scenes/battle/BattleVisualManager.gd" id="6_visual"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 3
 
 [node name="Battle" type="Node2D"]
 script = ExtResource("1_w6b63")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(592, 312)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 position = Vector2(592, 312)
 scale = Vector2(0.85, 0.85)
 texture = ExtResource("2_18p0q")
 
+[node name="BattleVisualManager" type="Node2D" parent="."]
+script = ExtResource("6_visual")
+
+[node name="PlayerSpriteContainer" type="Node2D" parent="BattleVisualManager"]
+position = Vector2(300, 350)
+
+[node name="EnemySpriteContainer" type="Node2D" parent="BattleVisualManager"]
+
 [node name="BattleUIController" type="Node" parent="."]
 script = ExtResource("2_emwda")
 
-[node name="PlayerInfo" type="Label" parent="BattleUIController"]
+[node name="PlayerInfo" type="RichTextLabel" parent="BattleUIController"]
 offset_left = 64.0
 offset_top = 96.0
-offset_right = 304.0
-offset_bottom = 192.0
-autowrap_mode = 2
-
-[node name="EnemyInfo" type="Label" parent="BattleUIController"]
-offset_left = 384.0
-offset_top = 96.0
-offset_right = 624.0
-offset_bottom = 192.0
-autowrap_mode = 2
+offset_right = 368.0
+offset_bottom = 256.0
+bbcode_enabled = true
 
 [node name="TurnLabel" type="Label" parent="BattleUIController"]
 offset_left = 168.0
@@ -37,30 +49,29 @@ offset_right = 424.0
 offset_bottom = 95.0
 
 [node name="ActionButtons" type="VBoxContainer" parent="BattleUIController"]
-offset_left = 72.0
-offset_top = 312.0
-offset_right = 384.0
-offset_bottom = 688.0
+offset_left = 64.0
+offset_top = 336.0
+offset_right = 304.0
+offset_bottom = 712.0
 
 [node name="WaveLabel" type="Label" parent="BattleUIController"]
 offset_left = 64.0
-offset_top = 40.0
+offset_top = 8.0
 offset_right = 208.0
-offset_bottom = 66.0
+offset_bottom = 34.0
 text = "Wave: "
 
 [node name="FloorLabel" type="Label" parent="BattleUIController"]
-offset_left = 384.0
-offset_top = 40.0
-offset_right = 552.0
-offset_bottom = 66.0
+offset_left = 64.0
+offset_top = 32.0
+offset_right = 232.0
+offset_bottom = 58.0
 text = "Floor: "
 
-[node name="DungeonDescriptionLabel" type="Label" parent="BattleUIController"]
-offset_left = 112.0
-offset_top = 8.0
-offset_right = 600.0
-offset_bottom = 31.0
+[node name="DungeonDescriptionLabel" type="RichTextLabel" parent="BattleUIController"]
+offset_left = 192.0
+offset_right = 960.0
+offset_bottom = 56.0
 
 [node name="XPLabel" type="Label" parent="BattleUIController"]
 offset_left = 64.0
@@ -70,30 +81,29 @@ offset_bottom = 290.0
 text = "XP:"
 
 [node name="CombatLogLabel" type="Label" parent="BattleUIController"]
-offset_left = 704.0
-offset_top = 24.0
-offset_right = 797.0
-offset_bottom = 50.0
+offset_left = 368.0
+offset_top = 480.0
+offset_right = 461.0
+offset_bottom = 506.0
 text = "Combat Log"
 
 [node name="CombatLogWindow" type="Panel" parent="BattleUIController"]
-offset_left = 704.0
-offset_top = 64.0
-offset_right = 1168.0
-offset_bottom = 264.0
-scale = Vector2(1, 1.36)
+offset_left = 368.0
+offset_top = 504.0
+offset_right = 832.0
+offset_bottom = 696.0
 
 [node name="ColorRect" type="ColorRect" parent="BattleUIController/CombatLogWindow"]
 layout_mode = 0
 offset_right = 464.0
-offset_bottom = 200.0
+offset_bottom = 192.0
 color = Color(0.116617, 0.118965, 0.183853, 0.886275)
 
 [node name="CombatLog" type="RichTextLabel" parent="BattleUIController"]
-offset_left = 704.0
-offset_top = 64.0
-offset_right = 1168.0
-offset_bottom = 336.0
+offset_left = 368.0
+offset_top = 504.0
+offset_right = 832.0
+offset_bottom = 696.0
 bbcode_enabled = true
 scroll_following = true
 
@@ -106,17 +116,17 @@ offset_bottom = 399.0
 text = "Debug"
 
 [node name="DebugWindow" type="Panel" parent="BattleUIController"]
-offset_left = 704.0
-offset_top = 384.0
-offset_right = 1168.0
-offset_bottom = 696.0
+visible = false
+offset_left = 368.0
+offset_top = 224.0
+offset_right = 832.0
+offset_bottom = 472.0
 
 [node name="DebugLog" type="RichTextLabel" parent="BattleUIController/DebugWindow"]
 layout_mode = 0
 offset_right = 464.0
-offset_bottom = 312.0
+offset_bottom = 248.0
 bbcode_enabled = true
-scroll_following = true
 
 [node name="InventoryMenu" type="Control" parent="BattleUIController"]
 layout_mode = 3
@@ -127,35 +137,106 @@ offset_right = 152.0
 offset_bottom = 168.0
 script = ExtResource("2_ng7cs")
 
-[node name="ItemList" type="ItemList" parent="BattleUIController/InventoryMenu"]
+[node name="Panel" type="Panel" parent="BattleUIController/InventoryMenu"]
 layout_mode = 0
-offset_left = 272.0
-offset_top = 208.0
-offset_right = 568.0
-offset_bottom = 456.0
+offset_left = 256.0
+offset_top = -96.0
+offset_right = 656.0
+offset_bottom = 304.0
 
-[node name="UseButton" type="Button" parent="BattleUIController/InventoryMenu"]
-custom_minimum_size = Vector2(120, 40)
+[node name="VBoxContainer" type="VBoxContainer" parent="BattleUIController/InventoryMenu/Panel"]
 layout_mode = 0
-offset_left = 272.0
-offset_top = 472.0
-offset_right = 392.0
-offset_bottom = 512.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 390.0
+offset_bottom = 390.0
+
+[node name="TitleLabel" type="Label" parent="BattleUIController/InventoryMenu/Panel/VBoxContainer"]
+layout_mode = 2
+text = "Inventory"
+horizontal_alignment = 1
+
+[node name="ItemList" type="ItemList" parent="BattleUIController/InventoryMenu/Panel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ButtonContainer" type="HBoxContainer" parent="BattleUIController/InventoryMenu/Panel/VBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="UseButton" type="Button" parent="BattleUIController/InventoryMenu/Panel/VBoxContainer/ButtonContainer"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
 text = "Use"
 
-[node name="CancelButton" type="Button" parent="BattleUIController/InventoryMenu"]
+[node name="CancelButton" type="Button" parent="BattleUIController/InventoryMenu/Panel/VBoxContainer/ButtonContainer"]
 custom_minimum_size = Vector2(120, 40)
-layout_mode = 0
-offset_left = 448.0
-offset_top = 472.0
-offset_right = 568.0
-offset_bottom = 512.0
+layout_mode = 2
 text = "Cancel"
 
 [node name="CurrencyLabel" type="Label" parent="BattleUIController/InventoryMenu"]
+visible = false
 layout_mode = 0
-offset_left = 272.0
-offset_top = 176.0
-offset_right = 347.0
-offset_bottom = 202.0
+offset_left = -48.0
+offset_top = 128.0
+offset_right = 27.0
+offset_bottom = 154.0
 text = "Currency:"
+
+[node name="EnemyScrollContainer" type="ScrollContainer" parent="BattleUIController"]
+custom_minimum_size = Vector2(320, 450)
+offset_left = 860.0
+offset_top = 96.0
+offset_right = 1180.0
+offset_bottom = 696.0
+
+[node name="EnemyInfoContainer" type="VBoxContainer" parent="BattleUIController/EnemyScrollContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TargetSelector" parent="BattleUIController" instance=ExtResource("5_target")]
+offset_left = -232.0
+offset_top = -232.0
+offset_right = 192.0
+offset_bottom = 68.0
+
+[node name="SkillMenuPanel" type="Panel" parent="BattleUIController"]
+custom_minimum_size = Vector2(300, 400)
+offset_left = 368.0
+offset_top = 72.0
+offset_right = 784.0
+offset_bottom = 472.0
+
+[node name="SkillMenuVBox" type="VBoxContainer" parent="BattleUIController/SkillMenuPanel"]
+custom_minimum_size = Vector2(280, 380)
+layout_mode = 0
+offset_left = 32.0
+offset_top = 8.0
+offset_right = 392.0
+offset_bottom = 388.0
+
+[node name="SkillMenuTitle" type="Label" parent="BattleUIController/SkillMenuPanel/SkillMenuVBox"]
+layout_mode = 2
+text = "Select Skill"
+horizontal_alignment = 1
+
+[node name="TitleSeparator" type="HSeparator" parent="BattleUIController/SkillMenuPanel/SkillMenuVBox"]
+layout_mode = 2
+
+[node name="SkillButtonsContainer" type="VBoxContainer" parent="BattleUIController/SkillMenuPanel/SkillMenuVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="NoSkillsLabel" type="Label" parent="BattleUIController/SkillMenuPanel/SkillMenuVBox"]
+visible = false
+layout_mode = 2
+text = "No usable skills available"
+horizontal_alignment = 1
+
+[node name="CancelSeparator" type="HSeparator" parent="BattleUIController/SkillMenuPanel/SkillMenuVBox"]
+layout_mode = 2
+
+[node name="SkillMenuCancelButton" type="Button" parent="BattleUIController/SkillMenuPanel/SkillMenuVBox"]
+custom_minimum_size = Vector2(260, 40)
+layout_mode = 2
+text = "Cancel"

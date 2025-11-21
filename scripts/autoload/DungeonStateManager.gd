@@ -1,6 +1,5 @@
-# DungeonStateManager.gd - FIXED
+# DungeonStateManager.gd - Multi-Enemy Support
 # Autoload: Add to project.godot as DungeonStateManager
-# Handles ALL dungeon state - removes this responsibility from SceneManager
 
 extends Node
 
@@ -18,7 +17,8 @@ var dungeon_description: String
 
 # Battle context
 var active_player: CharacterData
-var active_enemy: CharacterData
+var active_enemies: Array[CharacterData] = []
+var enemy_group: EnemyGroup
 
 # Persistent state
 var dungeon_active: bool = false
@@ -34,7 +34,7 @@ func start_dungeon(player: CharacterData, start_floor: int = 1):
 	# Sync player's floor
 	player.current_floor = start_floor
 	
-	# ✅ FIX: Set dungeon race immediately
+	# Set dungeon race immediately
 	EnemyFactory.set_dungeon_race(start_floor)
 	
 	print("DungeonState: Started dungeon at floor %d, race: %s" % [current_floor, EnemyFactory.current_dungeon_race])
@@ -44,7 +44,7 @@ func advance_wave() -> Dictionary:
 	"""Move to next wave and return battle data"""
 	current_wave += 1
 	
-	# ✅ FIX: Boss is wave 6 (after 5 regular waves)
+	# Boss is wave 6 (after 5 regular waves)
 	if current_wave == waves_per_floor + 1:
 		is_boss_fight = true
 		emit_signal("boss_spawned")
@@ -54,12 +54,12 @@ func advance_wave() -> Dictionary:
 		emit_signal("wave_changed", current_wave)
 		print("DungeonState: Wave %d/%d" % [current_wave, waves_per_floor])
 	
-	# Generate enemy
-	var momentum = MomentumSystem.get_momentum()
-	if is_boss_fight:
-		active_enemy = EnemyFactory.create_boss(current_floor, current_wave, momentum)
-	else:
-		active_enemy = EnemyFactory.create_enemy(1, current_floor, current_wave, momentum)
+	# Generate enemy group
+	enemy_group = EnemyGroup.new()
+	enemy_group.initialize(current_floor, current_wave, is_boss_fight)
+	active_enemies = enemy_group.enemies.duplicate()
+	
+	print("DungeonState: Generated %d enemies for battle" % active_enemies.size())
 	
 	return get_battle_data()
 
@@ -87,7 +87,7 @@ func get_battle_data() -> Dictionary:
 	"""Get current battle context"""
 	return {
 		"player_character": active_player,
-		"enemy": active_enemy,
+		"enemies": active_enemies,
 		"current_wave": current_wave,
 		"current_floor": current_floor,
 		"is_boss_fight": is_boss_fight,
@@ -118,15 +118,17 @@ func end_dungeon():
 	current_wave = 0
 	current_floor = 1
 	is_boss_fight = false
-	active_enemy = null
+	active_enemies.clear()
+	enemy_group = null
 	print("DungeonState: Dungeon ended")
 
 func get_state_summary() -> String:
 	"""Debug: Print current state"""
-	return "Floor %d, Wave %d/%d, Boss: %s, Active: %s" % [
+	return "Floor %d, Wave %d/%d, Boss: %s, Active: %s, Enemies: %d" % [
 		current_floor,
 		current_wave,
 		waves_per_floor,
 		is_boss_fight,
-		dungeon_active
+		dungeon_active,
+		active_enemies.size()
 	]

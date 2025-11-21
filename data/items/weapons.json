@@ -10,10 +10,10 @@
 		"attribute_increase": 2,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
 		  "dodge": 0,
-		  "crit": 0,
+		  "critical_hit_rate": 0,
 		  "armor_penetration": 0
 		},
 		"rarity": ""
@@ -27,10 +27,10 @@
 		"attribute_increase": 3,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
-		  "dodge": -5,
-		  "crit": 0,
+		  "dodge": -0.05,
+		  "critical_hit_rate": 0,
 		  "armor_penetration": 0
 		},
 		"rarity": ""
@@ -44,10 +44,10 @@
 		"attribute_increase": 2,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
 		  "dodge": 0,
-		  "crit": 5,
+		  "critical_hit_rate": 0.05,
 		  "armor_penetration": 0
 		},
 		"rarity": ""
@@ -61,10 +61,10 @@
 		"attribute_increase": 2,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
-		  "dodge": 5,
-		  "crit": 10,
+		  "dodge": 0.05,
+		  "critical_hit_rate": 0.10,
 		  "armor_penetration": 0
 		},
 		"rarity": ""
@@ -78,10 +78,10 @@
 		"attribute_increase": 1,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
-		  "dodge": 2,
-		  "crit": 15,
+		  "dodge": 0.02,
+		  "critical_hit_rate": 0.15,
 		  "status_effect_chance": 10
 		},
 		"rarity": ""
@@ -95,11 +95,11 @@
 		"attribute_increase": 2,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
-		  "dodge": -3,
-		  "crit": 0,
-		  "armor_penetration": 15
+		  "dodge": -0.03,
+		  "critical_hit_rate": 0,
+		  "armor_penetration": 0.15
 		},
 		"rarity": ""
 	  },
@@ -112,10 +112,10 @@
 		"attribute_increase": 3,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
-		  "dodge": -4,
-		  "crit": 0,
+		  "dodge": -0.04,
+		  "critical_hit_rate": 0,
 		  "armor_penetration": 10
 		},
 		"rarity": ""
@@ -129,10 +129,10 @@
 		"attribute_increase": 2,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
-		  "dodge": 3,
-		  "crit": 5,
+		  "dodge": 0.03,
+		  "critical_hit_rate": 0.05,
 		  "armor_penetration": 0
 		},
 		"rarity": ""
@@ -146,11 +146,11 @@
 		"attribute_increase": 3,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Cleric","Necromancer","Shaman","Mage","King"],
+		"class_restriction": ["Cleric","Necromancer","Elementalist","Monk","Druid","Shaman","Mage","King"],
 		"effects": {
 		  "dodge": 0,
-		  "crit": 0,
-		  "spell_power_increase": 10
+		  "critical_hit_rate": 0,
+		  "spell_power": 10
 		},
 		"rarity": ""
 	  },
@@ -163,11 +163,11 @@
 		"attribute_increase": 4,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Cleric","Necromancer","Shaman","Mage","King"],
+		"class_restriction": ["Cleric","Necromancer","Elementalist","Monk","Druid","Shaman","Mage","King"],
 		"effects": {
 		  "dodge": 0,
-		  "crit": 8,
-		  "spell_power_increase": 15
+		  "critical_hit_rate": 0.08,
+		  "spell_power": 15
 		},
 		"rarity": ""
 	  }
@@ -184,9 +184,9 @@
 		"slot": "main_hand",
 		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
 		"effects": {
-		  "dodge": -8,
-		  "crit": 0,
-		  "armor_penetration": 5
+		  "dodge": -0.08,
+		  "critical_hit_rate": 0,
+		  "armor_penetration": 0.05
 		},
 		"rarity": ""
 	  },
@@ -201,9 +201,9 @@
 		"slot": "main_hand",
 		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
 		"effects": {
-		  "dodge": -7,
-		  "crit": 0,
-		  "armor_penetration": 20
+		  "dodge": -0.07,
+		  "critical_hit_rate": 0,
+		  "armor_penetration": 0.20
 		},
 		"rarity": ""
 	  },
@@ -218,9 +218,9 @@
 		"slot": "main_hand",
 		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
 		"effects": {
-		  "dodge": 5,
-		  "crit": 3,
-		  "armor_penetration": 5
+		  "dodge": 0.05,
+		  "critical_hit_rate": 0.03,
+		  "armor_penetration": 0.5
 		},
 		"rarity": ""
 	  },
@@ -233,10 +233,10 @@
 		"attribute_increase": 5,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
+		"class_restriction": ["Paladin","Myrmidon","Samurai","Brute","King"],
 		"effects": {
-		  "dodge": -6,
-		  "crit": 10,
+		  "dodge": -0.06,
+		  "critical_hit_rate": 0.10,
 		  "armor_penetration": 0
 		},
 		"rarity": ""
@@ -252,9 +252,9 @@
 		"slot": "main_hand",
 		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
 		"effects": {
-		  "dodge": -9,
-		  "crit": 0,
-		  "armor_penetration": 25
+		  "dodge": -0.09,
+		  "critical_hit_rate": 0,
+		  "armor_penetration": 0.25
 		},
 		"rarity": ""
 	  },
@@ -269,9 +269,9 @@
 		"slot": "main_hand",
 		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
 		"effects": {
-		  "dodge": -8,
-		  "crit": 15,
-		  "armor_penetration": 10
+		  "dodge": -0.08,
+		  "critical_hit_rate": 0.15,
+		  "armor_penetration": 0.10
 		},
 		"rarity": ""
 	  },
@@ -284,11 +284,11 @@
 		"attribute_increase": 4,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
+		"class_restriction": ["Paladin","Myrmidon","Monk","Samurai","Brute","King"],
 		"effects": {
-		  "dodge": -7,
-		  "crit": 8,
-		  "armor_penetration": 15
+		  "dodge": -0.07,
+		  "critical_hit_rate": 0.08,
+		  "armor_penetration": 0.15
 		},
 		"rarity": ""
 	  },
@@ -301,11 +301,11 @@
 		"attribute_increase": 7,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Cleric","Necromancer","Shaman","Mage","King"],
+		"class_restriction": ["Cleric","Necromancer","Elementalist","Monk","Druid","Shaman","Mage","King"],
 		"effects": {
-		  "dodge": -6,
-		  "crit": 5,
-		  "spell_power_increase": 25
+		  "dodge": -0.06,
+		  "critical_hit_rate": 0.05,
+		  "spell_power": 25
 		},
 		"rarity": ""
 	  }
@@ -322,9 +322,9 @@
 		"attribute_increase": 1,
 		"type": "shield",
 		"slot": "off_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
-		  "dodge": -2
+		  "dodge": -0.02
 		},
 		"rarity": ""
 	  },
@@ -337,9 +337,9 @@
 		"attribute_increase": 2,
 		"type": "shield",
 		"slot": "off_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Minion","Brute","Shaman","Mage","King"],
+		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
 		"effects": {
-		  "dodge": -4
+		  "dodge": -0.04
 		},
 		"rarity": ""
 	  },
@@ -354,7 +354,7 @@
 		"slot": "off_hand",
 		"class_restriction": ["Paladin", "Brute", "King"],
 		"effects": {
-		  "dodge": -6
+		  "dodge": -0.06
 		},
 		"rarity": ""
 	  }
@@ -364,7 +364,7 @@
 		"name": "Necromantic Tome",
 		"description": "A dark tome that increases spell power, intelligence, and spell ward for Necromancers.",
 		"value": 150,
-		"spell_power_increase": 10,
+		"spell_power": 10,
 		"attribute_target": ["intelligence", "spell_ward"],
 		"attribute_increase": [3, 5],
 		"type": "source",
@@ -377,14 +377,14 @@
 		"name": "Elemental Talisman",
 		"description": "A magical talisman that increases spell power, dodge, and spell ward for Elementalists.",
 		"value": 150,
-		"spell_power_increase": 10,
+		"spell_power": 10,
 		"attribute_target": ["agility", "spell_ward"],
 		"attribute_increase": [3, 5],
 		"type": "source",
 		"slot": "off_hand",
 		"class_restriction": ["Elementalist"],
 		"effects": {
-		  "dodge": 3
+		  "dodge": 0.03
 		},
 		"rarity": ""
 	  },
@@ -392,7 +392,7 @@
 		"name": "Druidic Fetish",
 		"description": "A natural fetish that increases spell power, toughness, and spell ward for Druids.",
 		"value": 150,
-		"spell_power_increase": 10,
+		"spell_power": 10,
 		"attribute_target": ["vitality", "spell_ward"],
 		"attribute_increase": [3, 5],
 		"type": "source",
@@ -405,7 +405,7 @@
 		"name": "Holy Relic",
 		"description": "A sacred relic that increases spell power, faith, and spell ward for Clerics.",
 		"value": 150,
-		"spell_power_increase": 10,
+		"spell_power": 10,
 		"attribute_target": ["faith", "spell_ward"],
 		"attribute_increase": [3, 5],
 		"type": "source",

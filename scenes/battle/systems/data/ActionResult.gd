@@ -112,12 +112,20 @@ static func status_effect_result(character: CharacterData, dmg: int, heal: int, 
 static func _extract_skill_effects(result: ActionResult, skill: Skill, message: String):
 	"""Extract damage, healing, and status effects from skill"""
 	
-	# Extract damage from message
+	#  FIX 1: Extract damage from message (handles both "X damage" and "X fire damage" etc)
 	var damage_regex = RegEx.new()
-	damage_regex.compile("(\\d+) (?:damage|HP)")
+	damage_regex.compile("dealt.*?(\\d+).*?damage")  # More flexible pattern
 	var damage_match = damage_regex.search(message)
 	if damage_match:
 		result.damage = int(damage_match.get_string(1))
+		print("[ACTIONRESULT] Extracted damage: %d from message: %s" % [result.damage, message])
+	else:
+		# Fallback: Try simpler pattern
+		damage_regex.compile("(\\d+) damage")
+		damage_match = damage_regex.search(message)
+		if damage_match:
+			result.damage = int(damage_match.get_string(1))
+			print("[ACTIONRESULT] Extracted damage (fallback): %d" % result.damage)
 	
 	# Extract healing from message
 	var heal_regex = RegEx.new()
@@ -132,7 +140,7 @@ static func _extract_skill_effects(result: ActionResult, skill: Skill, message: 
 		if "drained" in message.to_lower() and result.damage > 0:
 			result.healing = int(result.damage * skill.drain_efficiency)
 	
-	# Extract status effects from skill.status_effects array (plural)
+	#  FIX 2: Extract status effects from skill.status_effects array (plural)
 	if not skill.status_effects.is_empty():
 		for effect_enum in skill.status_effects:
 			if effect_enum != Skill.StatusEffect.NONE:
@@ -140,8 +148,11 @@ static func _extract_skill_effects(result: ActionResult, skill: Skill, message: 
 					"name": Skill.StatusEffect.keys()[effect_enum],
 					"duration": skill.duration
 				})
+				print("[ACTIONRESULT] Added status effect: %s for %d turns" % [
+					Skill.StatusEffect.keys()[effect_enum], skill.duration
+				])
 	
-	# Extract buffs/debuffs from skill.attribute_targets array (plural)
+	#  FIX 3: Extract buffs/debuffs from skill.attribute_targets array (plural)
 	if not skill.attribute_targets.is_empty():
 		for attr_enum in skill.attribute_targets:
 			if attr_enum != Skill.AttributeTarget.NONE:
@@ -158,7 +169,7 @@ static func _extract_skill_effects(result: ActionResult, skill: Skill, message: 
 					result.debuffs.append(effect_data)
 
 static func _extract_item_effects(result: ActionResult, item, message: String, targets: Array):
-	"""✅ FIXED: Extract damage, healing, status effects AND removals from item"""
+	""" FIXED: Extract damage, healing, status effects AND removals from item"""
 	
 	# Extract damage from message
 	var damage_regex = RegEx.new()
@@ -174,7 +185,7 @@ static func _extract_item_effects(result: ActionResult, item, message: String, t
 	if heal_match:
 		result.healing = int(heal_match.get_string(1))
 	
-	# ✅ CRITICAL FIX: For damage items, check if status was ACTUALLY applied to target
+	#  CRITICAL FIX: For damage items, check if status was ACTUALLY applied to target
 	# (accounts for RNG chance like poison_chance on Flame Flask)
 	if item.consumable_type == Item.ConsumableType.DAMAGE:
 		if "status_effect" in item and item.status_effect != Skill.StatusEffect.NONE:
@@ -186,7 +197,7 @@ static func _extract_item_effects(result: ActionResult, item, message: String, t
 					"duration": item.effect_duration
 				})
 	
-	# ✅ NEW: Track status effects REMOVED (cure items like antidote)
+	#  NEW: Track status effects REMOVED (cure items like antidote)
 	elif item.consumable_type == Item.ConsumableType.CURE:
 		if "status_effect" in item and item.status_effect != Skill.StatusEffect.NONE:
 			# Specific cure (antidote, coolroot, etc)
@@ -199,7 +210,7 @@ static func _extract_item_effects(result: ActionResult, item, message: String, t
 				"name": "ALL"
 			})
 	
-	# ✅ NEW: Track buffs from buff items (berserker brew, smoke bomb)
+	#  NEW: Track buffs from buff items (berserker brew, smoke bomb)
 	elif item.consumable_type == Item.ConsumableType.BUFF:
 		if "buff_type" in item and item.buff_type != "":
 			var buff_value = 0

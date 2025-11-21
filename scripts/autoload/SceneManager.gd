@@ -1,4 +1,5 @@
-# SceneManager.gd - FIXED: Proper reward scene initialization
+# SceneManager.gd - Multi-Enemy Support
+#  FIXED: Consistent enemy handling throughout
 
 extends Node
 
@@ -35,13 +36,13 @@ func _deferred_change_scene(path: String) -> void:
 	get_tree().current_scene = current_scene
 
 func change_scene_with_character(path: String, character: CharacterData) -> void:
-	"""Change scene and set character on arrival"""
+	SaveManager.save_game(character)
 	call_deferred("_change_with_character", path, character)
 
 func _change_with_character(path: String, character: CharacterData) -> void:
 	_deferred_change_scene(path)
 	await get_tree().process_frame
-	
+	SaveManager.save_game(character)
 	if current_scene.has_method("set_player"):
 		current_scene.set_player(character)
 	elif current_scene.has_method("set_player_character"):
@@ -50,7 +51,6 @@ func _change_with_character(path: String, character: CharacterData) -> void:
 # === NAVIGATION WITH STACK ===
 
 func push_scene(path: String, character: CharacterData = null) -> void:
-	"""Save current scene and navigate to new one"""
 	var state = {
 		"path": current_scene.scene_file_path,
 		"player_character": character
@@ -65,7 +65,6 @@ func push_scene(path: String, character: CharacterData = null) -> void:
 	change_scene_with_character(path, character)
 	
 func pop_scene() -> void:
-	"""Return to previous scene"""
 	if scene_stack.is_empty():
 		print("Warning: Scene stack empty")
 		return
@@ -87,21 +86,27 @@ func change_to_town(character: CharacterData) -> void:
 	change_scene_with_character("res://scenes/TownScene.tscn", character)
 
 func change_to_shop(character: CharacterData) -> void:
+	SaveManager.save_game(character)
 	push_scene("res://scenes/ShopScene.tscn", character)
 
 func change_to_equipment(character: CharacterData) -> void:
+	SaveManager.save_game(character)
 	push_scene("res://scenes/EquipmentScene.tscn", character)
 
 func change_to_status(character: CharacterData) -> void:
+	SaveManager.save_game(character)
 	push_scene("res://scenes/StatusScene.tscn", character)
 
 func change_to_inventory(character: CharacterData) -> void:
+	SaveManager.save_game(character)
 	push_scene("res://scenes/InventoryScene.tscn", character)
 
 func change_to_stash(character: CharacterData) -> void:
+	SaveManager.save_game(character)
 	push_scene("res://scenes/StashScene.tscn", character)
 
 func change_to_arena(character: CharacterData) -> void:
+	SaveManager.save_game(character)
 	push_scene("res://scenes/arena/ArenaLobby.tscn", character)
 
 func change_to_main_menu() -> void:
@@ -118,7 +123,6 @@ func return_to_previous_scene() -> void:
 # === DUNGEON FLOW ===
 
 func start_dungeon_from_floor(player: CharacterData, floor: int) -> void:
-	"""Start a new dungeon run"""
 	player.current_hp = player.max_hp
 	player.current_mp = player.max_mp
 	player.current_sp = player.max_sp
@@ -134,11 +138,16 @@ func start_dungeon_from_floor(player: CharacterData, floor: int) -> void:
 		current_scene.start_dungeon(battle_data)
 
 func start_battle(battle_data: Dictionary) -> void:
-	"""Transition to battle scene"""
 	print("SceneManager: Starting battle - Floor %d, Wave %d" % [
 		battle_data["current_floor"],
 		battle_data["current_wave"]
 	])
+	
+	#  FIX: Log enemy count properly
+	if battle_data.has("enemies"):
+		print("  - Enemies: %d" % battle_data["enemies"].size())
+	elif battle_data.has("enemy"):
+		print("  - Enemy: 1 (legacy)")
 	
 	if current_scene:
 		print("SceneManager: Cleaning up previous scene: ", current_scene.name)
@@ -159,13 +168,24 @@ func start_battle(battle_data: Dictionary) -> void:
 	setup_battle_scene(battle_data)
 
 func setup_battle_scene(battle_data: Dictionary):
-	"""Configure battle scene with data"""
+	""" FIXED: Configure battle scene with consistent enemy handling"""
 	if not current_scene or not current_scene.has_method("set_player"):
 		push_error("Battle scene not ready")
 		return
 	
 	current_scene.set_player(battle_data["player_character"])
-	current_scene.set_enemy(battle_data["enemy"])
+	
+	#  FIX: Prioritize multi-enemy array, fallback to single enemy
+	if battle_data.has("enemies") and not battle_data["enemies"].is_empty():
+		current_scene.set_enemies(battle_data["enemies"])
+		print("SceneManager: Set %d enemies for battle" % battle_data["enemies"].size())
+	elif battle_data.has("enemy") and battle_data["enemy"]:
+		# Convert single enemy to array for consistency
+		current_scene.set_enemies([battle_data["enemy"]])
+		print("SceneManager: Set 1 enemy (legacy) for battle")
+	else:
+		push_error("SceneManager: No enemies in battle_data!")
+		return
 	
 	if not current_scene.is_connected("battle_completed", Callable(self, "_on_battle_completed")):
 		current_scene.connect("battle_completed", Callable(self, "_on_battle_completed"))
@@ -179,7 +199,6 @@ func setup_battle_scene(battle_data: Dictionary):
 	)
 
 func _on_battle_completed(player_won: bool, xp_gained: int):
-	"""Handle battle outcome"""
 	print("SceneManager: Battle completed - Won: %s, XP: %d, Wave: %d" % [
 		player_won, 
 		xp_gained,
@@ -207,7 +226,6 @@ func _on_battle_completed(player_won: bool, xp_gained: int):
 		_show_rewards(xp_gained)
 
 func _continue_with_momentum():
-	"""Player pressed on - skip rewards, continue immediately"""
 	print("=== SceneManager: Press On - Floor %d, Wave %d, Boss: %s ===" % [
 		DungeonStateManager.current_floor,
 		DungeonStateManager.current_wave,
@@ -234,10 +252,10 @@ func _continue_with_momentum():
 		print("SceneManager: DungeonScene loaded, calling advance_wave")
 		var battle_data = DungeonStateManager.advance_wave()
 		
-		print("SceneManager: Battle data - Floor %d, Wave %d, Enemy: %s" % [
+		print("SceneManager: Battle data - Floor %d, Wave %d, %d enemies" % [
 			battle_data["current_floor"],
 			battle_data["current_wave"],
-			battle_data["enemy"].name if battle_data["enemy"] else "NULL"
+			battle_data["enemies"].size() if battle_data.has("enemies") else 0
 		])
 		
 		if current_scene.has_method("start_dungeon"):
@@ -257,7 +275,6 @@ func _continue_with_momentum():
 		start_battle(battle_data)
 
 func _on_rewards_accepted():
-	"""Player collected rewards and wants to continue"""
 	print("SceneManager: Rewards accepted - Floor %d, Wave %d" % [
 		DungeonStateManager.current_floor,
 		DungeonStateManager.current_wave
@@ -289,7 +306,6 @@ func _on_rewards_accepted():
 		start_battle(battle_data)
 
 func _on_next_floor():
-	"""Advance to next floor (from reward screen)"""
 	print("SceneManager: Next floor requested")
 	
 	reward_scene_active = false
@@ -305,8 +321,9 @@ func _on_next_floor():
 		var battle_data = DungeonStateManager.advance_wave()
 		current_scene.start_dungeon(battle_data)
 
+# === REWARD SCENE MANAGEMENT ===
+
 func save_reward_state(rewards: Dictionary, xp_gained: int, rewards_collected: bool, collected_items: Dictionary, auto_rewards_given: bool = false):
-	"""Save reward state before navigating away from RewardScene"""
 	saved_reward_data = {
 		"rewards": rewards.duplicate(true),
 		"xp_gained": xp_gained,
@@ -324,18 +341,15 @@ func save_reward_state(rewards: Dictionary, xp_gained: int, rewards_collected: b
 	])
 
 func get_saved_reward_state():
-	"""Get saved reward state when returning to RewardScene"""
 	if saved_reward_data.is_empty():
 		return null
 	return saved_reward_data
 
 func clear_saved_reward_state():
-	"""Clear saved reward state when actually leaving rewards"""
 	saved_reward_data.clear()
 	print("SceneManager: Cleared saved reward state")
 
 func _connect_reward_scene_signals():
-	"""Ensure reward scene signals are connected to SceneManager"""
 	print("SceneManager: Connecting reward scene signals")
 	
 	if not current_scene:
@@ -354,14 +368,12 @@ func _connect_reward_scene_signals():
 		current_scene.connect("next_floor", Callable(self, "_on_next_floor"))
 
 func setup_reward_scene(data: Dictionary):
-	"""Configure reward scene - MUST be called on the actual reward scene instance"""
 	if not current_scene:
 		push_error("SceneManager: No current_scene in setup_reward_scene!")
 		return
 	
 	print("SceneManager: Setting up reward scene: ", current_scene.name)
 	
-	# Set all data FIRST
 	if current_scene.has_method("set_player_character"):
 		print("SceneManager: Setting player character")
 		current_scene.set_player_character(data["player_character"])
@@ -387,10 +399,8 @@ func setup_reward_scene(data: Dictionary):
 			data["description"]
 		)
 	
-	# Connect signals
 	_connect_reward_scene_signals()
 	
-	# NOW initialize the display - this is called AFTER all data is set
 	if current_scene.has_method("initialize_display"):
 		print("SceneManager: Calling initialize_display")
 		current_scene.initialize_display()
@@ -400,24 +410,57 @@ func setup_reward_scene(data: Dictionary):
 	print("SceneManager: Reward scene setup complete")
 
 func _show_rewards(xp_gained: int):
-	"""Show reward scene - FIXED: Proper async scene loading"""
 	print("SceneManager: Showing rewards - Floor %d, Wave %d" % [
 		DungeonStateManager.current_floor,
 		DungeonStateManager.current_wave
 	])
 	
-	# Calculate rewards
+	var player = DungeonStateManager.active_player
+	
+	var taking_breather = false
+	var momentum_at_breather = 0
+	
+	if player.has_meta("taking_breather_with_bonus"):
+		taking_breather = player.get_meta("taking_breather_with_bonus")
+		momentum_at_breather = player.get_meta("momentum_level_at_breather", 0)
+		
+		print("SceneManager: Breather detected - momentum was %d" % momentum_at_breather)
+		
+		player.remove_meta("taking_breather_with_bonus")
+		player.remove_meta("momentum_level_at_breather")
+	
+	# Calculate rewards with breather flag
 	var battle_data = DungeonStateManager.get_battle_data()
 	battle_data["xp_gained"] = xp_gained
-	battle_data["enemy"] = DungeonStateManager.active_enemy
+	
+	#  FIX: Ensure enemy data exists for RewardsManager
+	if battle_data.has("enemies") and not battle_data["enemies"].is_empty():
+		# Use first enemy as primary for rewards (legacy compatibility)
+		battle_data["enemy"] = battle_data["enemies"][0]
+	elif not battle_data.has("enemy"):
+		push_error("SceneManager: No enemy data for rewards calculation!")
+		battle_data["enemy"] = null
+	
+	# Add momentum flags to battle_data
+	if taking_breather:
+		battle_data["momentum_level"] = momentum_at_breather
+		battle_data["taking_breather"] = true
+		print("SceneManager: Battle data - momentum=%d, taking_breather=true" % momentum_at_breather)
+	else:
+		battle_data["momentum_level"] = MomentumSystem.get_momentum()
+		battle_data["taking_breather"] = false
+	
+	print("SceneManager: Calculating rewards with momentum=%d, breather=%s" % [
+		battle_data["momentum_level"],
+		battle_data["taking_breather"]
+	])
 	
 	var rewards = RewardsManager.calculate_battle_rewards(battle_data)
 	
-	# Prepare reward scene data
 	var reward_data = {
 		"rewards": rewards,
 		"xp_gained": xp_gained,
-		"player_character": DungeonStateManager.active_player,
+		"player_character": player,
 		"is_boss_fight": DungeonStateManager.is_boss_fight,
 		"current_floor": DungeonStateManager.current_floor,
 		"current_wave": DungeonStateManager.current_wave,
@@ -428,28 +471,22 @@ func _show_rewards(xp_gained: int):
 	reward_scene_active = true
 	rewards_accepted = false
 	
-	# Clean up old scene
 	if current_scene:
 		current_scene.queue_free()
 		current_scene = null
 	
-	# Load new scene
 	change_scene("res://scenes/RewardScene.tscn")
 	
-	# Wait for scene to be fully loaded and ready
 	print("SceneManager: Waiting for RewardScene to load...")
 	await get_tree().process_frame
 	await get_tree().process_frame
 	
-	# Verify scene loaded
 	if not current_scene:
 		push_error("SceneManager: RewardScene failed to load!")
 		return
 	
 	print("SceneManager: RewardScene loaded successfully")
 	
-	# Wait one more frame to ensure @onready variables are initialized
 	await get_tree().process_frame
 	
-	# Now setup the scene
 	setup_reward_scene(reward_data)

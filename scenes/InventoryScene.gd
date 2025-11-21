@@ -1,4 +1,4 @@
-# scenes/InventoryScene.gd - REFACTORED with category tabs
+# scenes/InventoryScene.gd - ENHANCED UX/UI
 extends Control
 
 enum ItemCategory { ALL, CONSUMABLES, WEAPONS, ARMOR, MATERIALS }
@@ -36,7 +36,7 @@ func _ready():
 	clear_item_info()
 
 func setup_tabs():
-	"""Setup category filter tabs"""
+	"""Setup category filter tabs with enhanced visuals"""
 	if all_tab:
 		all_tab.connect("pressed", Callable(self, "_on_category_changed").bind(ItemCategory.ALL))
 	if consumables_tab:
@@ -48,7 +48,6 @@ func setup_tabs():
 	if materials_tab:
 		materials_tab.connect("pressed", Callable(self, "_on_category_changed").bind(ItemCategory.MATERIALS))
 	
-	# Highlight active tab
 	_update_tab_visuals()
 
 func _on_category_changed(category: ItemCategory):
@@ -59,17 +58,32 @@ func _on_category_changed(category: ItemCategory):
 	clear_item_info()
 
 func _update_tab_visuals():
-	"""Highlight active tab"""
+	"""Enhanced tab highlighting with background colors"""
 	var tabs = [all_tab, consumables_tab, weapons_tab, armor_tab, materials_tab]
+	
 	for i in range(tabs.size()):
-		if tabs[i]:
-			if i == current_category:
-				tabs[i].modulate = Color(1.2, 1.2, 0.8)  # Highlighted
-			else:
-				tabs[i].modulate = Color(1, 1, 1)  # Normal
+		if not tabs[i]:
+			continue
+		
+		var style_normal = StyleBoxFlat.new()
+		style_normal.corner_radius_top_left = 4
+		style_normal.corner_radius_top_right = 4
+		
+		if i == current_category:
+			# Active tab: Brighter with accent border
+			style_normal.bg_color = Color("#4A4A3A")
+			style_normal.border_width_bottom = 3
+			style_normal.border_color = Color("#FFD700")
+			tabs[i].add_theme_stylebox_override("normal", style_normal)
+			tabs[i].modulate = Color(1, 1, 1)
+		else:
+			# Inactive tab: Darker
+			style_normal.bg_color = Color("#2A2A2A")
+			tabs[i].add_theme_stylebox_override("normal", style_normal)
+			tabs[i].modulate = Color(0.7, 0.7, 0.7)
 
 func refresh_inventory():
-	"""Refresh item list based on current category filter"""
+	"""Refresh item list with enhanced formatting"""
 	item_list.clear()
 	var index = 0
 	
@@ -81,8 +95,8 @@ func refresh_inventory():
 		if not _matches_category(item):
 			continue
 		
-		# Build display text
-		var display_text = "%s (x%d)" % [item.name, item_data.quantity]
+		# Enhanced display text with better formatting
+		var display_text = _format_item_display(item, item_data.quantity)
 		
 		# Add to list
 		item_list.add_item(display_text)
@@ -97,6 +111,28 @@ func refresh_inventory():
 	update_capacity_display()
 	clear_item_info()
 
+func _format_item_display(item: Item, quantity: int) -> String:
+	"""Format item display text for better readability"""
+	var display = ""
+	
+	if item is Equipment:
+		# Equipment: Name [Rarity] (ilvl XX)
+		display = "%s  [%s] (ilvl %d)" % [
+			item.display_name,
+			item.rarity.capitalize(),
+			item.item_level
+		]
+		if quantity > 1:
+			display += "  ×%d" % quantity
+	else:
+		# Regular items: Name ×Qty
+		if quantity > 1:
+			display = "%s  ×%d" % [item.display_name, quantity]
+		else:
+			display = item.display_name
+	
+	return display
+
 func _matches_category(item: Item) -> bool:
 	"""Check if item matches current category filter"""
 	match current_category:
@@ -105,12 +141,10 @@ func _matches_category(item: Item) -> bool:
 		ItemCategory.CONSUMABLES:
 			return item.item_type == Item.ItemType.CONSUMABLE
 		ItemCategory.WEAPONS:
-			# ✅ FIX: Check for main_hand or off_hand slots
 			if item is Equipment:
 				return item.slot in ["main_hand", "off_hand"]
 			return false
 		ItemCategory.ARMOR:
-			# ✅ FIX: Check for armor slots (not weapon slots)
 			if item is Equipment:
 				return item.slot in ["head", "chest", "hands", "legs", "feet"]
 			return false
@@ -119,17 +153,38 @@ func _matches_category(item: Item) -> bool:
 	return false
 
 func update_capacity_display():
+	"""Enhanced capacity display with color-coded fullness"""
 	if capacity_label:
 		var current = player_character.inventory.items.size()
 		var max_cap = player_character.inventory.capacity
 		
+		# Calculate fullness percentage
+		var fullness = float(current) / float(max_cap)
+		var color = "#FFFFFF"
+		var status_icon = ""
+		
+		if fullness >= 0.95:
+			color = "#FF4444"  # Red - Critical
+			status_icon = "⚠ "
+		elif fullness >= 0.8:
+			color = "#FF8800"  # Orange - Warning
+			status_icon = "⚠ "
+		elif fullness >= 0.6:
+			color = "#FFDD44"  # Yellow - Caution
+		else:
+			color = "#88FF88"  # Green - Good
+		
 		# Show category count
 		var filtered_count = item_list.get_item_count()
 		if current_category == ItemCategory.ALL:
-			capacity_label.text = "Inventory: %d/%d" % [current, max_cap]
+			capacity_label.text = "%s[color=%s]Inventory: %d/%d[/color]" % [
+				status_icon, color, current, max_cap
+			]
 		else:
 			var category_name = _get_category_name()
-			capacity_label.text = "%s: %d | Total: %d/%d" % [category_name, filtered_count, current, max_cap]
+			capacity_label.text = "[color=%s]%s: %d  |  Total: %s%d/%d[/color]" % [
+				color, category_name, filtered_count, status_icon, current, max_cap
+			]
 
 func _get_category_name() -> String:
 	match current_category:
@@ -158,6 +213,7 @@ func _get_filtered_items() -> Array:
 	return filtered
 
 func display_item_info(item: Item):
+	"""Enhanced item info display with better formatting"""
 	if not item_info_label:
 		return
 	
@@ -170,36 +226,58 @@ func display_item_info(item: Item):
 		if item is Equipment:
 			info_text = item.get_full_description()
 		else:
-			info_text = "[b]%s[/b]\n\n%s\n\n" % [item.name, item.description]
+			# Enhanced non-equipment display
+			info_text = "[center][b][color=#FFD700]%s[/color][/b][/center]\n" % item.display_name
+			info_text += "[color=#CCCCCC]%s[/color]\n\n" % item.description
 			
 			if item.item_type == Item.ItemType.CONSUMABLE:
-				info_text += "[color=cyan][b]Effect:[/b][/color]\n"
+				info_text += "[color=#00DDFF][b]═══ EFFECT ═══[/b][/color]\n"
 				
 				match item.consumable_type:
 					Item.ConsumableType.DAMAGE:
-						info_text += "  Deals %d damage\n" % item.effect_power
+						info_text += "[color=#FF6666]⚔ Deals %d damage[/color]\n" % item.effect_power
 						if item.status_effect != Skill.StatusEffect.NONE:
 							var effect_name = Skill.StatusEffect.keys()[item.status_effect]
-							info_text += "  Inflicts [color=purple]%s[/color] for %d turns\n" % [effect_name, item.effect_duration]
+							info_text += "[color=#BB88FF]✦ Inflicts %s for %d turns[/color]\n" % [effect_name, item.effect_duration]
 					Item.ConsumableType.HEAL:
-						info_text += "  Restores %d HP\n" % item.effect_power
+						info_text += "[color=#66FF66]❤ Restores %d HP[/color]\n" % item.effect_power
 					Item.ConsumableType.RESTORE:
-						info_text += "  Restores %d MP/SP\n" % item.effect_power
+						info_text += "[color=#6666FF]✦ Restores %d MP/SP[/color]\n" % item.effect_power
 					Item.ConsumableType.BUFF:
-						info_text += "  Increases %s by %d for %d turns\n" % [item.buff_type, item.effect_power, item.effect_duration]
+						info_text += "[color=#FFDD66]↑ Increases %s by %d for %d turns[/color]\n" % [item.buff_type, item.effect_power, item.effect_duration]
 					Item.ConsumableType.CURE:
-						info_text += "  Cures all status effects\n"
+						info_text += "[color=#66FFDD]✚ Cures all status effects[/color]\n"
 						if item.effect_power > 0:
-							info_text += "  Restores %d HP\n" % item.effect_power
+							info_text += "[color=#66FF66]❤ Restores %d HP[/color]\n" % item.effect_power
+			
+			# Show value
+			if item.value > 0:
+				info_text += "\n[color=#FFD700]Value: %d copper[/color]" % item.value
 		
 		item_info_label.text = info_text
 	else:
-		info_text = "%s\n\n%s" % [item.name, item.description]
+		info_text = "%s\n\n%s" % [item.display_name, item.description]
 		item_info_label.text = info_text
 
 func clear_item_info():
+	"""Enhanced empty state message"""
 	if item_info_label:
-		item_info_label.text = "Select an item to view details"
+		var empty_message = "[center][color=#888888][i]"
+		
+		match current_category:
+			ItemCategory.ALL:
+				empty_message += "Select an item to view details"
+			ItemCategory.CONSUMABLES:
+				empty_message += "Select a consumable to view its effects"
+			ItemCategory.WEAPONS:
+				empty_message += "Select a weapon to view its stats"
+			ItemCategory.ARMOR:
+				empty_message += "Select armor to view its protection"
+			ItemCategory.MATERIALS:
+				empty_message += "Select a material to view its properties"
+		
+		empty_message += "[/i][/color][/center]"
+		item_info_label.text = empty_message
 
 func _on_use_pressed():
 	var selected_items = item_list.get_selected_items()
@@ -232,7 +310,7 @@ func _on_use_pressed():
 			refresh_inventory()
 			return
 		
-		print("Using item outside combat: %s (Quantity: %d)" % [item.name, item_data.quantity])
+		print("Using item outside combat: %s (Quantity: %d)" % [item.display_name, item_data.quantity])
 		
 		# Use the item
 		var result = item.use(player_character, [player_character])

@@ -28,7 +28,7 @@ extends Control
 @onready var cancel_waiting_button = $UI/WaitingPanel/CancelButton
 
 var network: ArenaNetworkManager
-var match_started := false  # ✅ NEW: Prevent duplicate match starts
+var match_started := false  #  NEW: Prevent duplicate match starts
 
 func _ready():
 	print("[ARENA LOBBY] Initializing...")
@@ -211,7 +211,7 @@ func _on_player_disconnected(peer_id: int):
 	_show_main_menu()
 
 func _on_match_started(is_host: bool):
-	# ✅ CRITICAL FIX: Prevent duplicate match starts
+	#  CRITICAL FIX: Prevent duplicate match starts
 	if match_started:
 		print("[ARENA LOBBY] ❌ Match already started - ignoring duplicate signal")
 		return
@@ -238,7 +238,7 @@ func _on_match_started(is_host: bool):
 	
 	var battle = battle_scene.instantiate()
 	
-	# ✅ FIX: The root node "Battle" IS the BattleOrchestrator
+	#  FIX: The root node "Battle" IS the BattleOrchestrator
 	# The .tscn file shows: [node name="Battle" type="Node2D" script="BattleOrchestrator.gd"]
 	# So 'battle' already IS the orchestrator
 	var orchestrator = battle  # Don't use get_node()!

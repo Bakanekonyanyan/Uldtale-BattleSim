@@ -153,6 +153,7 @@ offset_bottom = 132.0
 text = "Dungeon"
 
 [node name="ArenaButton" type="Button" parent="UI"]
+visible = false
 custom_minimum_size = Vector2(180, 60)
 offset_left = 40.0
 offset_top = 352.0

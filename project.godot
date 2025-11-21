@@ -27,7 +27,6 @@ CharacterManager="*res://scripts/autoload/CharacterManager.gd"
 SaveManager="*res://scripts/autoload/SaveManager.gd"
 LootManager="*res://scripts/autoload/LootManager.gd"
 LevelSystem="*res://scripts/LevelSystem.gd"
-StatusEffects="*res://scripts/autoload/StatusEffectData.gd"
 RewardsManager="*res://scripts/autoload/RewardsManager.gd"
 MomentumSystem="*res://scripts/autoload/MomentumSystem.gd"
 ShopManager="*res://scripts/autoload/ShopManager.gd"
@@ -35,6 +34,8 @@ DungeonStateManager="*res://scripts/autoload/DungeonStateManager.gd"
 RaceElementalData="*res://scripts/autoload/RaceElementalData.gd"
 RandomManager="*res://scripts/autoload/RandomManager.gd"
 ArenaNetworkManager="*res://scripts/network/ArenaNetworkManager.gd"
+StatusEffects="*res://scripts/autoload/StatusEffects.gd"
+ClassEquipmentBias="*res://scripts/autoload/ClassEquipmentBias.gd"
 
 [display]
 

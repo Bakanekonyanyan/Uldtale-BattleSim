@@ -12,13 +12,13 @@ var is_my_turn := false
 var waiting_for_opponent := false
 var awaiting_turn_sync: bool = false
 
-# ✅ CRITICAL: Track last timestamp PER action type to prevent duplicates
+#  CRITICAL: Track last timestamp PER action type to prevent duplicates
 var last_status_damage_timestamp: int = 0
 var last_item_timestamp: int = 0
 var last_action_timestamp: int = 0
 var last_turn_end_timestamp: int = 0
 
-# ✅ NEW: Store which character belongs to which peer
+#  NEW: Store which character belongs to which peer
 var local_player_id: int = 0
 var opponent_player_id: int = 0
 var my_character: CharacterData = null
@@ -39,7 +39,7 @@ func initialize(orch, is_pvp: bool = false):
 	
 	network = orch.get_node("/root/ArenaNetworkManager")
 	
-	# ✅ CRITICAL FIX: Determine character ownership
+	#  CRITICAL FIX: Determine character ownership
 	local_player_id = network.local_player_id
 	opponent_player_id = network.get_opponent_id()
 	
@@ -91,7 +91,7 @@ func _on_network_action_received(peer_id: int, action_data: Dictionary):
 	var is_status_damage = (action_type == -2)
 	var timestamp = action_data.get("timestamp", 0)
 	
-	# ✅ CRITICAL FIX: Unified duplicate detection - check ALL timestamps
+	#  CRITICAL FIX: Unified duplicate detection - check ALL timestamps
 	if timestamp > 0:
 		var is_duplicate = false
 		
@@ -116,7 +116,7 @@ func _on_network_action_received(peer_id: int, action_data: Dictionary):
 		else:
 			last_action_timestamp = timestamp
 	
-	# ✅ Status damage handling
+	#  Status damage handling
 	if is_status_damage:
 		print("[BATTLE SYNC] Received status damage sync from peer %d (timestamp: %d)" % [peer_id, timestamp])
 		_apply_status_damage(action_data)
@@ -177,7 +177,7 @@ func _apply_opponent_action_result(data: Dictionary):
 	var action_type = int(data.get("type", -1))
 	var is_item = (action_type == BattleAction.ActionType.ITEM)
 	
-	# ✅ CRITICAL FIX: Use stored character references instead of orchestrator's
+	#  CRITICAL FIX: Use stored character references instead of orchestrator's
 	# This ensures we always modify the correct character
 	var actor = opponent_character  # Opponent always performs the action
 	var target_is_opponent = data.get("target_is_opponent", false)
@@ -275,7 +275,7 @@ func _apply_opponent_action_result(data: Dictionary):
 					status_name, target.name, duration
 				])
 	
-	# ✅ NEW: Remove status effects from target (cure items)
+	#  NEW: Remove status effects from target (cure items)
 	if not status_effects_removed.is_empty() and target.status_manager:
 		print("[BATTLE SYNC] Processing %d status effect removals on %s" % [
 			status_effects_removed.size(), target.name
@@ -341,7 +341,7 @@ func _apply_opponent_action_result(data: Dictionary):
 	if battle_result != "ongoing":
 		return
 	
-	# ✅ CRITICAL FIX: Only end turn for MAIN ACTIONS, not items
+	#  CRITICAL FIX: Only end turn for MAIN ACTIONS, not items
 	# AND only if we haven't already ended this turn
 	if not is_item:
 		var timestamp = data.get("timestamp", 0)
@@ -350,7 +350,7 @@ func _apply_opponent_action_result(data: Dictionary):
 			return
 		last_turn_end_timestamp = timestamp
 		
-		print("[BATTLE SYNC] ✅ Opponent main action complete - ending their turn")
+		print("[BATTLE SYNC]  Opponent main action complete - ending their turn")
 		orchestrator.turn_controller.end_current_turn()
 	else:
 		print("[BATTLE SYNC] Opponent item complete - NO turn change")
@@ -467,7 +467,7 @@ func _serialize_action_result(action: BattleAction, result) -> Dictionary:
 		"buffs_debuffs": []
 	}
 	
-	# ✅ CRITICAL FIX: Determine target based on character instance IDs
+	#  CRITICAL FIX: Determine target based on character instance IDs
 	if action.targets and not action.targets.is_empty():
 		var target = action.targets[0]
 		
@@ -524,7 +524,7 @@ func _serialize_action_result(action: BattleAction, result) -> Dictionary:
 					"duration": effect.get("duration", 3)
 				})
 		
-		# ✅ NEW: Extract status effect removals (cure items)
+		#  NEW: Extract status effect removals (cure items)
 		if "status_effects_removed" in result and result.status_effects_removed is Array:
 			print("[BATTLE SYNC] Extracting %d status effect removals" % result.status_effects_removed.size())
 			for effect in result.status_effects_removed:

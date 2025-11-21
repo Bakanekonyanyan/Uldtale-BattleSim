@@ -38,7 +38,7 @@ func refresh_lists():
 		var item = item_data.item
 		if item is Equipment:
 			# Add the item with its name and rarity
-			var display_name = "%s [%s]" % [item.name, item.rarity.capitalize()]
+			var display_name = "%s [%s]" % [item.display_name, item.rarity.capitalize()]
 			inventory_list.add_item(display_name)
 			
 			# Set the color based on rarity
@@ -51,7 +51,7 @@ func refresh_lists():
 	for slot in current_character.equipment:
 		var item = current_character.equipment[slot]
 		if item:
-			equipment_list.add_item("%s: %s [%s]" % [slot, item.name, item.rarity.capitalize()])
+			equipment_list.add_item("%s: %s [%s]" % [slot, item.display_name, item.rarity.capitalize()])
 			# Set the color based on rarity
 			var rarity_color = item.get_rarity_color()
 			if rarity_color != "":

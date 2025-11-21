@@ -7,7 +7,7 @@ enum ActionType { ATTACK, SKILL, ITEM, DEFEND, VIEW_EQUIPMENT }
 var type: ActionType
 var actor: CharacterData
 var target: CharacterData
-var targets: Array[CharacterData] = []  # ✅ Typed array
+var targets: Array[CharacterData] = []  #  Typed array
 var skill_data: Skill
 var item_data: Item
 
@@ -17,7 +17,7 @@ static func attack(actor: CharacterData, target: CharacterData) -> BattleAction:
 	action.type = ActionType.ATTACK
 	action.actor = actor
 	action.target = target
-	action.targets.append(target)  # ✅ Append instead of assign
+	action.targets.append(target)  # Append instead of assign
 	return action
 
 static func defend(actor: CharacterData) -> BattleAction:
@@ -70,12 +70,24 @@ func is_valid() -> bool:
 	
 	match type:
 		ActionType.ATTACK, ActionType.VIEW_EQUIPMENT:
+			# Single-target actions need a target
 			return target != null
+		
 		ActionType.SKILL:
+			#  CRITICAL FIX: ALL_ALLIES skills are valid with empty targets
+			# They get resolved in CombatEngine._execute_skill()
+			if skill_data and skill_data.target == Skill.TargetType.ALL_ALLIES:
+				return true
+			
+			# All other skills need non-empty targets
 			return skill_data != null and not targets.is_empty()
+		
 		ActionType.ITEM:
+			# Items need targets (resolved earlier)
 			return item_data != null and not targets.is_empty()
+		
 		ActionType.DEFEND:
+			# Defend needs no targets
 			return true
 	
 	return false
@@ -88,7 +100,7 @@ func get_description() -> String:
 		ActionType.SKILL:
 			return "%s uses %s" % [actor.name, skill_data.name]
 		ActionType.ITEM:
-			return "%s uses %s" % [actor.name, item_data.name]
+			return "%s uses %s" % [actor.name, item_data.display_name]
 		ActionType.DEFEND:
 			return "%s defends" % actor.name
 		ActionType.VIEW_EQUIPMENT:

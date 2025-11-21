@@ -223,7 +223,7 @@ func _on_create_pressed():
 	
 	print("Skills added to new character: ", new_character.skills)
 	
-	# ✅ CRITICAL: Initialize racial elemental modifiers BEFORE calculating stats
+	#CRITICAL: Initialize racial elemental modifiers BEFORE calculating stats
 	new_character.initialize_racial_elementals(true)
 	
 	new_character.calculate_secondary_attributes()

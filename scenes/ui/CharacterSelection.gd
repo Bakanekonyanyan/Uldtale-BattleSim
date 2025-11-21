@@ -105,7 +105,7 @@ func update_character_preview():
 			var color = item.get_rarity_color()
 			var slot_name = slot.capitalize().replace("_", " ")
 			
-			var item_line = "%s: [color=%s]%s[/color]" % [slot_name, color, item.name]
+			var item_line = "%s: [color=%s]%s[/color]" % [slot_name, color, item.display_name]
 			
 			# Add key stats
 			if item.damage > 0:

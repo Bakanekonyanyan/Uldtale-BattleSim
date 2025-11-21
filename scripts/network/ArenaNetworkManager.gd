@@ -182,7 +182,7 @@ func _start_match_signal(is_host_flag: bool):
 	print("[ARENA NET] Match starting! (is_host: %s)" % is_host_flag)
 	emit_signal("match_started", is_host_flag)
 
-# ✅ CRITICAL FIX: Changed to reliable to prevent duplicate/lost actions
+#  CRITICAL FIX: Changed to reliable to prevent duplicate/lost actions
 @rpc("any_peer", "call_remote", "reliable")
 func _send_action(action_data: Dictionary):
 	var sender_id = multiplayer.get_remote_sender_id()
@@ -291,12 +291,12 @@ func _serialize_character(character: CharacterData) -> Dictionary:
 		# Skills
 		"skills": serialized_skills,
 		
-		# ✅ FIXED: Complete equipment serialization
+		#  FIXED: Complete equipment serialization
 		"equipment": _serialize_equipment(character.equipment)
 	}
 
 func _serialize_equipment(equipment: Dictionary) -> Dictionary:
-	"""✅ FIXED: Complete equipment serialization including stat modifiers"""
+	""" FIXED: Complete equipment serialization including stat modifiers"""
 	var result = {}
 	
 	for slot in equipment:
@@ -309,7 +309,7 @@ func _serialize_equipment(equipment: Dictionary) -> Dictionary:
 			result[slot] = {
 				"id": item.id,
 				"key": item.key,
-				"name": item.name,
+				"name": item.display_name,
 				"type": item.type,
 				"slot": item.slot,
 				"damage": item.damage,
@@ -317,18 +317,18 @@ func _serialize_equipment(equipment: Dictionary) -> Dictionary:
 				"rarity": item.rarity,
 				"item_level": item.item_level,
 				
-				# ✅ NEW: Serialize stat modifiers
+				#  NEW: Serialize stat modifiers
 				"stat_modifiers": item.stat_modifiers,
 				"status_effect_type": item.status_effect_type,
 				"status_effect_chance": item.status_effect_chance,
 				"bonus_damage": item.bonus_damage,
 				
-				# ✅ NEW: Serialize naming
+				#  NEW: Serialize naming
 				"item_prefix": item.item_prefix,
 				"item_suffix": item.item_suffix,
 				"flavor_text": item.flavor_text,
 				
-				# ✅ NEW: Mark as already generated
+				#  NEW: Mark as already generated
 				"rarity_applied": item.rarity_applied,
 				"base_item_level": item.base_item_level
 			}
@@ -338,7 +338,7 @@ func _serialize_equipment(equipment: Dictionary) -> Dictionary:
 	return result
 
 func _deserialize_character(data: Dictionary) -> CharacterData:
-	"""✅ FIXED: Reconstruct CharacterData with equipment"""
+	""" FIXED: Reconstruct CharacterData with equipment"""
 	var character = CharacterData.new()
 	
 	character.name = data.name
@@ -383,7 +383,7 @@ func _deserialize_character(data: Dictionary) -> CharacterData:
 		if not valid_skills.is_empty():
 			character.skill_manager.add_skills(valid_skills)
 	
-	# ✅ CRITICAL FIX: Deserialize equipment
+	#  CRITICAL FIX: Deserialize equipment
 	if data.has("equipment"):
 		_deserialize_equipment(character, data.equipment)
 	
@@ -397,7 +397,7 @@ func _deserialize_character(data: Dictionary) -> CharacterData:
 	return character
 
 func _deserialize_equipment(character: CharacterData, equipment_data: Dictionary):
-	"""✅ NEW: Deserialize equipment and apply to character"""
+	""" NEW: Deserialize equipment and apply to character"""
 	
 	for slot in equipment_data:
 		var item_data = equipment_data[slot]
@@ -414,6 +414,6 @@ func _deserialize_equipment(character: CharacterData, equipment_data: Dictionary
 				equipment.apply_stat_modifiers(character)
 			
 			print("[ARENA NET] Deserialized %s: %s (dmg=%d, armor=%d, mods=%d)" % [
-				slot, equipment.name, equipment.damage, equipment.armor_value, 
+				slot, equipment.display_name, equipment.damage, equipment.armor_value, 
 				equipment.stat_modifiers.size()
 			])

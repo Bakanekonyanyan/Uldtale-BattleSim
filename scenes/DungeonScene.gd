@@ -1,6 +1,7 @@
 # res://scenes/DungeonScene.gd
 # REFACTORED: Now just a transition scene that passes through to Battle
 # All dungeon state is managed by DungeonStateManager
+#  FIXED: Multi-enemy support
 
 extends Control
 
@@ -25,21 +26,38 @@ func start_dungeon(battle_data: Dictionary):
 	"""
 	Called by SceneManager with complete battle data from DungeonStateManager
 	This scene just displays the floor info briefly, then transitions to battle
+	 FIXED: Now handles both single enemy (legacy) and multi-enemy arrays
 	"""
 	print("DungeonScene: start_dungeon called")
 	print("  - Floor: %d, Wave: %d" % [battle_data["current_floor"], battle_data["current_wave"]])
 	print("  - Player: ", battle_data["player_character"].name if battle_data["player_character"] else "NULL")
-	print("  - Enemy: ", battle_data["enemy"].name if battle_data["enemy"] else "NULL")
+	
+	#  FIX: Handle both multi-enemy and legacy single enemy
+	if battle_data.has("enemies"):
+		print("  - Enemies: %d" % battle_data["enemies"].size())
+		for enemy in battle_data["enemies"]:
+			print("    - %s" % enemy.name)
+	elif battle_data.has("enemy"):
+		print("  - Enemy: ", battle_data["enemy"].name if battle_data["enemy"] else "NULL")
+	
 	print("  - Boss: ", battle_data["is_boss_fight"])
 	
-	# Validate
+	# Validate player
 	if not battle_data.has("player_character") or not battle_data["player_character"]:
 		push_error("DungeonScene: Missing player_character!")
 		SceneManager.change_to_character_selection()
 		return
 	
-	if not battle_data.has("enemy") or not battle_data["enemy"]:
-		push_error("DungeonScene: Missing enemy!")
+	#  FIX: Validate enemies (check both formats)
+	var has_valid_enemies = false
+	
+	if battle_data.has("enemies") and not battle_data["enemies"].is_empty():
+		has_valid_enemies = true
+	elif battle_data.has("enemy") and battle_data["enemy"]:
+		has_valid_enemies = true
+	
+	if not has_valid_enemies:
+		push_error("DungeonScene: Missing enemies!")
 		SceneManager.change_to_character_selection()
 		return
 	
@@ -69,6 +87,5 @@ func update_labels(battle_data: Dictionary):
 	
 	if floor_label:
 		floor_label.text = "Floor: %d" % current_floor
-	
 	
 	print("DungeonScene: Labels updated - Floor %d, Wave %d" % [current_floor, current_wave])

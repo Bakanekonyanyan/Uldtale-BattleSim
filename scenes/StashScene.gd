@@ -34,7 +34,7 @@ func _ready():
 		print("Whoops! No character loaded.")
 		return
 	
-	# ✅ ENABLE MULTI-SELECT
+	#  ENABLE MULTI-SELECT
 	inventory_list.select_mode = ItemList.SELECT_MULTI
 	stash_list.select_mode = ItemList.SELECT_MULTI
 	
@@ -144,12 +144,12 @@ func refresh_lists():
 		
 		if item_data.item is Equipment:
 			var equip = item_data.item
-			var display_name = "%s (x%d) [%s]" % [equip.name, item_data.quantity, equip.rarity.capitalize()]
+			var display_name = "%s (x%d) [%s]" % [equip.display_name, item_data.quantity, equip.rarity.capitalize()]
 			inventory_list.add_item(display_name)
 			var rarity_color = Color(equip.get_rarity_color())
 			inventory_list.set_item_custom_fg_color(i, rarity_color)
 		else:
-			inventory_list.add_item("%s (x%d)" % [item_data.item.name, item_data.quantity])
+			inventory_list.add_item("%s (x%d)" % [item_data.item.display_name, item_data.quantity])
 	
 	var stash_items = _get_filtered_items_from(player_character.stash)
 	for i in range(stash_items.size()):
@@ -158,12 +158,12 @@ func refresh_lists():
 		
 		if item_data.item is Equipment:
 			var equip = item_data.item
-			var display_name = "%s (x%d) [%s]" % [equip.name, item_data.quantity, equip.rarity.capitalize()]
+			var display_name = "%s (x%d) [%s]" % [equip.display_name, item_data.quantity, equip.rarity.capitalize()]
 			stash_list.add_item(display_name)
 			var rarity_color = Color(equip.get_rarity_color())
 			stash_list.set_item_custom_fg_color(i, rarity_color)
 		else:
-			stash_list.add_item("%s (x%d)" % [item_data.item.name, item_data.quantity])
+			stash_list.add_item("%s (x%d)" % [item_data.item.display_name, item_data.quantity])
 	
 	update_capacity_labels()
 
@@ -307,7 +307,7 @@ func _on_stash_item_clicked(index: int, _at_position: Vector2, _mouse_button_ind
 		
 		if player_character.stash.items.has(item_id):
 			var item = player_character.stash.items[item_id].item
-			print("Found item in stash: ", item.name)
+			print("Found item in stash: ", item.display_name)
 			display_item_info(item)
 		else:
 			print("ERROR: Item not found in stash!")
@@ -326,7 +326,7 @@ func display_item_info(item: Item):
 		if item is Equipment:
 			info_text = item.get_full_description()
 		else:
-			info_text = "[b]%s[/b]\n\n%s\n\n" % [item.name, item.description]
+			info_text = "[b]%s[/b]\n\n%s\n\n" % [item.display_name, item.description]
 			
 			if item.item_type == Item.ItemType.CONSUMABLE:
 				info_text += "[color=cyan][b]Effect:[/b][/color]\n"
@@ -350,5 +350,5 @@ func display_item_info(item: Item):
 		
 		item_info_label.text = info_text
 	else:
-		info_text = "%s\n\n%s" % [item.name, item.description]
+		info_text = "%s\n\n%s" % [item.display_name, item.description]
 		item_info_label.text = info_text

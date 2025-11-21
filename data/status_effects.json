@@ -28,13 +28,14 @@
 		"message": "{name} is frozen, reducing movement and precision"
 	},
 	"BLEED": {
-		"damage_type": "hp_percent",
-		"damage_value": 0.125,
+		"damage_type": "stackable_burst",
+		"max_stacks": 3,
+		"burst_damage_percent": 0.30,
 		"stat_modifiers": {
-			"vitality": -2,
-			"endurance": -2
+			"vitality": -1,
+			"endurance": -1
 		},
-		"message": "{name} bleeds for {damage} damage"
+		"message": "{name} has {stacks} bleed stack(s)"
 	},
 	"CONFUSED": {
 		"damage_type": "none",
@@ -43,7 +44,9 @@
 			"mind": -3
 		},
 		"accuracy_reduction": 0.3,
-		"message": "{name} is confused, reducing accuracy and mental clarity"
+		"self_harm_chance": 0.30,
+		"self_harm_multiplier": 0.70,
+		"message": "{name} is confused and might hurt themselves"
 	},
 	"BLIND": {
 		"damage_type": "none",

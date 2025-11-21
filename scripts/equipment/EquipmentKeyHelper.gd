@@ -35,7 +35,7 @@ static func get_equipment_key(equipment: Equipment) -> String:
 		return find_key_by_name(equipment.base_name, equipment.slot)
 	
 	# Fallback: Strip prefixes/suffixes and search by base name
-	var base_name = strip_affixes(equipment.name)
+	var base_name = strip_affixes(equipment.display_name)
 	return find_key_by_name(base_name, equipment.slot)
 
 ## Strip common prefixes and suffixes from equipment names

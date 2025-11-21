@@ -1,4 +1,4 @@
-# ItemManager.gd - FIXED: Add proficiency keys during loading
+# ItemManager.gd - FIXED: Optional min_rarity_tier parameter
 
 extends Node
 
@@ -156,8 +156,16 @@ func print_consumables():
 func print_materials():
 	print("Available materials: ", materials.keys())
 
-func create_equipment_for_floor(item_id: String, floor: int) -> Equipment:
-	"""Creates equipment instance scaled to a specific floor"""
+#  FIXED: Make min_rarity_tier OPTIONAL with default value of 0
+func create_equipment_for_floor(item_id: String, floor: int, min_rarity_tier: int = 0) -> Equipment:
+	"""
+	Creates equipment instance scaled to a specific floor
+	
+	Parameters:
+	- item_id: Equipment template ID
+	- floor: Current floor number (affects item level)
+	- min_rarity_tier: OPTIONAL minimum rarity tier (0 = no minimum, uses random roll)
+	"""
 	if not equipment_templates.has(item_id):
 		print("ItemManager: Template not found for: ", item_id)
 		return null
@@ -170,6 +178,11 @@ func create_equipment_for_floor(item_id: String, floor: int) -> Equipment:
 	
 	# CRITICAL: Add floor context
 	template_data["floor_number"] = floor
+	
+	# NEW: Add minimum rarity tier if specified
+	if min_rarity_tier > 0:
+		template_data["min_rarity_tier"] = min_rarity_tier
+		print("ItemManager: Creating equipment with min rarity tier %d" % min_rarity_tier)
 	
 	# Clear any pre-existing rarity data to force fresh generation
 	template_data.erase("rarity")
@@ -197,3 +210,54 @@ func get_item(item_id: String) -> Item:
 	
 	print("ItemManager: Item not found: ", item_id)
 	return null
+	
+# ADD: Class-biased random weapon selection
+func get_random_weapon_biased(character_class: String = "") -> String:
+	"""Get random weapon with optional class bias"""
+	if character_class == "" or not ClassEquipmentBias.CLASS_EQUIPMENT_BIAS.has(character_class):
+		return get_random_weapon()  # Fallback to existing random
+	
+	return ClassEquipmentBias.get_biased_equipment_id(character_class, "weapons")
+
+# ADD: Class-biased random armor selection
+func get_random_armor_biased(character_class: String = "", slot: String = "") -> String:
+	"""Get random armor with optional class bias and slot filter"""
+	if character_class == "" or not ClassEquipmentBias.CLASS_EQUIPMENT_BIAS.has(character_class):
+		return get_random_armor("", slot)  # Fallback to existing random
+	
+	var armor_id = ClassEquipmentBias.get_biased_equipment_id(character_class, "armors")
+	
+	# Apply slot filter if specified
+	if slot != "" and armor_id != "":
+		var template = get_equipment_template(armor_id)
+		if template.get("slot", "") != slot:
+			# Re-roll with slot filter
+			var prefs = ClassEquipmentBias.CLASS_EQUIPMENT_BIAS[character_class]
+			var armor_types = prefs.get("armor_types", [])
+			var filtered = _get_armors_by_type_and_slot(armor_types, slot)
+			if not filtered.is_empty():
+				return filtered[RandomManager.randi() % filtered.size()]
+	
+	return armor_id
+
+# ADD: Helper for slot filtering
+func _get_armors_by_type_and_slot(armor_types: Array, slot: String) -> Array:
+	"""Get armor IDs matching both type and slot"""
+	var result = []
+	for armor_id in armors.keys():
+		var template = get_equipment_template(armor_id)
+		if template.get("type", "") in armor_types and template.get("slot", "") == slot:
+			result.append(armor_id)
+	return result
+
+# ADD: Class-biased random equipment
+func get_random_equipment_biased(character_class: String = "") -> String:
+	"""Get random equipment (weapon or armor) with class bias"""
+	if character_class == "" or not ClassEquipmentBias.CLASS_EQUIPMENT_BIAS.has(character_class):
+		return get_random_equipment()
+	
+	# 50/50 weapon vs armor
+	if RandomManager.randf() < 0.5:
+		return get_random_weapon_biased(character_class)
+	else:
+		return get_random_armor_biased(character_class)

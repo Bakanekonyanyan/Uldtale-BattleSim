@@ -1,4 +1,4 @@
-# res://scenes/ShopScene.gd
+# res://scenes/ShopScene.gd - ENHANCED UX/UI
 extends Control
 
 enum ItemCategory { ALL, CONSUMABLES, WEAPONS, ARMOR, BUYBACK }
@@ -21,12 +21,12 @@ var all_tab: Button
 var consumables_tab: Button
 var weapons_tab: Button
 var armor_tab: Button
-var buyback_tab: Button  # NEW
+var buyback_tab: Button
 
 func _ready():
 	print("ShopScene: _ready called")
 	
-	# ✅ ENABLE MULTI-SELECT
+	# Enable multi-select
 	if item_list:
 		item_list.select_mode = ItemList.SELECT_MULTI
 	if sell_item_list:
@@ -39,15 +39,15 @@ func _ready():
 	if exit_button:
 		exit_button.connect("pressed", Callable(self, "_on_exit_pressed"))
 	if item_list:
-		item_list.connect("item_selected", Callable(self, "_on_shop_item_selected"))
+		item_list.connect("item_clicked", Callable(self, "_on_shop_item_clicked"))
 	if sell_button:
-		sell_button.text = "Sell Selected"  # Updated text
+		sell_button.text = "Sell Selected"
 		sell_button.connect("pressed", Callable(self, "_on_sell_pressed"))
 	if sell_all_button:
-		sell_all_button.text = "Sell All Selected (Full Stack)"  # Updated text
+		sell_all_button.text = "Sell All Selected (Full Stack)"
 		sell_all_button.connect("pressed", Callable(self, "_on_sell_all_pressed"))
 	if sell_item_list:
-		sell_item_list.connect("item_selected", Callable(self, "_on_sell_item_selected"))
+		sell_item_list.connect("item_clicked", Callable(self, "_on_sell_item_clicked"))
 	
 	player_character = CharacterManager.get_current_character()
 	if player_character == null:
@@ -55,7 +55,7 @@ func _ready():
 		SceneManager.change_scene("res://scenes/ui/CharacterSelection.tscn")
 		return
 	
-	# NEW: Update buyback based on current floor
+	# Update buyback based on current floor
 	ShopManager.clear_buyback_on_floor_change(player_character.current_floor)
 	
 	refresh_shop_display()
@@ -65,6 +65,7 @@ func _ready():
 	print("ShopScene: Multi-select enabled")
 
 func setup_tabs():
+	"""Setup category tabs with enhanced visuals"""
 	tab_container = HBoxContainer.new()
 	tab_container.position = Vector2(32, 8)
 	
@@ -92,7 +93,6 @@ func setup_tabs():
 	armor_tab.pressed.connect(func(): _on_category_changed(ItemCategory.ARMOR))
 	tab_container.add_child(armor_tab)
 	
-	# NEW: Buyback tab
 	buyback_tab = Button.new()
 	buyback_tab.text = "Buyback"
 	buyback_tab.custom_minimum_size = Vector2(80, 32)
@@ -110,53 +110,68 @@ func _on_category_changed(category: ItemCategory):
 	clear_item_info()
 
 func _update_tab_visuals():
+	"""Enhanced tab highlighting with background colors and borders"""
 	var tabs = [all_tab, consumables_tab, weapons_tab, armor_tab, buyback_tab]
+	
 	for i in range(tabs.size()):
-		if tabs[i]:
-			if i == current_category:
-				tabs[i].modulate = Color(1.2, 1.2, 0.8)
-			else:
-				tabs[i].modulate = Color(1, 1, 1)
+		if not tabs[i]:
+			continue
+		
+		var style_normal = StyleBoxFlat.new()
+		style_normal.corner_radius_top_left = 4
+		style_normal.corner_radius_top_right = 4
+		
+		if i == current_category:
+			# Active tab: Brighter with gold border
+			style_normal.bg_color = Color("#4A4A3A")
+			style_normal.border_width_bottom = 3
+			style_normal.border_color = Color("#FFD700")
+			tabs[i].add_theme_stylebox_override("normal", style_normal)
+			tabs[i].modulate = Color(1, 1, 1)
+		else:
+			# Inactive tab: Darker
+			style_normal.bg_color = Color("#2A2A2A")
+			tabs[i].add_theme_stylebox_override("normal", style_normal)
+			tabs[i].modulate = Color(0.7, 0.7, 0.7)
 
 func refresh_shop_display():
+	"""Refresh shop items with enhanced formatting"""
 	if item_list:
 		item_list.clear()
 		
 		var index = 0
 		
-		# NEW: Show buyback items if buyback tab selected
+		# Show buyback items if buyback tab selected
 		if current_category == ItemCategory.BUYBACK:
 			var buyback_items = ShopManager.get_buyback_list()
-			for buyback_data in buyback_items:
-				var item = buyback_data["item"]
-				var price = buyback_data["price"]
-				var quantity = buyback_data["quantity"]
-				
-				var display_text = ""
-				if item is Equipment:
-					display_text = "%s [%s] (x%d) - %d copper" % [
-						item.name,
-						item.rarity.capitalize(),
-						quantity,
-						price
-					]
+			
+			if buyback_items.is_empty():
+				# Add placeholder message
+				item_list.add_item("No items to buyback")
+				item_list.set_item_disabled(0, true)
+				item_list.set_item_custom_fg_color(0, Color(0.5, 0.5, 0.5))
+			else:
+				for buyback_data in buyback_items:
+					var item = buyback_data["item"]
+					var price = buyback_data["price"]
+					var quantity = buyback_data["quantity"]
 					
+					var display_text = _format_shop_item(item, price, quantity)
 					item_list.add_item(display_text)
-					var rarity_color = Color(item.get_rarity_color())
-					item_list.set_item_custom_fg_color(index, rarity_color)
-				else:
-					display_text = "%s (x%d) - %d copper" % [item.name, quantity, price]
-					item_list.add_item(display_text)
-				
-				# Store buyback data in metadata
-				item_list.set_item_metadata(index, {
-					"type": "buyback",
-					"key": buyback_data["key"],
-					"item": item,
-					"price": price,
-					"quantity": quantity
-				})
-				index += 1
+					
+					if item is Equipment:
+						var rarity_color = Color(item.get_rarity_color())
+						item_list.set_item_custom_fg_color(index, rarity_color)
+					
+					# Store buyback data in metadata
+					item_list.set_item_metadata(index, {
+						"type": "buyback",
+						"key": buyback_data["key"],
+						"item": item,
+						"price": price,
+						"quantity": quantity
+					})
+					index += 1
 			
 			# Update button text for buyback
 			if buy_button:
@@ -172,7 +187,8 @@ func refresh_shop_display():
 					var item = ShopManager.get_consumable_item(item_id)
 					if item:
 						var price = ShopManager.get_consumable_price(item_id)
-						item_list.add_item("%s - %d copper" % [item.name, price])
+						var display_text = _format_shop_item(item, price)
+						item_list.add_item(display_text)
 						item_list.set_item_metadata(index, {
 							"type": "consumable",
 							"id": item_id,
@@ -198,12 +214,7 @@ func refresh_shop_display():
 						should_show = equipment.slot in ["head", "chest", "hands", "legs", "feet"]
 					
 					if should_show:
-						var display_text = "%s [%s] - %d copper" % [
-							equipment.name,
-							equipment.rarity.capitalize(),
-							price
-						]
-						
+						var display_text = _format_shop_item(equipment, price)
 						item_list.add_item(display_text)
 						
 						var rarity_color = Color(equipment.get_rarity_color())
@@ -218,29 +229,86 @@ func refresh_shop_display():
 						index += 1
 	
 	if player_currency_label and player_character:
-		player_currency_label.text = "Your Gold: %s" % player_character.currency.get_formatted()
+		# Enhanced currency display with icon
+		var copper = player_character.currency.copper
+		var color = "#FFD700"  # Gold
+		
+		if copper < 100:
+			color = "#FF6666"  # Red if low
+		elif copper < 500:
+			color = "#FFAA44"  # Orange if medium
+		
+		player_currency_label.text = "[color=%s] Your Gold: %s[/color]" % [
+			color,
+			player_character.currency.get_formatted()
+		]
+
+func _format_shop_item(item: Item, price: int, quantity: int = 1) -> String:
+	"""Format shop item display for better readability"""
+	var display = ""
+	
+	if item is Equipment:
+		display = "%s  [%s]  (ilvl %d)" % [
+			item.display_name,
+			item.rarity.capitalize(),
+			item.item_level
+		]
+		if quantity > 1:
+			display += "  ×%d" % quantity
+		display += "  —  %d copper" % price
+	else:
+		display = "%s" % item.display_name
+		if quantity > 1:
+			display += "  ×%d" % quantity
+		display += "  —  %d copper" % price
+	
+	return display
 
 func refresh_sell_items():
+	"""Refresh sell items with enhanced formatting"""
 	if sell_item_list:
 		sell_item_list.clear()
 		var index = 0
 		
-		for item_id in player_character.inventory.items:
-			var item_data = player_character.inventory.items[item_id]
-			var item = item_data.item
-			
-			if item:
-				var sell_value = item.value / 2
-				var display_text = "%s (x%d) - %d copper" % [item.name, item_data.quantity, sell_value]
-				sell_item_list.add_item(display_text)
+		if player_character.inventory.items.is_empty():
+			# Add placeholder message
+			sell_item_list.add_item("Your inventory is empty")
+			sell_item_list.set_item_disabled(0, true)
+			sell_item_list.set_item_custom_fg_color(0, Color(0.5, 0.5, 0.5))
+		else:
+			for item_id in player_character.inventory.items:
+				var item_data = player_character.inventory.items[item_id]
+				var item = item_data.item
 				
-				if item is Equipment:
-					var rarity_color = Color(item.get_rarity_color())
-					sell_item_list.set_item_custom_fg_color(index, rarity_color)
-				
-				index += 1
+				if item:
+					var sell_value = item.value / 2
+					var display_text = _format_sell_item(item, sell_value, item_data.quantity)
+					sell_item_list.add_item(display_text)
+					
+					if item is Equipment:
+						var rarity_color = Color(item.get_rarity_color())
+						sell_item_list.set_item_custom_fg_color(index, rarity_color)
+					
+					index += 1
 
-func _on_shop_item_selected(index: int):
+func _format_sell_item(item: Item, sell_value: int, quantity: int) -> String:
+	"""Format sell item display for better readability"""
+	var display = ""
+	
+	if item is Equipment:
+		display = "%s  [%s]" % [item.display_name, item.rarity.capitalize()]
+		if quantity > 1:
+			display += "  ×%d" % quantity
+		display += "  —  %d copper" % sell_value
+	else:
+		display = "%s" % item.display_name
+		if quantity > 1:
+			display += "  ×%d" % quantity
+		display += "  —  %d copper" % sell_value
+	
+	return display
+
+func _on_shop_item_clicked(index: int, _at_position: Vector2, _mouse_button_index: int):
 	var metadata = item_list.get_item_metadata(index)
 	if not metadata:
 		return
@@ -248,16 +316,17 @@ func _on_shop_item_selected(index: int):
 	var item = metadata["item"]
 	var price = metadata["price"]
 	
-	print("Shop item selected: %s" % item.name)
+	print("Shop item selected: %s" % item.display_name)
 	display_item_info(item, price, true)
 
-func _on_sell_item_selected(index: int):
+func _on_sell_item_clicked(index: int, _at_position: Vector2, _mouse_button_index: int):
 	var item_id = player_character.inventory.items.keys()[index]
 	var item = player_character.inventory.items[item_id].item
 	
 	display_item_info(item, item.value / 2, false)
 
 func display_item_info(item: Item, price: int, is_buying: bool):
+	"""Enhanced item info display"""
 	if not item_info_label:
 		return
 	
@@ -270,38 +339,42 @@ func display_item_info(item: Item, price: int, is_buying: bool):
 			info_text = item.get_full_description()
 			info_text += "\n\n"
 		else:
-			info_text = "[b]%s[/b]\n\n%s\n\n" % [item.name, item.description]
+			info_text = "[center][b][color=#FFD700]%s[/color][/b][/center]\n" % item.display_name
+			info_text += "[color=#CCCCCC]%s[/color]\n\n" % item.description
 			
 			if item.item_type == Item.ItemType.CONSUMABLE:
-				info_text += "[color=cyan][b]Consumable Effect:[/b][/color]\n"
+				info_text += "[color=#00DDFF][b]═══ EFFECT ═══[/b][/color]\n"
 				
 				match item.consumable_type:
 					Item.ConsumableType.DAMAGE:
-						info_text += "  Deals %d damage\n" % item.effect_power
+						info_text += "[color=#FF6666] Deals %d damage[/color]\n" % item.effect_power
 						if item.status_effect != Skill.StatusEffect.NONE:
 							var effect_name = Skill.StatusEffect.keys()[item.status_effect]
-							info_text += "  Inflicts [color=purple]%s[/color] for %d turns\n" % [effect_name, item.effect_duration]
+							info_text += "[color=#BB88FF]✦ Inflicts %s for %d turns[/color]\n" % [effect_name, item.effect_duration]
 					Item.ConsumableType.HEAL:
-						info_text += "  Restores %d HP\n" % item.effect_power
+						info_text += "[color=#66FF66] Restores %d HP[/color]\n" % item.effect_power
 					Item.ConsumableType.RESTORE:
-						info_text += "  Restores %d MP/SP\n" % item.effect_power
+						info_text += "[color=#6666FF] Restores %d MP/SP[/color]\n" % item.effect_power
 					Item.ConsumableType.BUFF:
-						info_text += "  Increases %s by %d for %d turns\n" % [item.buff_type, item.effect_power, item.effect_duration]
+						info_text += "[color=#FFDD66] Increases %s by %d for %d turns[/color]\n" % [item.buff_type, item.effect_power, item.effect_duration]
 					Item.ConsumableType.CURE:
-						info_text += "  Cures all status effects\n"
+						info_text += "[color=#66FFDD] Cures all status effects[/color]\n"
 						if item.effect_power > 0:
-							info_text += "  Restores %d HP\n" % item.effect_power
+							info_text += "[color=#66FF66] Restores %d HP[/color]\n" % item.effect_power
 				
 				info_text += "\n"
 		
+		# Show price with appropriate color
 		if is_buying:
-			info_text += "[color=yellow]Buy Price: %d copper[/color]" % price
+			var can_afford = player_character.currency.copper >= price
+			var price_color = "#00FF00" if can_afford else "#FF4444"
+			info_text += "[color=%s] Buy Price: %d copper[/color]" % [price_color, price]
 		else:
-			info_text += "[color=yellow]Sell Price: %d copper[/color]" % price
+			info_text += "[color=#FFD700] Sell Price: %d copper[/color]" % price
 		
 		item_info_label.text = info_text
 	else:
-		info_text = "%s\n\n%s\n\n" % [item.name, item.description]
+		info_text = "%s\n\n%s\n\n" % [item.display_name, item.description]
 		if is_buying:
 			info_text += "Buy Price: %d copper" % price
 		else:
@@ -309,11 +382,21 @@ func display_item_info(item: Item, price: int, is_buying: bool):
 		item_info_label.text = info_text
 
 func clear_item_info():
+	"""Enhanced empty state message"""
 	if item_info_label:
-		item_info_label.text = "Select an item to view details"
+		var empty_message = "[center][color=#888888][i]"
+		
+		match current_category:
+			ItemCategory.BUYBACK:
+				empty_message += "Select an item to buyback\n\n[color=#FFAA44]Tip: Items you sell are added here[/color]"
+			_:
+				empty_message += "Select an item to view details and pricing"
+		
+		empty_message += "[/i][/color][/center]"
+		item_info_label.text = empty_message
 
-# NEW: Batch buy selected items
 func _on_buy_pressed():
+	"""Batch buy selected items"""
 	var selected_items = item_list.get_selected_items()
 	if selected_items.is_empty():
 		return
@@ -332,7 +415,7 @@ func _on_buy_pressed():
 	if player_character.currency.copper < total_cost:
 		print("Not enough gold!")
 		var dialog = AcceptDialog.new()
-		dialog.dialog_text = "Not enough gold! Need %d copper, have %d copper" % [total_cost, player_character.currency.copper]
+		dialog.dialog_text = "[color=#FF4444]Not enough gold![/color]\n\nNeed: %d copper\nHave: %d copper" % [total_cost, player_character.currency.copper]
 		dialog.title = "Cannot Purchase"
 		add_child(dialog)
 		dialog.popup_centered()
@@ -345,7 +428,7 @@ func _on_buy_pressed():
 			var price = item_data["price"]
 			player_character.currency.subtract(price)
 			player_character.inventory.add_item(item)
-			print("ShopScene: Purchased consumable: %s" % item.name)
+			print("ShopScene: Purchased consumable: %s" % item.display_name)
 		
 		elif item_data["type"] == "equipment":
 			var equipment = item_data["item"]
@@ -355,7 +438,7 @@ func _on_buy_pressed():
 			player_character.currency.subtract(price)
 			player_character.inventory.add_item(equipment, 1)
 			ShopManager.purchase_equipment(key)
-			print("ShopScene: Purchased equipment: %s" % equipment.name)
+			print("ShopScene: Purchased equipment: %s" % equipment.display_name)
 		
 		elif item_data["type"] == "buyback":
 			var item = item_data["item"]
@@ -366,7 +449,7 @@ func _on_buy_pressed():
 			if result["success"]:
 				player_character.currency.subtract(price)
 				player_character.inventory.add_item(result["item"], result["quantity"])
-				print("ShopScene: Bought back: %s" % item.name)
+				print("ShopScene: Bought back: %s" % item.display_name)
 	
 	refresh_shop_display()
 	refresh_sell_items()
@@ -374,7 +457,6 @@ func _on_buy_pressed():
 	
 	print("Purchased %d items for %d copper" % [items_to_buy.size(), total_cost])
 
-# NEW: Batch sell selected items (one of each)
 func _on_sell_pressed():
 	"""Sell selected items (one of each) - FIXED"""
 	var selected_items = sell_item_list.get_selected_items()
@@ -382,18 +464,18 @@ func _on_sell_pressed():
 		print("No items selected")
 		return
 	
-	# ✅ FIX: Sort indices in DESCENDING order to avoid index shifting
+	# Sort indices in DESCENDING order to avoid index shifting
 	selected_items.sort()
 	selected_items.reverse()
 	
 	var total_earned = 0
 	
 	for item_index in selected_items:
-		# ✅ FIX: Re-fetch item keys EACH iteration (inventory may have changed)
+		# Re-fetch item keys EACH iteration
 		var current_keys = player_character.inventory.items.keys()
 		
 		if item_index >= current_keys.size():
-			print("⚠️ Index %d out of range (only %d items), skipping" % [item_index, current_keys.size()])
+			print("Index %d out of range, skipping" % item_index)
 			continue
 		
 		var item_id = current_keys[item_index]
@@ -421,18 +503,18 @@ func _on_sell_all_pressed():
 		print("No items selected")
 		return
 	
-	# ✅ FIX: Sort indices in DESCENDING order
+	# Sort indices in DESCENDING order
 	selected_items.sort()
 	selected_items.reverse()
 	
 	var total_earned = 0
 	
 	for item_index in selected_items:
-		# ✅ FIX: Re-fetch keys EACH iteration
+		# Re-fetch keys EACH iteration
 		var current_keys = player_character.inventory.items.keys()
 		
 		if item_index >= current_keys.size():
-			print("⚠️ Index %d out of range (only %d items), skipping" % [item_index, current_keys.size()])
+			print("Index %d out of range, skipping" % item_index)
 			continue
 		
 		var item_id = current_keys[item_index]

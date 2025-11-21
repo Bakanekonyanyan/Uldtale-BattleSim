@@ -33,7 +33,7 @@ enum StatusEffect {
 	REFLECT       # Buff effect
 }
 enum AbilityType { PHYSICAL, MAGICAL }
-enum DrainTarget {HP, MP, SP }
+enum DrainTarget { HP, MP, SP }
 enum ElementType {
 	NONE,
 	EARTH,
@@ -43,10 +43,9 @@ enum ElementType {
 	LIGHTNING,
 	HOLY,
 	DARK,
-	PHYSICAL  # Non-elemental physical damage
+	PHYSICAL
 }
 
-# Add this as an export variable
 @export var element: ElementType = ElementType.NONE
 @export var elements: Array = []
 
@@ -56,11 +55,13 @@ enum ElementType {
 @export var type: SkillType
 @export var target: TargetType
 
-# CHANGED: Now arrays to support multiple targets
-@export var attribute_targets: Array = []  # Array of AttributeTarget enums
-@export var status_effects: Array = []  # Array of StatusEffect enums
-@export var drain_target: DrainTarget = DrainTarget.HP
-@export var drain_efficiency: float = 0.5  # 50% of damage becomes healing
+@export var attribute_targets: Array = []
+@export var status_effects: Array = []
+
+# === DRAIN SYSTEM (Enhanced) ===
+@export var drain_source: DrainTarget = DrainTarget.HP  # What to drain FROM target
+@export var drain_restore: DrainTarget = DrainTarget.HP  # What to restore TO user
+@export var drain_efficiency: float = 0.5  # Conversion rate (0.0 to 1.0+)
 
 @export var power: int
 @export var duration: int
@@ -77,8 +78,7 @@ enum ElementType {
 @export var base_cooldown: int
 @export var base_duration: int
 
-
-const LEVEL_THRESHOLDS = [5, 25, 125, 625, 1500]
+const LEVEL_THRESHOLDS = [5, 15, 30, 60, 120]
 
 static func create_from_dict(data: Dictionary) -> Skill:
 	var skill = Skill.new()
@@ -88,62 +88,61 @@ static func create_from_dict(data: Dictionary) -> Skill:
 	skill.type = SkillType[data.type.to_upper()]
 	skill.target = TargetType[data.target.to_upper()]
 	
-	# ✅ PARSE ELEMENTS - supports both single string and array
+	# Parse elements
 	skill.elements = []
 	if data.has("elements") and data.elements is Array:
-		# New plural array format: "elements": ["FIRE", "HOLY"]
 		for elem_str in data.elements:
 			if elem_str != "" and elem_str != "NONE" and ElementType.has(elem_str.to_upper()):
 				skill.elements.append(ElementType[elem_str.to_upper()])
 	elif data.has("element"):
-		# Handle single element for backward compatibility
 		var elem_data = data.element
 		if elem_data is String and elem_data != "" and elem_data != "NONE":
 			if ElementType.has(elem_data.to_upper()):
 				skill.elements.append(ElementType[elem_data.to_upper()])
 	
-	# Parse attribute_targets - handles multiple formats
+	# Parse attribute_targets
 	skill.attribute_targets = []
 	if data.has("attribute_targets") and data.attribute_targets is Array:
-		# New plural array format: "attribute_targets": ["FORTITUDE", "ENDURANCE"]
 		for attr_str in data.attribute_targets:
 			if attr_str != "" and AttributeTarget.has(attr_str.to_upper()):
 				skill.attribute_targets.append(AttributeTarget[attr_str.to_upper()])
 	elif data.has("attribute_target"):
-		# Handle both string and array for backward compatibility
 		var attr_data = data.attribute_target
 		if attr_data is Array:
-			# Array format: "attribute_target": ["FORTITUDE"]
 			for attr_str in attr_data:
 				if attr_str != "" and attr_str != "NONE" and AttributeTarget.has(attr_str.to_upper()):
 					skill.attribute_targets.append(AttributeTarget[attr_str.to_upper()])
 		elif attr_data is String:
-			# String format: "attribute_target": "FORTITUDE"
 			if attr_data != "" and attr_data != "NONE" and AttributeTarget.has(attr_data.to_upper()):
 				skill.attribute_targets.append(AttributeTarget[attr_data.to_upper()])
 	
-	# Parse status_effects - handles multiple formats
+	# Parse status_effects
 	skill.status_effects = []
 	if data.has("status_effects") and data.status_effects is Array:
-		# New plural array format: "status_effects": ["FREEZE", "SHOCK"]
 		for effect_str in data.status_effects:
 			if effect_str != "" and StatusEffect.has(effect_str.to_upper()):
 				skill.status_effects.append(StatusEffect[effect_str.to_upper()])
 	elif data.has("status_effect"):
-		# Handle both string and array for backward compatibility
 		var effect_data = data.status_effect
 		if effect_data is Array:
-			# Array format: "status_effect": ["BURN"]
 			for effect_str in effect_data:
 				if effect_str != "" and effect_str != "NONE" and StatusEffect.has(effect_str.to_upper()):
 					skill.status_effects.append(StatusEffect[effect_str.to_upper()])
 		elif effect_data is String:
-			# String format: "status_effect": "BURN"
 			if effect_data != "" and effect_data != "NONE" and StatusEffect.has(effect_data.to_upper()):
 				skill.status_effects.append(StatusEffect[effect_data.to_upper()])
 	
-	if data.has("drain_target"):
-		skill.drain_target = DrainTarget[data.drain_target.to_upper()]
+	# === NEW: Parse drain system properties ===
+	if data.has("drain_source"):
+		skill.drain_source = DrainTarget[data.drain_source.to_upper()]
+	else:
+		skill.drain_source = DrainTarget.HP  # Default
+	
+	if data.has("drain_restore"):
+		skill.drain_restore = DrainTarget[data.drain_restore.to_upper()]
+	else:
+		skill.drain_restore = DrainTarget.HP  # Default
+	
 	if data.has("drain_efficiency"):
 		skill.drain_efficiency = data.drain_efficiency
 	
@@ -192,7 +191,7 @@ func calculate_level_bonuses():
 	
 	var level_index = min(level - 1, 5)
 	
-	if type in [SkillType.DAMAGE, SkillType.HEAL, SkillType.RESTORE]:
+	if type in [SkillType.DAMAGE, SkillType.HEAL, SkillType.RESTORE, SkillType.DRAIN]:
 		power = int(base_power * power_multipliers[level_index])
 	elif type in [SkillType.BUFF, SkillType.DEBUFF]:
 		power = int(base_power * power_multipliers[level_index])
@@ -210,7 +209,15 @@ func on_skill_used():
 		return "Skill leveled up to " + get_level_string() + "!"
 	return ""
 
-func use(user: CharacterData, targets: Array):
+func use(user: CharacterData, targets: Array) -> Dictionary:
+	"""
+	Returns a dictionary with:
+	- message: String (display text)
+	- damage: int (total damage dealt)
+	- healing: int (total healing done)
+	- mp_restored: int
+	- sp_restored: int
+	"""
 	match type:
 		SkillType.DAMAGE:
 			return deal_damage(user, targets)
@@ -224,16 +231,19 @@ func use(user: CharacterData, targets: Array):
 			return restore(user, targets)
 		SkillType.INFLICT_STATUS:
 			return inflict_status(user, targets)
-		SkillType.DRAIN:  # ✅ NEW
+		SkillType.DRAIN:
 			return drain(user, targets)
-
-func deal_damage(user: CharacterData, targets: Array):
-	var total_damage = 0
-	var was_crit = false
 	
+	return {"message": "Unknown skill type", "damage": 0, "healing": 0}
+
+# ===== UPDATE ALL SKILL METHODS TO RETURN DICTIONARY =====
+
+func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
+	var total_damage = 0
+	var target_results = []  #  Track per-target outcomes
 	var momentum_multiplier = MomentumSystem.get_damage_multiplier()
 	
-	# ✅ Convert skill elements to ElementalDamage.Element array
+	# Convert elements (keep existing code)
 	var elemental_types = []
 	for elem in elements:
 		if elem != ElementType.NONE and elem != ElementType.PHYSICAL:
@@ -246,198 +256,188 @@ func deal_damage(user: CharacterData, targets: Array):
 				ElementType.HOLY: elemental_types.append(ElementalDamage.Element.HOLY)
 				ElementType.DARK: elemental_types.append(ElementalDamage.Element.DARK)
 	
-	var elemental_results = []  # Store results for each element
-	
+	#  PROCESS EACH TARGET (don't early return)
 	for t in targets:
 		var base_damage = power + (user.attack_power if ability_type == AbilityType.PHYSICAL else user.spell_power)
 		base_damage *= momentum_multiplier
-		
 		var resistance = (t.toughness if ability_type == AbilityType.PHYSICAL else t.spell_ward)
+		
 		var accuracy_check = RandomManager.randf() < user.accuracy
 		var dodge_check = RandomManager.randf() < t.dodge
-		var crit_check = RandomManager.randf() < user.critical_hit_rate
 		
+		#  Handle miss/dodge per target
 		if not accuracy_check:
-			return "%s's attack missed!" % user.name
+			target_results.append({"target": t.name, "missed": true})
+			continue
 		
 		if dodge_check:
-			return "%s dodged the attack!" % t.name
+			target_results.append({"target": t.name, "dodged": true})
+			continue
 		
 		var damage = max(1, base_damage - resistance)
 		
-		# ✅ APPLY ELEMENTAL DAMAGE FOR EACH ELEMENT
+		# Apply elemental (keep existing code)
 		if not elemental_types.is_empty() and t.elemental_resistances:
 			var total_multiplier = 1.0
-			var is_weak = false
-			var is_resistant = false
-			
-			# Apply each element's modifiers
 			for elemental_type in elemental_types:
 				var attacker_bonus = user.get_elemental_damage_bonus(elemental_type)
 				var target_resistance = t.get_elemental_resistance(elemental_type)
 				var target_weakness = t.get_elemental_weakness(elemental_type)
-				
-				var elem_result = ElementalDamage.calculate_elemental_damage(
-					1.0,  # Use 1.0 to get just the multiplier
-					elemental_type,
-					attacker_bonus,
-					target_resistance,
-					target_weakness
-				)
-				
-				# Combine multipliers (multiplicative)
+				var elem_result = ElementalDamage.calculate_elemental_damage(1.0, elemental_type, attacker_bonus, target_resistance, target_weakness)
 				total_multiplier *= elem_result.multiplier
-				
-				if elem_result.is_weak:
-					is_weak = true
-				if elem_result.is_resistant:
-					is_resistant = true
-			
 			damage *= total_multiplier
-			
-			# Store combined result
-			elemental_results.append({
-				"damage": damage,
-				"is_weak": is_weak,
-				"is_resistant": is_resistant,
-				"elements": elemental_types
-			})
 		
+		# Crit check
+		var crit_check = RandomManager.randf() < user.critical_hit_rate
 		if crit_check:
 			damage *= 1.5 + RandomManager.randf() * 0.5
-			was_crit = true
 		
+		# Reflection
+		var reflection_info = _track_reflection_damage(user, t, damage)
+		
+		# Apply damage
 		t.take_damage(damage, user)
 		total_damage += damage
 		
-		# Apply status effects
+		# Apply status
 		for effect in status_effects:
 			if effect != StatusEffect.NONE:
 				t.apply_status_effect(effect, duration)
+		
+		#  Record successful hit
+		target_results.append({
+			"target": t.name,
+			"damage": int(damage),
+			"crit": crit_check,
+			"reflected": reflection_info.reflected,
+			"reflection_msg": ("[color=cyan]%s's barrier reflects %d damage back![/color]" % [t.name, reflection_info.amount]) if reflection_info.reflected else ""
+		})
 	
-	# Build result message
-	var result = ""
+	#  BUILD MESSAGE FROM RESULTS
+	var result_msg = ""
+	var hit_count = 0
+	var miss_count = 0
+	var dodge_count = 0
 	
-	if was_crit:
-		result = "Critical hit! "
-	
-	# ✅ BUILD ELEMENTAL MESSAGE WITH DAMAGE BREAKDOWN
-	if not elemental_results.is_empty():
-		var elem_result = elemental_results[0]
-		
-		# Build element names string
-		var element_names = []
-		for elem in elem_result.elements:
-			element_names.append(ElementalDamage.get_element_name(elem))
-		
-		var element_str = " + ".join(element_names) if element_names.size() > 1 else element_names[0]
-		
-		# Get color from first element
-		var color = ElementalDamage.get_element_color(elem_result.elements[0])
-		
-		# Calculate base damage (before elemental modifiers)
-		var base_only = power + (user.attack_power if ability_type == AbilityType.PHYSICAL else user.spell_power)
-		base_only *= momentum_multiplier
-		base_only = max(1, base_only - (targets[0].toughness if ability_type == AbilityType.PHYSICAL else targets[0].spell_ward))
-		
-		var elemental_bonus = int(total_damage - base_only)
-		
-		# Show damage breakdown
-		if elemental_bonus > 0:
-			result += "%s dealt [color=%s]%d (%+d) %s damage[/color] to %s" % [
-				user.name,
-				color,
-				int(total_damage),
-				elemental_bonus,
-				element_str,
-				targets[0].name if targets.size() == 1 else "%d enemies" % targets.size()
-			]
-		elif elemental_bonus < 0:
-			result += "%s dealt [color=%s]%d (%d) %s damage[/color] to %s" % [
-				user.name,
-				color,
-				int(total_damage),
-				elemental_bonus,
-				element_str,
-				targets[0].name if targets.size() == 1 else "%d enemies" % targets.size()
-			]
+	for res in target_results:
+		if res.has("missed"):
+			miss_count += 1
+		elif res.has("dodged"):
+			dodge_count += 1
 		else:
-			result += "%s dealt [color=%s]%d %s damage[/color] to %s" % [
-				user.name,
-				color,
-				int(total_damage),
-				element_str,
-				targets[0].name if targets.size() == 1 else "%d enemies" % targets.size()
-			]
+			hit_count += 1
+	
+	# Show hits first
+	if hit_count > 0:
+		result_msg = "%s dealt %d damage to %d target(s)" % [name, total_damage, hit_count]
 		
-		if elem_result.is_weak:
-			result += " [color=orange](WEAK!)[/color]"
-		elif elem_result.is_resistant:
-			result += " [color=cyan](RESIST)[/color]"
-	else:
-		result += "%s dealt %d damage to %d target(s)" % [name, int(total_damage), targets.size()]
+		# Show individual crits
+		for res in target_results:
+			if res.has("crit") and res.crit:
+				result_msg += "\n  CRITICAL on %s!" % res.target
+		
+		# Show reflections
+		for res in target_results:
+			if res.has("reflected") and res.reflected:
+				result_msg += "\n  " + res.reflection_msg
 	
-	if momentum_multiplier > 1.0:
-		var bonus_pct = int((momentum_multiplier - 1.0) * 100)
-		result += " (+%d%% momentum)" % bonus_pct
+	# Show misses/dodges
+	if miss_count > 0:
+		for res in target_results:
+			if res.has("missed"):
+				result_msg += ("\n" if result_msg else "") + "%s missed %s!" % [user.name, res.target]
 	
-	# List status effects applied
+	if dodge_count > 0:
+		for res in target_results:
+			if res.has("dodged"):
+				result_msg += ("\n" if result_msg else "") + "%s dodged!" % res.target
+	
+	# Show status effects
+	if not status_effects.is_empty() and hit_count > 0:
+		var effect_names = []
+		for effect in status_effects:
+			if effect != StatusEffect.NONE:
+				effect_names.append(StatusEffect.keys()[effect])
+		if not effect_names.is_empty():
+			result_msg += "\nApplied: " + ", ".join(effect_names)
+	
+	return {"message": result_msg, "damage": int(total_damage), "healing": 0}
+
+# ===== UPDATE ALL OTHER SKILL METHODS =====
+
+func heal(user: CharacterData, targets: Array) -> Dictionary:
+	var total_heal = 0
+	for t in targets:
+		var heal_amount = power + user.spell_power
+		t.heal(heal_amount)
+		total_heal += heal_amount
+	
+	return {
+		"message": "%s healed %d HP to %d target(s)" % [name, total_heal, targets.size()],
+		"damage": 0,
+		"healing": total_heal
+	}
+
+func apply_buff(_user: CharacterData, targets: Array) -> Dictionary:
+	# Apply status effects FIRST
+	if not status_effects.is_empty():
+		for t in targets:
+			for effect in status_effects:
+				if effect != StatusEffect.NONE:
+					t.apply_status_effect(effect, duration)
+	
+	# Then apply attribute buffs
+	if not attribute_targets.is_empty():
+		for t in targets:
+			for attribute in attribute_targets:
+				if attribute != AttributeTarget.NONE:
+					t.apply_buff(attribute, power, duration)
+	
+	# Build message
+	var result_parts = []
+	
 	if not status_effects.is_empty():
 		var effect_names = []
 		for effect in status_effects:
 			if effect != StatusEffect.NONE:
 				effect_names.append(StatusEffect.keys()[effect])
 		if not effect_names.is_empty():
-			result += " and applied " + ", ".join(effect_names)
+			result_parts.append("granted " + ", ".join(effect_names))
 	
-	return result
+	if not attribute_targets.is_empty():
+		var attr_names = []
+		for attr in attribute_targets:
+			if attr != AttributeTarget.NONE:
+				attr_names.append(AttributeTarget.keys()[attr])
+		if not attr_names.is_empty():
+			result_parts.append("buffed " + ", ".join(attr_names) + " by +" + str(power))
+	
+	if result_parts.is_empty():
+		return {"message": "%s had no effect!" % name, "damage": 0, "healing": 0}
+	
+	return {
+		"message": "%s %s on %s for %d turns" % [
+			name,
+			" and ".join(result_parts),
+			targets[0].name if targets.size() == 1 else "%d target(s)" % targets.size(),
+			duration
+		],
+		"damage": 0,
+		"healing": 0
+	}
 
-func heal(user: CharacterData, targets: Array):
-	var total_heal = 0
+func apply_debuff(_user: CharacterData, targets: Array) -> Dictionary:
 	for t in targets:
-		var heal_amount = power + user.spell_power
-		t.heal(heal_amount)
-		total_heal += heal_amount
-	return "%s healed %d HP to %d target(s)" % [name, total_heal, targets.size()]
-
-func apply_buff(_user: CharacterData, targets: Array):
-	# NEW: Apply buffs to ALL attribute_targets
-	if attribute_targets.is_empty():
-		return "%s had no effect!" % name
-	
-	for t in targets:
-		for attribute in attribute_targets:
-			if attribute != AttributeTarget.NONE:
-				t.apply_buff(attribute, power, duration)
-	
-	var attr_names = []
-	for attr in attribute_targets:
-		if attr != AttributeTarget.NONE:
-			attr_names.append(AttributeTarget.keys()[attr])
-	
-	return "%s buffed %s of %d target(s) by %d for %d turns" % [
-		name, 
-		", ".join(attr_names), 
-		targets.size(), 
-		power, 
-		duration
-	]
-
-func apply_debuff(_user: CharacterData, targets: Array):
-	for t in targets:
-		# NEW: Apply all status effects
 		for effect in status_effects:
 			if effect != StatusEffect.NONE:
 				t.apply_status_effect(effect, duration)
 		
-		# NEW: Apply debuffs to all attribute_targets
 		for attribute in attribute_targets:
 			if attribute != AttributeTarget.NONE:
 				t.apply_debuff(attribute, power, duration)
 	
 	var result_parts = []
 	
-	# Build status effect part
 	if not status_effects.is_empty():
 		var effect_names = []
 		for effect in status_effects:
@@ -446,7 +446,6 @@ func apply_debuff(_user: CharacterData, targets: Array):
 		if not effect_names.is_empty():
 			result_parts.append("inflicted " + ", ".join(effect_names))
 	
-	# Build attribute debuff part
 	if not attribute_targets.is_empty():
 		var attr_names = []
 		for attr in attribute_targets:
@@ -456,79 +455,34 @@ func apply_debuff(_user: CharacterData, targets: Array):
 			result_parts.append("debuffed " + ", ".join(attr_names) + " by " + str(power))
 	
 	if result_parts.is_empty():
-		return "%s had no effect!" % name
+		return {"message": "%s had no effect!" % name, "damage": 0, "healing": 0}
 	
-	return "%s %s on %d target(s) for %d turns" % [
-		name,
-		" and ".join(result_parts),
-		targets.size(),
-		duration
-	]
+	return {
+		"message": "%s %s on %d target(s) for %d turns" % [
+			name,
+			" and ".join(result_parts),
+			targets.size(),
+			duration
+		],
+		"damage": 0,
+		"healing": 0
+	}
 
-func restore(user: CharacterData, targets: Array):
-	var total_heal = 0
+func restore(user: CharacterData, targets: Array) -> Dictionary:
+	var total_restore = 0
 	for t in targets:
-		var heal_amount = power + user.spell_power
-		t.restore_mp(heal_amount)
-		total_heal += heal_amount
-	return "%s healed %d MP to %d target(s)" % [name, total_heal, targets.size()]
-
-# =============================================
-# DRAIN SKILL IMPLEMENTATION
-# =============================================
-
-func drain(user: CharacterData, targets: Array) -> String:
-	"""Drain resource from target and restore user"""
-	var total_drained = 0
-	var total_restored = 0
+		var restore_amount = power + user.spell_power
+		t.restore_mp(restore_amount)
+		total_restore += restore_amount
 	
-	for t in targets:
-		var drain_amount = 0
-		
-		match drain_target:
-			DrainTarget.HP:
-				# Drain HP (like damage)
-				var base_damage = power + user.spell_power
-				var resistance = t.toughness
-				drain_amount = max(1, base_damage - resistance)
-				
-				# Apply damage
-				t.take_damage(drain_amount)
-				
-				# Heal user
-				var heal_amount = int(drain_amount * drain_efficiency)
-				user.heal(heal_amount)
-				total_restored = heal_amount
-				
-			DrainTarget.MP:
-				# Drain MP
-				drain_amount = min(power, t.current_mp)
-				t.current_mp -= drain_amount
-				
-				# Restore user MP
-				var restore_amount = int(drain_amount * drain_efficiency)
-				user.restore_mp(restore_amount)
-				total_restored = restore_amount
-				
-			DrainTarget.SP:
-				# Drain SP
-				drain_amount = min(power, t.current_sp)
-				t.current_sp -= drain_amount
-				
-				# Restore user SP
-				var restore_amount = int(drain_amount * drain_efficiency)
-				user.restore_sp(restore_amount)
-				total_restored = restore_amount
-		
-		total_drained += drain_amount
-	
-	var resource_name = DrainTarget.keys()[drain_target]
-	return "%s drained %d %s from %d target(s) and restored %d %s" % [
-		name, total_drained, resource_name, targets.size(), total_restored, resource_name
-	]
+	return {
+		"message": "%s restored %d MP to %d target(s)" % [name, total_restore, targets.size()],
+		"damage": 0,
+		"healing": 0,
+		"mp_restored": total_restore
+	}
 
-func inflict_status(_user: CharacterData, targets: Array):
-	# NEW: Apply all status effects to each target
+func inflict_status(_user: CharacterData, targets: Array) -> Dictionary:
 	for t in targets:
 		for effect in status_effects:
 			if effect != StatusEffect.NONE:
@@ -540,11 +494,131 @@ func inflict_status(_user: CharacterData, targets: Array):
 			effect_names.append(StatusEffect.keys()[effect])
 	
 	if effect_names.is_empty():
-		return "%s had no effect!" % name
+		return {"message": "%s had no effect!" % name, "damage": 0, "healing": 0}
 	
-	return "%s inflicted %s on %d target(s) for %d turns" % [
-		name, 
-		", ".join(effect_names), 
-		targets.size(),
-		duration
+	return {
+		"message": "%s inflicted %s on %d target(s) for %d turns" % [
+			name, 
+			", ".join(effect_names), 
+			targets.size(),
+			duration
+		],
+		"damage": 0,
+		"healing": 0
+	}
+
+func drain(user: CharacterData, targets: Array) -> Dictionary:
+	var total_drained = 0
+	var total_restored = 0
+	
+	for t in targets:
+		var drain_amount = 0
+		
+		match drain_source:
+			DrainTarget.HP:
+				var base_damage = power + (user.attack_power if ability_type == AbilityType.PHYSICAL else user.spell_power)
+				var resistance = (t.toughness if ability_type == AbilityType.PHYSICAL else t.spell_ward)
+				drain_amount = max(1, base_damage - resistance)
+				t.take_damage(drain_amount)
+			
+			DrainTarget.MP:
+				drain_amount = min(power, t.current_mp)
+				t.current_mp = max(0, t.current_mp - drain_amount)
+			
+			DrainTarget.SP:
+				drain_amount = min(power, t.current_sp)
+				t.current_sp = max(0, t.current_sp - drain_amount)
+		
+		total_drained += drain_amount
+		
+		var restore_amount = int(drain_amount * drain_efficiency)
+		
+		match drain_restore:
+			DrainTarget.HP:
+				user.heal(restore_amount)
+			DrainTarget.MP:
+				user.restore_mp(restore_amount)
+			DrainTarget.SP:
+				user.restore_sp(restore_amount)
+		
+		total_restored += restore_amount
+	
+	var source_name = DrainTarget.keys()[drain_source]
+	var restore_name = DrainTarget.keys()[drain_restore]
+	var source_color = _get_resource_color(drain_source)
+	var restore_color = _get_resource_color(drain_restore)
+	
+	var result = "%s drained [color=%s]%d %s[/color] from %s" % [
+		name,
+		source_color,
+		total_drained,
+		source_name,
+		targets[0].name if targets.size() == 1 else "%d target(s)" % targets.size()
 	]
+	
+	if drain_source != drain_restore or drain_efficiency != 1.0:
+		result += " and restored [color=%s]%d %s[/color] to %s" % [
+			restore_color,
+			total_restored,
+			restore_name,
+			user.name
+		]
+		
+		if drain_efficiency != 1.0:
+			result += " (%.0f%% efficiency)" % (drain_efficiency * 100)
+	else:
+		result += " and restored [color=%s]%d %s[/color] to %s" % [
+			restore_color,
+			total_restored,
+			restore_name,
+			user.name
+		]
+	
+	return {
+		"message": result,
+		"damage": total_drained if drain_source == DrainTarget.HP else 0,
+		"healing": total_restored if drain_restore == DrainTarget.HP else 0
+	}
+
+func _get_resource_color(resource: DrainTarget) -> String:
+	"""Get color for resource type"""
+	match resource:
+		DrainTarget.HP:
+			return "red"
+		DrainTarget.MP:
+			return "cyan"
+		DrainTarget.SP:
+			return "yellow"
+		_:
+			return "white"
+
+# ADD this helper method to Skill.gd
+# Place it near the other helper methods at the bottom
+
+func _track_reflection_damage(user: CharacterData, target: CharacterData, damage: float) -> Dictionary:
+	"""Track reflection damage during skill use"""
+	var result = {
+		"reflected": false,
+		"amount": 0,
+		"percent": 0.0,
+		"target_name": ""
+	}
+	
+	if not target.status_manager:
+		return result
+	
+	var reflection = target.status_manager.get_total_reflection()
+	
+	if reflection > 0.0:
+		var reflected_damage = int(damage * reflection)
+		
+		if reflected_damage > 0:
+			result.reflected = true
+			result.amount = reflected_damage
+			result.percent = reflection * 100
+			result.target_name = user.name
+			
+			# Apply reflected damage (pass null to prevent chain)
+			user.take_damage(reflected_damage, null)
+	
+	return result

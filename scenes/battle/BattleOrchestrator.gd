@@ -1,4 +1,6 @@
 # res://scenes/battle/BattleOrchestrator.gd
+# UPDATED: Integrated BattleVisualManager for sprites and effects
+
 extends Node
 
 signal battle_completed(player_won: bool, xp_gained: int)
@@ -8,15 +10,16 @@ var rand_manager = RandomManager
 # Battle systems
 var combat_engine: CombatEngine
 var turn_controller: TurnController
-var enemy_ai: EnemyAI
+var enemy_ai_controllers: Array[EnemyAI] = []
 var ui_controller: BattleUIController
+var visual_manager: BattleVisualManager  # NEW
 var network_sync: BattleNetworkSync
 var is_pvp_mode := false
 var battle_started := false
 
 # Battle context
 var player: CharacterData
-var enemy: CharacterData
+var enemies: Array[CharacterData] = []
 var is_boss_battle: bool = false
 var current_wave: int
 var current_floor: int
@@ -25,22 +28,29 @@ var dungeon_description: String
 var item_action_used: bool = false
 var main_action_taken: bool = false
 
-# ✅ FIX: Track action flags per character
-var player_item_used: bool = false
-var player_main_action_taken: bool = false
-var enemy_item_used: bool = false
-var enemy_main_action_taken: bool = false
-
 func _ready():
 	ui_controller = get_node_or_null("BattleUIController")
 	if not ui_controller:
 		push_error("BattleOrchestrator: BattleUIController not found!")
 		return
 	
+	# NEW: Get visual manager reference
+	visual_manager = get_node_or_null("BattleVisualManager")
+	if not visual_manager:
+		push_error("BattleOrchestrator: BattleVisualManager not found!")
+		return
+	
+	# Initialize visual manager with camera and containers
+	var camera = get_node_or_null("Camera2D")
+	var player_container = visual_manager.get_node_or_null("PlayerSpriteContainer")
+	var enemy_container = visual_manager.get_node_or_null("EnemySpriteContainer")
+	
+	if camera and player_container and enemy_container:
+		visual_manager.initialize(camera, player_container, enemy_container)
+	
 	print("BattleOrchestrator: Ready")
 
 func start_battle():
-	# ✅ CRITICAL FIX: Set flag IMMEDIATELY to prevent race condition
 	if battle_started:
 		print("BattleOrchestrator: Battle already started, ignoring duplicate call")
 		return
@@ -48,64 +58,54 @@ func start_battle():
 	print("BattleOrchestrator: Battle start flag set - preventing duplicates")
 	
 	if not _validate_setup():
-		battle_started = false  # Reset if validation fails
+		battle_started = false
 		return
 	
-	print("BattleOrchestrator: Starting battle - %s vs %s (PvP: %s)" % [
-		player.name, enemy.name, is_pvp_mode
+	print("BattleOrchestrator: Starting battle - %s vs %d enemies (PvP: %s)" % [
+		player.name, enemies.size(), is_pvp_mode
 	])
 	
 	# Initialize systems
 	combat_engine = CombatEngine.new()
-	combat_engine.initialize(player, enemy)
+	combat_engine.initialize_multi(player, enemies)
 	
 	turn_controller = TurnController.new()
 	add_child(turn_controller)
-	turn_controller.initialize(player, enemy)
+	turn_controller.initialize(player, enemies)
 	
 	if is_pvp_mode:
 		turn_controller.set_pvp_mode(true)
 	
-	var player_agility = player.agility
-	var enemy_agility = enemy.agility
+	# Calculate initiative display
+	var all_combatants = [player] + enemies
+	all_combatants.sort_custom(func(a, b): return a.agility > b.agility)
 	
-	if player_agility > enemy_agility:
-		ui_controller.add_combat_log("%s wins initiative! (Agility: %.1f vs %.1f)" % [player.name, player_agility, enemy_agility], "cyan")
-		ui_controller.add_combat_log("%s goes first!" % player.name, "cyan")
-	elif enemy_agility > player_agility:
-		ui_controller.add_combat_log("%s wins initiative! (Agility: %.1f vs %.1f)" % [enemy.name, enemy_agility, player_agility], "red")
-		ui_controller.add_combat_log("%s goes first!" % enemy.name, "red")
-	else:
-		ui_controller.add_combat_log("Initiative tied! (Agility: %.1f) - Random turn order" % player_agility, "yellow")
+	var init_msg = "Initiative order: "
+	for i in range(all_combatants.size()):
+		init_msg += "%s (AGI: %.1f)" % [all_combatants[i].name, all_combatants[i].agility]
+		if i < all_combatants.size() - 1:
+			init_msg += " → "
 	
-	# ✅ NEW: Initialize network sync if PvP
+	ui_controller.add_combat_log(init_msg, "cyan")
+	
+	# Initialize AI for each enemy (PvE only)
+	if not is_pvp_mode:
+		_initialize_enemy_ai()
+	
 	if is_pvp_mode:
 		network_sync = BattleNetworkSync.new()
 		network_sync.initialize(self, true)
 		print("BattleOrchestrator: Network sync enabled")
-	
-	# ✅ MODIFIED: Use regular AI only in PvE mode
-	if not is_pvp_mode:
-		if is_boss_battle:
-			enemy_ai = BossAI.new()
-			print("BattleOrchestrator: Using BOSS AI")
-		else:
-			enemy_ai = EnemyAI.new()
-			print("BattleOrchestrator: Using regular AI")
-		
-		enemy_ai.initialize(enemy, player, current_floor)
-	else:
-		print("BattleOrchestrator: PvP mode - no AI")
 	
 	turn_controller.turn_started.connect(_on_turn_started)
 	turn_controller.turn_ended.connect(_on_turn_ended)
 	turn_controller.turn_skipped.connect(_on_turn_skipped)
 	
 	if ui_controller:
-		ui_controller.initialize(player, enemy)
+		ui_controller.initialize_multi(player, enemies)
 		ui_controller.action_selected.connect(_on_action_selected)
 		
-		ui_controller.update_character_info(player, enemy)
+		ui_controller.update_all_character_info()
 		ui_controller.update_xp_display()
 		ui_controller.update_debug_display()
 		
@@ -117,8 +117,13 @@ func start_battle():
 		print("BattleOrchestrator: UI initialized and updated")
 	else:
 		push_error("BattleOrchestrator: ui_controller is null!")
-		battle_started = false  # Reset if UI init fails
+		battle_started = false
 		return
+	
+	# NEW: Setup visual sprites
+	if visual_manager:
+		visual_manager.setup_player_sprite(player)
+		visual_manager.setup_enemy_sprites(enemies)
 	
 	_initialize_resources()
 	await _wait_for_ui_ready()
@@ -130,19 +135,13 @@ func start_battle():
 	
 	turn_controller.start_first_turn()
 
-func _wait_for_ui_ready():
-	await get_tree().process_frame
-	await get_tree().process_frame
-	
-	if ui_controller:
-		ui_controller.update_character_info(player, enemy)
-		ui_controller.update_turn_display("Battle starting...")
-	
-	print("BattleOrchestrator: UI ready, starting combat")
-
 func _validate_setup() -> bool:
-	if not player or not enemy:
-		push_error("BattleOrchestrator: Missing player or enemy")
+	if not player:
+		push_error("BattleOrchestrator: Missing player")
+		return false
+	
+	if enemies.is_empty():
+		push_error("BattleOrchestrator: No enemies in battle")
 		return false
 	
 	if not ui_controller:
@@ -151,30 +150,62 @@ func _validate_setup() -> bool:
 	
 	return true
 
+func _initialize_enemy_ai():
+	"""Create AI controller for each enemy"""
+	enemy_ai_controllers.clear()
+	
+	for enemy in enemies:
+		var ai: EnemyAI
+		
+		if is_boss_battle and "King" in enemy.character_class:
+			ai = BossAI.new()
+			print("BattleOrchestrator: Created BossAI for %s" % enemy.name)
+		else:
+			ai = EnemyAI.new()
+			print("BattleOrchestrator: Created EnemyAI for %s" % enemy.name)
+		
+		ai.initialize(enemy, player, current_floor)
+		enemy_ai_controllers.append(ai)
+	
+	print("BattleOrchestrator: Initialized %d AI controllers" % enemy_ai_controllers.size())
+
 func _initialize_resources():
 	if player.current_sp == 0:
 		player.current_sp = player.max_sp
-	if enemy.current_sp == 0:
-		enemy.current_sp = enemy.max_sp
+	
+	for enemy in enemies:
+		if enemy.current_sp == 0:
+			enemy.current_sp = enemy.max_sp
+
+func _wait_for_ui_ready():
+	await get_tree().process_frame
+	await get_tree().process_frame
+	
+	if ui_controller:
+		ui_controller.update_all_character_info()
+		ui_controller.update_turn_display("Battle starting...")
+	
+	print("BattleOrchestrator: UI ready, starting combat")
 
 # === TURN FLOW ===
 
-func _on_turn_started(character: CharacterData, is_player: bool):
+func _on_turn_started(character: CharacterData, is_player_turn: bool):
 	print("BattleOrchestrator: Turn started - %s" % character.name)
+	_check_battle_end()
 	
 	if ui_controller:
-		ui_controller.update_character_info(player, enemy)
+		ui_controller.update_all_character_info()
 		ui_controller.update_turn_display("%s's turn" % character.name)
 	
 	if is_pvp_mode and network_sync:
-		network_sync.on_turn_started(character, is_player)
+		network_sync.on_turn_started(character, is_player_turn)
 	
-	if is_player:
+	if is_player_turn:
 		item_action_used = false
 		main_action_taken = false
 		print("BattleOrchestrator: Reset action flags for player turn")
 	
-	# === ARMOR PROFICIENCY TRACKING ===
+	# Armor proficiency tracking
 	if character.proficiency_manager:
 		var armor_slots = ["head", "chest", "hands", "legs", "feet"]
 		for slot in armor_slots:
@@ -186,43 +217,69 @@ func _on_turn_started(character: CharacterData, is_player: bool):
 						ui_controller.add_combat_log(prof_msg, "cyan")
 						print("[PROFICIENCY LEVEL UP!] %s" % prof_msg)
 	
-	# ✅ CRITICAL FIX: In PvP, only process status effects for MY character
-	# Opponent's status effects are handled by them and synced via network
 	var should_process_status = true
 	if is_pvp_mode and network_sync:
-		# Only process if this is my character
 		should_process_status = (character.get_instance_id() == network_sync.my_character.get_instance_id())
-		print("[BATTLE ORCH] PvP status check: character=%s, my_char=%s, process=%s" % [
-			character.get_instance_id(), network_sync.my_character.get_instance_id(), should_process_status
-		])
 	
 	if should_process_status:
 		var status_result = combat_engine.process_status_effects(character)
+		
 		if status_result and status_result.message != "":
 			ui_controller.add_combat_log(status_result.message, "purple")
-			ui_controller.update_character_info(player, enemy)
+		
+		if ui_controller:
+			ui_controller.update_all_character_info()
 			
-			# ✅ NEW: In PvP, send status damage to opponent
-			if is_pvp_mode and network_sync:
-				print("[BATTLE ORCH] Syncing status effect result to opponent")
-				network_sync.send_status_damage(character, status_result)
-			
-			await get_tree().create_timer(1.0).timeout
+			if status_result.healing > 0:
+				ui_controller.add_combat_log(
+					"%s healed for %d HP" % [character.name, status_result.healing], 
+					"green"
+				)
+			if status_result.damage > 0:
+				ui_controller.add_combat_log(
+					"%s took %d damage from status effects" % [character.name, status_result.damage],
+					"red"
+				)
+				
+				# NEW: Visual feedback for status damage
+				if visual_manager:
+					# Check if player took status damage
+					if character == player:
+						visual_manager.shake_and_flash_screen(0.1)
+					else:
+						visual_manager.shake_on_hit(status_result.damage, false)
+						visual_manager.flash_sprite_hit(character, false)
+		
+		if is_pvp_mode and network_sync:
+			network_sync.send_status_damage(character, status_result)
+		
+		await get_tree().create_timer(1.0).timeout
 	else:
 		print("[BATTLE ORCH] Skipping local status processing - waiting for opponent's data")
 	
-	# Check if character died from status
+	turn_controller._remove_dead_from_queue()
+	
 	if not combat_engine.is_alive(character):
-		_handle_death(character)
+		await _handle_death(character)
+		
+		if _check_battle_end():
+			return
+		turn_controller.end_current_turn()
 		return
 	
-	# Check if stunned
 	if character.is_stunned:
 		var stun_msg = "%s is stunned and loses their turn!" % character.name
-		turn_controller.skip_turn(character, "stunned")
 		ui_controller.add_combat_log(stun_msg, "purple")
 		character.is_stunned = false
+		
 		await get_tree().create_timer(1.0).timeout
+		
+		print("BattleOrchestrator: %s stunned - ending turn immediately" % character.name)
+		
+		if _check_battle_end():
+			return
+		
+		turn_controller.end_current_turn()
 		return
 	
 	turn_controller.advance_phase()
@@ -230,10 +287,10 @@ func _on_turn_started(character: CharacterData, is_player: bool):
 	if is_pvp_mode and network_sync and not network_sync.is_my_turn:
 		return
 	
-	if is_player:
+	if is_player_turn:
 		_setup_player_turn()
 	else:
-		_execute_enemy_turn()
+		_execute_enemy_turn(character)
 
 func _on_turn_ended(character: CharacterData):
 	print("BattleOrchestrator: Turn ended - %s" % character.name)
@@ -253,7 +310,6 @@ func _setup_player_turn():
 func _on_action_selected(action: BattleAction):
 	print("BattleOrchestrator: Action selected - %s" % action.get_description())
 	
-	# ✅ CRITICAL: Handle item as bonus action - sync to network but don't end turn
 	if action.type == BattleAction.ActionType.ITEM:
 		if item_action_used:
 			ui_controller.add_combat_log("You've already used an item this turn!", "red")
@@ -263,7 +319,31 @@ func _on_action_selected(action: BattleAction):
 		_execute_item_action(action)
 		return
 	
-	# ✅ FIX: All other actions are "main actions"
+	if action.type == BattleAction.ActionType.DEFEND:
+		if main_action_taken:
+			ui_controller.add_combat_log("You've already taken your action!", "red")
+			ui_controller.unlock_ui()
+			ui_controller.enable_actions()
+			return
+		
+		ui_controller.disable_actions()
+		_execute_action(action, true)
+		return
+	
+	if action.type in [BattleAction.ActionType.ATTACK, BattleAction.ActionType.SKILL]:
+		if not action.target and (not action.targets or action.targets.is_empty()):
+			push_error("BattleOrchestrator: Action missing target - this should not happen!")
+			ui_controller.add_combat_log("Error: No target selected", "red")
+			ui_controller.unlock_ui()
+			ui_controller.enable_actions()
+			return
+		
+		if action.target and not action.target.is_alive():
+			ui_controller.add_combat_log("Target is already defeated!", "red")
+			ui_controller.unlock_ui()
+			ui_controller.enable_actions()
+			return
+	
 	if main_action_taken:
 		ui_controller.add_combat_log("You've already taken your action!", "red")
 		ui_controller.unlock_ui()
@@ -276,15 +356,44 @@ func _on_action_selected(action: BattleAction):
 func _execute_action(action: BattleAction, is_player: bool):
 	print("BattleOrchestrator: Executing MAIN action - %s" % action.get_description())
 	
-	# ✅ CRITICAL: Execute FIRST, then send result to network
+	if not is_player:
+		var action_name = ""
+		match action.type:
+			BattleAction.ActionType.ATTACK:
+				action_name = "Attack"
+			BattleAction.ActionType.DEFEND:
+				action_name = "Defend"
+			BattleAction.ActionType.SKILL:
+				action_name = action.skill_data.name
+			BattleAction.ActionType.ITEM:
+				action_name = action.item_data.display_name
+		
+		ui_controller.add_combat_log("[color=red]%s uses %s![/color]" % [action.actor.name, action_name], "white")
+	
+	# NEW: Play attack animation BEFORE damage
+	if visual_manager and action.type in [BattleAction.ActionType.ATTACK, BattleAction.ActionType.SKILL]:
+		# Check if AOE skill/attack
+		var is_aoe = action.targets.size() > 1
+		var is_magic = false
+		
+		if action.type == BattleAction.ActionType.SKILL:
+			is_magic = action.skill_data.ability_type != Skill.AbilityType.PHYSICAL
+		
+		if is_aoe:
+			# AOE - play magic animation on all targets
+			visual_manager.play_aoe_attack_animation(action.actor, action.targets, is_magic)
+			await get_tree().create_timer(0.3).timeout
+		elif action.target:
+			# Single target
+			visual_manager.play_attack_animation(action.actor, action.target, is_magic)
+			await get_tree().create_timer(0.3).timeout
+	
 	var result = combat_engine.execute_action(action)
 	
-	# ✅ CRITICAL FIX: Ensure result is valid before sending
 	if not result:
 		push_error("[BATTLE ORCH] Combat engine returned null result!")
 		return
 	
-	# ✅ NEW: Debug log the result before sending
 	print("[BATTLE ORCH] Action result: damage=%d, healing=%d, sp=%d, mp=%d" % [
 		result.damage if "damage" in result else 0,
 		result.healing if "healing" in result else 0, 
@@ -292,13 +401,38 @@ func _execute_action(action: BattleAction, is_player: bool):
 		result.mp_cost if "mp_cost" in result else 0
 	])
 	
-	# ✅ CRITICAL: Send action AND RESULT to network in PvP (AFTER execution)
+	# NEW: Handle dodge animation
+	if visual_manager and (result.was_dodged or result.was_missed):
+		for target in action.targets:
+			if target:
+				visual_manager.play_dodge_animation(target)
+	
+	# NEW: Visual feedback for hits
+	if visual_manager and result.damage > 0:
+		# Check if player was hit (no sprite, use screen flash)
+		var player_was_hit = false
+		for target in action.targets:
+			if target == player:
+				player_was_hit = true
+				break
+		
+		if player_was_hit:
+			# Player hit - screen shake + white flash
+			visual_manager.shake_and_flash_screen(0.15)
+		else:
+			# Enemy hit - normal shake
+			visual_manager.shake_on_hit(result.damage, result.is_critical)
+		
+		# Flash sprites for enemies that were hit
+		for target in action.targets:
+			if target and combat_engine.is_alive(target) and target != player:
+				visual_manager.flash_sprite_hit(target, result.is_critical)
+	
 	if is_pvp_mode and network_sync and is_player:
 		print("[BATTLE ORCH] Sending action to network sync...")
 		network_sync.on_action_selected(action, result)
 		print("[BATTLE ORCH] Main action + result synced to network")
 	
-	# ✅ FIXED: Pass action to display_result so it has actor context
 	ui_controller.display_result(result, action)
 	
 	if result.has_level_up():
@@ -310,28 +444,81 @@ func _execute_action(action: BattleAction, is_player: bool):
 	
 	await get_tree().create_timer(1.5).timeout
 	
-	if _check_battle_end():
-		return
+	var dead_characters: Array[CharacterData] = []
 	
-	# End turn - this advances to next player
+	if action.target and not combat_engine.is_alive(action.target):
+		dead_characters.append(action.target)
+	
+	for target in action.targets:
+		if target and not combat_engine.is_alive(target) and target not in dead_characters:
+			dead_characters.append(target)
+	
+	if not combat_engine.is_alive(action.actor) and action.actor not in dead_characters:
+		dead_characters.append(action.actor)
+	
+	if not dead_characters.is_empty():
+		for dead in dead_characters:
+			combat_engine.check_death_after_action(dead)
+			
+			# NEW: Play death animation
+			if visual_manager:
+				visual_manager.play_death_animation(dead)
+				visual_manager.shake_on_death()
+			
+			if dead == player:
+				print("[BATTLE ORCH] Player died")
+			else:
+				print("[BATTLE ORCH] %s died" % dead.name)
+		
+		if _check_battle_end():
+			return
+	
 	turn_controller.end_current_turn()
 
 func _execute_item_action(action: BattleAction):
 	print("BattleOrchestrator: Executing item as bonus action")
 	
+	# NEW: Play animation for damage items
+	if visual_manager and action.item_data.consumable_type == Item.ConsumableType.DAMAGE:
+		var is_aoe = action.targets.size() > 1
+		
+		if is_aoe:
+			visual_manager.play_aoe_attack_animation(action.actor, action.targets, true)
+		elif action.target:
+			visual_manager.play_attack_animation(action.actor, action.target, true)
+		
+		await get_tree().create_timer(0.3).timeout
+	
 	var result = combat_engine.execute_action(action)
 	
-	# ✅ NEW: Debug log the result
 	if result:
 		print("[BATTLE ORCH] Item result: damage=%d, healing=%d" % [
 			result.damage if "damage" in result else 0,
 			result.healing if "healing" in result else 0
 		])
+		
+		# NEW: Visual feedback for item effects
+		if visual_manager:
+			# Check if player was hit by item
+			var player_was_hit = false
+			for target in action.targets:
+				if target == player and result.damage > 0:
+					player_was_hit = true
+					break
+			
+			if player_was_hit:
+				visual_manager.shake_and_flash_screen(0.15)
+			elif result.damage > 0 or result.healing > 0:
+				visual_manager.add_trauma(0.15)
+			
+			# Flash sprites for enemies hit by items
+			if result.damage > 0:
+				for target in action.targets:
+					if target and target != player:
+						visual_manager.flash_sprite_hit(target, false)
 	
-	# ✅ FIXED: Pass action to display_result so it has actor context
 	ui_controller.display_result(result, action)
 	
-	# ✅ CRITICAL: Send item AND RESULT to network AFTER execution
 	if is_pvp_mode and network_sync:
 		print("[BATTLE ORCH] Sending item action to network...")
 		network_sync.on_action_selected(action, result)
@@ -339,89 +526,145 @@ func _execute_item_action(action: BattleAction):
 	
 	await get_tree().create_timer(0.5).timeout
 	
-	# Mark item used but NOT main action
 	item_action_used = true
 	print("BattleOrchestrator: Item used - player can still take main action")
 	
 	if _check_battle_end():
 		return
 	
-	# Refresh UI with both flags - turn continues
 	ui_controller.setup_player_actions(item_action_used, main_action_taken)
 	ui_controller.unlock_ui()
 	ui_controller.enable_actions()
 
 # === ENEMY TURN ===
 
-func _execute_enemy_turn():
-	print("BattleOrchestrator: Enemy's turn")
+func _execute_enemy_turn(enemy_character: CharacterData):
+	if not combat_engine.is_alive(enemy_character):
+		print("BattleOrchestrator: %s is dead, skipping turn entirely" % enemy_character.name)
+		turn_controller.end_current_turn()
+		return
 	
-	# ✅ NEW: In PvP, opponent actions come via network
+	print("BattleOrchestrator: %s's turn" % enemy_character.name)
+	
 	if is_pvp_mode:
 		ui_controller.add_combat_log("Opponent's turn", "red")
 		ui_controller.update_turn_display("Waiting for opponent...")
-		# Network sync will handle receiving the action
 		return
 	
-	# PvE: Use AI
-	ui_controller.add_combat_log("Enemy's turn", "red")
-	ui_controller.update_turn_display("Enemy is acting...")
+	ui_controller.add_combat_log("%s's turn" % enemy_character.name, "red")
+	ui_controller.update_turn_display("%s is acting..." % enemy_character.name)
 	
 	await get_tree().create_timer(1.0).timeout
 	
-	if not combat_engine.is_alive(enemy):
+	if not combat_engine.is_alive(enemy_character):
+		print("BattleOrchestrator: %s died during delay, skipping turn" % enemy_character.name)
 		_check_battle_end()
 		return
 	
-	var action = enemy_ai.decide_action()
+	var ai_controller = _get_ai_for_enemy(enemy_character)
+	if not ai_controller:
+		push_error("BattleOrchestrator: No AI found for %s, skipping turn" % enemy_character.name)
+		turn_controller.end_current_turn()
+		return
+	
+	if not combat_engine.is_alive(player):
+		print("BattleOrchestrator: Player is dead, ending enemy turn")
+		_check_battle_end()
+		return
+	
+	var action = ai_controller.decide_action()
+	
+	if not action:
+		push_error("BattleOrchestrator: AI returned null action for %s" % enemy_character.name)
+		turn_controller.end_current_turn()
+		return
+	
+	if action.type in [BattleAction.ActionType.ATTACK, BattleAction.ActionType.SKILL]:
+		if action.type == BattleAction.ActionType.SKILL and action.skill_data:
+			if action.skill_data.target == Skill.TargetType.ALL_ALLIES:
+				print("BattleOrchestrator: ALL_ALLIES skill - targets will be resolved by CombatEngine")
+				_execute_action(action, false)
+				return
+		
+		if not action.target and (not action.targets or action.targets.is_empty()):
+			push_warning("BattleOrchestrator: Action missing target, defaulting to player")
+			action.target = player
+			action.targets.clear()
+			action.targets.append(player)
+		
+		if action.target and not action.target.is_alive():
+			print("BattleOrchestrator: Enemy's target died, skipping action")
+			turn_controller.end_current_turn()
+			return
+	
 	_execute_action(action, false)
+
+func _get_ai_for_enemy(enemy_character: CharacterData) -> EnemyAI:
+	for i in range(enemies.size()):
+		if enemies[i] == enemy_character and i < enemy_ai_controllers.size():
+			return enemy_ai_controllers[i]
+	
+	push_error("BattleOrchestrator: Could not find AI for %s (index out of range or mismatch)" % enemy_character.name)
+	return null
 
 # === BATTLE END ===
 
 func _handle_death(character: CharacterData):
 	var death_msg = "%s has been defeated!" % character.name
 	ui_controller.add_combat_log(death_msg, "red")
+	
+	# NEW: Play death animation
+	if visual_manager:
+		visual_manager.play_death_animation(character)
+		visual_manager.shake_on_death()
+	
+	turn_controller.remove_combatant(character)
+	
 	await get_tree().create_timer(1.5).timeout
 	_check_battle_end()
 
 func _check_battle_end() -> bool:
-	var outcome = combat_engine.check_battle_end()
+	var living_enemies = _get_living_enemies()
 	
-	if outcome == "victory":
+	if living_enemies.is_empty():
 		_handle_victory()
 		return true
-	elif outcome == "defeat":
+	elif not combat_engine.is_alive(player):
 		_handle_defeat()
 		return true
 	
 	return false
 
+func _get_living_enemies() -> Array[CharacterData]:
+	var living: Array[CharacterData] = []
+	for e in enemies:
+		if e.is_alive():
+			living.append(e)
+	return living
+
 func _handle_victory():
 	print("BattleOrchestrator: Player victory!")
 	ui_controller.disable_actions()
 	
-	# ✅ FIX: In PvP, notify opponent first, then wait for sync
 	if is_pvp_mode and network_sync:
 		network_sync.on_battle_end(true)
-		# Network sync will handle the rest (dialog, save, return to town)
 		return
 	
-	# PvE: Normal flow with XP
-	var xp = enemy.level * 50 * current_floor
+	var total_xp = 0
+	for enemy in enemies:
+		total_xp += enemy.level * 50 * current_floor
+	
 	await get_tree().create_timer(1.0).timeout
-	_show_battle_complete_dialog(xp)
+	_show_battle_complete_dialog(total_xp)
 
 func _handle_defeat():
 	print("BattleOrchestrator: Player defeated!")
 	ui_controller.disable_actions()
 	
-	# ✅ FIX: In PvP, notify opponent first, then wait for sync
 	if is_pvp_mode and network_sync:
 		network_sync.on_battle_end(false)
-		# Network sync will handle the rest (dialog, save, return to town)
 		return
 	
-	# PvE: Normal flow
 	await get_tree().create_timer(1.0).timeout
 	emit_signal("battle_completed", false, 0)
 
@@ -455,8 +698,15 @@ func _on_press_on_selected(xp_gained: int):
 	emit_signal("battle_completed", true, -1)
 
 func _on_take_breather_selected(xp_gained: int):
-	print("BattleOrchestrator: Take breather selected")
+	var momentum_before_reset = MomentumSystem.get_momentum()
+	var had_momentum_bonus = momentum_before_reset >= 3
+	
 	MomentumSystem.reset_momentum()
+	
+	if had_momentum_bonus:
+		player.set_meta("taking_breather_with_bonus", true)
+		player.set_meta("momentum_level_at_breather", momentum_before_reset)
+		player.status_effects.clear()
 	emit_signal("battle_completed", true, xp_gained)
 
 func _show_level_up_overlay():
@@ -466,28 +716,35 @@ func _show_level_up_overlay():
 	await level_up_scene.level_up_complete
 	level_up_scene.queue_free()
 
-# === SETUP (called from Battle.tscn) ===
+# === SETUP ===
 
 func set_player(character: CharacterData):
 	player = character
 
+func set_enemies(enemy_list: Array[CharacterData]):
+	enemies = enemy_list
+	
+	for enemy in enemies:
+		enemy.calculate_secondary_attributes()
+		if enemy.current_sp == 0:
+			enemy.current_sp = enemy.max_sp
+	
+	print("BattleOrchestrator: Set %d enemies" % enemies.size())
+
 func set_enemy(new_enemy: CharacterData):
-	enemy = new_enemy
-	enemy.calculate_secondary_attributes()
-	if enemy.current_sp == 0:
-		enemy.current_sp = enemy.max_sp
+	enemies = [new_enemy]
+	set_enemies(enemies)
 
 func set_dungeon_info(boss_fight: bool, wave: int, floor: int, _max_floor:int, description: String):
+	is_boss_battle = boss_fight
 	current_wave = wave
 	current_floor = floor
-	dungeon_description = description
-	# CRITICAL FIX: Safely handle description parameter
+	
 	if description == null or description == "":
 		dungeon_description = "Dungeon Floor %d" % floor
 	elif typeof(description) == TYPE_STRING:
 		dungeon_description = description
 	else:
-		# Convert whatever type it is to String
 		dungeon_description = str(description)
 		push_warning("BattleOrchestrator: Description was type %d, converted to String" % typeof(description))
 		
@@ -496,23 +753,21 @@ func set_dungeon_info(boss_fight: bool, wave: int, floor: int, _max_floor:int, d
 func _deferred_start_battle():
 	print("BattleOrchestrator: _deferred_start_battle called")
 	print("  - Player: ", player.name if player else "NULL")
-	print("  - Enemy: ", enemy.name if enemy else "NULL")
+	print("  - Enemies: %d" % enemies.size())
 	print("  - Floor: %d, Wave: %d" % [current_floor, current_wave])
 	
-	# Validation
 	if not player:
 		push_error("BattleOrchestrator: Cannot start battle - player is null!")
 		return
 	
-	if not enemy:
-		push_error("BattleOrchestrator: Cannot start battle - enemy is null!")
+	if enemies.is_empty():
+		push_error("BattleOrchestrator: Cannot start battle - no enemies!")
 		return
 	
 	if not ui_controller:
 		push_error("BattleOrchestrator: Cannot start battle - ui_controller is null!")
 		return
 	
-	# ✅ FIX: Check if tree is valid before awaiting
 	var tree = get_tree()
 	if not tree:
 		push_error("BattleOrchestrator: Scene tree is null!")
@@ -520,7 +775,6 @@ func _deferred_start_battle():
 	
 	print("BattleOrchestrator: Waiting for scene to stabilize...")
 	
-	# Wait with timeout protection
 	var frames_waited = 0
 	var max_frames = 30
 	
@@ -532,7 +786,6 @@ func _deferred_start_battle():
 		await tree.process_frame
 		frames_waited += 1
 		
-		# Check if we're ready
 		if ui_controller and ui_controller.is_inside_tree():
 			print("BattleOrchestrator: Scene ready after %d frames" % frames_waited)
 			break
@@ -544,158 +797,28 @@ func _deferred_start_battle():
 	print("BattleOrchestrator: Starting battle now...")
 	start_battle()
 
-func debug_proficiency_status():
-	"""Debug command to check proficiency status"""
-	if not player or not player.proficiency_manager:
-		print("[DEBUG] No player or proficiency manager!")
-		return
-	
-	print("\n=== PLAYER PROFICIENCY DEBUG ===")
-	
-	# Check weapon
-	if player.equipment["main_hand"]:
-		var weapon = player.equipment["main_hand"]
-		print("Main Hand: %s" % weapon.name)
-		print("  Key: '%s'" % weapon.key)
-		
-		if weapon.key != "":
-			var uses = player.proficiency_manager.get_weapon_proficiency_uses(weapon.key)
-			var level = player.proficiency_manager.get_weapon_proficiency_level(weapon.key)
-			var next = player.proficiency_manager.get_uses_for_next_level(level)
-			print("  Proficiency: Level %d (%d/%d uses)" % [level, uses, next])
-	
-	# Check all tracked proficiencies
-	print("\nAll Weapon Proficiencies:")
-	var all_weapons = player.proficiency_manager.get_all_weapon_proficiencies()
-	if all_weapons.is_empty():
-		print("  (none)")
-	else:
-		for prof in all_weapons:
-			print("  %s" % prof)
-	
-	print("\nAll Armor Proficiencies:")
-	var all_armor = player.proficiency_manager.get_all_armor_proficiencies()
-	if all_armor.is_empty():
-		print("  (none)")
-	else:
-		for prof in all_armor:
-			print("  %s" % prof)
-	
-	print("================================\n")
-
-# === PVP SETUP FUNCTION ===
+# === PVP ===
 
 func setup_pvp_battle(local_player: CharacterData, remote_opponent: CharacterData):
-	"""Setup battle in PvP mode"""
 	print("BattleOrchestrator: setup_pvp_battle called")
-	print("  - Local player: %s (Level %d, HP: %d/%d)" % [
-		local_player.name, local_player.level, local_player.current_hp, local_player.max_hp
-	])
-	print("  - Remote opponent: %s (Level %d, HP: %d/%d)" % [
-		remote_opponent.name, remote_opponent.level, remote_opponent.current_hp, remote_opponent.max_hp
-	])
 	
 	is_pvp_mode = true
 	player = local_player
-	enemy = remote_opponent
+	enemies = [remote_opponent]
 	
-	# Reset for battle
 	player.reset_for_new_battle()
-	enemy.reset_for_new_battle()
+	remote_opponent.reset_for_new_battle()
 	
-	if not enemy.elemental_resistances:
-		enemy.elemental_resistances = ElementalResistanceManager.new(enemy)
+	if not remote_opponent.elemental_resistances:
+		remote_opponent.elemental_resistances = ElementalResistanceManager.new(remote_opponent)
 	
-	enemy.calculate_secondary_attributes()
+	remote_opponent.calculate_secondary_attributes()
 	
-	# Set dummy dungeon info
 	current_wave = 1
 	current_floor = 1
 	dungeon_description = "Arena PvP Battle"
 	is_boss_battle = false
 	
 	print("BattleOrchestrator: PvP battle configured")
-	print("  - Player instance ID: %s" % player.get_instance_id())
-	print("  - Enemy instance ID: %s" % enemy.get_instance_id())
 	
 	call_deferred("start_battle")
-
-func debug_character_references():
-	"""Debug to verify all character references point to same objects"""
-	print("\n=== CHARACTER REFERENCE DEBUG ===")
-	
-	if not is_pvp_mode:
-		print("Not in PvP mode")
-		return
-	
-	var local_char = CharacterManager.get_current_character()
-	var network_opponent_id = network_sync.network.get_opponent_id()
-	var network_opponent = network_sync.network.players.get(network_opponent_id, {}).get("character", null)
-	
-	print("orchestrator.player: %s (%s)" % [player.name, player.get_instance_id()])
-	print("orchestrator.enemy: %s (%s)" % [enemy.name, enemy.get_instance_id()])
-	print("CharacterManager.current: %s (%s)" % [local_char.name, local_char.get_instance_id()])
-	
-	if network_opponent:
-		print("Network opponent: %s (%s)" % [network_opponent.name, network_opponent.get_instance_id()])
-	
-	print("\nPlayer HP: %d/%d" % [player.current_hp, player.max_hp])
-	print("Enemy HP: %d/%d" % [enemy.current_hp, enemy.max_hp])
-	
-	if player == local_char:
-		print("✅ player == CharacterManager.current")
-	else:
-		print("❌ player != CharacterManager.current - THIS IS THE BUG!")
-	
-	if network_opponent and enemy.get_instance_id() == network_opponent.get_instance_id():
-		print("✅ enemy == network opponent")
-	else:
-		print("❌ enemy != network opponent - THIS IS THE BUG!")
-	
-	print("=================================\n")
-
-func debug_stat_comparison():
-	"""Debug function to compare local vs opponent stats"""
-	print("\n=== STAT COMPARISON DEBUG ===")
-	
-	print("\nLOCAL PLAYER (%s):" % player.name)
-	print("  Base Stats:")
-	print("    STR: %d, DEX: %d, INT: %d" % [player.strength, player.dexterity, player.intelligence])
-	print("    VIT: %d, AGI: %d" % [player.vitality, player.agility])
-	
-	print("  Equipment:")
-	for slot in player.equipment:
-		var item = player.equipment[slot]
-		if item:
-			print("    [%s] %s (dmg=%d, armor=%d, mods=%d)" % [
-				slot, item.name, item.damage, item.armor_value, item.stat_modifiers.size()
-			])
-			for stat in item.stat_modifiers:
-				print("      +%d %s" % [item.stat_modifiers[stat], Skill.AttributeTarget.keys()[stat]])
-	
-	print("  Calculated:")
-	print("    Attack Power: %d" % player.get_attack_power())
-	print("    Defense: %d" % player.get_defense())
-	print("    Max HP: %d" % player.max_hp)
-	
-	print("\nOPPONENT (%s):" % enemy.name)
-	print("  Base Stats:")
-	print("    STR: %d, DEX: %d, INT: %d" % [enemy.strength, enemy.dexterity, enemy.intelligence])
-	print("    VIT: %d, AGI: %d" % [enemy.vitality, enemy.agility])
-	
-	print("  Equipment:")
-	for slot in enemy.equipment:
-		var item = enemy.equipment[slot]
-		if item:
-			print("    [%s] %s (dmg=%d, armor=%d, mods=%d)" % [
-				slot, item.name, item.damage, item.armor_value, item.stat_modifiers.size()
-			])
-			for stat in item.stat_modifiers:
-				print("      +%d %s" % [item.stat_modifiers[stat], Skill.AttributeTarget.keys()[stat]])
-	
-	print("  Calculated:")
-	print("    Attack Power: %d" % enemy.get_attack_power())
-	print("    Defense: %d" % enemy.get_defense())
-	print("    Max HP: %d" % enemy.max_hp)
-	
-	print("=================================\n")

@@ -33,6 +33,16 @@ const RARITY_COLORS = {
 	"legendary": "orange"
 }
 
+# NEW: Map tier numbers to rarity names
+const RARITY_TIERS = {
+	"common": 0,
+	"uncommon": 1,
+	"magic": 2,
+	"rare": 3,
+	"epic": 4,
+	"legendary": 5
+}
+
 const PRIMARY_STATS = [
 	Skill.AttributeTarget.VITALITY,
 	Skill.AttributeTarget.STRENGTH,
@@ -48,16 +58,43 @@ const PRIMARY_STATS = [
 
 # === RARITY ROLLING ===
 
-func roll_rarity() -> String:
-	"""Roll random rarity tier"""
-	var roll = RandomManager.randf()
+func roll_rarity(min_rarity_tier: int = 0) -> String:
+	"""
+	Roll random rarity tier with optional minimum
 	
-	if roll < 0.50: return "common"
-	elif roll < 0.75: return "uncommon"
-	elif roll < 0.87: return "magic"
-	elif roll < 0.94: return "rare"
-	elif roll < 0.98: return "epic"
-	else: return "legendary"
+	Parameters:
+	- min_rarity_tier: Minimum rarity tier (0-5, where 0=common, 5=legendary)
+	"""
+	var roll = RandomManager.randf()
+	var rarity = ""
+	
+	if roll < 0.50: rarity = "common"
+	elif roll < 0.75: rarity = "uncommon"
+	elif roll < 0.87: rarity = "magic"
+	elif roll < 0.94: rarity = "rare"
+	elif roll < 0.98: rarity = "epic"
+	else: rarity = "legendary"
+	
+	# Enforce minimum rarity tier
+	if min_rarity_tier > 0:
+		var rolled_tier = RARITY_TIERS.get(rarity, 0)
+		if rolled_tier < min_rarity_tier:
+			# Upgrade to minimum tier
+			rarity = _get_rarity_by_tier(min_rarity_tier)
+			print("RarityGenerator: Upgraded to minimum tier %d (%s)" % [min_rarity_tier, rarity])
+	
+	return rarity
+
+func _get_rarity_by_tier(tier: int) -> String:
+	"""Get rarity name by tier number"""
+	match tier:
+		0: return "common"
+		1: return "uncommon"
+		2: return "magic"
+		3: return "rare"
+		4: return "epic"
+		5: return "legendary"
+		_: return "common"
 
 func get_ilvl_bonus(rarity: String) -> int:
 	"""Get item level bonus for rarity"""

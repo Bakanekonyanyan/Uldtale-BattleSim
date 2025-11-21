@@ -69,7 +69,7 @@ func _is_already_generated(data: Dictionary) -> bool:
 
 func _load_generated(data: Dictionary):
 	"""Load already-generated equipment"""
-	print("Equipment: Already generated - %s" % name)
+	print("Equipment: Already generated - %s" % display_name)
 	rarity = data.get("rarity", "common")
 	rarity_applied = true
 	damage = data.get("damage", damage)
@@ -78,24 +78,12 @@ func _load_generated(data: Dictionary):
 	if "stat_modifiers" in data:
 		_load_from_save(data)
 
-func _generate_new(data: Dictionary):
-	"""Generate fresh equipment"""
-	print("Equipment: Generating new - %s" % name)
-	
-	var floor = data.get("floor_number", item_level)
-	if floor > 1:
-		generate_for_floor(floor)
-	else:
-		generate_for_floor(1)
-
-# === GENERATION ===
-
-func generate_for_floor(floor: int):
+func generate_for_floor(floor: int, min_rarity_tier: int = 0):
 	"""Generate equipment for specific floor - delegates to managers"""
 	base_item_level = floor
 	
-	# 1. Assign rarity
-	rarity = rarity_generator.roll_rarity()
+	# 1. Assign rarity (with optional minimum)
+	rarity = rarity_generator.roll_rarity(min_rarity_tier)
 	
 	# 2. Calculate item level with rarity bonus
 	item_level = equipment_scaler.calculate_item_level(floor, rarity)
@@ -114,18 +102,30 @@ func generate_for_floor(floor: int):
 	
 	# 5. Generate name
 	var naming_data = {
-		"base_name": name,
+		"base_name": display_name,
 		"rarity": rarity,
 		"stat_modifiers": stat_modifiers,
 		"status_effect": status_effect_type,
 		"type": type
 	}
 	var names = equipment_namer.generate_name(naming_data)
-	name = names.full_name
+	display_name = names.full_name
 	flavor_text = names.flavor_text
 	
 	rarity_applied = true
-	print("Equipment: Generated ilvl %d %s (%s)" % [item_level, name, rarity])
+	print("Equipment: Generated ilvl %d %s (%s)" % [item_level, display_name, rarity])
+
+func _generate_new(data: Dictionary):
+	"""Generate fresh equipment"""
+	print("Equipment: Generating new - %s" % display_name)
+	
+	var floor = data.get("floor_number", item_level)
+	var min_rarity = data.get("min_rarity_tier", 0)
+	
+	if floor > 1 or min_rarity > 0:
+		generate_for_floor(floor, min_rarity)
+	else:
+		generate_for_floor(1, 0)
 
 # === EQUIPMENT OPERATIONS ===
 
@@ -135,14 +135,47 @@ func can_equip(character: CharacterData) -> bool:
 	return character.character_class in class_restriction
 
 func apply_effects(character: CharacterData):
-	for effect in effects:
-		if effect in character:
-			character[effect] += effects[effect]
+	"""Apply secondary attribute effects (dodge, critical_hit_rate, etc)"""
+	if effects.is_empty():
+		return
+	
+	print("[EQUIPMENT] Applying effects from %s:" % display_name)
+	
+	for property_name in effects:
+		var effect_value = effects[property_name]
+		
+		# Check if character has this property
+		if property_name in character:
+			var old_value = character.get(property_name)
+			character.set(property_name, old_value + effect_value)
+			print("  - %s: %s -> %s (%+.3f)" % [
+				property_name, 
+				old_value, 
+				character.get(property_name),
+				effect_value
+			])
+		else:
+			push_warning("Equipment effect '%s' not found on character" % property_name)
 
 func remove_effects(character: CharacterData):
-	for effect in effects:
-		if effect in character:
-			character[effect] -= effects[effect]
+	"""Remove secondary attribute effects"""
+	if effects.is_empty():
+		return
+	
+	print("[EQUIPMENT] Removing effects from %s:" % display_name)
+	
+	for property_name in effects:
+		var effect_value = effects[property_name]
+		
+		if property_name in character:
+			var old_value = character.get(property_name)
+			character.set(property_name, old_value - effect_value)
+			print("  - %s: %s -> %s (%-.3f)" % [
+				property_name,
+				old_value,
+				character.get(property_name),
+				effect_value
+			])
 
 func apply_stat_modifiers(character: CharacterData):
 	for stat in stat_modifiers:
@@ -169,7 +202,7 @@ func get_rarity_color() -> String:
 
 func get_full_description() -> String:
 	"""Generate rich description with all stats"""
-	var desc = "[b]%s[/b]\n" % name
+	var desc = "[b]%s[/b]\n" % display_name
 	
 	# QOL: Show slot prominently
 	desc += "[color=cyan][b]Slot: %s[/b][/color]\n" % _get_slot_display_name()
@@ -247,7 +280,7 @@ func _get_slot_display_name() -> String:
 func _load_base_data(data: Dictionary):
 	"""Load common base properties"""
 	id = data.get("id", "")
-	name = data.get("name", "")
+	display_name = data.get("name", "")
 	description = data.get("description", "")
 	value = data.get("value", 0)
 	damage = data.get("damage", 0)
@@ -275,19 +308,19 @@ func _load_base_data(data: Dictionary):
 			key = id.replace("weapon_", "").replace("armor_", "").replace("shield_", "").replace("source_", "")
 		else:
 			# Last resort: derive from name
-			var clean_name = name.to_lower().replace(" ", "_")
+			var clean_name = display_name.to_lower().replace(" ", "_")
 			# Remove common prefixes/suffixes
 			clean_name = clean_name.replace("the_", "").replace("a_", "").replace("an_", "")
 			key = clean_name
 	
-	print("Equipment: Set proficiency key '%s' for '%s' (id: %s, inv_key: %s)" % [key, name, id, inventory_key])
+	print("Equipment: Set proficiency key '%s' for '%s' (id: %s, inv_key: %s)" % [key, display_name, id, inventory_key])
 	
 	item_type = Item.ItemType.WEAPON if type == "weapon" else Item.ItemType.ARMOR
 
 # Also update _load_from_save to preserve the key
 func _load_from_save(data: Dictionary):
 	"""Restore from save data"""
-	print("Equipment: Loading from save - %s (ilvl %d)" % [name, item_level])
+	print("Equipment: Loading from save - %s (ilvl %d)" % [display_name, item_level])
 	rarity = data.get("rarity", "common")
 	rarity_applied = true
 	damage = data.get("damage", damage)
@@ -314,13 +347,13 @@ func _load_from_save(data: Dictionary):
 	item_suffix = data.get("item_suffix", "")
 	flavor_text = data.get("flavor_text", "")
 	if "name" in data:
-		name = data["name"]
+		display_name = data["name"]
 
 # Update get_save_data to include key
 func get_save_data() -> Dictionary:
 	return {
 		"id": id,
-		"name": name,
+		"name": display_name,
 		"key": key,  # NEW: Save the proficiency key
 		"rarity": rarity,
 		"rarity_applied": rarity_applied,
@@ -336,3 +369,31 @@ func get_save_data() -> Dictionary:
 		"item_suffix": item_suffix,
 		"flavor_text": flavor_text
 	}
+
+func get_effects_description() -> String:
+	"""Get formatted description of equipment effects"""
+	if effects.is_empty():
+		return ""
+	
+	var desc = "\n[color=cyan][b]Effects:[/b][/color]\n"
+	
+	for property_name in effects:
+		var value = effects[property_name]
+		var display_name = _format_property_name(property_name)
+		var color = "lime" if value > 0 else "red"
+		var sign = "+" if value > 0 else ""
+		
+		# Format based on value size (percentages vs flat values)
+		if abs(value) < 1.0:
+			# Likely a percentage (0.05 = 5%)
+			desc += "  [color=%s]%s%.1f%% %s[/color]\n" % [color, sign, value * 100, display_name]
+		else:
+			# Flat value
+			desc += "  [color=%s]%s%.0f %s[/color]\n" % [color, sign, value, display_name]
+	
+	return desc
+
+func _format_property_name(property_name: String) -> String:
+	"""Convert property_name to human-readable format"""
+	# Replace underscores with spaces and capitalize words
+	return property_name.replace("_", " ").capitalize()
