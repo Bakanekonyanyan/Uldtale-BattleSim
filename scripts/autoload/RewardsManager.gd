@@ -1,10 +1,16 @@
-# RewardsManager.gd
-# Autoload: Add to project.godot as RewardsManager
-# FIXED: Apply momentum bonus on ANY battle when taking breather (not just bosses)
+# RewardsManager.gd - REFACTORED
+# Now handles BOTH reward calculation AND state persistence
 
 extends Node
 
 signal rewards_calculated(rewards: Dictionary)
+signal rewards_state_changed()
+
+# ===== REWARD STATE (moved from SceneManager) =====
+var saved_reward_state: Dictionary = {}
+var is_reward_session_active: bool = false
+
+# ===== REWARD CALCULATION =====
 
 func calculate_battle_rewards(battle_data: Dictionary) -> Dictionary:
 	var current_wave = battle_data.get("current_wave", 1)
@@ -14,7 +20,7 @@ func calculate_battle_rewards(battle_data: Dictionary) -> Dictionary:
 	var enemy = battle_data.get("enemy")
 	var momentum_level = battle_data.get("momentum_level", 0)
 	var taking_breather = battle_data.get("taking_breather", false)
-	var player_class = battle_data.get("player_class", "")  # NEW: Player class for biased drops
+	var player_class = battle_data.get("player_class", "")
 	
 	var rewards = {
 		"currency": (50 + (current_wave * 10)) * current_floor,
@@ -28,7 +34,7 @@ func calculate_battle_rewards(battle_data: Dictionary) -> Dictionary:
 	
 	var drop_chance_multiplier = (1 + (current_floor * 0.1)) * momentum_bonus
 	
-	# Enemy equipment drops (always random, no bias)
+	# Enemy equipment drops
 	if enemy and enemy.has_meta("equipped_items"):
 		var equipped_items = enemy.get_meta("equipped_items")
 		for item in equipped_items:
@@ -38,7 +44,7 @@ func calculate_battle_rewards(battle_data: Dictionary) -> Dictionary:
 					rewards["equipment_instances"].append(item)
 					print("RewardsManager: Dropped enemy equipment - %s (ilvl %d)" % [item.display_name, item.item_level])
 	
-	# Regular loot drops (uses class bias for player)
+	# Regular loot drops
 	if is_boss:
 		rewards["currency"] *= 2
 		add_random_item_to_rewards(rewards, "consumable", 1.0 * drop_chance_multiplier, current_floor)
@@ -55,24 +61,66 @@ func calculate_battle_rewards(battle_data: Dictionary) -> Dictionary:
 		MomentumSystem.accumulate_loot(rewards)
 		print("RewardsManager: Accumulated loot for momentum run")
 	
-	# Apply momentum bonus rewards on breather
+	# Apply momentum bonus on breather
 	if taking_breather and momentum_level >= 3:
 		print("RewardsManager: Player taking breather at momentum %d - applying bonus rewards" % momentum_level)
 		var bonus_rewards = MomentumSystem.get_momentum_bonus_rewards(current_floor)
 		
 		if bonus_rewards.has("currency"):
 			rewards["currency"] += bonus_rewards["currency"]
-			print("RewardsManager: Added %d bonus currency (total: %d)" % [bonus_rewards["currency"], rewards["currency"]])
 		
 		if bonus_rewards.has("equipment_instances"):
 			for equip in bonus_rewards["equipment_instances"]:
 				rewards["equipment_instances"].append(equip)
-			print("RewardsManager: Added %d bonus equipment pieces" % bonus_rewards["equipment_instances"].size())
-		
-		MomentumSystem.clear_accumulated_loot()
 	
 	emit_signal("rewards_calculated", rewards)
 	return rewards
+
+# ===== STATE MANAGEMENT (NEW - moved from SceneManager) =====
+
+func save_state(rewards: Dictionary, xp_gained: int, rewards_collected: bool, collected_items: Dictionary, auto_rewards_given: bool = false) -> void:
+	"""Save reward session state for navigation persistence"""
+	saved_reward_state = {
+		"rewards": rewards.duplicate(true),
+		"xp_gained": xp_gained,
+		"rewards_collected": rewards_collected,
+		"collected_items": collected_items.duplicate(),
+		"auto_rewards_given": auto_rewards_given,
+		"is_boss_fight": DungeonStateManager.is_boss_fight,
+		"current_floor": DungeonStateManager.current_floor,
+		"current_wave": DungeonStateManager.current_wave,
+		"max_floor": DungeonStateManager.max_floor
+	}
+	
+	is_reward_session_active = true
+	emit_signal("rewards_state_changed")
+	
+	print("RewardsManager: Saved state - Wave %d, Boss: %s, Items: %d" % [
+		DungeonStateManager.current_wave,
+		DungeonStateManager.is_boss_fight,
+		collected_items.size()
+	])
+
+func get_saved_state() -> Dictionary:
+	"""Retrieve saved reward state"""
+	return saved_reward_state if not saved_reward_state.is_empty() else {}
+
+func clear_saved_state() -> void:
+	"""Clear saved reward state"""
+	saved_reward_state.clear()
+	is_reward_session_active = false
+	emit_signal("rewards_state_changed")
+	print("RewardsManager: Cleared saved state")
+
+func has_saved_state() -> bool:
+	"""Check if there's a saved reward session"""
+	return not saved_reward_state.is_empty()
+
+func is_session_active() -> bool:
+	"""Check if reward session is active"""
+	return is_reward_session_active
+
+# ===== HELPER METHODS =====
 
 func get_equipment_drop_chance(rarity: String, is_boss: bool, momentum_level: int) -> float:
 	var base_chance = 0.0
@@ -93,79 +141,57 @@ func get_equipment_drop_chance(rarity: String, is_boss: bool, momentum_level: in
 	
 	return base_chance
 
-func add_random_item_to_rewards(rewards: Dictionary, item_type: String, chance: float, floor: int = 1, character_class: String = ""):
-	"""
-	Add random items with class bias and floor-scaled rarity
-	- equipment creates instances with floor context
-	- consumables/materials store keys
-	- character_class enables class-biased drops (65% preferred)
-	"""
-	if RandomManager.randf() >= chance:
-		return
-	
-	var item_id = ""
-	
-	match item_type:
-		"consumable":
-			item_id = ItemManager.get_random_consumable()
-			if item_id != "":
-				rewards[item_id] = rewards.get(item_id, 0) + 1
-		
-		"material":
-			item_id = ItemManager.get_random_material()
-			if item_id != "":
-				rewards[item_id] = rewards.get(item_id, 0) + 1
-		
-		"weapon":
-			# Use class bias if character_class provided
-			if character_class != "":
-				item_id = ItemManager.get_random_weapon_biased(character_class)
-			else:
-				item_id = ItemManager.get_random_weapon()
+func add_random_item_to_rewards(rewards: Dictionary, item_type: String, chance: float, floor: int = 1, player_class: String = "") -> void:
+	"""Add random items to rewards dictionary"""
+	if RandomManager.randf() < chance:
+		var item_id = ""
+		match item_type:
+			"consumable": 
+				item_id = ItemManager.get_random_consumable()
+				if item_id != "":
+					if not rewards.has(item_id):
+						rewards[item_id] = 0
+					rewards[item_id] += 1
 			
-			if item_id != "":
-				var equipment = ItemManager.create_equipment_for_floor(item_id, floor)
-				if equipment:
-					rewards["equipment_instances"].append(equipment)
-					print("RewardsManager: Weapon drop - %s (ilvl %d, %s)%s" % [
-						equipment.display_name, 
-						equipment.item_level, 
-						equipment.rarity,
-						" [CLASS BIASED]" if character_class != "" else ""
-					])
-		
-		"armor":
-			# Use class bias if character_class provided
-			if character_class != "":
-				item_id = ItemManager.get_random_armor_biased(character_class)
-			else:
-				item_id = ItemManager.get_random_armor()
+			"material": 
+				item_id = ItemManager.get_random_material()
+				if item_id != "":
+					if not rewards.has(item_id):
+						rewards[item_id] = 0
+					rewards[item_id] += 1
 			
-			if item_id != "":
-				var equipment = ItemManager.create_equipment_for_floor(item_id, floor)
-				if equipment:
-					rewards["equipment_instances"].append(equipment)
-					print("RewardsManager: Armor drop - %s (ilvl %d, %s)%s" % [
-						equipment.display_name, 
-						equipment.item_level, 
-						equipment.rarity,
-						" [CLASS BIASED]" if character_class != "" else ""
-					])
-		
-		"equipment":
-			# Use class bias if character_class provided
-			if character_class != "":
-				item_id = ItemManager.get_random_equipment_biased(character_class)
-			else:
-				item_id = ItemManager.get_random_equipment()
+			"weapon":
+				# Use class-biased selection if player_class provided
+				if player_class != "":
+					item_id = ItemManager.get_random_weapon_biased(player_class)
+				else:
+					item_id = ItemManager.get_random_weapon()
+				
+				if item_id != "":
+					var equipment = ItemManager.create_equipment_for_floor(item_id, floor)
+					if equipment:
+						rewards["equipment_instances"].append(equipment)
 			
-			if item_id != "":
-				var equipment = ItemManager.create_equipment_for_floor(item_id, floor)
-				if equipment:
-					rewards["equipment_instances"].append(equipment)
-					print("RewardsManager: Equipment drop - %s (ilvl %d, %s)%s" % [
-						equipment.display_name, 
-						equipment.item_level, 
-						equipment.rarity,
-						" [CLASS BIASED]" if character_class != "" else ""
-					])
+			"armor":
+				# Use class-biased selection if player_class provided
+				if player_class != "":
+					item_id = ItemManager.get_random_armor_biased(player_class)
+				else:
+					item_id = ItemManager.get_random_armor()
+				
+				if item_id != "":
+					var equipment = ItemManager.create_equipment_for_floor(item_id, floor)
+					if equipment:
+						rewards["equipment_instances"].append(equipment)
+			
+			"equipment":
+				# Use class-biased selection if player_class provided
+				if player_class != "":
+					item_id = ItemManager.get_random_equipment_biased(player_class)
+				else:
+					item_id = ItemManager.get_random_equipment()
+				
+				if item_id != "":
+					var equipment = ItemManager.create_equipment_for_floor(item_id, floor)
+					if equipment:
+						rewards["equipment_instances"].append(equipment)

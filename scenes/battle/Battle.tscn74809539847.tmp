@@ -241,29 +241,3 @@ layout_mode = 2
 custom_minimum_size = Vector2(260, 40)
 layout_mode = 2
 text = "Cancel"
-
-[node name="SkillInfoDialog" type="AcceptDialog" parent="BattleUIController"]
-title = "Skill Information"
-initial_position = 2
-size = Vector2i(450, 450)
-
-[node name="SkillInfoRichLabel" type="RichTextLabel" parent="BattleUIController/SkillInfoDialog"]
-custom_minimum_size = Vector2(430, 350)
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 442.0
-offset_bottom = 358.0
-bbcode_enabled = true
-
-[node name="EnemyInfoDialog" type="AcceptDialog" parent="BattleUIController"]
-title = "Enemy Information"
-initial_position = 2
-size = Vector2i(520, 550)
-
-[node name="EnemyInfoRichLabel" type="RichTextLabel" parent="BattleUIController/EnemyInfoDialog"]
-custom_minimum_size = Vector2(500, 450)
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 512.0
-offset_bottom = 458.0
-bbcode_enabled = true

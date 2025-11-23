@@ -1,4 +1,4 @@
-# CharacterCreation.gd - UPDATED with comprehensive race/class info
+# res://scenes/ui/CharacterCreation.gd - REFACTORED to use CharacterFactory
 extends Control
 
 var races = {}
@@ -7,7 +7,7 @@ var classes = {}
 @onready var name_input = $NameInput
 @onready var race_option = $RaceOption
 @onready var class_option = $ClassOption
-@onready var info_display = $InfoDisplay  # RichTextLabel for detailed info
+@onready var info_display = $InfoDisplay
 @onready var create_button = $CreateButton
 @onready var cancel_button = $QuitButton
 
@@ -150,33 +150,12 @@ func update_info_display():
 	
 	info_text += "\n"
 	
-	# === SKILLS ===
-	if selected_class.has("skills") and selected_class.skills.size() > 0:
-		info_text += "[b][color=cyan]Starting Skills:[/color][/b]\n"
+	# === STARTING SKILLS ===
+	info_text += "[b][color=yellow]Starting Skills:[/color][/b]\n"
+	if selected_class.has("skills"):
 		for skill_name in selected_class.skills:
 			info_text += "  • %s\n" % skill_name
-		info_text += "\n"
 	
-	# === EQUIPMENT PROFICIENCIES ===
-	info_text += "[b][color=cyan]Equipment Proficiencies:[/color][/b]\n"
-	
-	# Get available equipment for this class
-	var temp_char = CharacterData.new()
-	temp_char.character_class = u_class_name
-	
-	if temp_char.proficiency_manager:
-		var weapons = temp_char.proficiency_manager.get_available_weapon_types()
-		var armors = temp_char.proficiency_manager.get_available_armor_types()
-		
-		if not weapons.is_empty():
-			info_text += "[color=yellow]Weapons:[/color] "
-			info_text += ", ".join(weapons.map(func(w): return w.capitalize())) + "\n"
-		
-		if not armors.is_empty():
-			info_text += "[color=yellow]Armor:[/color] "
-			info_text += ", ".join(armors.map(func(a): return a.capitalize())) + "\n"
-	
-	# === POWER TYPES ===
 	info_text += "\n[b][color=cyan]Combat Style:[/color][/b]\n"
 	info_text += "Attack Power: [color=yellow]%s[/color]-based\n" % selected_class.attack_power_type.capitalize()
 	info_text += "Spell Power: [color=yellow]%s[/color]-based\n" % selected_class.spell_power_type.capitalize()
@@ -193,45 +172,13 @@ func _on_create_pressed():
 		print("Please enter a character name")
 		return
 	
-	var new_character = CharacterData.new()
-	new_character.name = name_input.text
-	new_character.race = race_option.get_item_text(race_option.selected)
-	new_character.character_class = class_option.get_item_text(class_option.selected)
+	var char_name = name_input.text.strip_edges()
+	var race_name = race_option.get_item_text(race_option.selected)
+	var p_class_name = class_option.get_item_text(class_option.selected)
+	
+	# Use CharacterFactory for creation
+	var new_character = CharacterFactory.create_character(char_name, race_name, p_class_name, true)
 	new_character.max_floor_cleared = 1
-	
-	var selected_race = races["playable"][new_character.race]
-	var selected_class = classes["playable"][new_character.character_class]
-	
-	# Set attributes
-	new_character.vitality = selected_class.base_vit + selected_race.vit_mod
-	new_character.strength = selected_class.base_str + selected_race.str_mod
-	new_character.dexterity = selected_class.base_dex + selected_race.dex_mod
-	new_character.intelligence = selected_class.base_int + selected_race.int_mod
-	new_character.faith = selected_class.base_fai + selected_race.fai_mod
-	new_character.mind = selected_class.base_mnd + selected_race.mnd_mod
-	new_character.endurance = selected_class.base_end + selected_race.end_mod
-	new_character.arcane = selected_class.base_arc + selected_race.arc_mod
-	new_character.agility = selected_class.base_agi + selected_race.agi_mod
-	new_character.fortitude = selected_class.base_for + selected_race.for_mod
-	
-	new_character.attack_power_type = selected_class.attack_power_type
-	new_character.spell_power_type = selected_class.spell_power_type
-	
-	# Add skills
-	for skill_name in selected_class.skills:
-		new_character.add_skills(selected_class.skills)
-	
-	print("Skills added to new character: ", new_character.skills)
-	
-	#CRITICAL: Initialize racial elemental modifiers BEFORE calculating stats
-	new_character.initialize_racial_elementals(true)
-	
-	new_character.calculate_secondary_attributes()
-	
-	# Initialize current values to max
-	new_character.current_hp = new_character.max_hp
-	new_character.current_mp = new_character.max_mp
-	new_character.current_sp = new_character.max_sp
 	
 	# Starting gold
 	new_character.currency.copper = STARTING_GOLD
@@ -239,8 +186,9 @@ func _on_create_pressed():
 	
 	# Save the character
 	SaveManager.save_game(new_character)
-	print("Character created: ", new_character.name)
-	print("Skills for new character: ", new_character.skills)
+	print("Character created: %s (Level %d %s %s)" % [
+		new_character.name, new_character.level, race_name, p_class_name
+	])
 	
 	# Transition to character selection
 	SceneManager.change_scene("res://scenes/ui/CharacterSelection.tscn")

@@ -65,22 +65,22 @@ func update_status():
 		info_text += "[center][b][color=#00DDFF]═══ PRIMARY ATTRIBUTES ═══[/color][/b][/center]\n\n"
 		
 		# Row 1: Physical stats
-		info_text += "[color=#FF8888]⚔ Vitality:[/color] %d  " % current_character.vitality
-		info_text += "[color=#FFAA44]💪 Strength:[/color] %d  " % current_character.strength
-		info_text += "[color=#88FF88]🎯 Dexterity:[/color] %d\n" % current_character.dexterity
+		info_text += "[color=#FF8888]⚔ Vitality:[/color] %s  " % current_character.get_attribute_display_compact("vitality")
+		info_text += "[color=#FFAA44]💪 Strength:[/color] %s  " % current_character.get_attribute_display_compact("strength")
+		info_text += "[color=#88FF88]🎯 Dexterity:[/color] %s\n" % current_character.get_attribute_display_compact("dexterity")
 		
 		# Row 2: Mental stats
-		info_text += "[color=#88AAFF]🧠 Intelligence:[/color] %d  " % current_character.intelligence
-		info_text += "[color=#FFDD88]✨ Faith:[/color] %d  " % current_character.faith
-		info_text += "[color=#AA88FF]🔮 Mind:[/color] %d\n" % current_character.mind
+		info_text += "[color=#88AAFF]🧠 Intelligence:[/color] %s  " % current_character.get_attribute_display_compact("intelligence")
+		info_text += "[color=#FFDD88]✨ Faith:[/color] %s  " % current_character.get_attribute_display_compact("faith")
+		info_text += "[color=#AA88FF]🔮 Mind:[/color] %s\n" % current_character.get_attribute_display_compact("mind")
 		
 		# Row 3: Defensive stats
-		info_text += "[color=#66DDFF]🛡 Endurance:[/color] %d  " % current_character.endurance
-		info_text += "[color=#DD88FF]🌟 Arcane:[/color] %d\n" % current_character.arcane
+		info_text += "[color=#66DDFF]🛡 Endurance:[/color] %s  " % current_character.get_attribute_display_compact("endurance")
+		info_text += "[color=#DD88FF]🌟 Arcane:[/color] %s\n" % current_character.get_attribute_display_compact("arcane")
 		
 		# Row 4: Utility stats
-		info_text += "[color=#AAFF88]⚡ Agility:[/color] %d  " % current_character.agility
-		info_text += "[color=#FFAA88]🏔 Fortitude:[/color] %d\n\n" % current_character.fortitude
+		info_text += "[color=#AAFF88]⚡ Agility:[/color] %s  " % current_character.get_attribute_display_compact("agility")
+		info_text += "[color=#FFAA88]🏔 Fortitude:[/color] %s\n\n" % current_character.get_attribute_display_compact("fortitude")
 		
 		# === SECONDARY ATTRIBUTES ===
 		info_text += "[center][b][color=#00DDFF]═══ SECONDARY ATTRIBUTES ═══[/color][/b][/center]\n\n"
@@ -314,17 +314,23 @@ func _generate_fallback_attributes() -> String:
 	var info_text = ""
 	
 	info_text += "[center][b][color=#00DDFF]═══ PRIMARY ATTRIBUTES ═══[/color][/b][/center]\n\n"
-	info_text += "Vitality: %d | Strength: %d | Dexterity: %d\n" % [
-		current_character.vitality, current_character.strength, current_character.dexterity
+	info_text += "Vitality: %s | Strength: %s | Dexterity: %s\n" % [
+		current_character.get_attribute_display_compact("vitality"),
+		current_character.get_attribute_display_compact("strength"),
+		current_character.get_attribute_display_compact("dexterity")
 	]
-	info_text += "Intelligence: %d | Faith: %d | Mind: %d\n" % [
-		current_character.intelligence, current_character.faith, current_character.mind
+	info_text += "Intelligence: %s | Faith: %s | Mind: %s\n" % [
+		current_character.get_attribute_display_compact("intelligence"),
+		current_character.get_attribute_display_compact("faith"),
+		current_character.get_attribute_display_compact("mind")
 	]
-	info_text += "Endurance: %d | Arcane: %d\n" % [
-		current_character.endurance, current_character.arcane
+	info_text += "Endurance: %s | Arcane: %s\n" % [
+		current_character.get_attribute_display_compact("endurance"),
+		current_character.get_attribute_display_compact("arcane")
 	]
-	info_text += "Agility: %d | Fortitude: %d\n\n" % [
-		current_character.agility, current_character.fortitude
+	info_text += "Agility: %s | Fortitude: %s\n\n" % [
+		current_character.get_attribute_display_compact("agility"),
+		current_character.get_attribute_display_compact("fortitude")
 	]
 	
 	info_text += "[center][b][color=#00DDFF]═══ SECONDARY ATTRIBUTES ═══[/color][/b][/center]\n\n"

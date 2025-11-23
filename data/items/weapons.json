@@ -16,62 +16,16 @@
 		  "critical_hit_rate": 0,
 		  "armor_penetration": 0
 		},
-		"rarity": ""
-	  },
-	  "longsword": {
-		"name": "Longsword",
-		"description": "A powerful one-handed sword with high damage but decreases dodge.",
-		"value": 150,
-		"damage": 15,
-		"attribute_target": "strength",
-		"attribute_increase": 3,
-		"type": "one_handed",
-		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
-		"effects": {
-		  "dodge": -0.05,
-		  "critical_hit_rate": 0,
-		  "armor_penetration": 0
-		},
-		"rarity": ""
-	  },
-	  "katana": {
-		"name": "Katana",
-		"description": "A swift one-handed sword with average damage and slightly increased crit chance.",
-		"value": 130,
-		"damage": 12,
-		"attribute_target": "dexterity",
-		"attribute_increase": 2,
-		"type": "one_handed",
-		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
-		"effects": {
-		  "dodge": 0,
-		  "critical_hit_rate": 0.05,
-		  "armor_penetration": 0
-		},
-		"rarity": ""
-	  },
-	  "wakizashi": {
-		"name": "Wakizashi",
-		"description": "A short sword with light damage, high crit chance, and increased dodge.",
-		"value": 110,
-		"damage": 8,
-		"attribute_target": "dexterity",
-		"attribute_increase": 2,
-		"type": "one_handed",
-		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
-		"effects": {
-		  "dodge": 0.05,
-		  "critical_hit_rate": 0.10,
-		  "armor_penetration": 0
-		},
-		"rarity": ""
+		"rarity": "",
+		"dual_wieldable": true,
+		"dual_wield_classes": ["Myrmidon", "Samurai", "Monk"],
+		"preferred_slot": "main_hand",
+		"blocks_offhand": false,
+		"offhand_exceptions": []
 	  },
 	  "dagger": {
 		"name": "Dagger",
-		"description": "A swift dagger with low damage but high crit chance and potential status effects.",
+		"description": "A swift dagger with low damage but high crit chance.",
 		"value": 80,
 		"damage": 6,
 		"attribute_target": "dexterity",
@@ -84,92 +38,12 @@
 		  "critical_hit_rate": 0.15,
 		  "status_effect_chance": 10
 		},
-		"rarity": ""
-	  },
-	  "mace": {
-		"name": "Mace",
-		"description": "A heavy mace with average damage that moderately bypasses armor but decreases dodge.",
-		"value": 120,
-		"damage": 11,
-		"attribute_target": "strength",
-		"attribute_increase": 2,
-		"type": "one_handed",
-		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
-		"effects": {
-		  "dodge": -0.03,
-		  "critical_hit_rate": 0,
-		  "armor_penetration": 0.15
-		},
-		"rarity": ""
-	  },
-	  "axe": {
-		"name": "Axe",
-		"description": "A powerful axe with high damage that lightly bypasses armor but decreases dodge.",
-		"value": 140,
-		"damage": 14,
-		"attribute_target": "strength",
-		"attribute_increase": 3,
-		"type": "one_handed",
-		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
-		"effects": {
-		  "dodge": -0.04,
-		  "critical_hit_rate": 0,
-		  "armor_penetration": 10
-		},
-		"rarity": ""
-	  },
-	  "spear": {
-		"name": "Spear",
-		"description": "A versatile spear with average damage, slightly increased crit chance and dodge.",
-		"value": 110,
-		"damage": 11,
-		"attribute_target": "dexterity",
-		"attribute_increase": 2,
-		"type": "one_handed",
-		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
-		"effects": {
-		  "dodge": 0.03,
-		  "critical_hit_rate": 0.05,
-		  "armor_penetration": 0
-		},
-		"rarity": ""
-	  },
-	  "scepter": {
-		"name": "Scepter",
-		"description": "A magical scepter with average damage that increases spell power.",
-		"value": 160,
-		"damage": 9,
-		"attribute_target": "faith",
-		"attribute_increase": 3,
-		"type": "one_handed",
-		"slot": "main_hand",
-		"class_restriction": ["Cleric","Necromancer","Elementalist","Monk","Druid","Shaman","Mage","King"],
-		"effects": {
-		  "dodge": 0,
-		  "critical_hit_rate": 0,
-		  "spell_power": 10
-		},
-		"rarity": ""
-	  },
-	  "staff": {
-		"name": "Staff",
-		"description": "A magical staff with light damage that greatly increases spell power and crit chance.",
-		"value": 180,
-		"damage": 7,
-		"attribute_target": "intelligence",
-		"attribute_increase": 4,
-		"type": "one_handed",
-		"slot": "main_hand",
-		"class_restriction": ["Cleric","Necromancer","Elementalist","Monk","Druid","Shaman","Mage","King"],
-		"effects": {
-		  "dodge": 0,
-		  "critical_hit_rate": 0.08,
-		  "spell_power": 15
-		},
-		"rarity": ""
+		"rarity": "",
+		"dual_wieldable": true,
+		"dual_wield_classes": ["Myrmidon", "Samurai", "Monk", "Necromancer"],
+		"preferred_slot": "off_hand",
+		"blocks_offhand": false,
+		"offhand_exceptions": []
 	  }
 	},
 	"two_handed": {
@@ -188,45 +62,16 @@
 		  "critical_hit_rate": 0,
 		  "armor_penetration": 0.05
 		},
-		"rarity": ""
-	  },
-	  "lance": {
-		"name": "Lance",
-		"description": "A long lance that deals high damage and penetrates armor but reduces dodge.",
-		"value": 190,
-		"damage": 20,
-		"attribute_target": "strength",
-		"attribute_increase": 4,
-		"type": "two_handed",
-		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
-		"effects": {
-		  "dodge": -0.07,
-		  "critical_hit_rate": 0,
-		  "armor_penetration": 0.20
-		},
-		"rarity": ""
-	  },
-	  "curved_greatsword": {
-		"name": "Curved Greatsword",
-		"description": "A curved two-handed sword that increases dodge and deals high damage with low armor penetration.",
-		"value": 210,
-		"damage": 21,
-		"attribute_target": "dexterity",
-		"attribute_increase": 5,
-		"type": "two_handed",
-		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
-		"effects": {
-		  "dodge": 0.05,
-		  "critical_hit_rate": 0.03,
-		  "armor_penetration": 0.5
-		},
-		"rarity": ""
+		"rarity": "",
+		"dual_wieldable": false,
+		"dual_wield_classes": [],
+		"preferred_slot": "main_hand",
+		"blocks_offhand": true,
+		"offhand_exceptions": ["shield"]
 	  },
 	  "great_katana": {
 		"name": "Great Katana",
-		"description": "A large two-handed katana that increases crit chance and deals high damage but reduces dodge.",
+		"description": "A large two-handed katana that increases crit chance and deals high damage.",
 		"value": 220,
 		"damage": 20,
 		"attribute_target": "dexterity",
@@ -239,75 +84,12 @@
 		  "critical_hit_rate": 0.10,
 		  "armor_penetration": 0
 		},
-		"rarity": ""
-	  },
-	  "great_hammer": {
-		"name": "Great Hammer",
-		"description": "A massive hammer that greatly penetrates armor and deals high damage but reduces dodge.",
-		"value": 230,
-		"damage": 23,
-		"attribute_target": "strength",
-		"attribute_increase": 6,
-		"type": "two_handed",
-		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
-		"effects": {
-		  "dodge": -0.09,
-		  "critical_hit_rate": 0,
-		  "armor_penetration": 0.25
-		},
-		"rarity": ""
-	  },
-	  "great_axe": {
-		"name": "Great Axe",
-		"description": "A large two-handed axe that greatly increases crit chance and deals high damage but reduces dodge.",
-		"value": 225,
-		"damage": 22,
-		"attribute_target": "strength",
-		"attribute_increase": 5,
-		"type": "two_handed",
-		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
-		"effects": {
-		  "dodge": -0.08,
-		  "critical_hit_rate": 0.15,
-		  "armor_penetration": 0.10
-		},
-		"rarity": ""
-	  },
-	  "halberd": {
-		"name": "Halberd",
-		"description": "A versatile polearm that penetrates armor, increases crit chance, deals moderate damage but reduces dodge.",
-		"value": 215,
-		"damage": 19,
-		"attribute_target": "strength",
-		"attribute_increase": 4,
-		"type": "two_handed",
-		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Monk","Samurai","Brute","King"],
-		"effects": {
-		  "dodge": -0.07,
-		  "critical_hit_rate": 0.08,
-		  "armor_penetration": 0.15
-		},
-		"rarity": ""
-	  },
-	  "great_staff": {
-		"name": "Great Staff",
-		"description": "A powerful magical staff that greatly increases spell power and deals high damage but reduces dodge.",
-		"value": 240,
-		"damage": 18,
-		"attribute_target": "intelligence",
-		"attribute_increase": 7,
-		"type": "two_handed",
-		"slot": "main_hand",
-		"class_restriction": ["Cleric","Necromancer","Elementalist","Monk","Druid","Shaman","Mage","King"],
-		"effects": {
-		  "dodge": -0.06,
-		  "critical_hit_rate": 0.05,
-		  "spell_power": 25
-		},
-		"rarity": ""
+		"rarity": "",
+		"dual_wieldable": false,
+		"dual_wield_classes": ["Samurai"],
+		"preferred_slot": "main_hand",
+		"blocks_offhand": true,
+		"offhand_exceptions": []
 	  }
 	}
   },
@@ -326,22 +108,12 @@
 		"effects": {
 		  "dodge": -0.02
 		},
-		"rarity": ""
-	  },
-	  "shield": {
-		"name": "Shield",
-		"description": "A medium shield that provides moderate armor with light agility reduction.",
-		"value": 80,
-		"armor_value": 10,
-		"attribute_target": "strength",
-		"attribute_increase": 2,
-		"type": "shield",
-		"slot": "off_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
-		"effects": {
-		  "dodge": -0.04
-		},
-		"rarity": ""
+		"rarity": "",
+		"dual_wieldable": false,
+		"dual_wield_classes": [],
+		"preferred_slot": "off_hand",
+		"blocks_offhand": false,
+		"offhand_exceptions": []
 	  },
 	  "great_shield": {
 		"name": "Great Shield",
@@ -356,7 +128,12 @@
 		"effects": {
 		  "dodge": -0.06
 		},
-		"rarity": ""
+		"rarity": "",
+		"dual_wieldable": false,
+		"dual_wield_classes": [],
+		"preferred_slot": "off_hand",
+		"blocks_offhand": false,
+		"offhand_exceptions": []
 	  }
 	},
 	"source": {
@@ -371,7 +148,12 @@
 		"slot": "off_hand",
 		"class_restriction": ["Necromancer","Mage","King"],
 		"effects": {},
-		"rarity": ""
+		"rarity": "",
+		"dual_wieldable": false,
+		"dual_wield_classes": [],
+		"preferred_slot": "off_hand",
+		"blocks_offhand": false,
+		"offhand_exceptions": []
 	  },
 	  "talisman": {
 		"name": "Elemental Talisman",
@@ -386,7 +168,12 @@
 		"effects": {
 		  "dodge": 0.03
 		},
-		"rarity": ""
+		"rarity": "",
+		"dual_wieldable": false,
+		"dual_wield_classes": [],
+		"preferred_slot": "off_hand",
+		"blocks_offhand": false,
+		"offhand_exceptions": []
 	  },
 	  "fetish": {
 		"name": "Druidic Fetish",
@@ -399,7 +186,12 @@
 		"slot": "off_hand",
 		"class_restriction": ["Druid"],
 		"effects": {},
-		"rarity": ""
+		"rarity": "",
+		"dual_wieldable": false,
+		"dual_wield_classes": [],
+		"preferred_slot": "off_hand",
+		"blocks_offhand": false,
+		"offhand_exceptions": []
 	  },
 	  "relic": {
 		"name": "Holy Relic",
@@ -412,7 +204,12 @@
 		"slot": "off_hand",
 		"class_restriction": ["Cleric", "Shaman", "King"],
 		"effects": {},
-		"rarity": ""
+		"rarity": "",
+		"dual_wieldable": false,
+		"dual_wield_classes": [],
+		"preferred_slot": "off_hand",
+		"blocks_offhand": false,
+		"offhand_exceptions": []
 	  }
 	}
   }

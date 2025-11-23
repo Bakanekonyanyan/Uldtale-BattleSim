@@ -156,6 +156,14 @@ offset_right = 594.0
 offset_bottom = 367.0
 text = "Unequip"
 
+[node name="SwapHandsButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 392.0
+offset_top = 384.0
+offset_right = 466.0
+offset_bottom = 415.0
+text = "Swap Hands"
+
 [node name="ItemInfo" type="RichTextLabel" parent="."]
 layout_mode = 0
 offset_left = 704.0

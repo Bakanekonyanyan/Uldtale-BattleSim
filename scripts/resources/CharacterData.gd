@@ -1,19 +1,17 @@
-# CharacterData.gd - REFACTORED
-# Now focuses on: Core stats, combat calculations, equipment
-# Status effects → StatusEffectManager
-# Buffs/Debuffs → BuffDebuffManager  
-# Skills → SkillProgressionManager
+# CharacterData.gd - FINAL REFACTORED VERSION
+# Managers that store state: Instances (status, buff, skill, proficiency, elemental)
+# Managers that are stateless: Static utilities (resource, progression, combat)
 
 extends Resource
 class_name CharacterData
 
-# === MANAGERS (handles complex subsystems) ===
+# === STATEFUL MANAGERS (need instance, store character reference) ===
 var status_manager: StatusEffectManager
 var buff_manager: BuffDebuffManager
 var skill_manager: SkillProgressionManager
 var proficiency_manager: ProficiencyManager
 var elemental_resistances: ElementalResistanceManager
-
+# Note: ResourceManager and ProgressionManager are NOT here - they're static utilities
 
 # === BASIC INFO ===
 @export var name: String
@@ -60,26 +58,14 @@ var is_defending: bool = false
 var is_stunned: bool = false
 var last_attacker: CharacterData = null
 
-
-# === LEGACY ACCESSORS (for backward compatibility) ===
-var skills: Array:
-	get: return skill_manager.get_all_skills() if skill_manager else []
-var status_effects: Dictionary:
-	get: return status_manager.get_active_effects() if status_manager else {}
-var buffs: Dictionary:
-	get: return buff_manager.buffs if buff_manager else {}
-var debuffs: Dictionary:
-	get: return buff_manager.debuffs if buff_manager else {}
-var skill_cooldowns: Dictionary:
-	get: return skill_manager.skill_cooldowns if skill_manager else {}
-var skill_levels: Dictionary:
-	get: return skill_manager.skill_levels if skill_manager else {}
-
 # === PROGRESSION ===
 @export var xp: int = 0
 @export var attribute_points: int = 0
 @export var current_floor: int = 0
 @export var max_floor_cleared: int = 0
+
+# === EQUIPMENT BONUSES (separate from base attributes) ===
+var equipment_bonuses: Dictionary = {}
 
 # === INVENTORY & EQUIPMENT ===
 @export var inventory: Inventory
@@ -95,6 +81,20 @@ var equipment = {
 	"feet": null
 }
 
+# === LEGACY ACCESSORS ===
+var skills: Array:
+	get: return skill_manager.get_all_skills() if skill_manager else []
+var status_effects: Dictionary:
+	get: return status_manager.get_active_effects() if status_manager else {}
+var buffs: Dictionary:
+	get: return buff_manager.buffs if buff_manager else {}
+var debuffs: Dictionary:
+	get: return buff_manager.debuffs if buff_manager else {}
+var skill_cooldowns: Dictionary:
+	get: return skill_manager.skill_cooldowns if skill_manager else {}
+var skill_levels: Dictionary:
+	get: return skill_manager.skill_levels if skill_manager else {}
+
 func _init(p_name: String = "", p_race: String = "", p_class: String = ""):
 	name = p_name
 	race = p_race
@@ -103,16 +103,14 @@ func _init(p_name: String = "", p_race: String = "", p_class: String = ""):
 	currency = Currency.new()
 	stash = Stash.new()
 	
-	# Initialize managers
+	# Initialize ONLY stateful managers
 	status_manager = StatusEffectManager.new(self)
 	buff_manager = BuffDebuffManager.new(self)
 	skill_manager = SkillProgressionManager.new(self)
 	proficiency_manager = ProficiencyManager.new(self)
-	elemental_resistances = ElementalResistanceManager.new(self)  # ADD THIS LINE
+	elemental_resistances = ElementalResistanceManager.new(self)
 
-# Add this method (replaces the one I suggested before)
 func initialize_racial_elementals(load_from_race_data: bool = true):
-	"""Initialize elemental modifiers from race data using RaceElementalData autoload"""
 	if not load_from_race_data or race.is_empty():
 		return
 	
@@ -120,49 +118,45 @@ func initialize_racial_elementals(load_from_race_data: bool = true):
 		push_error("CharacterData.initialize_racial_elementals: elemental_resistances manager not initialized!")
 		return
 	
-	# Use the autoload singleton to apply racial data
 	RaceElementalData.apply_to_character(self, race, is_player)
-	
 	print("[ELEMENTAL] Initialized racial elementals for %s (%s)" % [name, race])
 
 func calculate_secondary_attributes():
-	"""Recalculate all derived stats"""
-	# Get effective stats (with buffs/debuffs)
+	# Calculate effective attributes: base + equipment + buffs/debuffs
 	var eff = {}
 	for stat in ["vitality", "strength", "dexterity", "intelligence", "faith", "mind", "endurance", "arcane", "agility", "fortitude"]:
+		var base_value = get(stat)
+		var equipment_bonus = equipment_bonuses.get(stat, 0)
 		var enum_val = Skill.AttributeTarget[stat.to_upper()]
-		eff[stat] = buff_manager.get_effective_attribute(enum_val)
+		
+		# Get buff/debuff modifier (this should NOT include equipment)
+		var buff_modifier = 0
+		if buff_manager:
+			var buffed = buff_manager.get_effective_attribute(enum_val)
+			buff_modifier = buffed - base_value
+		
+		eff[stat] = base_value + equipment_bonus + buff_modifier
 	
-	#  CRITICAL: Store old max values BEFORE recalculating
 	var old_max_hp = max_hp
 	var old_max_mp = max_mp
 	var old_max_sp = max_sp
 	
-	# Resource pools
+	# Resource pools - use BASE attributes only (no equipment/buffs)
 	max_hp = vitality * 8 + strength * 3
 	max_mp = mind * 5 + intelligence * 3
 	max_sp = endurance * 5 + agility * 3
 	
-	#  CRITICAL FIX: Only initialize if resources are ZERO (new character)
-	# DO NOT reset if they just exceed max (happens with buffs/debuffs)
-	# Only initialize HP on first calculation (when max_hp was 0)
+	# Initialize resources on first calculation
 	if max_hp > 0 and old_max_hp == 0 and current_hp == 0:
-		# First time calculating stats - initialize to full
 		current_hp = max_hp
-		print("[CHAR] First initialization - HP set to %d" % max_hp)
 	elif current_hp > max_hp:
-		# Stat debuff reduced max HP below current - clamp down
 		current_hp = max_hp
-		print("[CHAR] Clamped HP from above to new max: %d" % max_hp)
-		# else: Leave current_hp as-is (including 0 for dead characters)
-
-	# Same logic for MP
+	
 	if max_mp > 0 and old_max_mp == 0 and current_mp == 0:
 		current_mp = max_mp
 	elif current_mp > max_mp:
 		current_mp = max_mp
-
-	# Same logic for SP
+	
 	if max_sp > 0 and old_max_sp == 0 and current_sp == 0:
 		current_sp = max_sp
 	elif current_sp > max_sp:
@@ -193,51 +187,35 @@ func calculate_secondary_attributes():
 		"arcane":
 			spell_power = eff.arcane * 2 + eff.intelligence + eff.faith
 
-#  FIX 2: heal() - Add logging and return actual heal amount
+# === RESOURCE MANAGEMENT (delegates to static utility) ===
 func heal(amount: int) -> int:
-	"""Heal the character, returns actual amount healed"""
 	var hp_before = current_hp
 	var max_heal = max_hp - current_hp
 	var actual_heal = min(amount, max_heal)
 	
 	current_hp += actual_heal
-	current_hp = min(current_hp, max_hp)  # Safety clamp
+	current_hp = min(current_hp, max_hp)
 	
-	var hp_after = current_hp
-	
-	print("[HEAL] %s: %d → %d (+%d requested, +%d actual, max: %d)" % [
-		name, hp_before, hp_after, amount, actual_heal, max_hp
-	])
-	
+	print("[HEAL] %s: %d → %d (+%d)" % [name, hp_before, current_hp, actual_heal])
 	return actual_heal
 
-#  FIX 3: restore_mp - Add logging
 func restore_mp(amount: int) -> int:
-	"""Restore MP, returns actual amount restored"""
 	var mp_before = current_mp
-	var max_restore = max_mp - current_mp
-	var actual_restore = min(amount, max_restore)
-	
-	current_mp += actual_restore
+	var actual = min(amount, max_mp - current_mp)
+	current_mp += actual
 	current_mp = min(current_mp, max_mp)
-	
-	print("[RESTORE MP] %s: %d → %d (+%d)" % [name, mp_before, current_mp, actual_restore])
-	return actual_restore
+	print("[MP] %s: %d → %d (+%d)" % [name, mp_before, current_mp, actual])
+	return actual
 
-#  FIX 4: restore_sp - Add logging
 func restore_sp(amount: int) -> int:
-	"""Restore SP, returns actual amount restored"""
 	var sp_before = current_sp
-	var max_restore = max_sp - current_sp
-	var actual_restore = min(amount, max_restore)
-	
-	current_sp += actual_restore
+	var actual = min(amount, max_sp - current_sp)
+	current_sp += actual
 	current_sp = min(current_sp, max_sp)
-	
-	print("[RESTORE SP] %s: %d → %d (+%d)" % [name, sp_before, current_sp, actual_restore])
-	return actual_restore
-# === COMBAT ===
+	print("[SP] %s: %d → %d (+%d)" % [name, sp_before, current_sp, actual])
+	return actual
 
+# === COMBAT ===
 func defend() -> String:
 	is_defending = true
 	return "%s takes a defensive stance" % name
@@ -246,60 +224,134 @@ func reset_defense():
 	is_defending = false
 
 func is_alive() -> bool:
-	# Safety: Ensure HP never goes negative
-	if current_hp < 0:
-		current_hp = 0
 	return current_hp > 0
 
-func get_attack_power() -> int:
-	var base = attack_power
-	if equipment["main_hand"]:
-		var weapon = equipment["main_hand"]
-		var weapon_damage = weapon.damage
-		
-		# NEW: Apply proficiency bonus using specific weapon key
-		if proficiency_manager:
-			var weapon_key = EquipmentKeyHelper.get_equipment_key(weapon)
-			if weapon_key != "":
-				var prof_mult = proficiency_manager.get_weapon_damage_multiplier(weapon_key)
-				weapon_damage = int(weapon_damage * prof_mult)
-		
-		base += weapon_damage
-		if "bonus_damage" in weapon:
-			base += weapon.bonus_damage
-	
-	return int(base)
+func get_defense() -> float:
+	return toughness
 
-func get_defense() -> int:
-	var total = defense
+func get_attack_power() -> float:
+	return attack_power
+
+func get_spell_power() -> float:
+	return spell_power
+
+func attack(target: CharacterData) -> String:
+	# Use CombatActions if available, otherwise inline
+	if ClassDB.class_exists("CombatActions"):
+		return CombatActions.execute_basic_attack(self, target)
+	else:
+		# Fallback inline implementation
+		return _basic_attack_inline(target)
+
+func _basic_attack_inline(target: CharacterData) -> String:
+	var momentum_mult = MomentumSystem.get_damage_multiplier()
+	var base_damage = get_attack_power() * 0.5 * momentum_mult
+	var resistance = target.get_defense()
 	
-	for slot in equipment:
-		if equipment[slot] and equipment[slot].armor_value:
-			var armor = equipment[slot]
-			var armor_value = armor.armor_value
-			
-			# NEW: Apply proficiency bonus
-			if proficiency_manager and armor.type in ["cloth", "leather", "mail", "plate"]:
-				var prof_mult = proficiency_manager.get_armor_effectiveness_multiplier(armor.type)
-				armor_value = int(armor_value * prof_mult)
-			
-			total += armor_value
+	if RandomManager.randf() >= accuracy:
+		return "%s's attack missed!" % name
+	if RandomManager.randf() < target.dodge:
+		return "%s dodged the attack!" % target.name
 	
-	return total
+	var is_crit = RandomManager.randf() < critical_hit_rate
+	var damage = max(1, base_damage - resistance)
+	
+	if is_crit:
+		damage *= 1.5 + RandomManager.randf() * 0.5
+	
+	damage = round(damage)
+	target.take_damage(damage, self)
+	
+	var mp_restore = int(max_mp * 0.08)
+	var sp_restore = int(max_sp * 0.08)
+	restore_mp(mp_restore)
+	restore_sp(sp_restore)
+	
+	var result = "%s attacks %s for %d damage and restores %d MP, %d SP" % [
+		name, target.name, damage, mp_restore, sp_restore
+	]
+	
+	if is_crit:
+		result = "Critical hit! " + result
+	
+	return result
+
+func take_damage(amount: float, attacker: CharacterData = null):
+	if current_hp <= 0:
+		current_hp = 0
+		return
+	
+	# Track armor proficiency
+	track_armor_proficiency()
+	
+	if attacker:
+		last_attacker = attacker
+	
+	if is_defending:
+		amount *= 0.5
+	
+	# Reflection
+	if last_attacker and last_attacker != self:
+		var reflection = status_manager.get_total_reflection() if status_manager else 0.0
+		if reflection > 0.0:
+			var reflected = int(amount * reflection)
+			if reflected > 0:
+				print("%s reflected %d damage back to %s!" % [name, reflected, last_attacker.name])
+				last_attacker.take_damage(reflected, null)
+	
+	current_hp -= int(amount)
+	current_hp = clamp(current_hp, 0, max_hp)
+	print("[DAMAGE] %s took %d damage. HP: %d/%d" % [name, int(amount), current_hp, max_hp])
 
 # === EQUIPMENT ===
-
 func equip_item(item: Equipment) -> Equipment:
 	if not item.can_equip(self):
 		print("Cannot equip %s - class restriction" % item.display_name)
 		return null
 	
-	var old_item = equipment[item.slot]
+	var target_slot = item.slot
+	
+	# === DUAL WIELD LOGIC ===
+	if item.dual_wieldable and item.can_dual_wield(self):
+		# Dual wieldable weapon - check preferred slot first
+		if equipment[item.preferred_slot] == null:
+			target_slot = item.preferred_slot
+		elif item.preferred_slot == "main_hand" and equipment["off_hand"] == null:
+			target_slot = "off_hand"
+		elif item.preferred_slot == "off_hand" and equipment["main_hand"] == null:
+			target_slot = "main_hand"
+		else:
+			# Both slots occupied, use preferred slot
+			target_slot = item.preferred_slot
+	
+	# === TWO-HANDED BLOCKING ===
+	if target_slot == "main_hand" and equipment["main_hand"]:
+		var main_hand = equipment["main_hand"]
+		if main_hand.blocks_offhand and equipment["off_hand"]:
+			# Check if offhand is allowed
+			if not main_hand.allows_offhand(self, equipment["off_hand"]):
+				# Unequip offhand before equipping new main hand
+				unequip_item("off_hand")
+	
+	# Check if equipping item blocks offhand
+	if item.blocks_offhand and equipment["off_hand"]:
+		if not item.allows_offhand(self, equipment["off_hand"]):
+			unequip_item("off_hand")
+	
+	# Check if equipping offhand is blocked by main hand
+	if target_slot == "off_hand" and equipment["main_hand"]:
+		var main_hand = equipment["main_hand"]
+		if main_hand.blocks_offhand:
+			if not main_hand.allows_offhand(self, item):
+				print("Cannot equip %s: blocked by %s" % [item.display_name, main_hand.display_name])
+				return null
+	
+	var old_item = equipment[target_slot]
 	
 	if old_item:
-		unequip_item(item.slot)
+		unequip_item(target_slot)
 	
-	equipment[item.slot] = item
+	equipment[target_slot] = item
 	item.apply_effects(self)
 	
 	if item.has_method("apply_stat_modifiers"):
@@ -315,71 +367,202 @@ func unequip_item(slot: String) -> Equipment:
 	var item = equipment[slot]
 	if item:
 		item.remove_effects(self)
-	# ADD THIS LINE - remove stat modifiers too
-	if item.has_method("remove_stat_modifiers"):
-		item.remove_stat_modifiers(self)
-
+		if item.has_method("remove_stat_modifiers"):
+			item.remove_stat_modifiers(self)
+		
 		equipment[slot] = null
 		inventory.add_item(item, 1)
 		calculate_secondary_attributes()
 	return item
 
-# === MANAGER DELEGATES ===
+func swap_hands() -> bool:
+	"""Swap main_hand and off_hand equipment"""
+	var main = equipment["main_hand"]
+	var off = equipment["off_hand"]
+	
+	# Can't swap if either is null
+	if not main or not off:
+		return false
+	
+	# Can't swap if main hand blocks offhand
+	if main.blocks_offhand and not main.allows_offhand(self, off):
+		return false
+	
+	# Check if both are dual wieldable or compatible
+	var main_can_go_off = main.dual_wieldable and main.can_dual_wield(self)
+	var off_can_go_main = off.slot == "main_hand" or (off.dual_wieldable and off.can_dual_wield(self))
+	
+	if not (main_can_go_off and off_can_go_main):
+		return false
+	
+	# Temporarily remove effects
+	main.remove_effects(self)
+	off.remove_effects(self)
+	if main.has_method("remove_stat_modifiers"):
+		main.remove_stat_modifiers(self)
+	if off.has_method("remove_stat_modifiers"):
+		off.remove_stat_modifiers(self)
+	
+	# Swap
+	equipment["main_hand"] = off
+	equipment["off_hand"] = main
+	
+	# Reapply effects
+	off.apply_effects(self)
+	main.apply_effects(self)
+	if off.has_method("apply_stat_modifiers"):
+		off.apply_stat_modifiers(self)
+	if main.has_method("apply_stat_modifiers"):
+		main.apply_stat_modifiers(self)
+	
+	calculate_secondary_attributes()
+	return true
 
+# === SKILL DELEGATES ===
 func add_skills(skill_names: Array):
-	skill_manager.add_skills(skill_names)
+	if skill_manager:
+		skill_manager.add_skills(skill_names)
 
 func use_skill(skill_name: String) -> String:
-	return skill_manager.use_skill(skill_name)
+	return skill_manager.use_skill(skill_name) if skill_manager else ""
 
 func get_skill_instance(skill_name: String) -> Skill:
-	return skill_manager.get_skill_instance(skill_name)
+	return skill_manager.get_skill_instance(skill_name) if skill_manager else null
 
 func use_skill_cooldown(skill_name: String, turns: int):
-	skill_manager.set_cooldown(skill_name, turns)
+	if skill_manager:
+		skill_manager.set_cooldown(skill_name, turns)
 
 func is_skill_ready(skill_name: String) -> bool:
-	return skill_manager.is_skill_ready(skill_name)
+	return skill_manager.is_skill_ready(skill_name) if skill_manager else false
 
 func get_skill_cooldown(skill_name: String) -> int:
-	return skill_manager.get_cooldown(skill_name)
+	return skill_manager.get_cooldown(skill_name) if skill_manager else 0
 
 func reduce_cooldowns():
-	skill_manager.reduce_cooldowns()
+	if skill_manager:
+		skill_manager.reduce_cooldowns()
 
+# === STATUS EFFECT DELEGATES ===
 func apply_status_effect(effect: Skill.StatusEffect, duration: int) -> String:
-	return status_manager.apply_effect(effect, duration)
+	return status_manager.apply_effect(effect, duration) if status_manager else ""
 
 func remove_status_effect(effect: Skill.StatusEffect) -> String:
-	return status_manager.remove_effect(effect)
+	return status_manager.remove_effect(effect) if status_manager else ""
+
+func has_status_effect(effect: Skill.StatusEffect) -> bool:
+	return status_manager.has_effect(effect) if status_manager else false
 
 func update_status_effects() -> String:
-	var msg = status_manager.update_effects()
-	buff_manager.update_buffs_and_debuffs()
+	var msg = ""
+	if status_manager:
+		msg = status_manager.update_effects()
+	if buff_manager:
+		buff_manager.update_buffs_and_debuffs()
 	return msg
-
-func apply_buff(attr: Skill.AttributeTarget, value: int, duration: int):
-	buff_manager.apply_buff(attr, value, duration)
-
-func apply_debuff(attr: Skill.AttributeTarget, value: int, duration: int):
-	buff_manager.apply_debuff(attr, value, duration)
-
-func get_attribute_with_buffs_and_debuffs(attr: Skill.AttributeTarget) -> int:
-	return buff_manager.get_effective_attribute(attr)
 
 func get_status_effects_string() -> String:
 	var effects = []
-	effects.append(status_manager.get_effects_string())
 	
-	if buff_manager.has_buffs():
-		effects.append("Buffs: " + buff_manager.get_buffs_string())
-	if buff_manager.has_debuffs():
-		effects.append("Debuffs: " + buff_manager.get_debuffs_string())
+	if status_manager:
+		var status_str = status_manager.get_effects_string()
+		if status_str != "None":
+			effects.append(status_str)
 	
-	return " | ".join(effects) if not effects.is_empty() else "Normal"
+	if buff_manager:
+		if buff_manager.has_buffs():
+			effects.append("Buffs: " + buff_manager.get_buffs_string())
+		if buff_manager.has_debuffs():
+			effects.append("Debuffs: " + buff_manager.get_debuffs_string())
+	
+	return " | ".join(effects) if not effects.is_empty() else "None"
 
-# === LEVELING ===
+func check_confusion_self_harm() -> Dictionary:
+	if status_manager:
+		return status_manager.check_confusion_self_harm()
+	return {"success": false, "damage": 0, "message": ""}
 
+func get_total_reflection() -> float:
+	if status_manager:
+		return status_manager.get_total_reflection()
+	return 0.0
+
+func get_bleed_stacks() -> int:
+	if status_manager:
+		return status_manager.get_bleed_stacks()
+	return 0
+
+# === BUFF/DEBUFF DELEGATES ===
+func apply_buff(attr: Skill.AttributeTarget, value: int, duration: int):
+	if buff_manager:
+		buff_manager.apply_buff(attr, value, duration)
+
+func apply_debuff(attr: Skill.AttributeTarget, value: int, duration: int):
+	if buff_manager:
+		buff_manager.apply_debuff(attr, value, duration)
+
+func get_attribute_with_buffs_and_debuffs(attr: Skill.AttributeTarget) -> int:
+	return buff_manager.get_effective_attribute(attr) if buff_manager else get(Skill.AttributeTarget.keys()[attr].to_lower())
+
+func get_effective_attribute(attr: Skill.AttributeTarget) -> int:
+	"""Get attribute value including base + equipment + buffs/debuffs"""
+	var stat_name = Skill.AttributeTarget.keys()[attr].to_lower()
+	var base = get(stat_name)
+	var equipment_bonus = equipment_bonuses.get(stat_name, 0)
+	var buff_modifier = 0
+	
+	if buff_manager:
+		buff_modifier = buff_manager.get_effective_attribute(attr) - base
+	
+	return base + equipment_bonus + buff_modifier
+
+# === DISPLAY HELPERS ===
+func get_attribute_display(attribute_name: String) -> String:
+	"""Returns formatted string: 'Mind: 21 (+7)' or 'Mind: 21' if no bonus"""
+	var base = get(attribute_name)
+	var bonus = equipment_bonuses.get(attribute_name, 0)
+	
+	if bonus > 0:
+		return "%s: %d (+%d)" % [attribute_name.capitalize(), base, bonus]
+	elif bonus < 0:
+		return "%s: %d (%d)" % [attribute_name.capitalize(), base, bonus]
+	else:
+		return "%s: %d" % [attribute_name.capitalize(), base]
+
+func get_attribute_display_compact(attribute_name: String) -> String:
+	"""Returns compact format: '21 (+7)' or just '21'"""
+	var base = get(attribute_name)
+	var bonus = equipment_bonuses.get(attribute_name, 0)
+	
+	if bonus > 0:
+		return "%d (+%d)" % [base, bonus]
+	elif bonus < 0:
+		return "%d (%d)" % [base, bonus]
+	else:
+		return "%d" % base
+
+func get_attribute_breakdown(attribute_name: String) -> Dictionary:
+	"""
+	Get detailed breakdown of attribute sources
+	Returns: {base: int, equipment: int, buffs: int, total: int}
+	"""
+	var base = get(attribute_name)
+	var equipment_bonus = equipment_bonuses.get(attribute_name, 0)
+	
+	var buff_modifier = 0
+	if buff_manager and attribute_name.to_upper() in Skill.AttributeTarget:
+		var enum_val = Skill.AttributeTarget[attribute_name.to_upper()]
+		var buffed = buff_manager.get_effective_attribute(enum_val)
+		buff_modifier = buffed - base
+	
+	return {
+		"base": base,
+		"equipment": equipment_bonus,
+		"buffs": buff_modifier,
+		"total": base + equipment_bonus + buff_modifier
+	}
+
+# === PROGRESSION (keep existing implementation) ===
 func gain_xp(amount: int):
 	xp += amount
 	print("[XP] %s gained %d XP. Total: %d/%d" % [name, amount, xp, LevelSystem.calculate_xp_for_level(level)])
@@ -435,8 +618,73 @@ func spend_attribute_point(attribute: String) -> bool:
 		return true
 	return false
 
-# === RESET ===
+func update_max_floor_cleared(floor: int):
+	if floor > max_floor_cleared:
+		max_floor_cleared = floor
+		print("New max floor: %d" % max_floor_cleared)
 
+# === PROFICIENCY ===
+func track_weapon_proficiency():
+	if equipment["main_hand"] and proficiency_manager:
+		var weapon = equipment["main_hand"]
+		if weapon is Equipment:
+			var key = EquipmentKeyHelper.get_equipment_key(weapon)
+			if key != "":
+				proficiency_manager.use_weapon(key)
+
+func track_armor_proficiency():
+	if not proficiency_manager:
+		return
+	var armor_slots = ["head", "chest", "hands", "legs", "feet"]
+	for slot in armor_slots:
+		if equipment[slot] and equipment[slot] is Equipment:
+			var armor = equipment[slot]
+			if armor.type in ["cloth", "leather", "mail", "plate"]:
+				proficiency_manager.use_armor(armor.type)
+				break
+
+func debug_proficiency_status():
+	if not proficiency_manager:
+		print("[PROFICIENCY] ERROR: No proficiency manager!")
+		return
+	print("=== PROFICIENCY DEBUG ===")
+	if equipment["main_hand"]:
+		var weapon = equipment["main_hand"]
+		print("Main Hand: %s" % weapon.name)
+		if weapon is Equipment and weapon.key != "":
+			var uses = proficiency_manager.get_weapon_proficiency_uses(weapon.key)
+			var level = proficiency_manager.get_weapon_proficiency_level(weapon.key)
+			var next = proficiency_manager.get_uses_for_next_level(level)
+			print("  Proficiency: Level %d (%d/%d uses)" % [level, uses, next])
+	print("========================")
+
+# === ELEMENTAL DELEGATES ===
+func get_elemental_resistance(element: ElementalDamage.Element) -> float:
+	return elemental_resistances.get_total_resistance(element) if elemental_resistances else 0.0
+
+func get_elemental_weakness(element: ElementalDamage.Element) -> float:
+	return elemental_resistances.get_total_weakness(element) if elemental_resistances else 0.0
+
+func get_elemental_damage_bonus(element: ElementalDamage.Element) -> float:
+	return elemental_resistances.get_total_damage_bonus(element) if elemental_resistances else 0.0
+
+func add_temp_elemental_resistance(element: ElementalDamage.Element, value: float):
+	if elemental_resistances:
+		elemental_resistances.add_temp_resistance(element, value)
+
+func add_temp_elemental_weakness(element: ElementalDamage.Element, value: float):
+	if elemental_resistances:
+		elemental_resistances.add_temp_weakness(element, value)
+
+func add_temp_elemental_damage_bonus(element: ElementalDamage.Element, value: float):
+	if elemental_resistances:
+		elemental_resistances.add_temp_damage_bonus(element, value)
+
+func clear_temp_elemental_modifiers():
+	if elemental_resistances:
+		elemental_resistances.clear_temp_modifiers()
+
+# === RESET ===
 func reset_for_new_battle():
 	current_hp = max_hp
 	current_mp = max_mp
@@ -456,216 +704,5 @@ func reset_for_new_game():
 	currency.copper = 500
 	for slot in equipment:
 		equipment[slot] = null
+	equipment_bonuses.clear()
 	level = 1
-
-func update_max_floor_cleared(floor: int):
-	if floor > max_floor_cleared:
-		max_floor_cleared = floor
-		print("New max floor: %d" % max_floor_cleared)
-
-# =============================================
-# UPDATE ATTACK TO PASS ATTACKER
-# =============================================
-# Add these methods to CharacterData.gd for complete proficiency tracking
-
-func track_weapon_proficiency():
-	"""Track weapon proficiency usage"""
-	if not equipment["main_hand"] or not proficiency_manager:
-		return
-	
-	var weapon = equipment["main_hand"]
-	if not weapon is Equipment:
-		return
-	
-	var weapon_key = EquipmentKeyHelper.get_equipment_key(weapon)
-	if weapon_key != "":
-		var msg = proficiency_manager.use_weapon(weapon_key)
-		if msg != "":
-			print("[PROFICIENCY] %s" % msg)
-
-func track_armor_proficiency():
-	"""Track armor proficiency - call this when taking damage"""
-	if not proficiency_manager:
-		return
-	
-	# Track each equipped armor piece
-	var armor_slots = ["head", "chest", "hands", "legs", "feet"]
-	for slot in armor_slots:
-		if equipment[slot] and equipment[slot] is Equipment:
-			var armor = equipment[slot]
-			if armor.type in ["cloth", "leather", "mail", "plate"]:
-				var msg = proficiency_manager.use_armor(armor.type)
-				if msg != "":
-					print("[PROFICIENCY] %s" % msg)
-					# Only show one armor level up per damage instance
-					break
-
-func take_damage(amount: float, attacker: CharacterData = null):
-	"""Take damage with reflection mechanics and armor proficiency tracking"""
-	
-	#  CRITICAL FIX: Clamp HP to 0 minimum, never allow negative HP
-	if current_hp <= 0:
-		current_hp = 0
-		print("[TAKE_DAMAGE] %s already dead, ignoring damage" % name)
-		return
-	
-	# Track armor proficiency when taking damage
-	track_armor_proficiency()
-	
-	# Store attacker for reflection
-	if attacker:
-		last_attacker = attacker
-	
-	# Apply defense reduction
-	if is_defending:
-		amount *= 0.5
-	
-	# REFLECTION MECHANIC
-	if last_attacker and last_attacker != self:
-		var reflection = status_manager.get_total_reflection()
-		
-		if reflection > 0.0:
-			var reflected_damage = int(amount * reflection)
-			
-			if reflected_damage > 0:
-				print("%s reflected %d damage back to %s!" % [name, reflected_damage, last_attacker.name])
-				
-				# Apply reflected damage (no further reflection chain)
-				last_attacker.take_damage(reflected_damage, null)
-	
-	# Apply damage
-	current_hp -= int(amount)
-	
-	#  CRITICAL: Always clamp to [0, max_hp] range
-	current_hp = clamp(current_hp, 0, max_hp)
-	
-	print("[TAKE_DAMAGE] %s took %d damage. HP: %d/%d" % [name, int(amount), current_hp, max_hp])
-
-func attack(target: CharacterData) -> String:
-	"""Execute basic attack - NOTE: Proficiency tracking happens in CombatEngine"""
-	if not target or not is_instance_valid(target):
-		return "%s's attack failed - no valid target!" % name
-	
-	var momentum_mult = MomentumSystem.get_damage_multiplier()
-	var base_damage = get_attack_power() * 0.5 * momentum_mult
-	var resistance = target.get_defense()
-	
-	# Combat rolls
-	if RandomManager.randf() >= accuracy:
-		return "%s's attack missed!" % name
-	if RandomManager.randf() < target.dodge:
-		return "%s dodged the attack!" % target.name
-	
-	var is_crit = RandomManager.randf() < critical_hit_rate
-	var damage = max(1, base_damage - resistance)
-	
-	if is_crit:
-		damage *= 1.5 + RandomManager.randf() * 0.5
-	
-	damage = round(damage)
-	
-	# Apply damage (pass attacker for reflection)
-	target.take_damage(damage, self)
-	
-	# Status effect from weapon
-	var status_msg = ""
-	if equipment["main_hand"] and equipment["main_hand"] is Equipment:
-		var weapon = equipment["main_hand"]
-		if "status_effect_type" in weapon and "status_effect_chance" in weapon:
-			if weapon.status_effect_type != Skill.StatusEffect.NONE:
-				if weapon.has_method("try_apply_status_effect"):
-					if weapon.try_apply_status_effect(target):
-						status_msg = " and applied %s" % Skill.StatusEffect.keys()[weapon.status_effect_type]
-	
-	# Resource regen
-	var mp_restore = int(max_mp * 0.08)
-	var sp_restore = int(max_sp * 0.08)
-	restore_mp(mp_restore)
-	restore_sp(sp_restore)
-	
-	# Build message
-	var result = "%s attacks %s for %d damage" % [name, target.name, damage]
-	
-	if momentum_mult > 1.0:
-		result += " (+%d%% momentum)" % int((momentum_mult - 1.0) * 100)
-	
-	result += " and restores %d MP, %d SP%s" % [mp_restore, sp_restore, status_msg]
-	
-	if is_crit:
-		result = "Critical hit! " + result
-	
-	return result
-
-func debug_proficiency_status():
-	"""Print current proficiency status for debugging"""
-	if not proficiency_manager:
-		print("[PROFICIENCY] ERROR: No proficiency manager!")
-		return
-	
-	print("=== PROFICIENCY DEBUG ===")
-	
-	# Check weapon
-	if equipment["main_hand"]:
-		var weapon = equipment["main_hand"]
-		print("Main Hand Weapon: %s" % weapon.name)
-		print("  - Type: %s" % (weapon.get_class() if weapon.has_method("get_class") else "Unknown"))
-		print("  - Key: '%s'" % (weapon.key if "key" in weapon else "NO KEY PROPERTY"))
-		
-		if weapon is Equipment and weapon.key != "":
-			var uses = proficiency_manager.get_weapon_proficiency_uses(weapon.key)
-			var level = proficiency_manager.get_weapon_proficiency_level(weapon.key)
-			var next = proficiency_manager.get_uses_for_next_level(level)
-			print("  - Proficiency: Level %d (%d/%d uses)" % [level, uses, next])
-	else:
-		print("No weapon equipped")
-	
-	# Show all tracked proficiencies
-	print("\nAll Weapon Proficiencies:")
-	var all_profs = proficiency_manager.get_all_weapon_proficiencies()
-	if all_profs.is_empty():
-		print("  (none tracked yet)")
-	else:
-		for prof in all_profs:
-			print("  - %s" % prof)
-	
-	print("========================")
-
-# === ELEMENTAL RESISTANCE DELEGATES ===
-
-func get_elemental_resistance(element: ElementalDamage.Element) -> float:
-	"""Get total resistance to an element"""
-	if not elemental_resistances:
-		return 0.0
-	return elemental_resistances.get_total_resistance(element)
-
-func get_elemental_weakness(element: ElementalDamage.Element) -> float:
-	"""Get total weakness to an element"""
-	if not elemental_resistances:
-		return 0.0
-	return elemental_resistances.get_total_weakness(element)
-
-func get_elemental_damage_bonus(element: ElementalDamage.Element) -> float:
-	"""Get damage bonus for an element"""
-	if not elemental_resistances:
-		return 0.0
-	return elemental_resistances.get_total_damage_bonus(element)
-
-func add_temp_elemental_resistance(element: ElementalDamage.Element, value: float):
-	"""Add temporary resistance (from buffs/equipment)"""
-	if elemental_resistances:
-		elemental_resistances.add_temp_resistance(element, value)
-
-func add_temp_elemental_weakness(element: ElementalDamage.Element, value: float):
-	"""Add temporary weakness (from debuffs)"""
-	if elemental_resistances:
-		elemental_resistances.add_temp_weakness(element, value)
-
-func add_temp_elemental_damage_bonus(element: ElementalDamage.Element, value: float):
-	"""Add temporary damage bonus (from buffs/equipment)"""
-	if elemental_resistances:
-		elemental_resistances.add_temp_damage_bonus(element, value)
-
-func clear_temp_elemental_modifiers():
-	"""Clear all temporary elemental modifiers"""
-	if elemental_resistances:
-		elemental_resistances.clear_temp_modifiers()

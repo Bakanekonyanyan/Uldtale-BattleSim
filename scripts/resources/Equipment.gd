@@ -17,6 +17,13 @@ var class_restriction: Array
 var effects: Dictionary
 var inventory_key: String = ""
 
+# === DUAL WIELD & BLOCKING ===
+var dual_wieldable: bool = false
+var dual_wield_classes: Array = []
+var preferred_slot: String = "main_hand"
+var blocks_offhand: bool = false
+var offhand_exceptions: Array = []
+
 # === RARITY SYSTEM ===
 var rarity: String = "common"
 var rarity_applied: bool = false
@@ -134,6 +141,34 @@ func can_equip(character: CharacterData) -> bool:
 		return true
 	return character.character_class in class_restriction
 
+func can_dual_wield(character: CharacterData) -> bool:
+	"""Check if character can dual wield this weapon"""
+	if not dual_wieldable:
+		return false
+	if dual_wield_classes.is_empty():
+		return true
+	return character.character_class in dual_wield_classes
+
+func allows_offhand(character: CharacterData, offhand_item: Equipment) -> bool:
+	"""Check if this main hand allows the offhand item"""
+	if not blocks_offhand:
+		return true
+	
+	# Check class-specific exceptions (e.g., Paladin + great_shield)
+	if offhand_item and not offhand_exceptions.is_empty():
+		# Try matching by type first (shield, source, etc)
+		if offhand_item.type in offhand_exceptions:
+			# For shields, only Paladin can use with two-handed
+			if offhand_item.type == "shield" and character.character_class == "Paladin":
+				return true
+		
+		# Also check by key for specific items
+		if offhand_item.key in offhand_exceptions:
+			if character.character_class == "Paladin":
+				return true
+	
+	return false
+
 func apply_effects(character: CharacterData):
 	"""Apply secondary attribute effects (dodge, critical_hit_rate, etc)"""
 	if effects.is_empty():
@@ -178,16 +213,31 @@ func remove_effects(character: CharacterData):
 			])
 
 func apply_stat_modifiers(character: CharacterData):
+	"""Apply equipment stat bonuses to separate equipment_bonuses dict"""
 	for stat in stat_modifiers:
 		var stat_name = Skill.AttributeTarget.keys()[stat].to_lower()
 		if stat_name in character:
-			character.set(stat_name, character.get(stat_name) + stat_modifiers[stat])
+			if not character.equipment_bonuses.has(stat_name):
+				character.equipment_bonuses[stat_name] = 0
+			character.equipment_bonuses[stat_name] += stat_modifiers[stat]
+			print("[EQUIPMENT] Added +%d to %s (total equipment bonus: %d)" % [
+				stat_modifiers[stat],
+				stat_name,
+				character.equipment_bonuses[stat_name]
+			])
 
 func remove_stat_modifiers(character: CharacterData):
+	"""Remove equipment stat bonuses from equipment_bonuses dict"""
 	for stat in stat_modifiers:
 		var stat_name = Skill.AttributeTarget.keys()[stat].to_lower()
 		if stat_name in character:
-			character.set(stat_name, character.get(stat_name) - stat_modifiers[stat])
+			if character.equipment_bonuses.has(stat_name):
+				character.equipment_bonuses[stat_name] -= stat_modifiers[stat]
+				print("[EQUIPMENT] Removed +%d from %s (total equipment bonus: %d)" % [
+					stat_modifiers[stat],
+					stat_name,
+					character.equipment_bonuses[stat_name]
+				])
 
 func try_apply_status_effect(target: CharacterData) -> bool:
 	if status_effect_type != Skill.StatusEffect.NONE and RandomManager.randf() < status_effect_chance:
@@ -294,6 +344,13 @@ func _load_base_data(data: Dictionary):
 	inventory_key = data.get("inventory_key", "")
 	item_level = data.get("item_level", 1)
 	base_item_level = data.get("base_item_level", 1)
+	
+	# === DUAL WIELD & BLOCKING ===
+	dual_wieldable = data.get("dual_wieldable", false)
+	dual_wield_classes = data.get("dual_wield_classes", [])
+	preferred_slot = data.get("preferred_slot", "main_hand")
+	blocks_offhand = data.get("blocks_offhand", type == "two_handed")
+	offhand_exceptions = data.get("offhand_exceptions", [])
 	
 	# === CRITICAL: Always set proficiency key ===
 	# Priority: data["key"] > inventory_key > id (cleaned) > derived from name

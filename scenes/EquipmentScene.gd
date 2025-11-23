@@ -10,6 +10,7 @@ var selected_item: Equipment = null
 @onready var item_info = $ItemInfo
 @onready var equip_button = $EquipButton
 @onready var unequip_button = $UnequipButton
+@onready var swap_hands_button = $SwapHandsButton
 @onready var exit_button = $ExitButton
 
 func _ready():
@@ -21,9 +22,11 @@ func _ready():
 	refresh_lists()
 	equip_button.connect("pressed", Callable(self, "_on_equip_pressed"))
 	unequip_button.connect("pressed", Callable(self, "_on_unequip_pressed"))
+	swap_hands_button.connect("pressed", Callable(self, "_on_swap_hands_pressed"))
 	inventory_list.connect("item_selected", Callable(self, "_on_inventory_item_selected"))
 	equipment_list.connect("item_selected", Callable(self, "_on_equipment_item_selected"))
 	exit_button.connect("pressed", Callable(self, "_on_exit_pressed"))
+	update_swap_button_state()
 
 func set_player(character: CharacterData):
 	current_character = character
@@ -59,6 +62,8 @@ func refresh_lists():
 		else:
 			equipment_list.add_item("%s: Empty" % slot)
 		index += 1
+	
+	update_swap_button_state()
 
 func update_item_info(item: Equipment):
 	if not item_info:
@@ -137,10 +142,34 @@ func _on_unequip_pressed():
 		selected_item = null
 		update_item_info(null)
 		unequip_button.disabled = true
+		update_swap_button_state()
+
+func _on_swap_hands_pressed():
+	if current_character.swap_hands():
+		print("Swapped main hand and off hand")
+		refresh_lists()
+		selected_item = null
+		update_item_info(null)
+		update_swap_button_state()
+	else:
+		print("Cannot swap hands")
+
+func update_swap_button_state():
+	if not swap_hands_button:
+		return
+	
+	var main = current_character.equipment["main_hand"]
+	var off = current_character.equipment["off_hand"]
+	
+	# Enable if both slots have swappable items
+	if main and off:
+		var can_swap = main.dual_wieldable or off.dual_wieldable
+		swap_hands_button.disabled = not can_swap
+	else:
+		swap_hands_button.disabled = true
 		
 func _on_exit_pressed():
 	# Save the character's updated inventory and currency
-	print(SceneManager.town_scene_active)
 	CharacterManager.save_character(current_character)
 	# Return to the previous scene (which should be the RewardScene)
 	SceneManager.return_to_previous_scene()
