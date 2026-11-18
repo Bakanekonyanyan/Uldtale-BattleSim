@@ -55,6 +55,8 @@ func _ready():
 		inventory_menu.item_selected.connect(_on_inventory_item_selected)
 	if skill_menu_panel:
 		skill_menu_panel.hide()
+	# Guild bounty progress lines ("Bounty: Cull the Brutes 4/7")
+	GuildManager.progress_message.connect(func(text): add_combat_log(text, "gold"))
 	
 # === INITIALIZATION ===
 

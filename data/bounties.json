@@ -1,0 +1,56 @@
+{
+	"_comment": "Guild bounty templates. The board rolls concrete bounties from these. Title fields: {location_name} {class} {class_plural} {race} {race_plural} {count} {floor} {item_name}. Placeholders: {any_location} (all 5), {themed_location} (single-race locations), {race} (the themed location's race), {any_class} (Minion/Brute/Shaman/Mage), {any_material}, {location_material} (common drop at the chosen location), {unknown_flask_recipe}. Gold rewards scale with the player's best floor. Objective types: KILL, KILL_BOSS, CLEAR_FLOOR, WIN_STREAK, DELIVER.",
+	"settings": {
+		"board_size": 3,
+		"max_active": 3,
+		"deadline_expeditions": 3,
+		"fail_point_penalty": 0.5,
+		"abandon_fee_fraction": 0.25,
+		"reroll_fee_per_floor": 50,
+		"classes": ["Minion", "Brute", "Shaman", "Mage"]
+	},
+	"templates": {
+		"hunt_class": {
+			"title": "Cull the {class_plural} of {location_name}",
+			"objective": { "type": "KILL", "target": { "location": "{any_location}", "class": "{any_class}" }, "count": [5, 9] },
+			"min_floor": 1,
+			"weight": 10,
+			"rewards": { "gold_per_count": 25, "materials": { "{location_material}": [2, 3] }, "points": 10, "chance": { "monster_core": 0.15 } }
+		},
+		"race_purge": {
+			"title": "Purge the {race_plural} of {location_name}",
+			"objective": { "type": "KILL", "target": { "location": "{themed_location}", "race": "{race}" }, "count": [8, 12] },
+			"min_floor": 1,
+			"weight": 8,
+			"rewards": { "gold_per_count": 20, "materials": { "{location_material}": [3, 5] }, "points": 12 }
+		},
+		"boss_hunt": {
+			"title": "Dethrone a King in {location_name}",
+			"objective": { "type": "KILL_BOSS", "target": { "location": "{any_location}" }, "count": 1 },
+			"min_floor": 1,
+			"weight": 5,
+			"rewards": { "gold_flat": 150, "points": 20, "chance": { "monster_core": 0.5 } }
+		},
+		"depth_charge": {
+			"title": "Clear floor {floor} of {location_name}",
+			"objective": { "type": "CLEAR_FLOOR", "target": { "location": "{any_location}" }, "floor": "location_max" },
+			"min_floor": 1,
+			"weight": 4,
+			"rewards": { "gold_flat": 120, "recipe": "{unknown_flask_recipe}", "points": 25 }
+		},
+		"streak": {
+			"title": "Win {count} waves in a row without a Breather",
+			"objective": { "type": "WIN_STREAK", "count": [3, 5] },
+			"min_floor": 1,
+			"weight": 5,
+			"rewards": { "gold_per_count": 40, "points": 12 }
+		},
+		"supply_run": {
+			"title": "Deliver {count} {item_name}",
+			"objective": { "type": "DELIVER", "item": "{any_material}", "count": [4, 8] },
+			"min_floor": 1,
+			"weight": 6,
+			"rewards": { "gold_per_count": 18, "points": 8 }
+		}
+	}
+}

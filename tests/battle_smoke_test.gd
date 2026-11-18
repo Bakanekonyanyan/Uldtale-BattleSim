@@ -214,6 +214,7 @@ func _phase0_checks() -> void:
 	_alchemy_checks()
 	_status_modifier_checks()
 	_blacksmith_checks()
+	_guild_checks()
 
 # ------------------------------------------------------------------ momentum + gear drops
 
@@ -490,6 +491,134 @@ func _blacksmith_checks() -> void:
 	if lw:
 		lw.set_upgrade_level(3)
 		check(lw.damage == int(round(lw.base_damage * 1.24)), "upgrades after reload use the original base stats")
+
+# ------------------------------------------------------------------ guild bounties
+
+func _bounty(p: CharacterData, tid: String, type: String, target: Dictionary, count: int) -> Dictionary:
+	var b = GuildManager._instantiate(tid, p)
+	b.type = type; b.target = target; b.count = count; b.progress = 0; b.deadline = 3
+	GuildManager.state(p).active.append(b)
+	return b
+
+func _guild_checks() -> void:
+	var p = make_player()
+	p.name = "ZZ_SmokeTest_Guild"
+	p.max_floor_cleared = 3
+	DungeonStateManager.active_player = p
+	var messages: Array = []
+	var on_msg = func(t): messages.append(t)
+	GuildManager.progress_message.connect(on_msg)
+	
+	var board = GuildManager.get_board(p)
+	var resolved := true
+	for b in board:
+		if "{" in b.title or b.title == "" or (b.target.has("location") and not LocationManager.has_location(b.target.location)):
+			resolved = false
+	check(board.size() == 3 and resolved, "board rolls 3 bounties with resolved placeholders (%s)" % ", ".join(board.map(func(b): return b.title)))
+	var first_uid = int(board[0].uid)
+	check(GuildManager.accept(p, first_uid).ok and GuildManager.get_active(p).size() == 1 and GuildManager.state(p).board.size() == 2,
+		"accepting moves a bounty from the board to active")
+	GuildManager.state(p).active.clear()
+	
+	# KILL filters: location + race; class (bosses count for their minion class)
+	EnemyFactory.set_location("troll_caves")
+	var troll = EnemyFactory.create_enemy(1, 1, 1)
+	EnemyFactory.set_location("goblin_forest")
+	var goblin = EnemyFactory.create_enemy(1, 1, 1)
+	var purge = _bounty(p, "race_purge", "KILL", {"location": "troll_caves", "race": "Troll"}, 2)
+	GameEvents.enemy_killed.emit(troll, "troll_caves", 1, false)
+	GameEvents.enemy_killed.emit(troll, "the_dungeon", 1, false)   # wrong location
+	GameEvents.enemy_killed.emit(goblin, "troll_caves", 1, false)  # wrong race
+	check(int(purge.progress) == 1, "KILL counts only the right race at the right location")
+	GameEvents.enemy_killed.emit(troll, "troll_caves", 1, false)
+	check(GuildManager.is_complete(p, purge) and messages.any(func(m): return "complete" in m), "bounty completes and announces it in the combat log")
+	
+	var brutes = _bounty(p, "hunt_class", "KILL", {"location": "orc_plains", "class": "Brute"}, 5)
+	var king = EnemyFactory.create_enemy(1, 1, 1); king.character_class = "King (Brute)"
+	var mage = EnemyFactory.create_enemy(1, 1, 1); mage.character_class = "Mage"
+	GameEvents.enemy_killed.emit(king, "orc_plains", 2, true)
+	GameEvents.enemy_killed.emit(mage, "orc_plains", 2, false)
+	check(int(brutes.progress) == 1, "a Brute King counts for a Brute bounty; a Mage doesn't")
+	
+	var boss = _bounty(p, "boss_hunt", "KILL_BOSS", {"location": "fairy_circles"}, 1)
+	GameEvents.enemy_killed.emit(goblin, "fairy_circles", 2, false)
+	check(int(boss.progress) == 0, "KILL_BOSS ignores regular enemies")
+	GameEvents.enemy_killed.emit(king, "fairy_circles", 2, true)
+	check(GuildManager.is_complete(p, boss), "KILL_BOSS completes on a boss kill at the location")
+	
+	var depth = _bounty(p, "depth_charge", "CLEAR_FLOOR", {"location": "orc_plains"}, 1)
+	depth.floor = 2
+	GameEvents.floor_cleared.emit("orc_plains", 1)
+	check(int(depth.progress) == 0, "clearing a lower floor doesn't count")
+	GameEvents.floor_cleared.emit("orc_plains", 2)
+	check(GuildManager.is_complete(p, depth), "CLEAR_FLOOR completes when that floor is cleared")
+	
+	# Win streak; a Breather (momentum -> 0) resets it
+	var streak = _bounty(p, "streak", "WIN_STREAK", {}, 3)
+	GameEvents.expedition_started.emit("the_dungeon", 1)
+	MomentumSystem.reset_momentum()
+	GameEvents.battle_won.emit("the_dungeon", 1, 1, false)
+	GameEvents.battle_won.emit("the_dungeon", 1, 2, false)
+	MomentumSystem.gain_momentum(); MomentumSystem.reset_momentum()  # Breather
+	GameEvents.battle_won.emit("the_dungeon", 1, 3, false)
+	check(int(streak.progress) == 2 and not GuildManager.is_complete(p, streak), "a Breather resets the win streak (best %d/3)" % int(streak.progress))
+	GameEvents.battle_won.emit("the_dungeon", 1, 4, false)
+	GameEvents.battle_won.emit("the_dungeon", 1, 5, false)
+	check(GuildManager.is_complete(p, streak), "3 wins in a row completes WIN_STREAK")
+	
+	# Turn in: gold + GP; DELIVER consumes items from pack/stash
+	var gold0 = p.currency.copper
+	var gp0 = GuildManager.get_points(p)
+	var r = GuildManager.turn_in(p, int(purge.uid))
+	check(r.ok and p.currency.copper == gold0 + int(purge.rewards.gold) and GuildManager.get_points(p) == gp0 + int(purge.rewards.points),
+		"turn-in pays gold and Guild Points")
+	check(not GuildManager.turn_in(p, int(brutes.uid)).ok, "unfinished bounties can't be turned in")
+	var deliver = _bounty(p, "supply_run", "DELIVER", {}, 4)
+	deliver.item = "wood"
+	check(not GuildManager.is_complete(p, deliver), "DELIVER isn't complete without the items")
+	p.stash.add_item(ItemManager.get_item("wood"), 5)
+	check(GuildManager.turn_in(p, int(deliver.uid)).ok and p.count_owned("wood") == 1, "DELIVER turn-in takes 4 wood from the stash")
+	
+	# Abandon: fee (no demerit) or demerit
+	p.currency.copper = 100000
+	var fee = GuildManager.get_abandon_fee(brutes)
+	var dem0 = GuildManager.get_demerits(p)
+	r = GuildManager.abandon(p, int(brutes.uid), true)
+	check(r.ok and p.currency.copper == 100000 - fee and GuildManager.get_demerits(p) == dem0, "abandon with fee: pay 25%% of the gold, no demerit (%d)" % fee)
+	var quit_me = _bounty(p, "hunt_class", "KILL", {"location": "orc_plains", "class": "Mage"}, 5)
+	GuildManager.state(p).points = 30
+	r = GuildManager.abandon(p, int(quit_me.uid), false)
+	check(r.ok and GuildManager.get_demerits(p) == dem0 + 1 and GuildManager.get_points(p) == 30 - GuildManager.get_point_penalty(quit_me),
+		"abandon without paying: demerit and -50% of its GP")
+	
+	# Deadlines: 3 expeditions, unfinished bounties fail; finished ones wait
+	var late = _bounty(p, "hunt_class", "KILL", {"location": "orc_plains", "class": "Shaman"}, 9)
+	var dem1 = GuildManager.get_demerits(p)
+	for i in range(3):
+		GameEvents.expedition_ended.emit("the_dungeon", true)
+	check(not GuildManager.get_active(p).has(late) and GuildManager.get_demerits(p) == dem1 + 1, "missing the 3-expedition deadline fails the bounty with a demerit")
+	check(GuildManager.get_active(p).has(boss) and GuildManager.get_active(p).has(depth), "finished bounties don't expire before turn-in")
+	check(GuildManager.state(p).board.size() == 3, "the board refreshes after an expedition")
+	
+	var fee_r = GuildManager.get_reroll_fee(p)
+	var c0 = p.currency.copper
+	check(GuildManager.reroll_board(p).ok and p.currency.copper == c0 - fee_r, "paid reroll (%d)" % fee_r)
+	
+	# Save/load keeps guild state
+	SaveManager.save_game(p)
+	var loaded = SaveManager.load_game(p.name)
+	SaveManager.delete_character(p.name)
+	check(loaded != null and GuildManager.get_points(loaded) == GuildManager.get_points(p) and GuildManager.get_demerits(loaded) == GuildManager.get_demerits(p)
+		and GuildManager.get_active(loaded).size() == GuildManager.get_active(p).size() and GuildManager.state(loaded).board.size() == 3,
+		"guild state survives save/load")
+	if loaded:
+		var lb = GuildManager.get_active(loaded)[0]
+		DungeonStateManager.active_player = loaded
+		check(GuildManager.is_complete(loaded, lb), "loaded bounties keep their progress")
+	
+	GuildManager.progress_message.disconnect(on_msg)
+	DungeonStateManager.active_player = null
+	EnemyFactory.set_location("the_dungeon")
 
 # ------------------------------------------------------------------ full battles
 
