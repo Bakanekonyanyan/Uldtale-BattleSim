@@ -235,47 +235,6 @@ func get_attack_power() -> float:
 func get_spell_power() -> float:
 	return spell_power
 
-func attack(target: CharacterData) -> String:
-	# Use CombatActions if available, otherwise inline
-	if ClassDB.class_exists("CombatActions"):
-		return CombatActions.execute_basic_attack(self, target)
-	else:
-		# Fallback inline implementation
-		return _basic_attack_inline(target)
-
-func _basic_attack_inline(target: CharacterData) -> String:
-	var momentum_mult = MomentumSystem.get_damage_multiplier()
-	var base_damage = get_attack_power() * 0.5 * momentum_mult
-	var resistance = target.get_defense()
-	
-	if RandomManager.randf() >= accuracy:
-		return "%s's attack missed!" % name
-	if RandomManager.randf() < target.dodge:
-		return "%s dodged the attack!" % target.name
-	
-	var is_crit = RandomManager.randf() < critical_hit_rate
-	var damage = max(1, base_damage - resistance)
-	
-	if is_crit:
-		damage *= 1.5 + RandomManager.randf() * 0.5
-	
-	damage = round(damage)
-	target.take_damage(damage, self)
-	
-	var mp_restore = int(max_mp * 0.08)
-	var sp_restore = int(max_sp * 0.08)
-	restore_mp(mp_restore)
-	restore_sp(sp_restore)
-	
-	var result = "%s attacks %s for %d damage and restores %d MP, %d SP" % [
-		name, target.name, damage, mp_restore, sp_restore
-	]
-	
-	if is_crit:
-		result = "Critical hit! " + result
-	
-	return result
-
 func take_damage(amount: float, attacker: CharacterData = null):
 	if current_hp <= 0:
 		current_hp = 0
@@ -290,14 +249,17 @@ func take_damage(amount: float, attacker: CharacterData = null):
 	if is_defending:
 		amount *= 0.5
 	
-	# Reflection
-	if last_attacker and last_attacker != self:
+	# Reflection - the ONLY place reflected damage is applied.
+	# Only reflect when a live attacker hit us directly; status ticks, confusion
+	# self-harm and reflected damage itself pass no attacker. (Previously this used
+	# the stale `last_attacker`, so e.g. poison damage was reflected too.)
+	if attacker and attacker != self:
 		var reflection = status_manager.get_total_reflection() if status_manager else 0.0
 		if reflection > 0.0:
 			var reflected = int(amount * reflection)
 			if reflected > 0:
-				print("%s reflected %d damage back to %s!" % [name, reflected, last_attacker.name])
-				last_attacker.take_damage(reflected, null)
+				print("%s reflected %d damage back to %s!" % [name, reflected, attacker.name])
+				attacker.take_damage(reflected, null)
 	
 	current_hp -= int(amount)
 	current_hp = clamp(current_hp, 0, max_hp)

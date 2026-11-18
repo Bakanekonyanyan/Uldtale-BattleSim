@@ -1,4 +1,4 @@
-# res://scenes/battle/BattleVisualManager.gd
+# res://scenes/battle/visuals/BattleVisualManager.gd
 # Manages all visual effects in battle: sprites, animations, camera shake, hit effects
 
 class_name BattleVisualManager

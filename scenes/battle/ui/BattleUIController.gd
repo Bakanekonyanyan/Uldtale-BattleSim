@@ -1,5 +1,9 @@
-# Complete Fixed BattleUIController.gd
-# res://scenes/battle/components/ui/BattleUIController.gd
+# res://scenes/battle/ui/BattleUIController.gd
+# Everything the player SEES and CLICKS during a battle: info panels, combat log,
+# action buttons, skill menu, target selection, inspect dialogs.
+#
+# Output: emits `action_selected(BattleAction)` when the player has fully chosen
+# an action (incl. target). It never executes actions or changes game state.
 
 class_name BattleUIController
 extends Node
@@ -60,16 +64,14 @@ func initialize_multi(p_player: CharacterData, p_enemies: Array[CharacterData]):
 	_create_enemy_panels()
 	update_all_character_info()
 
-func initialize(p_player: CharacterData, single_enemy: CharacterData):
-	initialize_multi(p_player, [single_enemy])
-
 func _create_enemy_panels():
-	for panel in enemy_panels:
-		panel.queue_free()
 	enemy_panels.clear()
-	
 	if not enemy_info_container:
 		return
+	
+	# Free the whole per-enemy VBox (panel + inspect button), not just the panel
+	for child in enemy_info_container.get_children():
+		child.queue_free()
 	
 	for i in range(enemies.size()):
 		var vbox = VBoxContainer.new()
@@ -147,7 +149,8 @@ func _get_hp_color(hp_percent: float) -> String:
 	if hp_percent < 75: return "yellow"
 	return "white"
 
-func update_character_info(p_player: CharacterData, single_enemy: CharacterData):
+## Used by BattleNetworkSync (PvP)
+func update_character_info(p_player: CharacterData, _single_enemy: CharacterData):
 	player = p_player
 	update_all_character_info()
 
@@ -237,6 +240,8 @@ func _add_skills_button():
 func _add_items_button(item_used: bool):
 	var btn = _create_action_button("Items" + (" (Used)" if item_used else ""))
 	btn.disabled = item_used
+	# Remember it so enable_actions() doesn't re-enable a used Items button
+	btn.set_meta("stay_disabled", item_used)
 	btn.pressed.connect(_on_items_pressed)
 	action_buttons.add_child(btn)
 
@@ -402,54 +407,21 @@ func _show_skill_info(skill: Skill):
 	if skill.cooldown > 0:
 		info_text += "[b][color=cyan]Cooldown:[/color][/b] %d turns\n" % skill.cooldown
 	
-	# Attributes affected - Check both singular and plural
-	var has_attribute_effect = false
-	if "attribute_target" in skill:
-		var attr_target = skill.attribute_target
-		# Check if it's an array
-		if attr_target is Array:
-			if not attr_target.is_empty():
-				var attr_names = []
-				for attr in attr_target:
-					attr_names.append(str(attr))
-				info_text += "\n[b][color=cyan]Affects:[/color][/b] %s\n" % ", ".join(attr_names)
-				has_attribute_effect = true
-		# Check if it's an enum value (int) and not NONE (0)
-		elif typeof(attr_target) == TYPE_INT and attr_target != 0:
-			info_text += "\n[b][color=cyan]Affects:[/color][/b] %s\n" % Skill.AttributeTarget.keys()[attr_target]
-			has_attribute_effect = true
-		# Check if it's a string and not "NONE"
-		elif typeof(attr_target) == TYPE_STRING and attr_target != "NONE":
-			info_text += "\n[b][color=cyan]Affects:[/color][/b] %s\n" % attr_target
-			has_attribute_effect = true
+	# Attributes affected
+	var attr_names: PackedStringArray = []
+	for attr in skill.attribute_targets:
+		if attr != Skill.AttributeTarget.NONE:
+			attr_names.append(Skill.AttributeTarget.keys()[attr].capitalize())
+	if not attr_names.is_empty():
+		info_text += "\n[b][color=cyan]Affects:[/color][/b] %s\n" % ", ".join(attr_names)
 	
-	if "attribute_targets" in skill:
-		var attr_targets = skill.attribute_targets
-		if attr_targets is Array and not attr_targets.is_empty():
-			var attr_names = []
-			for attr in attr_targets:
-				attr_names.append(str(attr))
-			info_text += "\n[b][color=cyan]Affects:[/color][/b] %s\n" % ", ".join(attr_names)
-			has_attribute_effect = true
-		elif typeof(attr_targets) == TYPE_STRING and attr_targets != "NONE":
-			info_text += "\n[b][color=cyan]Affects:[/color][/b] %s\n" % attr_targets
-			has_attribute_effect = true
-	
-	# Status effects - Check both singular and plural
-	var status_list = []
-	if "status_effect" in skill:
-		var status = skill.status_effect
-		if status is Array:
-			for s in status:
-				if s != "NONE" and typeof(s) == TYPE_STRING:
-					status_list.append(s)
-				elif typeof(s) == TYPE_INT and s != 0:
-					status_list.append(Skill.StatusEffect.keys()[s])
-		elif typeof(status) == TYPE_INT and status != 0:
-			status_list.append(Skill.StatusEffect.keys()[status])
-		elif typeof(status) == TYPE_STRING and status != "NONE":
-			status_list.append(status)
-	
+	# Status effects (previously collected but never displayed)
+	var status_names: PackedStringArray = []
+	for effect in skill.status_effects:
+		if effect != Skill.StatusEffect.NONE:
+			status_names.append(Skill.StatusEffect.keys()[effect].capitalize())
+	if not status_names.is_empty():
+		info_text += "[b][color=purple]Inflicts:[/color][/b] %s\n" % ", ".join(status_names)
 	
 	skill_info_rich_label.clear()
 	skill_info_rich_label.append_text(info_text)
@@ -543,8 +515,8 @@ func show_target_selection(targets: Array[CharacterData], on_selected: Callable,
 func enable_actions():
 	if action_buttons:
 		for btn in action_buttons.get_children():
-			if btn is Button:
-				btn.disabled = false
+			if btn is Button and not btn.is_queued_for_deletion():
+				btn.disabled = btn.get_meta("stay_disabled", false)
 
 func disable_actions():
 	if action_buttons:
@@ -559,7 +531,8 @@ func lock_ui():
 func unlock_ui():
 	ui_locked = false
 
-func _force_ui_invisible():
+## Hide the battle HUD (used before the post-battle dialog)
+func hide_battle_ui():
 	if action_buttons: action_buttons.hide()
 	if player_info: player_info.hide()
 	if enemy_scroll_container: enemy_scroll_container.hide()

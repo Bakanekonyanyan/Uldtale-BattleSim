@@ -351,7 +351,7 @@ func _apply_opponent_action_result(data: Dictionary):
 		last_turn_end_timestamp = timestamp
 		
 		print("[BATTLE SYNC]  Opponent main action complete - ending their turn")
-		orchestrator.turn_controller.end_current_turn()
+		orchestrator.finish_remote_turn()
 	else:
 		print("[BATTLE SYNC] Opponent item complete - NO turn change")
 
@@ -361,6 +361,8 @@ func _on_match_ended(winner_id: int):
 	"""Called when opponent ends match via network signal"""
 	var i_won = (winner_id == local_player_id)
 	print("[BATTLE SYNC] Match ended via network signal, winner: %d (me: %s)" % [winner_id, i_won])
+	# Stop the local turn loop - the result was decided on the other client
+	orchestrator.end_battle_from_network()
 	await _show_battle_end_dialog(i_won)
 
 func _cleanup_battle():

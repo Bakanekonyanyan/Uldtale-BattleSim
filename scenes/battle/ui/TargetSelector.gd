@@ -1,5 +1,5 @@
-# res://scenes/battle/components/TargetSelector.gd
-# UI component for selecting battle targets
+# res://scenes/battle/ui/TargetSelector.gd
+# Popup list for picking a target. Used by BattleUIController and InventoryMenu.
 
 class_name TargetSelector
 extends Control
@@ -57,7 +57,7 @@ func _populate_target_list():
 		var status_text = ""
 		if target.status_manager:
 			var effects = target.status_manager.get_effects_string()
-			if effects != "Normal":
+			if effects != "None":  # StatusEffectManager returns "None" (was compared to "Normal")
 				status_text = " [%s]" % effects
 		
 		button.text = "%s - HP: %d/%d (%.0f%%)%s" % [

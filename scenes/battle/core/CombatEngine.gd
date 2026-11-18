@@ -1,26 +1,18 @@
-# CombatEngine.gd - COMPLETE MULTI-ENEMY SUPPORT
-#  VERIFIED: Handles both single enemy and multi-enemy battles
-#  ENHANCED: Added utility methods for multi-enemy management
+# res://scenes/battle/core/CombatEngine.gd
+# The RULES of combat: damage formulas, skill/item resolution, status ticks.
+#
+# Pure logic - it never touches the UI, visuals, turn order or scene tree.
+# Input: a BattleAction.  Output: an ActionResult describing what happened.
 
 class_name CombatEngine
 extends RefCounted
 
 var player: CharacterData
-var enemy: CharacterData  # Legacy: first enemy in list
 var enemies: Array[CharacterData] = []
 
-func initialize(p_player: CharacterData, single_enemy: CharacterData):
-	"""Legacy single-enemy initialization"""
-	player = p_player
-	enemy = single_enemy
-	enemies = [single_enemy]
-	print("CombatEngine: Initialized (legacy) - Player: %s vs Enemy: %s" % [player.name, single_enemy.name])
-
 func initialize_multi(p_player: CharacterData, p_enemies: Array[CharacterData]):
-	"""Multi-enemy initialization"""
 	player = p_player
 	enemies = p_enemies
-	enemy = enemies[0] if not enemies.is_empty() else null  # Set first as legacy reference
 	print("CombatEngine: Initialized - Player: %s vs %d enemies" % [player.name, enemies.size()])
 
 func execute_action(action: BattleAction) -> ActionResult:
@@ -64,6 +56,7 @@ func _check_confusion_before_action(action: BattleAction) -> ActionResult:
 		result.success = true
 		result.damage = confusion_check.damage
 		result.message = confusion_check.message
+		result.self_inflicted = true
 		return result
 	
 	return null
@@ -72,7 +65,7 @@ func _check_confusion_before_action(action: BattleAction) -> ActionResult:
 
 func _execute_attack(action: BattleAction) -> ActionResult:
 	var attacker = action.actor
-	var target = action.target
+	var target = action.primary_target
 	
 	if not is_alive(target):
 		return ActionResult.failure_msg("%s is already defeated" % target.name)
@@ -179,6 +172,10 @@ func _execute_skill(action: BattleAction) -> ActionResult:
 	
 	if not is_alive(caster):
 		return ActionResult.failure_msg("%s cannot cast while defeated" % caster.name)
+	
+	var cooldown_left = caster.get_skill_cooldown(skill.name)
+	if cooldown_left > 0:
+		return ActionResult.failure_msg("%s is on cooldown (%d turns)" % [skill.name, cooldown_left])
 	
 	var cost_type = "MP" if skill.ability_type != Skill.AbilityType.PHYSICAL else "SP"
 	var cost = skill.mp_cost if cost_type == "MP" else skill.sp_cost
@@ -421,13 +418,7 @@ func get_living_enemies() -> Array[CharacterData]:
 			living.append(e)
 	return living
 
-func get_enemy_count() -> int:
-	""" NEW: Get total enemy count"""
-	return enemies.size()
 
-func get_living_enemy_count() -> int:
-	""" NEW: Get count of living enemies"""
-	return get_living_enemies().size()
 
 func get_allies_for_character(character: CharacterData) -> Array[CharacterData]:
 	"""Get all living allies for a character (including self)"""
@@ -446,61 +437,17 @@ func get_allies_for_character(character: CharacterData) -> Array[CharacterData]:
 	print("[ALLIES] Found %d allies for %s" % [allies.size(), character.name])
 	return allies
 
-func get_skill_targets(skill: Skill, caster: CharacterData, opponent: CharacterData) -> Array[CharacterData]:
-	""" Get appropriate targets for skill (supports multi-enemy + ALL_ALLIES)"""
-	var result: Array[CharacterData] = []
-	
-	match skill.target:
-		Skill.TargetType.SELF:
-			result.append(caster)
-		Skill.TargetType.ALLY:
-			result.append(caster)
-		Skill.TargetType.ALL_ALLIES:
-			#  FIX: Resolve all allies for caster (enemies buff each other)
-			result = get_allies_for_character(caster)
-			print("[SKILL TARGETS] ALL_ALLIES for %s: %d targets" % [caster.name, result.size()])
-		Skill.TargetType.ENEMY:
-			if opponent:
-				result.append(opponent)
-		Skill.TargetType.ALL_ENEMIES:
-			# Return all living enemies for AOE skills
-			result = get_living_enemies()
-			print("[SKILL TARGETS] ALL_ENEMIES: %d targets" % result.size())
-	
-	return result
 
 # === REFLECTION TRACKING ===
 
 func _track_reflection_damage(attacker: CharacterData, defender: CharacterData, damage: float) -> Dictionary:
 	"""
-	Track reflection damage and return info for logging
+	Predict reflection damage for the combat log.
+	Does NOT apply it - CharacterData.take_damage() applies reflection itself
+	when given an attacker. (Applying it here as well dealt reflection twice.)
 	Returns: {reflected: bool, amount: int, percent: float, target_name: String}
 	"""
-	var result = {
-		"reflected": false,
-		"amount": 0,
-		"percent": 0.0,
-		"target_name": ""
-	}
-	
-	if not defender.status_manager:
-		return result
-	
-	var reflection = defender.status_manager.get_total_reflection()
-	
-	if reflection > 0.0:
-		var reflected_damage = int(damage * reflection)
-		
-		if reflected_damage > 0:
-			result.reflected = true
-			result.amount = reflected_damage
-			result.percent = reflection * 100
-			result.target_name = attacker.name
-			
-			# Apply reflected damage (pass null to prevent reflection chain)
-			attacker.take_damage(reflected_damage, null)
-	
-	return result
+	return ReflectionInfo.predict(attacker, defender, damage)
 
 # === DEATH CHECKING ===
 
@@ -514,53 +461,3 @@ func check_death_after_action(character: CharacterData) -> bool:
 		# Else: Already at 0, don't log again
 		return true
 	return false
-
-
-func check_all_deaths() -> Array[CharacterData]:
-	""" NEW: Check all combatants for death, return list of dead characters"""
-	var dead: Array[CharacterData] = []
-	
-	# Check player
-	if check_death_after_action(player):
-		dead.append(player)
-	
-	# Check all enemies
-	for e in enemies:
-		if check_death_after_action(e):
-			dead.append(e)
-	
-	return dead
-
-# Add to CombatEngine.gd
-
-func validate_turn_order(character: CharacterData) -> bool:
-	"""
-	Validate if character can take turn (alive check)
-	Call this BEFORE executing any action
-	"""
-	if not is_alive(character):
-		print("[TURN VALIDATION] %s is dead, skipping turn" % character.name)
-		return false
-	return true
-
-func get_next_living_enemy() -> CharacterData:
-	"""
-	Get next living enemy for turn order
-	Returns null if all dead
-	"""
-	for e in enemies:
-		if is_alive(e):
-			return e
-	return null
-
-func rebuild_enemy_turn_queue() -> Array[CharacterData]:
-	"""
-	Rebuild turn queue with only living enemies
-	Call this after status effects kill an enemy
-	"""
-	var living: Array[CharacterData] = []
-	for e in enemies:
-		if is_alive(e):
-			living.append(e)
-	print("[TURN QUEUE] Rebuilt: %d living enemies" % living.size())
-	return living

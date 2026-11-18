@@ -1,5 +1,6 @@
-# res://scripts/battle/ActionResult.gd
-# Represents the result of a battle action
+# res://scenes/battle/core/ActionResult.gd
+# The outcome of executing a BattleAction (or a status-effect tick).
+# Produced by CombatEngine, consumed by the UI log, visuals and network sync.
 class_name ActionResult
 extends RefCounted
 
@@ -25,6 +26,7 @@ var debuffs: Array = []  # [{stat: String, amount: int, duration: int}]
 var is_critical: bool = false
 var was_dodged: bool = false
 var was_missed: bool = false
+var self_inflicted: bool = false  # e.g. confusion: the actor hurt themselves, not the targets
 
 # === FACTORY METHODS ===
 

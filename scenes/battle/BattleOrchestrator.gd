@@ -1,77 +1,161 @@
 # res://scenes/battle/BattleOrchestrator.gd
-# REFACTORED: Thin coordinator using component-based architecture
-# Delegates responsibilities to specialized handlers
+# Root script of Battle.tscn. Builds the battle components and runs the turn loop.
+#
+# The whole fight reads top-to-bottom in _run_battle_loop() / _run_turn():
+#
+#   loop until battle_over:
+#       actor = turn_queue.current_actor()
+#       TurnStartProcessor.run(actor)        -> CAN_ACT / STUNNED / DIED
+#       player  -> wait for UI action  -> ActionExecutor.execute()
+#       enemy   -> EnemyTurnPlanner     -> ActionExecutor.execute()
+#       remote  -> wait for BattleNetworkSync (PvP)
+#       BattleOutcomeHandler.handle_deaths() / check_battle_end()
+#       turn_queue.advance()
+#
+# See scenes/battle/README.md for a map of every component.
 
 extends Node
 
+## Emitted for SceneManager. xp_gained == -1 means the player chose "Press On".
 signal battle_completed(player_won: bool, xp_gained: int)
 
-# Core systems (unchanged)
-var combat_engine: CombatEngine
-var turn_controller: TurnController
-var enemy_ai_controllers: Array[EnemyAI] = []
+signal _player_turn_finished
+signal _remote_turn_finished
+
+# --- Scene nodes ---
 var ui_controller: BattleUIController
 var visual_manager: BattleVisualManager
-var network_sync: BattleNetworkSync
 
-# NEW: Component handlers
+# --- Components (created in start_battle) ---
 var context: BattleContext
-var action_handler: ActionHandler
-var turn_handler: TurnHandler
-var flow_controller: BattleFlowController
+var combat_engine: CombatEngine
+var turn_queue: TurnQueue
+var turn_start: TurnStartProcessor
+var action_executor: ActionExecutor
+var enemy_planner: EnemyTurnPlanner
+var outcome: BattleOutcomeHandler
+var network_sync: BattleNetworkSync  # PvP only
+
+# Player-input guards
+var _awaiting_player_action: bool = false
+var _action_in_progress: bool = false
+
+# Read-only accessors used by BattleNetworkSync
+var player: CharacterData:
+	get: return context.player if context else null
+var enemy: CharacterData:
+	get: return context.enemies[0] if context and not context.enemies.is_empty() else null
 
 func _ready():
 	ui_controller = get_node_or_null("BattleUIController")
+	visual_manager = get_node_or_null("BattleVisualManager")
+
 	if not ui_controller:
 		push_error("BattleOrchestrator: BattleUIController not found!")
 		return
-	
-	visual_manager = get_node_or_null("BattleVisualManager")
 	if not visual_manager:
 		push_error("BattleOrchestrator: BattleVisualManager not found!")
 		return
-	
-	_initialize_visual_manager()
-	
-	print("BattleOrchestrator: Ready")
 
-func _initialize_visual_manager():
 	var camera = get_node_or_null("Camera2D")
 	var player_container = visual_manager.get_node_or_null("PlayerSpriteContainer")
 	var enemy_container = visual_manager.get_node_or_null("EnemySpriteContainer")
-	
 	if camera and player_container and enemy_container:
 		visual_manager.initialize(camera, player_container, enemy_container)
 
-# === BATTLE START ===
+	ui_controller.action_selected.connect(_on_player_action_selected)
 
-func start_battle():
-	if context.battle_started:
-		print("BattleOrchestrator: Battle already started")
+# =============================================================
+# PUBLIC SETUP API (called by SceneManager / ArenaLobby)
+# =============================================================
+
+func set_player(character: CharacterData) -> void:
+	_ensure_context()
+	context.player = character
+
+func set_enemies(enemy_list: Array[CharacterData]) -> void:
+	_ensure_context()
+	context.enemies = enemy_list
+	for e in context.enemies:
+		e.calculate_secondary_attributes()
+
+func set_enemy(new_enemy: CharacterData) -> void:
+	set_enemies([new_enemy])
+
+## Last setup call for PvE - starts the battle on the next frames.
+func set_dungeon_info(boss_fight: bool, wave: int, floor_num: int, max_floor: int, description: String) -> void:
+	_ensure_context()
+	context.set_dungeon_info(boss_fight, wave, floor_num, max_floor, description)
+	call_deferred("_deferred_start_battle")
+
+func setup_pvp_battle(local_player: CharacterData, remote_opponent: CharacterData) -> void:
+	_ensure_context()
+	context.is_pvp_mode = true
+	context.player = local_player
+	context.enemies = [remote_opponent]
+
+	local_player.reset_for_new_battle()
+	remote_opponent.reset_for_new_battle()
+	if not remote_opponent.elemental_resistances:
+		remote_opponent.elemental_resistances = ElementalResistanceManager.new(remote_opponent)
+	remote_opponent.calculate_secondary_attributes()
+
+	context.set_dungeon_info(false, 1, 1, 1, "Arena PvP Battle")
+	call_deferred("start_battle")
+
+## Called by BattleNetworkSync when the opponent finished their main action.
+func finish_remote_turn() -> void:
+	_remote_turn_finished.emit()
+
+## Called by BattleNetworkSync when the match was decided on the other client.
+func end_battle_from_network() -> void:
+	if context:
+		context.battle_over = true
+	_awaiting_player_action = false
+	if ui_controller:
+		ui_controller.disable_actions()
+	_remote_turn_finished.emit()
+	_player_turn_finished.emit()
+
+func _ensure_context() -> void:
+	if not context:
+		context = BattleContext.new()
+
+func _deferred_start_battle() -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	start_battle()
+
+# =============================================================
+# BATTLE START
+# =============================================================
+
+func start_battle() -> void:
+	if not context or context.battle_started:
+		return
+	if not _validate_setup():
 		return
 	context.battle_started = true
-	
-	if not _validate_setup():
-		context.battle_started = false
-		return
-	
-	print("BattleOrchestrator: Starting battle - %s vs %d enemies" % [
-		context.player.name, context.enemies.size()
+
+	print("BattleOrchestrator: Starting battle - %s vs %d enemies%s" % [
+		context.player.name, context.enemies.size(), " (PvP)" if context.is_pvp_mode else ""
 	])
-	
-	_initialize_systems()
-	_connect_signals()
+
+	_build_components()
+	_initialize_resources()
 	_initialize_ui()
 	_initialize_visuals()
-	_initialize_resources()
-	
-	await _wait_for_ui_ready()
-	
+
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	ui_controller.update_all_character_info()
+	ui_controller.update_turn_display("Battle starting...")
+	ui_controller.add_combat_log("Initiative order: " + turn_queue.describe_order(), "cyan")
 	ui_controller.setup_player_actions(false, false)
 	ui_controller.disable_actions()
-	
-	print("BattleOrchestrator: Battle initialized")
-	turn_controller.start_first_turn()
+
+	_run_battle_loop()
 
 func _validate_setup() -> bool:
 	if not context.player:
@@ -85,329 +169,195 @@ func _validate_setup() -> bool:
 		return false
 	return true
 
-func _initialize_systems():
-	# Core systems
+func _build_components() -> void:
 	combat_engine = CombatEngine.new()
 	combat_engine.initialize_multi(context.player, context.enemies)
-	
-	turn_controller = TurnController.new()
-	add_child(turn_controller)
-	turn_controller.initialize(context.player, context.enemies)
-	
+
+	turn_queue = TurnQueue.new()
+	turn_queue.initialize(context.player, context.enemies)
+
 	if context.is_pvp_mode:
-		turn_controller.set_pvp_mode(true)
-	
-	# Display initiative order
-	var all_combatants = [context.player] + context.enemies
-	all_combatants.sort_custom(func(a, b): return a.agility > b.agility)
-	
-	var init_msg = "Initiative order: "
-	for i in range(all_combatants.size()):
-		init_msg += "%s (AGI: %.1f)" % [all_combatants[i].name, all_combatants[i].agility]
-		if i < all_combatants.size() - 1:
-			init_msg += " → "
-	
-	ui_controller.add_combat_log(init_msg, "cyan")
-	
-	# Initialize AI for enemies
-	if not context.is_pvp_mode:
-		_initialize_enemy_ai()
-	
-	# NEW: Component handlers
-	action_handler = ActionHandler.new()
-	action_handler.initialize(combat_engine, visual_manager, ui_controller, context)
-	
-	turn_handler = TurnHandler.new()
-	turn_handler.initialize(turn_controller, combat_engine, visual_manager, ui_controller, context)
-	
-	flow_controller = BattleFlowController.new()
-	flow_controller.initialize(combat_engine, visual_manager, ui_controller, turn_handler, context, self)
+		network_sync = BattleNetworkSync.new()
+		network_sync.initialize(self, true)
+	else:
+		enemy_planner = EnemyTurnPlanner.new()
+		enemy_planner.initialize(context)
 
-func _connect_signals():
-	turn_controller.turn_started.connect(_on_turn_started)
-	turn_controller.turn_ended.connect(_on_turn_ended)
-	turn_controller.turn_skipped.connect(_on_turn_skipped)
-	
-	ui_controller.action_selected.connect(_on_action_selected)
-	
-	# NEW: Handler signals
-	turn_handler.turn_ready_for_action.connect(_on_turn_ready_for_action)
-	turn_handler.turn_skipped_death.connect(_on_turn_skipped_death)
-	turn_handler.turn_skipped_stun.connect(_on_turn_skipped_stun)
-	
-	action_handler.action_executed.connect(_on_action_executed)
-	action_handler.deaths_occurred.connect(_on_deaths_occurred)
-	
-	flow_controller.battle_ended.connect(func(won, xp): emit_signal("battle_completed", won, xp))
+	turn_start = TurnStartProcessor.new()
+	turn_start.initialize(combat_engine, visual_manager, ui_controller, context, network_sync)
 
-func _initialize_ui():
+	action_executor = ActionExecutor.new()
+	action_executor.initialize(combat_engine, visual_manager, ui_controller, context)
+
+	outcome = BattleOutcomeHandler.new()
+	outcome.initialize(combat_engine, visual_manager, ui_controller, turn_queue, context, self, network_sync)
+	outcome.battle_ended.connect(func(won, xp): battle_completed.emit(won, xp))
+
+func _initialize_resources() -> void:
+	for c in [context.player] + context.enemies:
+		if c.current_sp == 0:
+			c.current_sp = c.max_sp
+
+func _initialize_ui() -> void:
 	ui_controller.initialize_multi(context.player, context.enemies)
-	ui_controller.update_all_character_info()
 	ui_controller.update_xp_display()
 	ui_controller.update_debug_display()
-	
 	if context.is_pvp_mode:
 		ui_controller.hide_dungeon_info()
 	else:
-		ui_controller.update_dungeon_info(
-			context.current_wave,
-			context.current_floor,
-			context.dungeon_description
-		)
+		ui_controller.update_dungeon_info(context.current_wave, context.current_floor, context.dungeon_description)
 
-func _initialize_visuals():
+func _initialize_visuals() -> void:
 	if visual_manager:
 		visual_manager.setup_player_sprite(context.player)
 		visual_manager.setup_enemy_sprites(context.enemies)
 
-func _initialize_enemy_ai():
-	enemy_ai_controllers.clear()
-	
-	for enemy in context.enemies:
-		var ai: EnemyAI
-		
-		if context.is_boss_battle and "King" in enemy.character_class:
-			ai = BossAI.new()
-		else:
-			ai = EnemyAI.new()
-		
-		ai.initialize(enemy, context.player, context.current_floor)
-		enemy_ai_controllers.append(ai)
-	
-	print("BattleOrchestrator: Initialized %d AI controllers" % enemy_ai_controllers.size())
+# =============================================================
+# TURN LOOP
+# =============================================================
 
-func _initialize_resources():
-	if context.player.current_sp == 0:
-		context.player.current_sp = context.player.max_sp
-	
-	for enemy in context.enemies:
-		if enemy.current_sp == 0:
-			enemy.current_sp = enemy.max_sp
+func _run_battle_loop() -> void:
+	while not context.battle_over:
+		var actor := turn_queue.current_actor()
+		if actor == null:
+			break
 
-func _wait_for_ui_ready():
-	await get_tree().process_frame
-	await get_tree().process_frame
-	
-	ui_controller.update_all_character_info()
-	ui_controller.update_turn_display("Battle starting...")
+		await _run_turn(actor)
 
-# === TURN FLOW (Simplified) ===
+		if await outcome.check_battle_end():
+			break
+		turn_queue.advance()
 
-func _on_turn_started(character: CharacterData, is_player_turn: bool):
-	print("BattleOrchestrator: Turn started - %s" % character.name)
-	
-	if await flow_controller.check_battle_end():
+	print("BattleOrchestrator: Battle loop finished")
+
+func _run_turn(actor: CharacterData) -> void:
+	var turn_no = turn_queue.begin_turn()
+	var is_player_turn = turn_queue.is_player(actor)
+	print("BattleOrchestrator: Turn %d - %s" % [turn_no, actor.name])
+
+	if network_sync:
+		network_sync.on_turn_started(actor, is_player_turn)
+
+	var start_result: TurnStartProcessor.Result = await turn_start.run(actor)
+	match start_result:
+		TurnStartProcessor.Result.DIED:
+			await outcome.handle_deaths([actor])
+			return
+		TurnStartProcessor.Result.STUNNED:
+			return
+
+	if context.battle_over:
 		return
-	
-	# Delegate to turn handler
-	await turn_handler.start_turn(character, is_player_turn)
 
-func _on_turn_ready_for_action(character: CharacterData, is_player: bool):
-	if is_player:
-		_setup_player_turn()
+	if is_player_turn:
+		await _run_player_turn()
+	elif context.is_pvp_mode:
+		await _run_remote_turn()
 	else:
-		await _execute_enemy_turn(character)
+		await _run_enemy_turn(actor)
 
-func _on_turn_skipped_death(character: CharacterData):
-	await flow_controller.handle_death(character)
-	if await flow_controller.check_battle_end():
-		return
-	turn_handler.end_turn()
-
-func _on_turn_skipped_stun(character: CharacterData):
-	if await flow_controller.check_battle_end():
-		return
-	turn_handler.end_turn()
-
-func _on_turn_ended(character: CharacterData):
-	print("BattleOrchestrator: Turn ended - %s" % character.name)
 	ui_controller.disable_actions()
 
-func _on_turn_skipped(character: CharacterData, reason: String):
-	print("BattleOrchestrator: Turn skipped - %s (%s)" % [character.name, reason])
+# --- Player ---
 
-# === PLAYER TURN ===
+func _run_player_turn() -> void:
+	context.reset_turn_state()
+	_awaiting_player_action = true
+	_present_player_actions()
+	await _player_turn_finished
+	_awaiting_player_action = false
 
-func _setup_player_turn():
-	print("BattleOrchestrator: Player's turn")
+func _present_player_actions() -> void:
 	ui_controller.setup_player_actions(context.item_action_used, context.main_action_taken)
 	ui_controller.unlock_ui()
 	ui_controller.enable_actions()
 
-func _on_action_selected(action: BattleAction):
-	print("BattleOrchestrator: Action selected - %s" % action.get_description())
-	
-	# Item actions
-	if action.type == BattleAction.ActionType.ITEM:
-		if context.item_action_used:
-			ui_controller.add_combat_log("You've already used an item!", "red")
-			ui_controller.unlock_ui()
-			ui_controller.enable_actions()
+func _on_player_action_selected(action: BattleAction) -> void:
+	if not _awaiting_player_action or _action_in_progress or context.battle_over:
+		return
+
+	match action.type:
+		BattleAction.ActionType.ITEM:
+			await _handle_player_item(action)
+		BattleAction.ActionType.ATTACK, BattleAction.ActionType.SKILL, BattleAction.ActionType.DEFEND:
+			await _handle_player_main_action(action)
+		_:
+			_present_player_actions()
+
+## Items are a free action: they don't end the turn, but only one per turn.
+func _handle_player_item(action: BattleAction) -> void:
+	if context.item_action_used:
+		ui_controller.add_combat_log("You've already used an item this turn!", "red")
+		_present_player_actions()
+		return
+
+	_action_in_progress = true
+	ui_controller.disable_actions()
+
+	var result: ActionExecutor.Outcome = await action_executor.execute(action)
+	context.item_action_used = true
+	if network_sync:
+		network_sync.on_action_selected(action, result.result)
+
+	await outcome.handle_deaths(result.dead)
+	_action_in_progress = false
+
+	if context.is_battle_decided():
+		_player_turn_finished.emit()  # loop runs the victory/defeat sequence
+	else:
+		_present_player_actions()
+
+## Attack / Skill / Defend - ends the player's turn.
+func _handle_player_main_action(action: BattleAction) -> void:
+	if context.main_action_taken:
+		ui_controller.add_combat_log("You've already taken your action!", "red")
+		_present_player_actions()
+		return
+
+	if action.type != BattleAction.ActionType.DEFEND:
+		var needs_target = not (action.skill_data and action.skill_data.target == Skill.TargetType.ALL_ALLIES)
+		if needs_target and action.targets.is_empty():
+			ui_controller.add_combat_log("Error: No target", "red")
+			_present_player_actions()
 			return
-		
-		ui_controller.disable_actions()
-		await action_handler.execute_item_action(action)
-		
-		if await flow_controller.check_battle_end():
+		if action.primary_target and not action.primary_target.is_alive():
+			ui_controller.add_combat_log("Target already defeated!", "red")
+			_present_player_actions()
 			return
-		
-		ui_controller.setup_player_actions(context.item_action_used, context.main_action_taken)
-		ui_controller.unlock_ui()
-		ui_controller.enable_actions()
-		return
-	
-	# Main actions
-	if action.type in [BattleAction.ActionType.ATTACK, BattleAction.ActionType.SKILL, BattleAction.ActionType.DEFEND]:
-		if context.main_action_taken:
-			ui_controller.add_combat_log("You've already taken your action!", "red")
-			ui_controller.unlock_ui()
-			ui_controller.enable_actions()
-			return
-		
-		# Validate target
-		if action.type in [BattleAction.ActionType.ATTACK, BattleAction.ActionType.SKILL]:
-			if not action.target and (not action.targets or action.targets.is_empty()):
-				ui_controller.add_combat_log("Error: No target", "red")
-				ui_controller.unlock_ui()
-				ui_controller.enable_actions()
-				return
-			
-			if action.target and not action.target.is_alive():
-				ui_controller.add_combat_log("Target already defeated!", "red")
-				ui_controller.unlock_ui()
-				ui_controller.enable_actions()
-				return
-		
-		ui_controller.disable_actions()
-		await action_handler.execute_main_action(action, true)
 
-func _on_action_executed(action: BattleAction, result: ActionResult):
-	# Action handler already updated UI, just track state
-	pass
+	_action_in_progress = true
+	ui_controller.disable_actions()
 
-func _on_deaths_occurred(dead_characters: Array[CharacterData]):
-	if dead_characters.is_empty():
-		# No deaths, just end turn
-		turn_handler.end_turn()
-		return
-	
-	# Handle deaths
-	var battle_ended = await flow_controller.handle_deaths(dead_characters)
-	if battle_ended:
-		return
-	turn_handler.end_turn()
+	var result: ActionExecutor.Outcome = await action_executor.execute(action)
+	context.main_action_taken = true
+	if network_sync:
+		network_sync.on_action_selected(action, result.result)
 
-# === ENEMY TURN ===
+	await outcome.handle_deaths(result.dead)
+	_action_in_progress = false
+	_player_turn_finished.emit()
 
-func _execute_enemy_turn(enemy_character: CharacterData):
-	if not combat_engine.is_alive(enemy_character):
-		print("BattleOrchestrator: %s is dead, skipping" % enemy_character.name)
-		turn_handler.end_turn()
-		return
-	
-	print("BattleOrchestrator: %s's turn" % enemy_character.name)
-	
-	if context.is_pvp_mode:
-		ui_controller.add_combat_log("Opponent's turn", "red")
-		ui_controller.update_turn_display("Waiting for opponent...")
-		return
-	
+# --- Enemy (PvE) ---
+
+func _run_enemy_turn(enemy_character: CharacterData) -> void:
 	ui_controller.add_combat_log("%s's turn" % enemy_character.name, "red")
 	ui_controller.update_turn_display("%s is acting..." % enemy_character.name)
-	
+
 	await get_tree().create_timer(1.0).timeout
-	
-	if not combat_engine.is_alive(enemy_character):
-		print("BattleOrchestrator: %s died during delay" % enemy_character.name)
-		await flow_controller.check_battle_end()
+
+	if not enemy_character.is_alive() or not context.player.is_alive():
 		return
-	
-	var ai_controller = _get_ai_for_enemy(enemy_character)
-	if not ai_controller:
-		push_error("BattleOrchestrator: No AI for %s" % enemy_character.name)
-		turn_handler.end_turn()
-		return
-	
-	if not combat_engine.is_alive(context.player):
-		print("BattleOrchestrator: Player dead, ending enemy turn")
-		await flow_controller.check_battle_end()
-		return
-	
-	var action = ai_controller.decide_action()
-	
+
+	var action = enemy_planner.plan_action(enemy_character)
 	if not action:
-		push_error("BattleOrchestrator: AI returned null action")
-		turn_handler.end_turn()
 		return
-	
-	# Validate target
-	if action.type in [BattleAction.ActionType.ATTACK, BattleAction.ActionType.SKILL]:
-		if not action.target and (not action.targets or action.targets.is_empty()):
-			action.target = context.player
-			action.targets.clear()
-			action.targets.append(context.player)
-		
-		if action.target and not action.target.is_alive():
-			print("BattleOrchestrator: Enemy target died, skipping")
-			turn_handler.end_turn()
-			return
-	
-	await action_handler.execute_main_action(action, false)
 
-func _get_ai_for_enemy(enemy_character: CharacterData) -> EnemyAI:
-	for i in range(context.enemies.size()):
-		if context.enemies[i] == enemy_character and i < enemy_ai_controllers.size():
-			return enemy_ai_controllers[i]
-	return null
+	var result: ActionExecutor.Outcome = await action_executor.execute(action, true)
+	await outcome.handle_deaths(result.dead)
 
-# === SETUP (public API) ===
+# --- Remote opponent (PvP) ---
 
-func set_player(character: CharacterData):
-	if not context:
-		context = BattleContext.new()
-	context.player = character
-
-func set_enemies(enemy_list: Array[CharacterData]):
-	if not context:
-		context = BattleContext.new()
-	context.enemies = enemy_list
-	
-	for enemy in context.enemies:
-		enemy.calculate_secondary_attributes()
-		if enemy.current_sp == 0:
-			enemy.current_sp = enemy.max_sp
-
-func set_enemy(new_enemy: CharacterData):
-	set_enemies([new_enemy])
-
-func set_dungeon_info(boss_fight: bool, wave: int, floor: int, _max_floor: int, description: String):
-	if not context:
-		context = BattleContext.new()
-	
-	context.set_dungeon_info(boss_fight, wave, floor, _max_floor, description)
-	call_deferred("_deferred_start_battle")
-
-func _deferred_start_battle():
-	await get_tree().process_frame
-	await get_tree().process_frame
-	start_battle()
-
-func setup_pvp_battle(local_player: CharacterData, remote_opponent: CharacterData):
-	if not context:
-		context = BattleContext.new()
-	
-	context.is_pvp_mode = true
-	context.player = local_player
-	context.enemies = [remote_opponent]
-	
-	local_player.reset_for_new_battle()
-	remote_opponent.reset_for_new_battle()
-	
-	if not remote_opponent.elemental_resistances:
-		remote_opponent.elemental_resistances = ElementalResistanceManager.new(remote_opponent)
-	
-	remote_opponent.calculate_secondary_attributes()
-	
-	context.set_dungeon_info(false, 1, 1, 1, "Arena PvP Battle")
-	
-	call_deferred("start_battle")
+func _run_remote_turn() -> void:
+	ui_controller.add_combat_log("Opponent's turn", "red")
+	ui_controller.update_turn_display("Waiting for opponent...")
+	await _remote_turn_finished

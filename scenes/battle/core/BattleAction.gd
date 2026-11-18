@@ -1,5 +1,7 @@
-# res://scenes/battle/systems/data/BattleAction.gd
-# REFACTORED: Single source of truth - targets array only
+# res://scenes/battle/core/BattleAction.gd
+# A request to do something in battle (attack, skill, item, defend).
+# Built by the UI (player) or the AI (enemies), executed by CombatEngine.
+# `targets` is the single source of truth; `primary_target` is a convenience accessor.
 class_name BattleAction
 extends RefCounted
 
@@ -19,15 +21,6 @@ var primary_target: CharacterData:
 		if value:
 			targets.clear()
 			targets.append(value)
-
-# DEPRECATED: For backwards compatibility only - remove after migration
-var target: CharacterData:
-	get:
-		push_warning("BattleAction.target is deprecated - use primary_target or targets array")
-		return primary_target
-	set(value):
-		push_warning("BattleAction.target is deprecated - use primary_target or targets array")
-		primary_target = value
 
 # ===== FACTORY METHODS =====
 

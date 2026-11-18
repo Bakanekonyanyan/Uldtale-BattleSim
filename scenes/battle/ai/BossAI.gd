@@ -1,4 +1,4 @@
-# res://scenes/battle/systems/BossAI.gd
+# res://scenes/battle/ai/BossAI.gd
 # Boss AI with phase transitions, enrage mechanics, and special abilities
 
 class_name BossAI
@@ -97,9 +97,10 @@ func _on_phase_transition(old_phase: BossPhase, new_phase: BossPhase):
 			print("BossAI: Phase 2 - Boss grows stronger!")
 		
 		BossPhase.PHASE_3:
-			# Strong buff + clear debuffs
+			# Clear debuffs, then strong buff. (clear_all() AFTER the buff used
+			# to wipe the buff it had just applied.)
+			enemy.buff_manager.clear_debuffs()
 			_apply_phase_buff(1.5)
-			enemy.buff_manager.clear_all()
 			print("BossAI: Phase 3 - Boss enters final form!")
 
 func _trigger_enrage():
@@ -107,12 +108,11 @@ func _trigger_enrage():
 	print("BossAI: BOSS ENRAGED - Time limit exceeded!")
 	current_phase = BossPhase.ENRAGED
 	
-	# Massive stat boost
-	_apply_phase_buff(2.0)
-	
-	# Clear all debuffs
+	# Clear all debuffs first, then the massive stat boost
+	# (previously clear_all() ran after the boost and erased it)
 	if enemy.buff_manager:
-		enemy.buff_manager.clear_all()
+		enemy.buff_manager.clear_debuffs()
+	_apply_phase_buff(2.0)
 	
 	# Clear all status effects
 	if enemy.status_manager:
@@ -154,7 +154,7 @@ func _get_phase_special_skill() -> Skill:
 	var available_skills = []
 	
 	for skill_name in enemy.skills:
-		var skill = SkillManager.get_skill(skill_name)
+		var skill = enemy.get_skill_instance(skill_name)
 		if not skill or enemy.get_skill_cooldown(skill_name) > 0:
 			continue
 		

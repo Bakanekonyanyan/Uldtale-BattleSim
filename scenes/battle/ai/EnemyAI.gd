@@ -1,5 +1,7 @@
-# res://scenes/battle/systems/EnemyAI.gd
-# Enhanced AI with smarter decision-making and desperation mechanics
+# res://scenes/battle/ai/EnemyAI.gd
+# Decision-making for a regular enemy: given the current state, pick a BattleAction.
+# Priority: desperation -> items -> defensive -> buffs/debuffs -> damage skills -> attack.
+# Owned by EnemyTurnPlanner (one instance per enemy).
 
 class_name EnemyAI
 extends RefCounted
@@ -26,7 +28,6 @@ func initialize(p_enemy: CharacterData, p_player: CharacterData, floor: int):
 	print("EnemyAI: Initialized for %s (Aggression: %.2f, Intelligence: %.2f)" % [
 		enemy.name, aggression, intelligence
 	])
-	print(enemy.inventory.items)
 	
 func decide_action() -> BattleAction:
 	"""Main decision-making entry point with priority system"""
@@ -83,7 +84,8 @@ func _decide_desperate_action() -> BattleAction:
 	# If player is low on resources, go for the kill
 	if player_mp_percent < 0.3 and player_sp_percent < 0.3:
 		print("EnemyAI: Player low on resources - FULL AGGRO!")
-		var best_damage_skill = _find_best_damage_skill()
+		# Must be affordable - an unaffordable skill fails and wastes the turn
+		var best_damage_skill = _find_strongest_available_skill()
 		if best_damage_skill:
 			return BattleAction.skill(enemy, best_damage_skill, [player])
 		return BattleAction.attack(enemy, player)
@@ -266,7 +268,7 @@ func _get_damage_skills() -> Array[Skill]:
 	var result: Array[Skill] = []
 	
 	for skill_name in enemy.skills:
-		var skill = SkillManager.get_skill(skill_name)
+		var skill = enemy.get_skill_instance(skill_name)  # enemy's own (leveled) copy, not the global template
 		if not skill or enemy.get_skill_cooldown(skill_name) > 0:
 			continue
 		
@@ -278,7 +280,7 @@ func _get_damage_skills() -> Array[Skill]:
 func _find_healing_skill() -> Skill:
 	"""Find healing skill"""
 	for skill_name in enemy.skills:
-		var skill = SkillManager.get_skill(skill_name)
+		var skill = enemy.get_skill_instance(skill_name)  # enemy's own (leveled) copy, not the global template
 		if not skill or enemy.get_skill_cooldown(skill_name) > 0:
 			continue
 		
@@ -290,7 +292,7 @@ func _find_healing_skill() -> Skill:
 func _find_buff_skill() -> Skill:
 	"""Find buff skill"""
 	for skill_name in enemy.skills:
-		var skill = SkillManager.get_skill(skill_name)
+		var skill = enemy.get_skill_instance(skill_name)  # enemy's own (leveled) copy, not the global template
 		if not skill or enemy.get_skill_cooldown(skill_name) > 0:
 			continue
 		
@@ -302,7 +304,7 @@ func _find_buff_skill() -> Skill:
 func _find_debuff_skill() -> Skill:
 	"""Find debuff skill"""
 	for skill_name in enemy.skills:
-		var skill = SkillManager.get_skill(skill_name)
+		var skill = enemy.get_skill_instance(skill_name)  # enemy's own (leveled) copy, not the global template
 		if not skill or enemy.get_skill_cooldown(skill_name) > 0:
 			continue
 		

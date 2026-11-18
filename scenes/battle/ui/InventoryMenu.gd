@@ -1,5 +1,5 @@
-# res://scenes/battle/InventoryMenu.gd
-#  FIXED: Proper unlock on cancel + correct currency access
+# res://scenes/battle/ui/InventoryMenu.gd
+# In-battle item picker. Emits item_selected(item, target) to BattleUIController.
 
 extends Control
 

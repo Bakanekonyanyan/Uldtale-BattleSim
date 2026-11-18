@@ -199,8 +199,10 @@ func calculate_level_bonuses():
 	elif type == SkillType.INFLICT_STATUS:
 		duration = base_duration + duration_bonuses[level_index]
 	
-	mp_cost = max(1, int(base_mp_cost * cost_multipliers[level_index]))
-	sp_cost = max(1, int(base_sp_cost * cost_multipliers[level_index]))
+	# Only floor at 1 when the skill actually costs that resource; a 0-cost
+	# resource must stay 0 (otherwise every skill showed "MP: 1 | SP: 1").
+	mp_cost = max(1, int(base_mp_cost * cost_multipliers[level_index])) if base_mp_cost > 0 else 0
+	sp_cost = max(1, int(base_sp_cost * cost_multipliers[level_index])) if base_sp_cost > 0 else 0
 	cooldown = max(0, base_cooldown - cooldown_reductions[level_index])
 
 func on_skill_used():
@@ -592,33 +594,6 @@ func _get_resource_color(resource: DrainTarget) -> String:
 		_:
 			return "white"
 
-# ADD this helper method to Skill.gd
-# Place it near the other helper methods at the bottom
-
 func _track_reflection_damage(user: CharacterData, target: CharacterData, damage: float) -> Dictionary:
-	"""Track reflection damage during skill use"""
-	var result = {
-		"reflected": false,
-		"amount": 0,
-		"percent": 0.0,
-		"target_name": ""
-	}
-	
-	if not target.status_manager:
-		return result
-	
-	var reflection = target.status_manager.get_total_reflection()
-	
-	if reflection > 0.0:
-		var reflected_damage = int(damage * reflection)
-		
-		if reflected_damage > 0:
-			result.reflected = true
-			result.amount = reflected_damage
-			result.percent = reflection * 100
-			result.target_name = user.name
-			
-			# Apply reflected damage (pass null to prevent chain)
-			user.take_damage(reflected_damage, null)
-	
-	return result
+	"""Predict reflection for the log. take_damage() applies it (applying it here too doubled it)."""
+	return ReflectionInfo.predict(user, target, damage)

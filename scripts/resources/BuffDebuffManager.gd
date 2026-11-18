@@ -115,6 +115,11 @@ func has_buffs() -> bool:
 func has_debuffs() -> bool:
 	return not debuffs.is_empty()
 
+func clear_debuffs():
+	"""Remove only debuffs (keeps buffs)"""
+	debuffs.clear()
+	character.calculate_secondary_attributes()
+
 func clear_all():
 	"""Remove all buffs and debuffs"""
 	buffs.clear()
