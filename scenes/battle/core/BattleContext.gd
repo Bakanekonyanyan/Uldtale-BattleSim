@@ -41,6 +41,21 @@ func reset_turn_state() -> void:
 	item_action_used = false
 	main_action_taken = false
 
+## The player's side. A single hero today; this is the one place a 1-3 hero
+## party would plug in (AI targeting already reads from here).
+func get_heroes() -> Array[CharacterData]:
+	var heroes: Array[CharacterData] = []
+	if player:
+		heroes.append(player)
+	return heroes
+
+func get_living_heroes() -> Array[CharacterData]:
+	var living: Array[CharacterData] = []
+	for h in get_heroes():
+		if h.is_alive():
+			living.append(h)
+	return living
+
 func get_living_enemies() -> Array[CharacterData]:
 	var living: Array[CharacterData] = []
 	for e in enemies:
@@ -49,8 +64,8 @@ func get_living_enemies() -> Array[CharacterData]:
 	return living
 
 func is_battle_decided() -> bool:
-	return get_living_enemies().is_empty() or not player.is_alive()
+	return get_living_enemies().is_empty() or get_living_heroes().is_empty()
 
 func did_player_win() -> bool:
-	# Player death takes priority (e.g. both die from reflected damage)
-	return player.is_alive() and get_living_enemies().is_empty()
+	# Losing takes priority (e.g. both sides die from reflected damage)
+	return not get_living_heroes().is_empty() and get_living_enemies().is_empty()

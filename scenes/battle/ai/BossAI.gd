@@ -16,8 +16,8 @@ var phase_skill_used: Dictionary = {}  # Track phase-specific abilities
 const PHASE_2_HP_THRESHOLD = 0.66
 const PHASE_3_HP_THRESHOLD = 0.33
 
-func initialize(p_enemy: CharacterData, p_player: CharacterData, floor: int):
-	super.initialize(p_enemy, p_player, floor)
+func initialize(p_enemy: CharacterData, p_heroes: Variant, floor: int):
+	super.initialize(p_enemy, p_heroes, floor)
 	
 	# Bosses are more aggressive and intelligent
 	aggression = randf_range(0.6, 0.9)
@@ -29,8 +29,8 @@ func initialize(p_enemy: CharacterData, p_player: CharacterData, floor: int):
 	
 	print("BossAI: Initialized BOSS %s (Enrage in %d turns)" % [enemy.name, max_enrage_turns])
 
-func decide_action() -> BattleAction:
-	"""Boss decision-making with phase mechanics"""
+func _decide() -> BattleAction:
+	"""Boss decision-making with phase mechanics (target already chosen)"""
 	
 	# Update phase
 	_check_phase_transition()
@@ -58,7 +58,7 @@ func decide_action() -> BattleAction:
 			return opener
 	
 	# Otherwise use enhanced base AI
-	return super.decide_action()
+	return super._decide()
 
 # =============================================
 # PHASE MANAGEMENT
@@ -186,7 +186,7 @@ func _get_skill_targets_smart(skill: Skill) -> Array:
 		Skill.TargetType.SELF, Skill.TargetType.ALLY, Skill.TargetType.ALL_ALLIES:
 			return [enemy]
 		Skill.TargetType.ENEMY, Skill.TargetType.ALL_ENEMIES:
-			return [player]
+			return [target]
 	return []
 
 # =============================================
@@ -203,17 +203,17 @@ func _boss_opener() -> BattleAction:
 		print("BossAI: Opening with self-buff")
 		return BattleAction.skill(enemy, buff_skill, [enemy])
 	
-	# Or debuff player
+	# Or debuff target
 	var debuff_skill = _find_debuff_skill()
 	if debuff_skill and _can_afford_skill(debuff_skill):
-		print("BossAI: Opening with player debuff")
-		return BattleAction.skill(enemy, debuff_skill, [player])
+		print("BossAI: Opening with target debuff")
+		return BattleAction.skill(enemy, debuff_skill, [target])
 	
 	# Or strong attack
 	var damage_skill = _find_best_damage_skill()
 	if damage_skill and _can_afford_skill(damage_skill):
 		print("BossAI: Opening with strong attack")
-		return BattleAction.skill(enemy, damage_skill, [player])
+		return BattleAction.skill(enemy, damage_skill, [target])
 	
 	return null
 
@@ -230,10 +230,10 @@ func _enraged_behavior() -> BattleAction:
 		var best_skill = _find_strongest_available_skill()
 		if best_skill:
 			print("BossAI: Enraged skill - %s" % best_skill.name)
-			return BattleAction.skill(enemy, best_skill, [player])
+			return BattleAction.skill(enemy, best_skill, [target])
 	
 	print("BossAI: Enraged attack")
-	return BattleAction.attack(enemy, player)
+	return BattleAction.attack(enemy, target)
 
 # =============================================
 # BOSS-SPECIFIC DESPERATION
@@ -247,8 +247,8 @@ func _decide_desperate_action() -> BattleAction:
 	var strongest = _find_strongest_available_skill()
 	if strongest:
 		print("BossAI: Final desperate skill - %s!" % strongest.name)
-		return BattleAction.skill(enemy, strongest, [player])
+		return BattleAction.skill(enemy, strongest, [target])
 	
 	# No mercy - attack
 	print("BossAI: Final desperate attack!")
-	return BattleAction.attack(enemy, player)
+	return BattleAction.attack(enemy, target)

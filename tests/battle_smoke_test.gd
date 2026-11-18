@@ -113,6 +113,22 @@ func _unit_checks() -> void:
 			uses_instances = false
 	check(uses_instances, "EnemyAI picks the enemy's own skill instances")
 
+	# Party prep: AI picks a target from a hero list (works with 1..N heroes)
+	var h1 = make_player(); var h2 = make_player(); var h3 = make_player()
+	h2.current_hp = 5
+	var ai3 = EnemyAI.new(); ai3.initialize(e3, [h1, h2, h3], 1)
+	ai3.intelligence = 1.0
+	check(ai3.choose_target() == h2, "smart enemy focuses the most wounded hero")
+	h2.current_hp = 0
+	var picks := {}
+	ai3.intelligence = 0.0
+	for i in range(30): picks[ai3.choose_target()] = true
+	check(not picks.has(h2) and picks.size() == 2, "AI never targets a dead hero and spreads attacks when not focusing")
+	var ai_solo = EnemyAI.new(); ai_solo.initialize(e3, func(): return [p], 1)
+	var solo_action = ai_solo.decide_action()
+	check(solo_action != null and (solo_action.targets.is_empty() or p in solo_action.targets or e3 in solo_action.targets),
+		"single-hero behaviour unchanged (targets the player)")
+	
 	# Defend wears off at the start of the defender's next turn
 	var ctx = BattleContext.new(); ctx.player = p; ctx.enemies = enemies
 	var tsp = TurnStartProcessor.new()

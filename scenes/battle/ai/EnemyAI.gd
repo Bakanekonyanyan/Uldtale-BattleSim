@@ -7,7 +7,11 @@ class_name EnemyAI
 extends RefCounted
 
 var enemy: CharacterData
-var player: CharacterData
+## The hero this enemy is acting against THIS decision (re-chosen every turn)
+var target: CharacterData
+## Where the living heroes come from: a Callable returning an Array, or a fixed
+## Array / single CharacterData. Lets the AI work unchanged with a 1-3 hero party.
+var _heroes_source: Variant
 var current_floor: int = 1
 
 # AI personality traits (can be randomized per enemy)
@@ -15,9 +19,9 @@ var aggression: float = 0.5  # 0.0 = defensive, 1.0 = aggressive
 var intelligence: float = 0.5  # 0.0 = random, 1.0 = optimal
 var desperation_threshold: float = 0.25  # HP% when desperation kicks in
 
-func initialize(p_enemy: CharacterData, p_player: CharacterData, floor: int):
+func initialize(p_enemy: CharacterData, p_heroes: Variant, floor: int):
 	enemy = p_enemy
-	player = p_player
+	_heroes_source = p_heroes
 	current_floor = floor
 	
 	# Randomize personality traits for variety
@@ -29,10 +33,40 @@ func initialize(p_enemy: CharacterData, p_player: CharacterData, floor: int):
 		enemy.name, aggression, intelligence
 	])
 	
+## Entry point: pick which hero to act against, then decide what to do.
 func decide_action() -> BattleAction:
-	"""Main decision-making entry point with priority system"""
+	target = choose_target()
+	if target == null:
+		return null
+	return _decide()
+
+func get_living_heroes() -> Array:
+	var heroes: Array = []
+	if _heroes_source is Callable:
+		heroes = _heroes_source.call()
+	elif _heroes_source is Array:
+		heroes = _heroes_source
+	elif _heroes_source is CharacterData:
+		heroes = [_heroes_source]
+	return heroes.filter(func(h): return h != null and h.is_alive())
+
+## Smarter enemies focus the most wounded hero; the rest pick at random.
+func choose_target() -> CharacterData:
+	var heroes = get_living_heroes()
+	if heroes.is_empty():
+		return null
+	if heroes.size() == 1:
+		return heroes[0]
+	if RandomManager.randf() < intelligence:
+		heroes.sort_custom(func(a, b): return float(a.current_hp) / a.max_hp < float(b.current_hp) / b.max_hp)
+		return heroes[0]
+	return heroes[RandomManager.randi() % heroes.size()]
+
+## Decision logic against `target` (BossAI overrides this).
+func _decide() -> BattleAction:
+	"""Priority system"""
 	var enemy_hp_percent = float(enemy.current_hp) / float(enemy.max_hp)
-	var player_hp_percent = float(player.current_hp) / float(player.max_hp)
+	var target_hp_percent = float(target.current_hp) / float(target.max_hp)
 	var momentum_level = MomentumSystem.get_momentum()
 	
 	# === DESPERATION MODE (Low HP - Last Stand) ===
@@ -54,7 +88,7 @@ func decide_action() -> BattleAction:
 		if defensive_action:
 			return defensive_action
 	
-	# === BUFF/DEBUFF PRIORITY (If unbuffed/player unbuffed) ===
+	# === BUFF/DEBUFF PRIORITY (If unbuffed/target unbuffed) ===
 	if RandomManager.randf() < 0.6:  # 60% chance to consider buffs
 		var buff_action = _try_buff_or_debuff()
 		if buff_action:
@@ -67,7 +101,7 @@ func decide_action() -> BattleAction:
 			return skill_action
 	
 	# === FALLBACK: Basic Attack ===
-	return BattleAction.attack(enemy, player)
+	return BattleAction.attack(enemy, target)
 
 # =============================================
 # DESPERATION MODE (Low HP - All-or-Nothing)
@@ -77,20 +111,20 @@ func _decide_desperate_action() -> BattleAction:
 	"""When enemy is very low HP, go all-out or setup for final strike"""
 	print("EnemyAI: DESPERATION MODE activated!")
 	
-	# Check player resources to assess threat
-	var player_mp_percent = float(player.current_mp) / float(player.max_mp) if player.max_mp > 0 else 0.0
-	var player_sp_percent = float(player.current_sp) / float(player.max_sp) if player.max_sp > 0 else 0.0
+	# Check target resources to assess threat
+	var player_mp_percent = float(target.current_mp) / float(target.max_mp) if target.max_mp > 0 else 0.0
+	var player_sp_percent = float(target.current_sp) / float(target.max_sp) if target.max_sp > 0 else 0.0
 	
-	# If player is low on resources, go for the kill
+	# If target is low on resources, go for the kill
 	if player_mp_percent < 0.3 and player_sp_percent < 0.3:
 		print("EnemyAI: Player low on resources - FULL AGGRO!")
 		# Must be affordable - an unaffordable skill fails and wastes the turn
 		var best_damage_skill = _find_strongest_available_skill()
 		if best_damage_skill:
-			return BattleAction.skill(enemy, best_damage_skill, [player])
-		return BattleAction.attack(enemy, player)
+			return BattleAction.skill(enemy, best_damage_skill, [target])
+		return BattleAction.attack(enemy, target)
 	
-	# If player has resources, try to survive ONE more turn
+	# If target has resources, try to survive ONE more turn
 	# Use healing item if available
 	var heal_item = _find_healing_item()
 	if heal_item:
@@ -107,9 +141,9 @@ func _decide_desperate_action() -> BattleAction:
 	print("EnemyAI: Final desperate attack!")
 	var strongest_skill = _find_strongest_available_skill()
 	if strongest_skill:
-		return BattleAction.skill(enemy, strongest_skill, [player])
+		return BattleAction.skill(enemy, strongest_skill, [target])
 	
-	return BattleAction.attack(enemy, player)
+	return BattleAction.attack(enemy, target)
 
 # =============================================
 # SMART ITEM USAGE
@@ -142,12 +176,12 @@ func _try_use_item_smart() -> BattleAction:
 			print("EnemyAI: Using buff item")
 			return BattleAction.item(enemy, buff_item, [enemy])
 	
-	# Damage/debuff items (if player not debuffed)
-	if not player.buff_manager.has_debuffs():
+	# Damage/debuff items (if target not debuffed)
+	if not target.buff_manager.has_debuffs():
 		var damage_item = _find_damage_item()
 		if damage_item:
 			print("EnemyAI: Using damage/debuff item")
-			return BattleAction.item(enemy, damage_item, [player])
+			return BattleAction.item(enemy, damage_item, [target])
 	
 	return null
 
@@ -158,12 +192,12 @@ func _try_use_item_smart() -> BattleAction:
 func _try_buff_or_debuff() -> BattleAction:
 	"""Apply buffs/debuffs strategically"""
 	
-	# Prioritize debuffing player if they're strong
-	if not player.buff_manager.has_debuffs() and RandomManager.randf() < 0.6:
+	# Prioritize debuffing target if they're strong
+	if not target.buff_manager.has_debuffs() and RandomManager.randf() < 0.6:
 		var debuff_skill = _find_debuff_skill()
 		if debuff_skill and _can_afford_skill(debuff_skill):
 			print("EnemyAI: Applying debuff to player")
-			return BattleAction.skill(enemy, debuff_skill, [player])
+			return BattleAction.skill(enemy, debuff_skill, [target])
 	
 	#  FIX: Buff allies based on skill target type
 	if not enemy.buff_manager.has_buffs():
@@ -191,11 +225,11 @@ func _decide_defensive_action() -> BattleAction:
 	# Don't defend if already defending
 	if enemy.is_defending:
 		# Check if safe to go offensive
-		if player.current_hp < enemy.current_hp * 1.5:
+		if target.current_hp < enemy.current_hp * 1.5:
 			var damage_skill = _try_use_damage_skill()
 			if damage_skill:
 				return damage_skill
-		return BattleAction.attack(enemy, player)
+		return BattleAction.attack(enemy, target)
 	
 	# Try to heal
 	var heal_skill = _find_healing_skill()
@@ -228,7 +262,7 @@ func _try_use_damage_skill() -> BattleAction:
 	for skill in available_skills:
 		if _can_afford_skill(skill):
 			print("EnemyAI: Using damage skill: %s" % skill.name)
-			return BattleAction.skill(enemy, skill, [player])
+			return BattleAction.skill(enemy, skill, [target])
 	
 	return null
 
@@ -377,6 +411,6 @@ func _get_item_targets(item: Item) -> Array:
 	"""Get correct targets for an item"""
 	match item.consumable_type:
 		Item.ConsumableType.DAMAGE, Item.ConsumableType.DEBUFF:
-			return [player]
+			return [target]
 		_:
 			return [enemy]

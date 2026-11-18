@@ -20,7 +20,8 @@ func initialize(p_context: BattleContext) -> void:
 			ai = BossAI.new()
 		else:
 			ai = EnemyAI.new()
-		ai.initialize(enemy, context.player, context.current_floor)
+		# AI reads the current living heroes each turn (party-ready)
+		ai.initialize(enemy, context.get_living_heroes, context.current_floor)
 		_brains[enemy] = ai
 
 	print("EnemyTurnPlanner: %d AI controllers ready" % _brains.size())
@@ -37,9 +38,9 @@ func plan_action(enemy: CharacterData) -> BattleAction:
 		push_error("EnemyTurnPlanner: AI for %s returned no action" % enemy.name)
 		return null
 
-	# Offensive actions with no target fall back to the player
+	# Offensive actions with no target fall back to the hero the AI chose
 	if action.type in [BattleAction.ActionType.ATTACK, BattleAction.ActionType.SKILL] and action.targets.is_empty():
 		if not (action.skill_data and action.skill_data.target == Skill.TargetType.ALL_ALLIES):
-			action.primary_target = context.player
+			action.primary_target = ai.target if ai.target else context.player
 
 	return action
