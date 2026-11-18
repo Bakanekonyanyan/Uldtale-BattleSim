@@ -22,7 +22,8 @@ enum ScenePath {
 	ARENA_LOBBY,
 	DUNGEON,
 	BATTLE,
-	REWARDS
+	REWARDS,
+	ALCHEMIST
 }
 
 # Scene path lookup
@@ -38,7 +39,8 @@ const SCENE_PATHS = {
 	ScenePath.ARENA_LOBBY: "res://scenes/arena/ArenaLobby.tscn",
 	ScenePath.DUNGEON: "res://scenes/DungeonScene.tscn",
 	ScenePath.BATTLE: "res://scenes/battle/Battle.tscn",
-	ScenePath.REWARDS: "res://scenes/RewardScene.tscn"
+	ScenePath.REWARDS: "res://scenes/RewardScene.tscn",
+	ScenePath.ALCHEMIST: "res://scenes/town/AlchemistScene.tscn"
 }
 
 # ===== STATE =====
@@ -173,6 +175,9 @@ func change_to_town(character: CharacterData) -> void:
 
 func change_to_shop(character: CharacterData) -> void:
 	navigate(ScenePath.SHOP, TransitionType.PUSH, character)
+
+func change_to_alchemist(character: CharacterData) -> void:
+	navigate(ScenePath.ALCHEMIST, TransitionType.PUSH, character)
 
 func change_to_equipment(character: CharacterData) -> void:
 	navigate(ScenePath.EQUIPMENT, TransitionType.PUSH, character)

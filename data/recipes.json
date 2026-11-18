@@ -1,0 +1,226 @@
+{
+	"_comment": "Alchemist recipes. unlock.type: default | purchase (price in copper) | floor_reached (highest floor unlocked in any location) | bounty_reward | adventurer_rank. Ingredients come from pack then stash; output over the carry limit goes to the stash.",
+	"recipes": {
+		"health_potion": {
+			"output": "health_potion",
+			"quantity": 1,
+			"ingredients": {
+				"glowcap_mushroom": 1,
+				"bloodvine_fiber": 1
+			},
+			"fee": 5,
+			"unlock": {
+				"type": "default"
+			},
+			"category": "Potions"
+		},
+		"mana_potion": {
+			"output": "mana_potion",
+			"quantity": 1,
+			"ingredients": {
+				"mindglass_shard": 1,
+				"glowcap_mushroom": 1
+			},
+			"fee": 8,
+			"unlock": {
+				"type": "default"
+			},
+			"category": "Potions"
+		},
+		"stamina_potion": {
+			"output": "stamina_potion",
+			"quantity": 1,
+			"ingredients": {
+				"rousepepper_seeds": 1,
+				"bloodvine_fiber": 1
+			},
+			"fee": 8,
+			"unlock": {
+				"type": "default"
+			},
+			"category": "Potions"
+		},
+		"antidote_herb": {
+			"output": "antidote_herb",
+			"quantity": 2,
+			"ingredients": {
+				"bogblossom_petal": 2
+			},
+			"fee": 10,
+			"unlock": {
+				"type": "default"
+			},
+			"category": "Cures"
+		},
+		"coolroot_gel": {
+			"output": "coolroot_gel",
+			"quantity": 2,
+			"ingredients": {
+				"frostroot_chunk": 2
+			},
+			"fee": 10,
+			"unlock": {
+				"type": "default"
+			},
+			"category": "Cures"
+		},
+		"warmth_charm": {
+			"output": "warmth_charm",
+			"quantity": 2,
+			"ingredients": {
+				"embershard_fragment": 2
+			},
+			"fee": 10,
+			"unlock": {
+				"type": "default"
+			},
+			"category": "Cures"
+		},
+		"coagulant_bandage": {
+			"output": "coagulant_bandage",
+			"quantity": 2,
+			"ingredients": {
+				"bloodvine_fiber": 2
+			},
+			"fee": 10,
+			"unlock": {
+				"type": "default"
+			},
+			"category": "Cures"
+		},
+		"grounding_stone": {
+			"output": "grounding_stone",
+			"quantity": 2,
+			"ingredients": {
+				"voltslate_pebble": 2
+			},
+			"fee": 10,
+			"unlock": {
+				"type": "default"
+			},
+			"category": "Cures"
+		},
+		"clarity_droplet": {
+			"output": "clarity_droplet",
+			"quantity": 2,
+			"ingredients": {
+				"mindglass_shard": 2
+			},
+			"fee": 10,
+			"unlock": {
+				"type": "default"
+			},
+			"category": "Cures"
+		},
+		"glowcap_salve": {
+			"output": "glowcap_salve",
+			"quantity": 2,
+			"ingredients": {
+				"glowcap_mushroom": 2
+			},
+			"fee": 10,
+			"unlock": {
+				"type": "default"
+			},
+			"category": "Cures"
+		},
+		"awakening_spice": {
+			"output": "awakening_spice",
+			"quantity": 2,
+			"ingredients": {
+				"rousepepper_seeds": 2
+			},
+			"fee": 10,
+			"unlock": {
+				"type": "default"
+			},
+			"category": "Cures"
+		},
+		"flame_flask": {
+			"output": "flame_flask",
+			"quantity": 1,
+			"ingredients": {
+				"embershard_fragment": 2,
+				"wood": 1
+			},
+			"fee": 15,
+			"unlock": {
+				"type": "purchase",
+				"price": 300
+			},
+			"category": "Flasks"
+		},
+		"frost_crystal": {
+			"output": "frost_crystal",
+			"quantity": 1,
+			"ingredients": {
+				"frostroot_chunk": 2,
+				"mindglass_shard": 1
+			},
+			"fee": 15,
+			"unlock": {
+				"type": "purchase",
+				"price": 300
+			},
+			"category": "Flasks"
+		},
+		"thunder_orb": {
+			"output": "thunder_orb",
+			"quantity": 1,
+			"ingredients": {
+				"voltslate_pebble": 2,
+				"iron_ore": 1
+			},
+			"fee": 15,
+			"unlock": {
+				"type": "purchase",
+				"price": 300
+			},
+			"category": "Flasks"
+		},
+		"venom_vial": {
+			"output": "venom_vial",
+			"quantity": 1,
+			"ingredients": {
+				"bogblossom_petal": 2,
+				"wood": 1
+			},
+			"fee": 15,
+			"unlock": {
+				"type": "purchase",
+				"price": 300
+			},
+			"category": "Flasks"
+		},
+		"greater_health_potion": {
+			"output": "greater_health_potion",
+			"quantity": 1,
+			"ingredients": {
+				"glowcap_mushroom": 2,
+				"bloodvine_fiber": 2,
+				"monster_core": 1
+			},
+			"fee": 60,
+			"unlock": {
+				"type": "floor_reached",
+				"floor": 5
+			},
+			"category": "Elixirs"
+		},
+		"ether": {
+			"output": "ether",
+			"quantity": 1,
+			"ingredients": {
+				"mindglass_shard": 2,
+				"rousepepper_seeds": 2,
+				"monster_core": 1
+			},
+			"fee": 60,
+			"unlock": {
+				"type": "floor_reached",
+				"floor": 5
+			},
+			"category": "Elixirs"
+		}
+	}
+}

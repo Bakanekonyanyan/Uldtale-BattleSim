@@ -13,6 +13,7 @@ var current_character: CharacterData
 @onready var character_select_button = $UI/CharacterSelectButton
 @onready var quit_button = $UI/QuitButton
 @onready var arena_button = $UI/ArenaButton
+@onready var alchemist_button = $UI/AlchemistButton
 
 
 func _ready():
@@ -34,6 +35,8 @@ func _ready():
 		quit_button.connect("pressed", Callable(self, "_on_quit_pressed"))
 	if arena_button:
 		arena_button.connect("pressed", Callable(self, "_on_arena_pressed"))
+	if alchemist_button:
+		alchemist_button.pressed.connect(func(): SceneManager.change_to_alchemist(current_character))
 		
 	update_ui()
 

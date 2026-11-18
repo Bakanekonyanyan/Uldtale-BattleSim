@@ -211,6 +211,7 @@ func _phase0_checks() -> void:
 	EnemyFactory.set_location("the_dungeon")
 	_reward_checks()
 	_buff_checks()
+	_alchemy_checks()
 
 # ------------------------------------------------------------------ momentum + gear drops
 
@@ -276,6 +277,70 @@ func _buff_checks() -> void:
 	var hp_before = foe.current_hp
 	var r = curse.use(p, [foe])
 	check(foe.current_hp < hp_before and r.damage > 0 and foe.buff_manager.has_debuffs(), "debuff skills also land a hit (%d dmg) and debuff" % r.damage)
+
+# ------------------------------------------------------------------ alchemist
+
+func _alchemy_checks() -> void:
+	var p = make_player()
+	p.currency.copper = 100
+	check(AlchemyManager.is_known(p, "health_potion") and not AlchemyManager.is_known(p, "flame_flask")
+		and not AlchemyManager.is_known(p, "ether"), "default recipes known; bought/floor recipes locked")
+	
+	# Ingredients come from pack first, then stash
+	p.inventory.add_item(ItemManager.get_item("glowcap_mushroom"), 3)
+	p.stash.add_item(ItemManager.get_item("glowcap_mushroom"), 2)
+	p.stash.add_item(ItemManager.get_item("bloodvine_fiber"), 4)
+	check(AlchemyManager.max_craftable(p, "health_potion") == 4, "max craftable counts pack + stash")
+	var r = AlchemyManager.craft(p, "health_potion", 4)
+	check(r.ok and p.inventory.get_quantity("health_potion") == 4 and p.currency.copper == 80
+		and p.inventory.get_quantity("glowcap_mushroom") == 0 and p.stash.get_quantity("glowcap_mushroom") == 1
+		and p.stash.get_quantity("bloodvine_fiber") == 0, "craft uses pack then stash, charges the fee")
+	check(not AlchemyManager.craft(p, "health_potion", 1).ok, "can't craft without materials")
+	
+	# Output over the carry limit goes to the stash
+	p.inventory.add_item(ItemManager.get_item("bogblossom_petal"), 8)
+	r = AlchemyManager.craft(p, "antidote_herb", 4)
+	check(r.ok and r.made == 8 and p.inventory.get_quantity("antidote_herb") == 5 and p.stash.get_quantity("antidote_herb") == 3,
+		"crafted output respects the carry limit (8 -> 5 pack + 3 stash)")
+	
+	# Fee limits crafting too
+	p.currency.copper = 0
+	p.inventory.add_item(ItemManager.get_item("glowcap_mushroom"), 1)
+	p.inventory.add_item(ItemManager.get_item("bloodvine_fiber"), 1)
+	check(AlchemyManager.max_craftable(p, "health_potion") == 0, "no money for the fee = can't craft")
+	
+	# Buying a recipe book, and it persists through save/load
+	check(not AlchemyManager.buy_recipe(p, "flame_flask").ok, "can't buy a recipe without money")
+	p.currency.copper = 300
+	r = AlchemyManager.buy_recipe(p, "flame_flask")
+	check(r.ok and AlchemyManager.is_known(p, "flame_flask") and p.currency.copper == 0, "buy Flame Flask recipe for 300")
+	check(not AlchemyManager.buy_recipe(p, "flame_flask").ok, "can't buy a known recipe twice")
+	p.max_floor_cleared = 5
+	check(AlchemyManager.is_known(p, "ether"), "floor-gated recipe unlocks at floor 5")
+	p.name = "ZZ_SmokeTest_Alchemy"
+	SaveManager.save_game(p)
+	var loaded = SaveManager.load_game(p.name)
+	SaveManager.delete_character(p.name)
+	check(loaded != null and AlchemyManager.is_known(loaded, "flame_flask") and not AlchemyManager.is_known(loaded, "venom_vial"),
+		"known recipes survive save/load")
+	
+	# Mana potion restores MP only, Stamina SP only, Ether both
+	var q = make_player()
+	q.current_mp = 0; q.current_sp = 0
+	ItemManager.get_item("mana_potion").use(q, [q])
+	check(q.current_mp > 0 and q.current_sp == 0, "Mana Potion restores MP only")
+	ItemManager.get_item("stamina_potion").use(q, [q])
+	check(q.current_sp > 0, "Stamina Potion restores SP")
+	q.current_mp = 0; q.current_sp = 0
+	ItemManager.get_item("ether").use(q, [q])
+	check(q.current_mp > 0 and q.current_sp > 0, "Ether restores MP and SP")
+	
+	# Craft-only items never drop as random loot
+	var dropped_exclusive := false
+	for i in range(400):
+		if ItemManager.get_random_consumable() in ["greater_health_potion", "ether"]:
+			dropped_exclusive = true
+	check(not dropped_exclusive, "craft-only potions never drop as random loot")
 
 # ------------------------------------------------------------------ full battles
 

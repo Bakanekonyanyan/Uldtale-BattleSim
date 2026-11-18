@@ -1,7 +1,7 @@
 # Town Services: Alchemist, Blacksmith and Guild Bounties
 
 **Status:** v3. All decisions (Q1–Q7, F1–F5) are incorporated; see the decision log in §10.
-Phase 0 (foundations) is built on PR #1; Phase 1 (Alchemist) is next.
+Phases 0 (foundations) and 1 (Alchemist) are built on PR #1; Phase 2 (Blacksmith) is next.
 **Scope:** three new town buildings that turn dungeon loot into character progress, plus
 **Expedition Locations**, which the bounty design needs.
 **Out of scope (parked):** the Adventurer system (§9).
@@ -492,7 +492,7 @@ per-NPC relationship values, and a quest engine with branching and prerequisites
 | Phase | Contents | Main files |
 |---|---|---|
 | **0. Foundations** ✅ built | `GameEvents` autoload; save v2 + migration; **Locations** (data, `EnemyFactory.set_location`, mixed races, location picker); material drop tables + new materials; **carry limit** with overflow to stash; simulator item-use policy + per-location runs | `scripts/autoload/GameEvents.gd`, `SaveManager.gd`, `data/locations.json`, `EnemyFactory.gd`, `EnemyGroup.gd`, `DungeonStateManager.gd`, `TownScene.gd`, `RewardsManager.gd`, `data/loot/material_tables.json`, `materials.json`, `Inventory.gd`, `tests/balance_sim.gd` |
-| **1. Alchemist** | recipes data, `AlchemyManager`, AlchemistScene (shop background), town button, content-tool tab, tests | `data/recipes.json`, `scripts/autoload/AlchemyManager.gd`, `scenes/town/AlchemistScene.*`, `consumables.json` (2 new) |
+| **1. Alchemist** ✅ built | recipes data, `AlchemyManager`, AlchemistScene (shop background), town button, content-tool tab, tests | `data/recipes.json`, `scripts/autoload/AlchemyManager.gd`, `scenes/town/AlchemistScene.*`, `consumables.json` (2 new) |
 | **2. Blacksmith** | `base_damage`/`base_armor`/`upgrade_level`; `BlacksmithManager` (upgrade with success roll + reinforcement + Tempered, salvage); naming; save fields; simulator gear profiles | `Equipment.gd`, `EquipmentNamer.gd`, `scripts/autoload/BlacksmithManager.gd`, `scenes/town/BlacksmithScene.*` |
 | **3. Guild** | `bounties.json`; `GuildManager` (board, progress, deadlines, demerits/fees, turn-in); GuildScene; combat log lines | `data/bounties.json`, `scripts/autoload/GuildManager.gd`, `scenes/town/GuildScene.*` |
 

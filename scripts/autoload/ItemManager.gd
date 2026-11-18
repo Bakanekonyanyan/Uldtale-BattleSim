@@ -7,6 +7,7 @@ var weapons = {}
 var armors = {}
 var consumables = {}
 var materials = {}
+var craft_only_consumables: Array = []  # consumables with "craft_only": true
 var equipment_templates = {}  # Base templates (never modified)
 
 
@@ -29,6 +30,8 @@ func load_consumables():
 	
 	for item_id in json:
 		consumables[item_id] = Item.create_from_dict(item_id, json[item_id])
+		if json[item_id].get("craft_only", false):
+			craft_only_consumables.append(item_id)
 
 func load_materials():
 	var file = FileAccess.open("res://data/items/materials.json", FileAccess.READ)
@@ -105,9 +108,11 @@ func update_items():
 func get_all_items() -> Dictionary:
 	return items
 
+## Random loot consumable. Craft-only items (Alchemist exclusives) never drop.
 func get_random_consumable() -> String:
-	if consumables.size() > 0:
-		return consumables.keys()[RandomManager.randi() % consumables.size()]
+	var pool = consumables.keys().filter(func(id): return id not in craft_only_consumables)
+	if pool.size() > 0:
+		return pool[RandomManager.randi() % pool.size()]
 	return ""
 
 func get_random_material() -> String:

@@ -13,10 +13,14 @@ func subtract(amount: int) -> bool:
 	return false
 
 func get_formatted() -> String:
-	var platinum = copper / 10000
-	var gold = (copper % 10000) / 1000
-	var silver = (copper % 1000) / 100
-	var remaining_copper = copper % 100
+	return format_copper(copper)
+
+## Format any copper amount, e.g. 1250 -> "1 gold 2 silver 50 copper".
+static func format_copper(amount: int) -> String:
+	var platinum = amount / 10000
+	var gold = (amount % 10000) / 1000
+	var silver = (amount % 1000) / 100
+	var remaining_copper = amount % 100
 	
 	var result = []
 	if platinum > 0:

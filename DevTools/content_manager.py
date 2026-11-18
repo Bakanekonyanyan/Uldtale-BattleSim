@@ -30,6 +30,9 @@ JSON_FILES = {
     "Weapons": "data/items/weapons.json",
     "Consumables": "data/items/consumables.json",
     "Materials": "data/items/materials.json",
+    "Recipes": "data/recipes.json",
+    "Locations": "data/locations.json",
+    "Material Drops": "data/loot/material_tables.json",
 }
 
 # -------------------------

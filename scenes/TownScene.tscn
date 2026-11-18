@@ -195,6 +195,14 @@ offset_bottom = 316.0
 text = "Stash
 "
 
+[node name="AlchemistButton" type="Button" parent="UI"]
+custom_minimum_size = Vector2(180, 60)
+offset_left = 472.0
+offset_top = 72.0
+offset_right = 652.0
+offset_bottom = 132.0
+text = "Alchemist"
+
 [node name="CharacterSelectButton" type="Button" parent="UI"]
 custom_minimum_size = Vector2(180, 60)
 offset_left = 952.0
