@@ -45,8 +45,35 @@ func _ready():
 		current_wave = saved_state.get("current_wave", 1)
 		max_floor = saved_state.get("max_floor", 25)
 	
+	_apply_chrome()
 	setup_ui_signals()
 	update_button_visibility()
+
+var chrome: ScreenChrome
+
+func _apply_chrome():
+	# No single "back": the way out is Continue / Next Floor / Back to Town.
+	chrome = ScreenChrome.attach(self, "Victory")
+	ScreenChrome.place(auto_rewards_label, Rect2(32, 72, 524, 120))
+	reward_label.visible = false
+	$UI/ActionLabel.visible = false
+	var loot_caption = $UI/CollectionContainer/CollectionLabel
+	loot_caption.text = "Loot to Collect"
+	ScreenChrome.place(loot_caption, Rect2(32, 204, 300, 24))
+	ScreenChrome.place(reward_items_list, Rect2(32, 232, 300, 392))
+	ScreenChrome.place($UI/CollectionContainer/ButtonContainer, Rect2(348, 232, 208, 196))
+	ScreenChrome.place(item_info_label, Rect2(572, 72, 372, 552))
+	ScreenChrome.place(use_consumable_button, Rect2(968, 72, 200, 44))
+	ScreenChrome.place(equip_button, Rect2(968, 124, 200, 44))
+	var progress = $UI/ProgressLabel
+	progress.text = "Onward"
+	progress.add_theme_color_override("font_color", ScreenChrome.MUTED)
+	ScreenChrome.place(progress, Rect2(968, 196, 200, 24))
+	ScreenChrome.place(continue_button, Rect2(968, 224, 200, 48))
+	ScreenChrome.place(next_floor_button, Rect2(968, 280, 200, 48))
+	ScreenChrome.place(quit_button, ScreenChrome.BACK_RECT)
+	if has_node("UI/AcceptRewardButton"):
+		$UI/AcceptRewardButton.visible = false
 
 func setup_ui_signals():
 	if continue_button:
@@ -113,17 +140,17 @@ func display_rewards():
 	
 	# Auto-rewards label
 	if auto_rewards_label:
-		var auto_text = "[center][b][color=#FFD700]═══ AUTO-COLLECTED REWARDS ═══[/color][/b][/center]\n\n"
+		var auto_text = "[b][color=#e5c34a]Rewards[/color][/b]\n"
 		if xp_gained > 0:
-			auto_text += "[color=#88FF88]✦ +%d XP[/color]\n" % xp_gained
+			auto_text += "[color=#88FF88]+%d XP[/color]\n" % xp_gained
 		if rewards.has("currency"):
-			auto_text += "[color=#FFD700]💰 +%d Gold[/color]\n" % rewards["currency"]
+			auto_text += "[color=#FFD700]+%d Gold[/color]\n" % rewards["currency"]
 		if RewardsManager.last_momentum_bonus > 0.0:
-			auto_text += "[color=#FF9944]🔥 Momentum bonus: +%d%% gold and items[/color]\n" % int(round(RewardsManager.last_momentum_bonus * 100))
+			auto_text += "[color=#FF9944]Momentum bonus: +%d%% gold and items[/color]\n" % int(round(RewardsManager.last_momentum_bonus * 100))
 		if auto_rewards_given:
-			auto_text += "\n[color=#66DD66][i]✓ Collected[/i][/color]"
+			auto_text += "\n[color=#66DD66][i]Collected[/i][/color]"
 		else:
-			auto_text += "\n[color=#FFAA44][i]⏳ Will be collected when you proceed[/i][/color]"
+			auto_text += "\n[color=#FFAA44][i]Will be collected when you proceed[/i][/color]"
 		auto_rewards_label.bbcode_enabled = true
 		auto_rewards_label.text = auto_text
 	
@@ -146,9 +173,9 @@ func display_rewards():
 			var is_collected = collected_items.has(item_id)
 			var item = ItemManager.get_item(item_id)
 			if item:
-				var display_text = "%dx %s" % [rewards[item_id], item.display_name]
+				var display_text = ScreenChrome.item_row(item, rewards[item_id])
 				if is_collected:
-					display_text += " [COLLECTED]"
+					display_text += "  (collected)"
 				
 				reward_items_list.add_item(display_text)
 				var idx = reward_items_list.get_item_count() - 1
@@ -173,9 +200,9 @@ func display_rewards():
 				var equipment = rewards["equipment_instances"][i]
 				
 				if equipment is Equipment:
-					var display_text = "%s [ilvl %d]" % [equipment.display_name, equipment.item_level]
+					var display_text = ScreenChrome.item_row(equipment)
 					if is_collected:
-						display_text += " [COLLECTED]"
+						display_text += "  (collected)"
 					
 					reward_items_list.add_item(display_text)
 					var idx = reward_items_list.get_item_count() - 1
@@ -184,8 +211,7 @@ func display_rewards():
 						reward_items_list.set_item_custom_fg_color(idx, Color(0.5, 0.5, 0.5))
 						reward_items_list.set_item_disabled(idx, true)
 					else:
-						var color = equipment.get_rarity_color()
-						reward_items_list.set_item_custom_fg_color(idx, Color(color))
+						reward_items_list.set_item_custom_fg_color(idx, ScreenChrome.rarity_color(equipment))
 					
 					reward_items_list.set_item_metadata(idx, {
 						"type": "equipment",
@@ -253,7 +279,7 @@ func _on_item_clicked(index: int, at_position: Vector2, mouse_button_index: int)
 			info_text += "Armor: %d\n" % item.armor_value
 	
 	if metadata.get("collected", false):
-		info_text += "\n[color=green]✓ COLLECTED[/color]"
+		info_text += "\n[color=green]COLLECTED[/color]"
 	
 	item_info_label.bbcode_enabled = true
 	item_info_label.text = info_text
@@ -307,7 +333,7 @@ func _on_accept_all_pressed():
 	_save_state()
 	display_rewards()
 	if item_info_label:
-		item_info_label.text = "[center][color=#66FF66][b]✓ All collected![/b][/color][/center]"
+		item_info_label.text = "[center][color=#66FF66][b]All collected![/b][/color][/center]"
 
 func _on_dispose_selected_pressed():
 	var selected = reward_items_list.get_selected_items()

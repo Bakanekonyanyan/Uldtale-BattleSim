@@ -22,10 +22,25 @@ func _ready():
 	if not current_character:
 		print("Error: No character loaded")
 		return
+	_apply_chrome()
 	update_status()
 	
 	if exit_button:
 		exit_button.connect("pressed", Callable(self, "_on_exit_pressed"))
+
+var chrome: ScreenChrome
+
+func _apply_chrome():
+	chrome = ScreenChrome.attach(self, "Status", _on_exit_pressed)
+	exit_button.visible = false
+	for l in [name_label, race_label, class_label, level_label]:
+		if l:
+			l.visible = false
+	ScreenChrome.place(xp_label, Rect2(32, 72, 560, 28))
+	ScreenChrome.place(elemental_info, Rect2(32, 104, 560, 360))
+	ScreenChrome.place(skills_info, Rect2(32, 476, 560, 148))
+	ScreenChrome.place(equipment_info, Rect2(616, 72, 552, 250))
+	ScreenChrome.place(prof_info, Rect2(616, 334, 552, 290))
 
 func set_player(character: CharacterData):
 	current_character = character
@@ -37,7 +52,10 @@ func update_status():
 		print("Error: No character data available")
 		return
 	
-	# Enhanced header display
+	# Header: name as the title, level/race/class on the right
+	if chrome:
+		chrome.set_title(str(current_character.name))
+		chrome.set_info("Level %d  %s %s" % [current_character.level, current_character.race, current_character.character_class])
 	set_label_text(name_label, "[b][color=#FFD700]%s[/color][/b]" % str(current_character.name))
 	set_label_text(race_label, "[color=#CCCCCC]%s[/color]" % str(current_character.race))
 	set_label_text(class_label, "[color=#88DDFF]%s[/color]" % str(current_character.character_class))
@@ -62,28 +80,28 @@ func update_status():
 		var info_text = ""
 		
 		# === PRIMARY ATTRIBUTES ===
-		info_text += "[center][b][color=#00DDFF]═══ PRIMARY ATTRIBUTES ═══[/color][/b][/center]\n\n"
+		info_text += "[center][b][color=#00DDFF]PRIMARY ATTRIBUTES [/color][/b][/center]\n\n"
 		
 		# Row 1: Physical stats
-		info_text += "[color=#FF8888]⚔ Vitality:[/color] %s  " % current_character.get_attribute_display_compact("vitality")
-		info_text += "[color=#FFAA44]💪 Strength:[/color] %s  " % current_character.get_attribute_display_compact("strength")
-		info_text += "[color=#88FF88]🎯 Dexterity:[/color] %s\n" % current_character.get_attribute_display_compact("dexterity")
+		info_text += "[color=#FF8888]Vitality:[/color] %s  " % current_character.get_attribute_display_compact("vitality")
+		info_text += "[color=#FFAA44]Strength:[/color] %s  " % current_character.get_attribute_display_compact("strength")
+		info_text += "[color=#88FF88]Dexterity:[/color] %s\n" % current_character.get_attribute_display_compact("dexterity")
 		
 		# Row 2: Mental stats
-		info_text += "[color=#88AAFF]🧠 Intelligence:[/color] %s  " % current_character.get_attribute_display_compact("intelligence")
-		info_text += "[color=#FFDD88]✨ Faith:[/color] %s  " % current_character.get_attribute_display_compact("faith")
-		info_text += "[color=#AA88FF]🔮 Mind:[/color] %s\n" % current_character.get_attribute_display_compact("mind")
+		info_text += "[color=#88AAFF]Intelligence:[/color] %s  " % current_character.get_attribute_display_compact("intelligence")
+		info_text += "[color=#FFDD88]Faith:[/color] %s  " % current_character.get_attribute_display_compact("faith")
+		info_text += "[color=#AA88FF]Mind:[/color] %s\n" % current_character.get_attribute_display_compact("mind")
 		
 		# Row 3: Defensive stats
-		info_text += "[color=#66DDFF]🛡 Endurance:[/color] %s  " % current_character.get_attribute_display_compact("endurance")
-		info_text += "[color=#DD88FF]🌟 Arcane:[/color] %s\n" % current_character.get_attribute_display_compact("arcane")
+		info_text += "[color=#66DDFF]Endurance:[/color] %s  " % current_character.get_attribute_display_compact("endurance")
+		info_text += "[color=#DD88FF]Arcane:[/color] %s\n" % current_character.get_attribute_display_compact("arcane")
 		
 		# Row 4: Utility stats
-		info_text += "[color=#AAFF88]⚡ Agility:[/color] %s  " % current_character.get_attribute_display_compact("agility")
-		info_text += "[color=#FFAA88]🏔 Fortitude:[/color] %s\n\n" % current_character.get_attribute_display_compact("fortitude")
+		info_text += "[color=#AAFF88]Agility:[/color] %s  " % current_character.get_attribute_display_compact("agility")
+		info_text += "[color=#FFAA88]Fortitude:[/color] %s\n\n" % current_character.get_attribute_display_compact("fortitude")
 		
 		# === SECONDARY ATTRIBUTES ===
-		info_text += "[center][b][color=#00DDFF]═══ SECONDARY ATTRIBUTES ═══[/color][/b][/center]\n\n"
+		info_text += "[center][b][color=#00DDFF]SECONDARY ATTRIBUTES [/color][/b][/center]\n\n"
 		
 		# Resource pools with color coding
 		var hp_percent = float(current_character.current_hp) / float(current_character.max_hp)
@@ -95,28 +113,28 @@ func update_status():
 		var sp_percent = float(current_character.current_sp) / float(current_character.max_sp)
 		var sp_color = "#FFAA00" if sp_percent < 0.3 else "#FFCC44" if sp_percent < 0.7 else "#FFDD88"
 		
-		info_text += "[color=%s]❤ HP:[/color] %d / %d  " % [hp_color, current_character.current_hp, current_character.max_hp]
-		info_text += "[color=%s]✦ MP:[/color] %d / %d  " % [mp_color, current_character.current_mp, current_character.max_mp]
-		info_text += "[color=%s]⚡ SP:[/color] %d / %d\n\n" % [sp_color, current_character.current_sp, current_character.max_sp]
+		info_text += "[color=%s]HP:[/color] %d / %d  " % [hp_color, current_character.current_hp, current_character.max_hp]
+		info_text += "[color=%s]MP:[/color] %d / %d  " % [mp_color, current_character.current_mp, current_character.max_mp]
+		info_text += "[color=%s]SP:[/color] %d / %d\n\n" % [sp_color, current_character.current_sp, current_character.max_sp]
 		
 		# Offensive stats
-		info_text += "[color=#FF6666]⚔ Attack Power:[/color] %d  " % current_character.get_attack_power()
-		info_text += "[color=#8888FF]🔮 Spell Power:[/color] %d\n" % current_character.spell_power
+		info_text += "[color=#FF6666]Attack Power:[/color] %d  " % current_character.get_attack_power()
+		info_text += "[color=#8888FF]Spell Power:[/color] %d\n" % current_character.spell_power
 		
 		# Defensive stats
-		info_text += "[color=#6666FF]🛡 Defense:[/color] %d  " % current_character.get_defense()
-		info_text += "[color=#AAAA88]🏔 Toughness:[/color] %.2f\n" % current_character.toughness
+		info_text += "[color=#6666FF]Defense:[/color] %d  " % current_character.get_defense()
+		info_text += "[color=#AAAA88]Toughness:[/color] %.2f\n" % current_character.toughness
 		
 		# Evasion stats
-		info_text += "[color=#88FFAA]💨 Dodge:[/color] %.1f%%  " % (current_character.dodge * 100)
-		info_text += "[color=#AA88FF]✨ Spell Ward:[/color] %.2f\n" % current_character.spell_ward
+		info_text += "[color=#88FFAA]Dodge:[/color] %.1f%%  " % (current_character.dodge * 100)
+		info_text += "[color=#AA88FF]Spell Ward:[/color] %.2f\n" % current_character.spell_ward
 		
 		# Accuracy stats
-		info_text += "[color=#FFAA66]🎯 Accuracy:[/color] %.1f%%  " % (current_character.accuracy * 100)
-		info_text += "[color=#FFDD44]💥 Crit Rate:[/color] %.1f%%\n\n" % (current_character.critical_hit_rate * 100)
+		info_text += "[color=#FFAA66]Accuracy:[/color] %.1f%%  " % (current_character.accuracy * 100)
+		info_text += "[color=#FFDD44]Crit Rate:[/color] %.1f%%\n\n" % (current_character.critical_hit_rate * 100)
 		
 		# === ELEMENTAL AFFINITIES ===
-		info_text += "[center][b][color=#FF8844]═══ ELEMENTAL AFFINITIES ═══[/color][/b][/center]\n\n"
+		info_text += "[center][b][color=#FF8844]ELEMENTAL AFFINITIES [/color][/b][/center]\n\n"
 		
 		# Show ALL elements with their values
 		for element in ElementalDamage.Element.values():
@@ -130,15 +148,15 @@ func update_status():
 			var bonus = current_character.get_elemental_damage_bonus(element)
 			
 			# Element icon mapping
-			var icon = "○"
+			var icon = ""
 			match element:
-				ElementalDamage.Element.FIRE: icon = "🔥"
-				ElementalDamage.Element.ICE: icon = "❄"
-				ElementalDamage.Element.LIGHTNING: icon = "⚡"
-				ElementalDamage.Element.EARTH: icon = "🌍"
-				ElementalDamage.Element.WIND: icon = "💨"
-				ElementalDamage.Element.HOLY: icon = "✨"
-				ElementalDamage.Element.DARK: icon = "🌑"
+				ElementalDamage.Element.FIRE: icon = ""
+				ElementalDamage.Element.ICE: icon = ""
+				ElementalDamage.Element.LIGHTNING: icon = ""
+				ElementalDamage.Element.EARTH: icon = ""
+				ElementalDamage.Element.WIND: icon = ""
+				ElementalDamage.Element.HOLY: icon = ""
+				ElementalDamage.Element.DARK: icon = ""
 			
 			# Build element line with icon
 			var line = "[color=%s]%s %s:[/color]" % [color, icon, element_name]
@@ -175,22 +193,22 @@ func update_status():
 	
 	# Enhanced Equipment display
 	if equipment_info:
-		var equipment_text = "[center][b][color=#00DDFF]═══ EQUIPMENT ═══[/color][/b][/center]\n\n"
+		var equipment_text = "[center][b][color=#00DDFF]EQUIPMENT [/color][/b][/center]\n\n"
 		
 		var slot_icons = {
-			"main_hand": "⚔",
-			"off_hand": "🛡",
-			"head": "⛑",
-			"chest": "🎽",
-			"hands": "🧤",
-			"legs": "👖",
-			"feet": "👢"
+			"main_hand": "",
+			"off_hand": "",
+			"head": "",
+			"chest": "",
+			"hands": "",
+			"legs": "",
+			"feet": ""
 		}
 		
 		for slot in current_character.equipment:
 			var item = current_character.equipment[slot]
 			var slot_name = slot.capitalize().replace("_", " ")
-			var icon = slot_icons.get(slot, "○")
+			var icon = slot_icons.get(slot, "")
 			
 			if item:
 				var color = item.get_rarity_color()
@@ -220,7 +238,7 @@ func update_status():
 	
 	# Enhanced Skills display
 	if skills_info:
-		var skills_text = "[center][b][color=#00DDFF]═══ SKILLS ═══[/color][/b][/center]\n\n"
+		var skills_text = "[center][b][color=#00DDFF]SKILLS [/color][/b][/center]\n\n"
 		
 		for skill_name in current_character.skills:
 			var skill = current_character.get_skill_instance(skill_name)
@@ -273,14 +291,14 @@ func update_status():
 	
 	# Enhanced Proficiencies display
 	if prof_info and current_character.proficiency_manager:
-		var prof_text = "[center][b][color=#00DDFF]═══ PROFICIENCIES ═══[/color][/b][/center]\n\n"
+		var prof_text = "[center][b][color=#00DDFF]PROFICIENCIES [/color][/b][/center]\n\n"
 		
 		var prof_mgr = current_character.proficiency_manager
 		
 		# Get available weapon types
 		var available_weapons = prof_mgr.get_available_weapon_types()
 		
-		prof_text += "[b][color=#FFAA44]⚔ Weapons & Off-Hand:[/color][/b]\n"
+		prof_text += "[b][color=#FFAA44]Weapons & Off-Hand:[/color][/b]\n"
 		if available_weapons.is_empty():
 			prof_text += "  [color=#888888]No weapons available[/color]\n"
 		else:
@@ -292,7 +310,7 @@ func update_status():
 		# Get available armor types
 		var available_armors = prof_mgr.get_available_armor_types()
 		
-		prof_text += "\n[b][color=#6666FF]🛡 Armor:[/color][/b]\n"
+		prof_text += "\n[b][color=#6666FF]Armor:[/color][/b]\n"
 		if available_armors.is_empty():
 			prof_text += "  [color=#888888]No armor available[/color]\n"
 		else:
@@ -313,7 +331,7 @@ func _generate_fallback_attributes() -> String:
 	"""Generate attributes display for characters without elemental system"""
 	var info_text = ""
 	
-	info_text += "[center][b][color=#00DDFF]═══ PRIMARY ATTRIBUTES ═══[/color][/b][/center]\n\n"
+	info_text += "[center][b][color=#00DDFF]PRIMARY ATTRIBUTES [/color][/b][/center]\n\n"
 	info_text += "Vitality: %s | Strength: %s | Dexterity: %s\n" % [
 		current_character.get_attribute_display_compact("vitality"),
 		current_character.get_attribute_display_compact("strength"),
@@ -333,7 +351,7 @@ func _generate_fallback_attributes() -> String:
 		current_character.get_attribute_display_compact("fortitude")
 	]
 	
-	info_text += "[center][b][color=#00DDFF]═══ SECONDARY ATTRIBUTES ═══[/color][/b][/center]\n\n"
+	info_text += "[center][b][color=#00DDFF]SECONDARY ATTRIBUTES [/color][/b][/center]\n\n"
 	info_text += "HP: %d / %d | MP: %d / %d | SP: %d / %d\n" % [
 		current_character.current_hp, current_character.max_hp,
 		current_character.current_mp, current_character.max_mp,

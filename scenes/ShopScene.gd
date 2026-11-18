@@ -44,7 +44,7 @@ func _ready():
 		sell_button.text = "Sell Selected"
 		sell_button.connect("pressed", Callable(self, "_on_sell_pressed"))
 	if sell_all_button:
-		sell_all_button.text = "Sell All Selected (Full Stack)"
+		sell_all_button.text = "Sell Whole Stacks"
 		sell_all_button.connect("pressed", Callable(self, "_on_sell_all_pressed"))
 	if sell_item_list:
 		sell_item_list.connect("item_clicked", Callable(self, "_on_sell_item_clicked"))
@@ -58,11 +58,36 @@ func _ready():
 	# Update buyback based on current floor
 	ShopManager.clear_buyback_on_floor_change(player_character.current_floor)
 	
+	_apply_chrome()
 	refresh_shop_display()
 	refresh_sell_items()
 	clear_item_info()
 	
 	print("ShopScene: Multi-select enabled")
+
+var chrome: ScreenChrome
+
+func _apply_chrome():
+	chrome = ScreenChrome.attach(self, "Shop", _on_exit_pressed)
+	exit_button.visible = false
+	player_currency_label.visible = false
+	ScreenChrome.tab_row(tab_container, Rect2(32, 72, 440, 36))
+	var for_sale = $UI/ShopLabel
+	for_sale.text = "For Sale"
+	ScreenChrome.place(for_sale, Rect2(32, 114, 440, 24))
+	for_sale.add_theme_color_override("font_color", ScreenChrome.MUTED)
+	ScreenChrome.place(item_list, Rect2(32, 140, 440, 220))
+	var pack_label = $UI/InventoryLabel
+	pack_label.text = "Your Pack (sells for half value)"
+	ScreenChrome.place(pack_label, Rect2(32, 372, 440, 24))
+	pack_label.add_theme_color_override("font_color", ScreenChrome.MUTED)
+	ScreenChrome.place(sell_item_list, Rect2(32, 398, 440, 226))
+	ScreenChrome.place(item_info_label, Rect2(496, 72, 672, 488))
+	item_info_label.bbcode_enabled = true
+	ScreenChrome.place(buy_button, Rect2(496, 576, 200, 44))
+	ScreenChrome.place(sell_button, Rect2(712, 576, 200, 44))
+	ScreenChrome.place(sell_all_button, Rect2(928, 576, 240, 44))
+	chrome.set_info(ScreenChrome.money_text(player_character))
 
 func setup_tabs():
 	"""Setup category tabs with enhanced visuals"""
@@ -111,28 +136,7 @@ func _on_category_changed(category: ItemCategory):
 
 func _update_tab_visuals():
 	"""Enhanced tab highlighting with background colors and borders"""
-	var tabs = [all_tab, consumables_tab, weapons_tab, armor_tab, buyback_tab]
-	
-	for i in range(tabs.size()):
-		if not tabs[i]:
-			continue
-		
-		var style_normal = StyleBoxFlat.new()
-		style_normal.corner_radius_top_left = 4
-		style_normal.corner_radius_top_right = 4
-		
-		if i == current_category:
-			# Active tab: Brighter with gold border
-			style_normal.bg_color = Color("#4A4A3A")
-			style_normal.border_width_bottom = 3
-			style_normal.border_color = Color("#FFD700")
-			tabs[i].add_theme_stylebox_override("normal", style_normal)
-			tabs[i].modulate = Color(1, 1, 1)
-		else:
-			# Inactive tab: Darker
-			style_normal.bg_color = Color("#2A2A2A")
-			tabs[i].add_theme_stylebox_override("normal", style_normal)
-			tabs[i].modulate = Color(0.7, 0.7, 0.7)
+	ScreenChrome.set_active_tab([all_tab, consumables_tab, weapons_tab, armor_tab, buyback_tab], current_category)
 
 func refresh_shop_display():
 	"""Refresh shop items with enhanced formatting"""
@@ -160,7 +164,7 @@ func refresh_shop_display():
 					item_list.add_item(display_text)
 					
 					if item is Equipment:
-						var rarity_color = Color(item.get_rarity_color())
+						var rarity_color = ScreenChrome.rarity_color(item)
 						item_list.set_item_custom_fg_color(index, rarity_color)
 					
 					# Store buyback data in metadata
@@ -217,7 +221,7 @@ func refresh_shop_display():
 						var display_text = _format_shop_item(equipment, price)
 						item_list.add_item(display_text)
 						
-						var rarity_color = Color(equipment.get_rarity_color())
+						var rarity_color = ScreenChrome.rarity_color(equipment)
 						item_list.set_item_custom_fg_color(index, rarity_color)
 						
 						item_list.set_item_metadata(index, {
@@ -238,6 +242,8 @@ func refresh_shop_display():
 		elif copper < 500:
 			color = "#FFAA44"  # Orange if medium
 		
+		if chrome:
+			chrome.set_info(ScreenChrome.money_text(player_character))
 		player_currency_label.text = "[color=%s] Your Gold: %s[/color]" % [
 			color,
 			player_character.currency.get_formatted()
@@ -245,24 +251,7 @@ func refresh_shop_display():
 
 func _format_shop_item(item: Item, price: int, quantity: int = 1) -> String:
 	"""Format shop item display for better readability"""
-	var display = ""
-	
-	if item is Equipment:
-		display = "%s  [%s]  (ilvl %d)" % [
-			item.display_name,
-			item.rarity.capitalize(),
-			item.item_level
-		]
-		if quantity > 1:
-			display += "  ×%d" % quantity
-		display += "  —  %d copper" % price
-	else:
-		display = "%s" % item.display_name
-		if quantity > 1:
-			display += "  ×%d" % quantity
-		display += "  —  %d copper" % price
-	
-	return display
+	return ScreenChrome.item_row(item, quantity, price)
 
 func refresh_sell_items():
 	"""Refresh sell items with enhanced formatting"""
@@ -286,27 +275,14 @@ func refresh_sell_items():
 					sell_item_list.add_item(display_text)
 					
 					if item is Equipment:
-						var rarity_color = Color(item.get_rarity_color())
+						var rarity_color = ScreenChrome.rarity_color(item)
 						sell_item_list.set_item_custom_fg_color(index, rarity_color)
 					
 					index += 1
 
 func _format_sell_item(item: Item, sell_value: int, quantity: int) -> String:
 	"""Format sell item display for better readability"""
-	var display = ""
-	
-	if item is Equipment:
-		display = "%s  [%s]" % [item.display_name, item.rarity.capitalize()]
-		if quantity > 1:
-			display += "  ×%d" % quantity
-		display += "  —  %d copper" % sell_value
-	else:
-		display = "%s" % item.display_name
-		if quantity > 1:
-			display += "  ×%d" % quantity
-		display += "  —  %d copper" % sell_value
-	
-	return display
+	return ScreenChrome.item_row(item, quantity, sell_value)
 
 func _on_shop_item_clicked(index: int, _at_position: Vector2, _mouse_button_index: int):
 	var metadata = item_list.get_item_metadata(index)
@@ -343,14 +319,14 @@ func display_item_info(item: Item, price: int, is_buying: bool):
 			info_text += "[color=#CCCCCC]%s[/color]\n\n" % item.description
 			
 			if item.item_type == Item.ItemType.CONSUMABLE:
-				info_text += "[color=#00DDFF][b]═══ EFFECT ═══[/b][/color]\n"
+				info_text += "[color=#00DDFF][b]EFFECT [/b][/color]\n"
 				
 				match item.consumable_type:
 					Item.ConsumableType.DAMAGE:
 						info_text += "[color=#FF6666] Deals %d damage[/color]\n" % item.effect_power
 						if item.status_effect != Skill.StatusEffect.NONE:
 							var effect_name = Skill.StatusEffect.keys()[item.status_effect]
-							info_text += "[color=#BB88FF]✦ Inflicts %s for %d turns[/color]\n" % [effect_name, item.effect_duration]
+							info_text += "[color=#BB88FF]Inflicts %s for %d turns[/color]\n" % [effect_name, item.effect_duration]
 					Item.ConsumableType.HEAL:
 						info_text += "[color=#66FF66] Restores %d HP[/color]\n" % item.effect_power
 					Item.ConsumableType.RESTORE:

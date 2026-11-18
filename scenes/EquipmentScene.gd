@@ -19,6 +19,7 @@ func _ready():
 		print("Error: No character loaded")
 		return
 	
+	_apply_chrome()
 	refresh_lists()
 	equip_button.connect("pressed", Callable(self, "_on_equip_pressed"))
 	unequip_button.connect("pressed", Callable(self, "_on_unequip_pressed"))
@@ -27,6 +28,21 @@ func _ready():
 	equipment_list.connect("item_selected", Callable(self, "_on_equipment_item_selected"))
 	exit_button.connect("pressed", Callable(self, "_on_exit_pressed"))
 	update_swap_button_state()
+
+var chrome: ScreenChrome
+
+func _apply_chrome():
+	chrome = ScreenChrome.attach(self, "Equipment", _on_exit_pressed, "Back")
+	exit_button.visible = false
+	ScreenChrome.caption(self, "Pack", Vector2(32, 72))
+	ScreenChrome.caption(self, "Equipped", Vector2(344, 72))
+	ScreenChrome.place(inventory_list, Rect2(32, 100, 296, 460))
+	ScreenChrome.place(equipment_list, Rect2(344, 100, 296, 460))
+	ScreenChrome.place(equip_button, Rect2(32, 572, 140, 44))
+	ScreenChrome.place(unequip_button, Rect2(344, 572, 140, 44))
+	ScreenChrome.place(swap_hands_button, Rect2(496, 572, 144, 44))
+	ScreenChrome.place(item_info, Rect2(664, 72, 504, 552))
+	chrome.set_info(ScreenChrome.money_text(current_character))
 
 func set_player(character: CharacterData):
 	current_character = character
@@ -41,26 +57,18 @@ func refresh_lists():
 		var item = item_data.item
 		if item is Equipment:
 			# Add the item with its name and rarity
-			var display_name = "%s [%s]" % [item.display_name, item.rarity.capitalize()]
-			inventory_list.add_item(display_name)
-			
-			# Set the color based on rarity
-			var rarity_color = item.get_rarity_color()
-			if rarity_color != "":
-				inventory_list.set_item_custom_fg_color(index, Color(rarity_color))
+			ScreenChrome.add_item_row(inventory_list, item)
 			index += 1
 	
 	index = 0
 	for slot in current_character.equipment:
 		var item = current_character.equipment[slot]
 		if item:
-			equipment_list.add_item("%s: %s [%s]" % [slot, item.display_name, item.rarity.capitalize()])
-			# Set the color based on rarity
-			var rarity_color = item.get_rarity_color()
-			if rarity_color != "":
-				equipment_list.set_item_custom_fg_color(index, Color(rarity_color))
+			equipment_list.add_item("%s:  %s" % [ScreenChrome.slot_name(slot), item.display_name])
+			equipment_list.set_item_custom_fg_color(index, ScreenChrome.rarity_color(item))
 		else:
-			equipment_list.add_item("%s: Empty" % slot)
+			equipment_list.add_item("%s:  -" % ScreenChrome.slot_name(slot))
+			equipment_list.set_item_custom_fg_color(index, ScreenChrome.MUTED)
 		index += 1
 	
 	update_swap_button_state()

@@ -38,23 +38,21 @@ func set_player(character: CharacterData) -> void:
 
 func _build_ui() -> void:
 	var ui: CanvasLayer = $UI
-	_label(ui, "Adventurers' Guild", Vector2(40, 16), 28)
-	header_label = _label(ui, "", Vector2(560, 24), 18)
+	header_label = ScreenChrome.attach(self, "Adventurers' Guild", _on_back_pressed).info_label
 
 	for i in range(TAB_NAMES.size()):
-		var b = _button(ui, TAB_NAMES[i], Vector2(40 + i * 145, 68), func(): _set_tab(i), Vector2(135, 36))
+		var b = _button(ui, TAB_NAMES[i], Vector2(32 + i * 145, 72), func(): _set_tab(i), Vector2(135, 36))
 		b.toggle_mode = true
 		tab_buttons.append(b)
 
 	bounty_list = ItemList.new()
-	bounty_list.position = Vector2(40, 112)
-	bounty_list.size = Vector2(420, 500)
+	ScreenChrome.place(bounty_list, ScreenChrome.LIST_RECT)
 	bounty_list.item_selected.connect(_on_bounty_selected)
 	ui.add_child(bounty_list)
 
 	var panel = Panel.new()
-	panel.position = Vector2(490, 72)
-	panel.size = Vector2(670, 440)
+	panel.position = Vector2(496, 72)
+	panel.size = Vector2(672, 440)
 	ui.add_child(panel)
 	details = RichTextLabel.new()
 	details.bbcode_enabled = true
@@ -62,11 +60,10 @@ func _build_ui() -> void:
 	details.size = Vector2(640, 416)
 	panel.add_child(details)
 
-	primary_button = _button(ui, "Accept", Vector2(490, 526), _on_primary_pressed)
+	primary_button = _button(ui, "Accept", Vector2(496, 526), _on_primary_pressed)
 	reroll_button = _button(ui, "Reroll Board", Vector2(660, 526), _on_reroll_pressed, Vector2(220, 40))
-	_button(ui, "Back to Town", Vector2(980, 640), _on_back_pressed)
 
-	status_label = _label(ui, "", Vector2(490, 580), 16)
+	status_label = _label(ui, "", Vector2(496, 580), 16)
 	status_label.size = Vector2(670, 50)
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 

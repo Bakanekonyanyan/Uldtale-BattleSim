@@ -35,6 +35,20 @@ func show_dialog(character: CharacterData, xp: int):
 	var momentum_text = MomentumSystem.get_momentum_status()
 	momentum_label.text = momentum_text
 	
+	# Spell out what each choice does
+	var next_level = mini(momentum_level + 1, MomentumSystem.MAX_MOMENTUM)
+	var banked_gold = int(MomentumSystem.momentum_loot_accumulated.currency)
+	var banked_items = MomentumSystem.momentum_loot_accumulated.equipment_instances.size() + MomentumSystem.momentum_loot_accumulated.items.size()
+	press_on_button.text = "Press On\nMomentum x%d: +%d%% damage, next Breather pays +%d%%. No rest - and banked loot is lost if you fall." % [
+		next_level, int(round(next_level * MomentumSystem.DAMAGE_BONUS_PER_LEVEL * 100)), int(round(MomentumSystem.get_reward_bonus(next_level) * 100))]
+	var payout = "this wave"
+	if banked_gold > 0 or banked_items > 0:
+		payout = "this wave + %s and %d item stack%s banked" % [Currency.format_copper(banked_gold), banked_items, "" if banked_items == 1 else "s"]
+	breather_button.text = "Take a Breather\nCollect %s%s. Rest and recover; momentum resets." % [
+		payout, " (+%d%% bonus)" % int(round(MomentumSystem.get_reward_bonus() * 100)) if MomentumSystem.has_momentum_bonus() else ""]
+	for b in [press_on_button, breather_button]:
+		b.autowrap_mode = TextServer.AUTOWRAP_WORD
+	
 	# Show status warnings
 	var warnings = []
 	if character.current_hp < character.max_hp * 0.5:

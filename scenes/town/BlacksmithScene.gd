@@ -39,23 +39,21 @@ func set_player(character: CharacterData) -> void:
 
 func _build_ui() -> void:
 	var ui: CanvasLayer = $UI
-	_label(ui, "Blacksmith", Vector2(40, 16), 28)
-	money_label = _label(ui, "", Vector2(760, 24), 18)
+	money_label = ScreenChrome.attach(self, "Blacksmith", _on_back_pressed).info_label
 
-	upgrade_tab = _button(ui, "Upgrade", Vector2(40, 68), func(): _set_mode(Mode.UPGRADE), Vector2(140, 36))
-	salvage_tab = _button(ui, "Salvage", Vector2(190, 68), func(): _set_mode(Mode.SALVAGE), Vector2(140, 36))
+	upgrade_tab = _button(ui, "Upgrade", Vector2(32, 72), func(): _set_mode(Mode.UPGRADE), Vector2(140, 36))
+	salvage_tab = _button(ui, "Salvage", Vector2(182, 72), func(): _set_mode(Mode.SALVAGE), Vector2(140, 36))
 	upgrade_tab.toggle_mode = true
 	salvage_tab.toggle_mode = true
 
 	gear_list = ItemList.new()
-	gear_list.position = Vector2(40, 112)
-	gear_list.size = Vector2(420, 500)
+	ScreenChrome.place(gear_list, ScreenChrome.LIST_RECT)
 	gear_list.item_selected.connect(_on_gear_selected)
 	ui.add_child(gear_list)
 
 	var panel = Panel.new()
-	panel.position = Vector2(490, 72)
-	panel.size = Vector2(670, 440)
+	panel.position = Vector2(496, 72)
+	panel.size = Vector2(672, 440)
 	ui.add_child(panel)
 	details = RichTextLabel.new()
 	details.bbcode_enabled = true
@@ -63,7 +61,7 @@ func _build_ui() -> void:
 	details.size = Vector2(640, 416)
 	panel.add_child(details)
 
-	reinforce_label = _label(ui, "Reinforce:", Vector2(490, 532), 16)
+	reinforce_label = _label(ui, "Reinforce:", Vector2(496, 532), 16)
 	reinforce_spin = SpinBox.new()
 	reinforce_spin.position = Vector2(580, 526)
 	reinforce_spin.custom_minimum_size = Vector2(100, 36)
@@ -72,9 +70,8 @@ func _build_ui() -> void:
 	ui.add_child(reinforce_spin)
 
 	action_button = _button(ui, "Upgrade", Vector2(700, 526), _on_action_pressed)
-	_button(ui, "Back to Town", Vector2(980, 640), _on_back_pressed)
 
-	status_label = _label(ui, "", Vector2(490, 580), 16)
+	status_label = _label(ui, "", Vector2(496, 580), 16)
 	status_label.size = Vector2(670, 50)
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 
@@ -223,7 +220,7 @@ func _upgrade_text(item: Equipment) -> String:
 
 ## Rarity colors lightened so dark ones (uncommon blue) stay readable on the backdrop.
 func _readable(rarity_color: String) -> Color:
-	return Color(rarity_color).lerp(Color.WHITE, 0.45) if rarity_color != "" else Color.WHITE
+	return Color(rarity_color).lerp(Color.WHITE, 0.35) if rarity_color != "" else Color("e6dccb")
 
 func _fmt(v: float) -> String:
 	return str(int(round(v))) if v >= 1.0 else "%.0f%%" % (v * 100.0)

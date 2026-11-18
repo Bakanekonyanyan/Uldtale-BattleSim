@@ -175,7 +175,6 @@ offset_top = 128.0
 offset_right = 560.0
 offset_bottom = 560.0
 theme_override_constants/line_separation = 4
-theme_override_font_sizes/font_size = 18
 
 [node name="UseButton" type="Button" parent="UI"]
 visible = false
@@ -198,8 +197,6 @@ offset_left = 576.0
 offset_top = 128.0
 offset_right = 1152.0
 offset_bottom = 560.0
-theme_override_font_sizes/normal_font_size = 16
-theme_override_font_sizes/bold_font_size = 20
 bbcode_enabled = true
 text = "Select an item to view details"
 fit_content = true

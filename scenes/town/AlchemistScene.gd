@@ -38,26 +38,26 @@ func set_player(character: CharacterData) -> void:
 func _build_ui() -> void:
 	var ui: CanvasLayer = $UI
 
-	title_label = _label(ui, "Alchemist", Vector2(40, 16), 28)
-	money_label = _label(ui, "", Vector2(760, 24), 18)
+	var chrome = ScreenChrome.attach(self, "Alchemist", _on_back_pressed)
+	title_label = chrome.title_label
+	money_label = chrome.info_label
 
 	filter_option = OptionButton.new()
 	for f in FILTERS:
 		filter_option.add_item(f)
-	filter_option.position = Vector2(40, 72)
+	filter_option.position = Vector2(32, 72)
 	filter_option.custom_minimum_size = Vector2(200, 32)
 	filter_option.item_selected.connect(func(_i): _refresh())
 	ui.add_child(filter_option)
 
 	recipe_list = ItemList.new()
-	recipe_list.position = Vector2(40, 112)
-	recipe_list.size = Vector2(420, 500)
+	ScreenChrome.place(recipe_list, ScreenChrome.LIST_RECT)
 	recipe_list.item_selected.connect(_on_recipe_selected)
 	ui.add_child(recipe_list)
 
 	var panel = Panel.new()
-	panel.position = Vector2(490, 72)
-	panel.size = Vector2(670, 440)
+	panel.position = Vector2(496, 72)
+	panel.size = Vector2(672, 440)
 	ui.add_child(panel)
 
 	details = RichTextLabel.new()
@@ -66,7 +66,7 @@ func _build_ui() -> void:
 	details.size = Vector2(640, 416)
 	panel.add_child(details)
 
-	_label(ui, "Batches:", Vector2(490, 532), 16)
+	_label(ui, "Batches:", Vector2(496, 532), 16)
 	quantity_spin = SpinBox.new()
 	quantity_spin.position = Vector2(570, 526)
 	quantity_spin.custom_minimum_size = Vector2(110, 36)
@@ -77,9 +77,8 @@ func _build_ui() -> void:
 
 	craft_button = _button(ui, "Craft", Vector2(700, 526), _on_craft_pressed)
 	buy_button = _button(ui, "Buy Recipe", Vector2(870, 526), _on_buy_pressed)
-	_button(ui, "Back to Town", Vector2(980, 640), _on_back_pressed)
 
-	status_label = _label(ui, "", Vector2(490, 580), 16)
+	status_label = _label(ui, "", Vector2(496, 580), 16)
 	status_label.size = Vector2(670, 50)
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 

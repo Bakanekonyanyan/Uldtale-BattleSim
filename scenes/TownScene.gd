@@ -18,7 +18,13 @@ var current_character: CharacterData
 @onready var guild_button = $UI/GuildButton
 
 
+var chrome: ScreenChrome
+
 func _ready():
+	# Town keeps its art undimmed; the header carries name and money.
+	chrome = ScreenChrome.attach(self, "Town", Callable(), "", false)
+	if name_label:
+		name_label.visible = false
 	if shop_button:
 		shop_button.connect("pressed", Callable(self, "_on_shop_pressed"))
 	if dungeon_button:
@@ -56,6 +62,8 @@ func update_ui():
 	if name_label:
 		if current_character:
 			name_label.text = "Character: " + current_character.name
+			if chrome:
+				chrome.set_info("%s  -  Level %d %s %s    %s" % [current_character.name, current_character.level, current_character.race, current_character.character_class, ScreenChrome.money_text(current_character)])
 		else:
 			name_label.text = "No character loaded"
 	else:
