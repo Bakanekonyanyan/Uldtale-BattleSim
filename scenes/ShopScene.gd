@@ -427,7 +427,7 @@ func _on_buy_pressed():
 			var item = item_data["item"]
 			var price = item_data["price"]
 			player_character.currency.subtract(price)
-			player_character.inventory.add_item(item)
+			player_character.add_to_pack(item, 1)  # over the carry limit -> stash
 			print("ShopScene: Purchased consumable: %s" % item.display_name)
 		
 		elif item_data["type"] == "equipment":
@@ -448,7 +448,7 @@ func _on_buy_pressed():
 			var result = ShopManager.buyback_item(key, 1)
 			if result["success"]:
 				player_character.currency.subtract(price)
-				player_character.inventory.add_item(result["item"], result["quantity"])
+				player_character.add_to_pack(result["item"], result["quantity"])
 				print("ShopScene: Bought back: %s" % item.display_name)
 	
 	refresh_shop_display()

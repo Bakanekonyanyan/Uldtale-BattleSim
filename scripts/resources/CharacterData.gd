@@ -68,7 +68,19 @@ var last_attacker: CharacterData = null
 @export var xp: int = 0
 @export var attribute_points: int = 0
 @export var current_floor: int = 0
+## Highest floor unlocked in ANY location (kept for display / old saves).
+## Real progress is per location: see location_progress.
 @export var max_floor_cleared: int = 0
+## location_id -> highest floor unlocked there (floors start unlocked at 1)
+@export var location_progress: Dictionary = {}
+@export var last_location: String = "the_dungeon"
+## Max copies of each consumable carried in the pack; the rest goes to the stash.
+## Raised later by purchases / Adventurer rank in steps of CARRY_LIMIT_STEP.
+@export var carry_limit: int = 5
+## Saved town-service state ({"alchemy": {...}, "blacksmith": {...}, "guild": {...}})
+@export var town_state: Dictionary = {}
+const CARRY_LIMIT_STEP := 5
+const CARRY_LIMIT_MAX := 20
 
 # === EQUIPMENT BONUSES (separate from base attributes) ===
 var equipment_bonuses: Dictionary = {}
@@ -605,6 +617,71 @@ func update_max_floor_cleared(floor: int):
 	if floor > max_floor_cleared:
 		max_floor_cleared = floor
 		print("New max floor: %d" % max_floor_cleared)
+
+# === CARRY LIMIT (pack vs stash) ===
+## Consumables are limited to `carry_limit` copies of each in the pack.
+func is_carry_limited(item: Item) -> bool:
+	return item != null and not (item is Equipment) and item.item_type == Item.ItemType.CONSUMABLE
+
+## How many more of this item fit in the pack (huge for unlimited items).
+func pack_room_for(item: Item) -> int:
+	if not is_carry_limited(item):
+		return 1 << 30
+	return max(0, carry_limit - inventory.get_quantity(item.id))
+
+## Add items to the pack; anything over the carry limit goes to the stash.
+## Returns {"pack": n, "stash": m}.
+func add_to_pack(item: Item, quantity: int = 1) -> Dictionary:
+	var to_pack = min(quantity, pack_room_for(item))
+	var to_stash = quantity - to_pack
+	if to_pack > 0 and not inventory.add_item(item, to_pack):
+		to_stash += to_pack  # pack full (capacity) -> stash
+		to_pack = 0
+	if to_stash > 0:
+		stash.add_item(item, to_stash)
+		print("%d x %s sent to stash (carry limit %d)" % [to_stash, item.display_name, carry_limit])
+	return {"pack": to_pack, "stash": to_stash}
+
+## Move up to `quantity` of a stash entry into the pack, respecting the carry
+## limit. Returns how many were moved.
+func withdraw_from_stash(stash_key: String, quantity: int = 1) -> int:
+	if not stash.items.has(stash_key):
+		return 0
+	var item: Item = stash.items[stash_key].item
+	var amount = min(quantity, stash.items[stash_key].quantity, pack_room_for(item))
+	if amount <= 0:
+		return 0
+	stash.remove_item(stash_key, amount)
+	if not inventory.add_item(item, amount):
+		stash.add_item(item, amount)  # pack full: put it back
+		return 0
+	return amount
+
+## Move any consumables above the carry limit from the pack to the stash
+## (save migration, or after carry_limit changes). Returns the number moved.
+func enforce_carry_limit() -> int:
+	var moved := 0
+	for key in inventory.items.keys():
+		var entry = inventory.items[key]
+		var item: Item = entry.item
+		if is_carry_limited(item) and entry.quantity > carry_limit:
+			var excess = entry.quantity - carry_limit
+			inventory.remove_item(key, excess)
+			stash.add_item(item, excess)
+			moved += excess
+	return moved
+
+# === LOCATION PROGRESS ===
+## Highest floor the player may start from at this location (at least 1).
+func get_max_floor(location_id: String) -> int:
+	return max(1, int(location_progress.get(location_id, 1)))
+
+## Unlock floors up to `floor_num` at a location (never lowers progress).
+func unlock_floor(location_id: String, floor_num: int) -> void:
+	if floor_num > get_max_floor(location_id):
+		location_progress[location_id] = floor_num
+		print("%s: unlocked floor %d" % [location_id, floor_num])
+	update_max_floor_cleared(floor_num)
 
 # === PROFICIENCY ===
 func track_weapon_proficiency():

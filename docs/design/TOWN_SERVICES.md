@@ -1,7 +1,7 @@
 # Town Services: Alchemist, Blacksmith and Guild Bounties
 
-**Status:** Draft v2. Your decisions on Q1–Q7 are incorporated (see the decision log in §10).
-A few smaller follow-up questions remain in §8.
+**Status:** v3. All decisions (Q1–Q7, F1–F5) are incorporated; see the decision log in §10.
+Phase 0 (foundations) is built on PR #1; Phase 1 (Alchemist) is next.
 **Scope:** three new town buildings that turn dungeon loot into character progress, plus
 **Expedition Locations**, which the bounty design needs.
 **Out of scope (parked):** the Adventurer system (§9).
@@ -64,13 +64,16 @@ The player picks **where** to go, then **which floor**:
 | **Troll Caves** | Troll only | Tanky hitters; cold-themed drops |
 | **Orc Plains** | Orc only | Brutes and armor; ore-rich |
 | **Fairy Circles** | Fairy only | Casters, high magic; arcane drops |
-| **The Dungeon** | **Mixed:** each enemy rolls a random race | Unpredictable; bonus rewards (§8, F1) |
+| **The Dungeon** | **Mixed:** each enemy rolls a random race | The classic wave gauntlet; drops from every table |
 
-Rules (my proposal):
-- **Floor progress is shared across locations.** `max_floor_cleared` stays one number,
-  floors mean depth and difficulty, and the location only changes who you fight and
-  what drops. This avoids grinding the same floors four times. (Per-location
-  progress is an alternative; see §8, F2.)
+Rules:
+- **Two modes, eventually** *(F1)*. **The Dungeon stays a wave-based gauntlet.** The
+  four themed locations will become **exploration** areas once the Adventurer system
+  exists (§9). Until then they use the same wave format with a single race.
+- **Floor progress is tracked per location** *(F2)*. Each location has its own highest
+  unlocked floor (`location_progress[location_id]`). Existing saves carry their old
+  `max_floor_cleared` over to The Dungeon, which is the mode they were played in.
+  Themed locations start at floor 1.
 - **Bosses match the location**, e.g. "Goblin Brute King" in the Goblin Forest. In
   The Dungeon the boss race is random.
 - **Material drops come from the race of each defeated enemy** (§3.2). Single-race
@@ -84,13 +87,14 @@ Data: `data/locations.json`
 "troll_caves":   { "name": "Troll Caves",   "races": ["Troll"],  "description": "...", "reward_mult": 1.0 },
 "orc_plains":    { "name": "Orc Plains",    "races": ["Orc"],    "description": "...", "reward_mult": 1.0 },
 "fairy_circles": { "name": "Fairy Circles", "races": ["Fairy"],  "description": "...", "reward_mult": 1.0 },
-"the_dungeon":   { "name": "The Dungeon",   "races": "all", "mixed": true, "description": "...", "reward_mult": 1.15 }
+"the_dungeon":   { "name": "The Dungeon",   "races": "all", "mixed": true, "mode": "waves", "description": "...", "reward_mult": 1.0 }
 ```
 Code changes:
 - `EnemyFactory.set_dungeon_race(floor)` becomes `set_location(location_id)`. For a
   mixed location, `create_enemy` rolls the race per enemy.
 - `DungeonStateManager.start_dungeon(player, floor, location_id)` stores the location.
-- The battle background can later be chosen per location, once art exists.
+- The battle background will be chosen per location once art exists *(F5)*; there's a
+  `background` field reserved for it.
 
 ### 3.2 Material economy
 - **More drops.** Each regular wave drops 1–2 materials and the boss 3, plus floor scaling.
@@ -311,10 +315,15 @@ success = min(1.0, base_success + 0.10 × reinforcement_steps)
 So a gambler pays less on average at low levels, while at the top it's cheaper to buy
 certainty. That makes the slider a real decision.
 
-**On failure** (my proposal): **the payment is consumed and the item stays at its
-current level.** It never downgrades or breaks. The item also gains a
-**"Tempered" +5% to its next attempt** (stacking, reset on success), which softens bad
-streaks. See §8, F3 if you'd prefer harsher failures.
+**On failure** *(F3)*: **the payment is consumed.** Below +7 the item keeps its level.
+**If the item is already +7 or higher, it drops one level** (a failed +7→+8 attempt
+leaves it at +6). It never breaks. Every failure also gives the item **"Tempered"**:
++5% to its next attempt, stacking, and reset on success.
+
+```
+DOWNGRADE_FROM_LEVEL = 7     # items at this level or above lose 1 level on failure
+TEMPERED_BONUS       = 0.05  # per consecutive failure
+```
 
 The UI always shows the exact success %, the cost of each reinforcement step, and the
 pity bonus.
@@ -424,24 +433,22 @@ Town → [Expedition] → pick Location (5 cards with description, races, materi
 The location picker is a new dialog in front of the existing
 `show_floor_selection_dialog()`. It remembers `last_location`.
 
-## 8. Follow-up questions
+## 8. Follow-up decisions
 
-Smaller questions created by your answers. Each has a default I'll build unless you
-say otherwise.
-
-| # | Question | Default |
+| # | Question | Decision |
 |---|---|---|
-| F1 | What makes **The Dungeon** (mixed) worth picking over a themed location? | **+15% gold/XP** (`reward_mult` 1.15) and drops from all four tables |
-| F2 | Is floor progress shared across locations, or tracked per location? | **Shared** (one `max_floor_cleared`) |
-| F3 | What happens when an upgrade fails? | **Payment lost, item kept, "Tempered" +5% next try**. Alternatives: lose a level on failure at +7 and above, or allow a breaking chance. |
-| F4 | How long do bounties last, and what do failures cost? | **3 expeditions**; fail = −50% of the bounty's GP + 1 demerit; abandon = same demerit, or pay 25% of the gold reward instead |
-| F5 | Does the location change the battle background? | **Later**, once art exists; use the current background for now |
+| F1 | What makes The Dungeon different? | It stays the **wave-based gauntlet** with mixed races. The themed locations become **exploration** areas later (waves until then). No reward multiplier needed. |
+| F2 | Shared or per-location floor progress? | **Per location**. Old saves carry their progress over to The Dungeon. |
+| F3 | Upgrade failure | **Payment lost, item kept, Tempered bonus. Items at +7 or higher lose one level on failure.** |
+| F4 | Bounty deadlines and penalties | **Default**: 3 expeditions; fail = −50% GP + 1 demerit; abandon = demerit or 25% fee |
+| F5 | Per-location battle backgrounds | **Later**; the data field is reserved |
 
 ## 9. Future: Adventurer system (parked)
 
 Your idea, recorded so it isn't lost:
 
-- **Exploration dungeons** that are explored rather than played as wave gauntlets.
+- **Exploration dungeons** that are explored rather than played as wave gauntlets. The
+  four themed locations (§3.1) become these.
 - **Adventurer rank F, E, D, C, B, A, S**, unlocking new quest types.
 - **A robust NPC system** with quest givers and named characters.
 - **Alignment and relationship systems** that affect quests and NPC reactions.
@@ -473,13 +480,18 @@ per-NPC relationship values, and a quest engine with branching and prerequisites
 | Q5 | Status flask recipes | **Bought**; upgraded flask recipes later tied to Adventurer rank |
 | Q6 | Bounty board refresh | **After each run**; unfinished bounties give **demerits or a penalty fee** (§6.1) |
 | Q7 | Guild Points | **Visible now**; Adventurer ranks **F, E, D, C, B, A, S** later |
+| F1 | Dungeon vs themed | Dungeon = wave gauntlet (mixed races); themed locations = exploration later |
+| F2 | Floor progress | **Per location** |
+| F3 | Upgrade failure | Payment lost, Tempered; **−1 level on failure at +7 and above** |
+| F4 | Bounty deadlines | Default (3 expeditions, demerit or fee) |
+| F5 | Location backgrounds | Later |
 | – | Art | Alchemist, Blacksmith and Guild use the **shop background** for now |
 
 ## 11. Build plan
 
 | Phase | Contents | Main files |
 |---|---|---|
-| **0. Foundations** | `GameEvents` autoload; save v2 + migration; **Locations** (data, `EnemyFactory.set_location`, mixed races, location picker); material drop tables + new materials; **carry limit** with overflow to stash; simulator item-use policy + per-location runs | `scripts/autoload/GameEvents.gd`, `SaveManager.gd`, `data/locations.json`, `EnemyFactory.gd`, `EnemyGroup.gd`, `DungeonStateManager.gd`, `TownScene.gd`, `RewardsManager.gd`, `data/loot/material_tables.json`, `materials.json`, `Inventory.gd`, `tests/balance_sim.gd` |
+| **0. Foundations** ✅ built | `GameEvents` autoload; save v2 + migration; **Locations** (data, `EnemyFactory.set_location`, mixed races, location picker); material drop tables + new materials; **carry limit** with overflow to stash; simulator item-use policy + per-location runs | `scripts/autoload/GameEvents.gd`, `SaveManager.gd`, `data/locations.json`, `EnemyFactory.gd`, `EnemyGroup.gd`, `DungeonStateManager.gd`, `TownScene.gd`, `RewardsManager.gd`, `data/loot/material_tables.json`, `materials.json`, `Inventory.gd`, `tests/balance_sim.gd` |
 | **1. Alchemist** | recipes data, `AlchemyManager`, AlchemistScene (shop background), town button, content-tool tab, tests | `data/recipes.json`, `scripts/autoload/AlchemyManager.gd`, `scenes/town/AlchemistScene.*`, `consumables.json` (2 new) |
 | **2. Blacksmith** | `base_damage`/`base_armor`/`upgrade_level`; `BlacksmithManager` (upgrade with success roll + reinforcement + Tempered, salvage); naming; save fields; simulator gear profiles | `Equipment.gd`, `EquipmentNamer.gd`, `scripts/autoload/BlacksmithManager.gd`, `scenes/town/BlacksmithScene.*` |
 | **3. Guild** | `bounties.json`; `GuildManager` (board, progress, deadlines, demerits/fees, turn-in); GuildScene; combat log lines | `data/bounties.json`, `scripts/autoload/GuildManager.gd`, `scenes/town/GuildScene.*` |

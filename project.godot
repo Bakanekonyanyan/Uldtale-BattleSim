@@ -18,6 +18,8 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+GameEvents="*res://scripts/autoload/GameEvents.gd"
+LocationManager="*res://scripts/autoload/LocationManager.gd"
 SceneManager="*res://scripts/autoload/SceneManager.gd"
 EnemyFactory="*res://scripts/autoload/EnemyFactory.gd"
 SkillManager="*res://scripts/autoload/SkillManager.gd"

@@ -17,8 +17,13 @@ func get_save_file_path(character_name: String) -> String:
 func save_exists(character_name: String) -> bool:
 	return FileAccess.file_exists(get_save_file_path(character_name))
 
+## Bump when the save layout changes; add a step to _migrate() for it.
+## v1: original (no version key). v2: per-location progress, carry limit, town block.
+const SAVE_VERSION := 2
+
 func save_game(player: CharacterData):
 	var save_data = {
+		"save_version": SAVE_VERSION,
 		"name": player.name,
 		"race": player.race,
 		"character_class": player.character_class,
@@ -47,7 +52,12 @@ func save_game(player: CharacterData):
 		"equipment": {},
 		"xp": player.xp,
 		"attribute_points": player.attribute_points,
-		"max_floor_cleared": player.max_floor_cleared
+		"max_floor_cleared": player.max_floor_cleared,
+		"location_progress": player.location_progress,
+		"last_location": player.last_location,
+		"carry_limit": player.carry_limit,
+		# Alchemist / Blacksmith / Guild state (filled in by later phases)
+		"town": player.town_state
 
 	}
 	
@@ -230,6 +240,11 @@ func load_game(character_name: String) -> CharacterData:
 	player.xp = save_data.get("xp", 0)
 	player.attribute_points = save_data.get("attribute_points", 0)
 	player.max_floor_cleared = save_data.get("max_floor_cleared", 0)
+	_migrate(save_data)
+	player.location_progress = save_data.get("location_progress", {})
+	player.last_location = save_data.get("last_location", "the_dungeon")
+	player.carry_limit = int(save_data.get("carry_limit", 5))
+	player.town_state = save_data.get("town", {})
 	player.is_player = true
 	
 	# Handle skills separately
@@ -391,6 +406,11 @@ func load_game(character_name: String) -> CharacterData:
 	print("Loaded inventory items: ", player.inventory.items.keys())
 	print("Loaded stash items: ", player.stash.items.keys())
 	
+	# Consumables over the carry limit live in the stash (also migrates old saves)
+	var moved = player.enforce_carry_limit()
+	if moved > 0:
+		print("SaveManager: moved %d consumables over the carry limit to the stash" % moved)
+	
 	#  ADD THIS AFTER ALL CHARACTER DATA IS LOADED:
 	# Initialize elemental resistances if not already present
 	if player.elemental_resistances == null:
@@ -404,6 +424,16 @@ func load_game(character_name: String) -> CharacterData:
 	player.calculate_secondary_attributes()
 	
 	return player
+
+## Upgrade older save dictionaries in place to the current layout.
+func _migrate(save_data: Dictionary) -> void:
+	var version = int(save_data.get("save_version", 1))
+	if version < 2:
+		# v1 had a single progress number from the (then only) mixed dungeon
+		var old_max = max(1, int(save_data.get("max_floor_cleared", 1)))
+		save_data["location_progress"] = {"the_dungeon": old_max}
+		print("SaveManager: migrated v1 save (floor %d -> The Dungeon)" % old_max)
+	save_data["save_version"] = SAVE_VERSION
 
 func get_all_characters() -> Array:
 	var characters = []

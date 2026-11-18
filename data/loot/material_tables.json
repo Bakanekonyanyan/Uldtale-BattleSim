@@ -1,0 +1,19 @@
+{
+	"_comment": "Material drops per defeated enemy race. Each regular wave rolls per_wave_min..per_wave_max times (+1 per floor_bonus_every floors); each roll picks a defeated enemy and draws from its race table (common vs uncommon). Floor materials and boss drops are rolled separately.",
+	"per_wave_min": 1,
+	"per_wave_max": 2,
+	"boss_rolls": 3,
+	"floor_bonus_every": 5,
+	"uncommon_chance": 0.25,
+	"races": {
+		"Goblin": { "common": ["bogblossom_petal", "rousepepper_seeds"], "uncommon": ["iron_ore"] },
+		"Orc":    { "common": ["iron_ore", "bloodvine_fiber"],         "uncommon": ["wood"] },
+		"Troll":  { "common": ["frostroot_chunk", "wood"],              "uncommon": ["voltslate_pebble"] },
+		"Fairy":  { "common": ["glowcap_mushroom", "mindglass_shard"],  "uncommon": ["embershard_fragment"] }
+	},
+	"floor_materials": [
+		{ "id": "mithril_ore", "min_floor": 6, "chance_per_wave": 0.25 },
+		{ "id": "adamant_ore", "min_floor": 12, "chance_per_wave": 0.20 }
+	],
+	"boss_drops": { "monster_core": 0.6 }
+}

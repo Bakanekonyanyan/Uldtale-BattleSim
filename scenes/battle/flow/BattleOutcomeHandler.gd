@@ -43,6 +43,10 @@ func handle_deaths(dead_characters: Array[CharacterData]) -> void:
 		if visual_manager:
 			visual_manager.play_death_animation(dead)
 		turn_queue.remove(dead)
+		# Tell town systems (Guild bounties, later quests). PvE only.
+		if dead != context.player and not context.is_pvp_mode:
+			GameEvents.enemy_killed.emit(dead, DungeonStateManager.current_location,
+				context.current_floor, dead.character_class.begins_with("King"))
 
 	if visual_manager:
 		visual_manager.shake_on_death()

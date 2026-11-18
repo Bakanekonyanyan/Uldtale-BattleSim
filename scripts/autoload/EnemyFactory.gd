@@ -20,8 +20,11 @@ const BOSS_MINION_STAT_SHARE := 0.25
 var races = {}
 var classes = {}
 var skills = {}
+## Expedition location (LocationManager id) that decides which races spawn
+var current_location: String = ""
+## Single race of a themed location, or the race rolled for this floor's boss in a
+## mixed location. Read by DungeonStateManager for flavor text.
 var current_dungeon_race: String = ""
-var dungeon_race: String = ""
 var current_floor: int = 0
 
 func _ready():
@@ -37,61 +40,51 @@ func load_data():
 	file = FileAccess.open("res://data/skills.json", FileAccess.READ)
 	skills = JSON.parse_string(file.get_as_text())["skills"]
 
-func get_dungeon_race():
-	if current_dungeon_race == "":
-		print("Warning: Dungeon race not set yet! Call set_dungeon_race(floor) first.")
-	else:
-		print("Current dungeon race:", current_dungeon_race)
+func get_dungeon_race() -> String:
 	return current_dungeon_race
 
-func set_dungeon_race(floor: int):
-	if floor != current_floor:
-		current_floor = floor
-		var non_playable_races = races["non_playable"].keys()
-		dungeon_race = non_playable_races[RandomManager.randi() % non_playable_races.size()]
-		current_dungeon_race = dungeon_race
-		print("Floor %d - Current dungeon race set to: %s" % [floor, current_dungeon_race])
-	else:
-		print("Floor %d - Keeping current dungeon race: %s" % [floor, current_dungeon_race])
+## Choose where the expedition takes place. Call when an expedition starts and
+## when it advances to a new floor (mixed locations re-roll their headline race).
+func set_location(location_id: String) -> void:
+	if not LocationManager.has_location(location_id):
+		push_warning("EnemyFactory: unknown location '%s', using %s" % [location_id, LocationManager.DEFAULT_LOCATION])
+		location_id = LocationManager.DEFAULT_LOCATION
+	current_location = location_id
+	current_dungeon_race = _roll_race()
+	print("EnemyFactory: Location %s (headline race: %s)" % [
+		LocationManager.get_display_name(location_id), current_dungeon_race
+	])
+
+func _location_races() -> Array:
+	return LocationManager.get_races(current_location, races["non_playable"].keys())
+
+func _roll_race() -> String:
+	var pool = _location_races()
+	return pool[RandomManager.randi() % pool.size()]
+
+## Race for one regular enemy: per-enemy roll in mixed locations, otherwise the
+## location's race.
+func _race_for_enemy() -> String:
+	if current_location == "":
+		set_location(LocationManager.DEFAULT_LOCATION)
+	if LocationManager.is_mixed(current_location):
+		return _roll_race()
+	return current_dungeon_race
 
 func create_enemy(level: int = 1, floor: int = 1, wave: int = 1, momentum_level: int = 0) -> CharacterData:
 	var enemy = CharacterData.new()
 	level = floor
-	#  FIX: Ensure dungeon race is set
-	if current_dungeon_race == "" or current_dungeon_race == null:
-		print("WARNING: Dungeon race not set, setting now for floor %d" % floor)
-		set_dungeon_race(floor)
-	
-	get_dungeon_race()
-
-	#  DEBUG: Check types at each step
-	print("=== DEBUG create_enemy ===")
-	print("1. races type: ", typeof(races))
-	print("2. races.keys(): ", races.keys())
-	print("3. races['non_playable'] type: ", typeof(races["non_playable"]))
-	print("4. current_dungeon_race: ", current_dungeon_race, " (type: ", typeof(current_dungeon_race), ")")
-	
-	# Check if current_dungeon_race exists in races
-	if not races["non_playable"].has(current_dungeon_race):
-		push_error("ERROR: Race '%s' not found in races['non_playable']!" % current_dungeon_race)
-		print("Available races: ", races["non_playable"].keys())
+	var race_name = _race_for_enemy()
+	if not races["non_playable"].has(race_name):
+		push_error("EnemyFactory: Race '%s' not found in races['non_playable']" % race_name)
 		return enemy
-	
-	print("5. races['non_playable'][current_dungeon_race] type: ", typeof(races["non_playable"][current_dungeon_race]))
 	
 	var enemy_classes = classes["non_playable"].keys()
 	var chosen_class = enemy_classes[RandomManager.randi() % enemy_classes.size()]
 	
-	print("6. chosen_class: ", chosen_class)
-	print("7. classes['non_playable'][chosen_class] type: ", typeof(classes["non_playable"][chosen_class]))
-
-	#  FIX: Pass race name AND race data separately
-	var race_data = races["non_playable"][current_dungeon_race]
-	print("8. race_data: ", race_data)
-	print("9. About to call setup_character...")
-	
-	setup_character(enemy, chosen_class, "non_playable", current_dungeon_race, race_data)
-	enemy.name = "%s %s" % [current_dungeon_race, chosen_class]
+	var race_data = races["non_playable"][race_name]
+	setup_character(enemy, chosen_class, "non_playable", race_name, race_data)
+	enemy.name = "%s %s" % [race_name, chosen_class]
 
 	#  ADD THIS: Initialize elemental resistances for enemies
 	if enemy.elemental_resistances == null:
@@ -117,10 +110,10 @@ func create_enemy(level: int = 1, floor: int = 1, wave: int = 1, momentum_level:
 	return enemy
 
 func create_boss(floor: int = 1, wave: int = 1, momentum_level: int = 0) -> CharacterData:
-	#  FIX: Ensure dungeon race is set
-	if current_dungeon_race == "" or current_dungeon_race == null:
-		print("WARNING: Dungeon race not set for boss, setting now for floor %d" % floor)
-		set_dungeon_race(floor)
+	# Boss race: the location's race (themed) or this floor's rolled race (mixed)
+	if current_location == "":
+		set_location(LocationManager.DEFAULT_LOCATION)
+	var boss_race = current_dungeon_race
 	
 	var boss = CharacterData.new()
 	var king_data = classes["boss"]["King"]
@@ -128,10 +121,10 @@ func create_boss(floor: int = 1, wave: int = 1, momentum_level: int = 0) -> Char
 	var minion_classes = ["Shaman", "Brute", "Minion"]
 	var chosen_minion = minion_classes[RandomManager.randi() % minion_classes.size()]
 	var minion_data = classes["non_playable"][chosen_minion]
-	var race_data = races["non_playable"][current_dungeon_race]
+	var race_data = races["non_playable"][boss_race]
 	
-	boss.name = "%s %s King" % [current_dungeon_race, chosen_minion]
-	boss.race = current_dungeon_race
+	boss.name = "%s %s King" % [boss_race, chosen_minion]
+	boss.race = boss_race
 	boss.character_class = "King (%s)" % chosen_minion
 	
 	var minion_contribution = BOSS_MINION_STAT_SHARE

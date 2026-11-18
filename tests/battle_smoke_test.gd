@@ -9,6 +9,7 @@ extends Node
 
 var failures: Array[String] = []
 var passes := 0
+var kills_seen := 0  # GameEvents.enemy_killed count
 
 func check(cond: bool, label: String) -> void:
 	if cond:
@@ -33,6 +34,8 @@ func _ready():
 	Engine.time_scale = 25.0
 	await get_tree().process_frame
 	_unit_checks()
+	_phase0_checks()
+	GameEvents.enemy_killed.connect(func(_e, _loc, _f, _b): kills_seen += 1)
 	await _battle_run("single enemy", 1, false, -1)
 	await _battle_run("three enemies", 3, false, -1)
 	await _battle_run("boss", 1, true, -1)
@@ -120,6 +123,77 @@ func _unit_checks() -> void:
 	p.reset_defense()
 	check(not p.is_defending, "reset_defense clears stance (called by TurnStartProcessor.run)")
 
+# ------------------------------------------------------------------ phase 0 (locations, drops, carry limit, saves)
+
+func _phase0_checks() -> void:
+	# Themed location: only that race (regular enemies and boss)
+	EnemyFactory.set_location("goblin_forest")
+	var all_goblin := true
+	for i in range(15):
+		if EnemyFactory.create_enemy(1, 1, 1).race != "Goblin": all_goblin = false
+	check(all_goblin and EnemyFactory.create_boss(1, 6, 0).race == "Goblin", "Goblin Forest spawns only Goblins (incl. boss)")
+	
+	# Mixed location: several races
+	EnemyFactory.set_location("the_dungeon")
+	var seen := {}
+	for i in range(40):
+		seen[EnemyFactory.create_enemy(1, 1, 1).race] = true
+	check(seen.size() >= 3, "The Dungeon mixes races (%s)" % str(seen.keys()))
+	
+	# Per-location progress
+	var p = make_player()
+	check(p.get_max_floor("orc_plains") == 1, "new location starts at floor 1")
+	p.unlock_floor("orc_plains", 4)
+	p.unlock_floor("orc_plains", 2)  # never lowers
+	check(p.get_max_floor("orc_plains") == 4 and p.get_max_floor("troll_caves") == 1 and p.max_floor_cleared >= 4,
+		"floor progress is tracked per location")
+	
+	# v1 save migration
+	var v1 := {"max_floor_cleared": 7}
+	SaveManager._migrate(v1)
+	check(v1.location_progress == {"the_dungeon": 7} and v1.save_version == SaveManager.SAVE_VERSION,
+		"v1 save progress migrates to The Dungeon")
+	
+	# Carry limit: pack holds 5 of each consumable, rest to stash; materials unlimited
+	var potion = ItemManager.get_item("health_potion")
+	var res = p.add_to_pack(potion, 8)
+	check(res.pack == 5 and res.stash == 3 and p.inventory.get_quantity("health_potion") == 5 and p.stash.get_quantity("health_potion") >= 3,
+		"carry limit: 8 potions -> 5 pack + 3 stash")
+	check(p.withdraw_from_stash("health_potion", 2) == 0, "can't withdraw past the carry limit")
+	p.add_to_pack(ItemManager.get_item("iron_ore"), 12)
+	check(p.inventory.get_quantity("iron_ore") == 12, "materials are not carry-limited")
+	p.inventory.add_item(potion, 4)  # simulate an old save with 9 in the pack
+	check(p.enforce_carry_limit() == 4 and p.inventory.get_quantity("health_potion") == 5, "enforce_carry_limit moves excess to stash")
+	
+	# Material drops follow the defeated enemies' race
+	EnemyFactory.set_location("troll_caves")
+	var trolls: Array[CharacterData] = [EnemyFactory.create_enemy(1, 1, 1), EnemyFactory.create_enemy(1, 1, 1)]
+	var troll_mats = ["frostroot_chunk", "wood", "voltslate_pebble"]
+	var only_troll := true
+	var total := 0
+	for i in range(30):
+		var drops = RewardsManager.roll_material_drops({"current_floor": 1, "is_boss_fight": false, "enemies": trolls})
+		for id in drops:
+			total += drops[id]
+			if id not in troll_mats: only_troll = false
+	check(only_troll and total >= 30 and total <= 60, "Troll waves drop 1-2 Troll materials each (%d over 30 waves)" % total)
+	var boss_total := 0
+	for i in range(20):
+		var drops = RewardsManager.roll_material_drops({"current_floor": 1, "is_boss_fight": true, "enemies": trolls})
+		for id in drops: boss_total += drops[id]
+	check(boss_total >= 60, "boss waves drop 3+ materials (%d over 20)" % boss_total)
+	
+	# Save round trip keeps v2 fields
+	p.name = "ZZ_SmokeTest_Save"
+	p.last_location = "fairy_circles"
+	SaveManager.save_game(p)
+	var loaded = SaveManager.load_game(p.name)
+	SaveManager.delete_character(p.name)
+	check(loaded != null and loaded.get_max_floor("orc_plains") == 4 and loaded.last_location == "fairy_circles"
+		and loaded.carry_limit == 5 and loaded.inventory.get_quantity("health_potion") == 5,
+		"save v2 round trip keeps location progress, last location, carry limit, pack")
+	EnemyFactory.set_location("the_dungeon")
+
 # ------------------------------------------------------------------ full battles
 
 func _battle_run(label: String, enemy_count: int, boss: bool, player_hp: int) -> void:
@@ -132,6 +206,7 @@ func _battle_run(label: String, enemy_count: int, boss: bool, player_hp: int) ->
 		for i in range(enemy_count):
 			enemies.append(EnemyFactory.create_enemy(1, 1, 1))
 
+	var kills_seen_before := kills_seen
 	var battle = load("res://scenes/battle/Battle.tscn").instantiate()
 	get_tree().root.add_child(battle)
 
@@ -189,5 +264,8 @@ func _battle_run(label: String, enemy_count: int, boss: bool, player_hp: int) ->
 	else:
 		check(completed[1] == player.is_alive(), "%s: result matches player state (won=%s)" % [label, completed[1]])
 	check(not stale_defense, "%s: defend stance never carried into the next player turn" % label)
+	if completed[1]:
+		check(kills_seen_before + enemies.size() == kills_seen,
+			"%s: GameEvents.enemy_killed fired once per enemy (%d)" % [label, kills_seen - kills_seen_before])
 	battle.queue_free()
 	await get_tree().process_frame

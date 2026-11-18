@@ -271,7 +271,7 @@ func _on_accept_selected_pressed():
 	if metadata["type"] == "consumable":
 		var item = metadata["item"]
 		var quantity = metadata["quantity"]
-		player_character.inventory.add_item(item, quantity)
+		player_character.add_to_pack(item, quantity)  # over the carry limit -> stash
 		collected_items[metadata["id"]] = true
 	elif metadata["type"] == "equipment":
 		var equipment = metadata["item"]
@@ -290,7 +290,7 @@ func _on_accept_all_pressed():
 		if not collected_items.has(item_id):
 			var item = ItemManager.get_item(item_id)
 			if item:
-				player_character.inventory.add_item(item, rewards[item_id])
+				player_character.add_to_pack(item, rewards[item_id])
 				collected_items[item_id] = true
 	
 	if rewards.has("equipment_instances"):

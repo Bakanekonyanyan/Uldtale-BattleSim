@@ -252,8 +252,8 @@ func _on_move_to_inventory_pressed():
 		var item_id = filtered_items[item_index].get("key")
 		var item = player_character.stash.items[item_id].item
 		
-		player_character.stash.remove_item(item_id, 1)
-		player_character.inventory.add_item(item, 1)
+		if player_character.withdraw_from_stash(item_id, 1) == 0:
+			print("Can't carry more %s (limit %d)" % [item.display_name, player_character.carry_limit])
 	
 	refresh_lists()
 	print("Moved %d items to inventory" % selected_items.size())
@@ -276,8 +276,9 @@ func _on_move_all_to_inventory_pressed():
 		var item = item_data.item
 		var quantity = item_data.quantity
 		
-		player_character.stash.remove_item(item_id, quantity)
-		player_character.inventory.add_item(item, quantity)
+		var moved = player_character.withdraw_from_stash(item_id, quantity)
+		if moved < quantity:
+			print("Took %d of %d %s (carry limit %d)" % [moved, quantity, item.display_name, player_character.carry_limit])
 	
 	refresh_lists()
 	print("Moved all quantities of %d items to inventory" % selected_items.size())

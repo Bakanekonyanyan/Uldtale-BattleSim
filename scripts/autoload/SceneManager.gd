@@ -167,7 +167,7 @@ func _apply_data_to_scene(data: Dictionary) -> void:
 
 func change_to_town(character: CharacterData) -> void:
 	MomentumSystem.reset_momentum()
-	DungeonStateManager.end_dungeon()
+	DungeonStateManager.end_dungeon(true)
 	RewardsManager.clear_saved_state()  # Managed by RewardsManager now
 	navigate(ScenePath.TOWN, TransitionType.REPLACE, character)
 
@@ -191,7 +191,7 @@ func change_to_arena(character: CharacterData) -> void:
 
 func change_to_main_menu() -> void:
 	MomentumSystem.reset_momentum()
-	DungeonStateManager.end_dungeon()
+	DungeonStateManager.end_dungeon(true)
 	navigate(ScenePath.MAIN_MENU, TransitionType.REPLACE)
 
 func change_to_character_selection() -> void:
@@ -202,8 +202,9 @@ func return_to_previous_scene() -> void:
 
 # ===== DUNGEON FLOW =====
 
-func start_dungeon_from_floor(player: CharacterData, floor: int) -> void:
-	"""Initialize dungeon and transition to dungeon scene"""
+func start_dungeon_from_floor(player: CharacterData, floor: int, location_id: String = "the_dungeon") -> void:
+	"""Start an expedition at a location/floor and transition to the dungeon scene"""
+	floor = clamp(floor, 1, player.get_max_floor(location_id))
 	# Reset player state
 	player.current_hp = player.max_hp
 	player.current_mp = player.max_mp
@@ -212,7 +213,7 @@ func start_dungeon_from_floor(player: CharacterData, floor: int) -> void:
 	player.skill_manager.clear_cooldowns()
 	
 	# Initialize dungeon
-	DungeonStateManager.start_dungeon(player, floor)
+	DungeonStateManager.start_dungeon(player, floor, location_id)
 	
 	# Navigate
 	navigate(ScenePath.DUNGEON, TransitionType.REPLACE, player)
@@ -278,21 +279,27 @@ func _on_battle_completed(player_won: bool, xp_gained: int) -> void:
 	
 	if not player_won:
 		MomentumSystem.reset_momentum()
-		DungeonStateManager.end_dungeon()
+		DungeonStateManager.end_dungeon(false)
 		change_to_character_selection()
 		return
 	
-	# Update max floor if boss
+	var location_id = DungeonStateManager.current_location
+	GameEvents.battle_won.emit(location_id, DungeonStateManager.current_floor,
+		DungeonStateManager.current_wave, DungeonStateManager.is_boss_fight)
+	
+	# Boss down: unlock the next floor at THIS location
 	if DungeonStateManager.is_boss_fight:
 		var cleared_floor = DungeonStateManager.current_floor
 		var player = DungeonStateManager.active_player
+		GameEvents.floor_cleared.emit(location_id, cleared_floor)
 		
-		if cleared_floor >= player.max_floor_cleared:
-			player.max_floor_cleared = cleared_floor + 1
+		if cleared_floor + 1 > player.get_max_floor(location_id):
+			player.unlock_floor(location_id, cleared_floor + 1)
 			SaveManager.save_game(player)
 	
 	# Press on (-1) or take breather (xp)
 	if xp_gained == -1:
+		RewardsManager.bank_material_drops(DungeonStateManager.get_battle_data())
 		_continue_with_momentum()
 	else:
 		_show_rewards(xp_gained)

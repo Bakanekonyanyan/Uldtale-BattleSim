@@ -13,6 +13,8 @@ const CLASSES = ["Paladin", "Necromancer", "Myrmidon", "Cleric", "Samurai", "Ele
 const N = 150
 
 var out := []
+var sim_location := "the_dungeon"  # expedition location used by make_enemies()
+var start_potions := 0             # health + mana potions each hero starts a run with
 var t := {}  # tallies
 
 func log_line(s: String) -> void:
@@ -56,6 +58,35 @@ func _ready():
 			reached[r.wave] = reached.get(r.wave, 0) + 1
 		log_line("%-12s clear %3d%%   died at wave: %s" % [cls, int(100.0 * clears / N), str(reached)])
 
+	# --- 2c. Same run, carrying 5 Health + 5 Mana potions (the carry limit) ---
+	log_line("\n== Floor 1 full run carrying 5 Health + 5 Mana potions: clear % ==")
+	start_potions = 5
+	for cls in CLASSES:
+		var clears := 0
+		for i in range(N):
+			MomentumSystem.reset_momentum()
+			if sim_run(cls, 1).cleared: clears += 1
+		log_line("%-12s clear %3d%%" % [cls, int(100.0 * clears / N)])
+	start_potions = 0
+	
+	# --- 2d. Floor 1 full run by expedition location ---
+	log_line("\n== Floor 1 full run by location (no potions): clear % ==")
+	var loc_header = "%-12s" % "class"
+	for loc in LocationManager.get_ids():
+		loc_header += " %14s" % LocationManager.get_display_name(loc)
+	log_line(loc_header)
+	for cls in ["Paladin", "Samurai", "Cleric", "Elementalist", "Druid"]:
+		var row = "%-12s" % cls
+		for loc in LocationManager.get_ids():
+			sim_location = loc
+			var clears := 0
+			for i in range(N):
+				MomentumSystem.reset_momentum()
+				if sim_run(cls, 1).cleared: clears += 1
+			row += " %13d%%" % int(100.0 * clears / N)
+		log_line(row)
+	sim_location = "the_dungeon"
+	
 	# --- 2b. Campaign: floors 1..4 back to back, same character ---
 	log_line("\n== Campaign: floors 1-4 back-to-back, leveling up (clear % of each floor | avg level reached) ==")
 	for cls in CLASSES:
@@ -135,10 +166,13 @@ func tally(key: String, amount: float) -> void:
 func make_player(cls: String) -> CharacterData:
 	var p = CharacterFactory.create_character("Hero", "Hume", cls, true)
 	p.reset_for_new_battle()
+	if start_potions > 0:
+		p.add_to_pack(ItemManager.get_item("health_potion"), start_potions)
+		p.add_to_pack(ItemManager.get_item("mana_potion"), start_potions)
 	return p
 
 func make_enemies(floor_num: int, wave: int) -> Array[CharacterData]:
-	EnemyFactory.set_dungeon_race(floor_num)
+	EnemyFactory.set_location(sim_location)
 	var g = EnemyGroup.new()
 	g.initialize(floor_num, wave, wave == 6)
 	return g.enemies
@@ -205,6 +239,13 @@ func fight(p: CharacterData, enemies: Array[CharacterData], floor_num: int, boss
 		if actor.is_stunned:
 			actor.is_stunned = false; q.advance(); continue
 
+		# Items are a free action (one per turn) before the main action
+		if actor == p:
+			var potion = potion_policy(p)
+			if potion:
+				engine.execute_action(potion)
+				tally("player item " + potion.item_data.id, 1)
+		
 		var action: BattleAction = player_policy(p, ctx) if actor == p else planner.plan_action(actor)
 		if action:
 			var hp_before = p.current_hp
@@ -225,6 +266,14 @@ func fight(p: CharacterData, enemies: Array[CharacterData], floor_num: int, boss
 		q.advance()
 
 	return {"won": ctx.did_player_win(), "direct": direct, "status": status, "turns": turns}
+
+# Drink a health potion below 40% HP, or a mana potion below 25% MP (casters).
+func potion_policy(p: CharacterData) -> BattleAction:
+	if p.current_hp < p.max_hp * 0.4 and p.inventory.get_quantity("health_potion") > 0:
+		return BattleAction.item(p, p.inventory.get_item("health_potion"), [p])
+	if p.spell_power > p.attack_power and p.current_mp < p.max_mp * 0.25 and p.inventory.get_quantity("mana_potion") > 0:
+		return BattleAction.item(p, p.inventory.get_item("mana_potion"), [p])
+	return null
 
 # A sensible human-like policy: heal when low, use best ready damage skill, else attack weakest.
 func player_policy(p: CharacterData, ctx: BattleContext) -> BattleAction:

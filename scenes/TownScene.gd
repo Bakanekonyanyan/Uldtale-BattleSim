@@ -61,99 +61,116 @@ func _on_shop_pressed():
 func _on_dungeon_pressed():
 	set_player(current_character)
 	current_character.current_floor = 1
-	if current_character.max_floor_cleared == null:
-		current_character.max_floor_cleared = 1;
-		print(current_character.max_floor_cleared)
-	else:
-		print(current_character.max_floor_cleared)
-	
-	show_floor_selection_dialog()
+	show_location_selection_dialog()
 
+# === EXPEDITION: pick a location, then a floor ===
 
-func show_floor_selection_dialog():
-	"""Show a dialog to select which floor to start from"""
-	
-	# CRITICAL: Log current max_floor_cleared
-	print("TownScene: Opening floor selection - max_floor_cleared: %d" % current_character.max_floor_cleared)
-	
+func show_location_selection_dialog():
+	"""Step 1: choose where to go (The Dungeon or a themed location)."""
 	var dialog = ConfirmationDialog.new()
-	dialog.title = "Select Starting Floor"
-	dialog.ok_button_text = "Start Dungeon"
+	dialog.title = "Choose Expedition"
+	dialog.ok_button_text = "Next: Choose Floor"
 	dialog.cancel_button_text = "Cancel"
 	
-	# Create container for floor selection
+	var vbox = VBoxContainer.new()
+	vbox.custom_minimum_size = Vector2(460, 320)
+	
+	var selected = [current_character.last_location if LocationManager.has_location(current_character.last_location) else LocationManager.DEFAULT_LOCATION]
+	var buttons: Array[Button] = []
+	
+	var description = RichTextLabel.new()
+	description.bbcode_enabled = true
+	description.fit_content = true
+	description.custom_minimum_size = Vector2(440, 90)
+	
+	var update_description = func():
+		var loc = LocationManager.get_location(selected[0])
+		var races = LocationManager.get_races(selected[0], EnemyFactory.races["non_playable"].keys())
+		description.text = "[b]%s[/b]\n%s\n[color=gray]Enemies: %s  |  Highest floor unlocked: %d[/color]" % [
+			loc.get("name", selected[0]),
+			loc.get("description", ""),
+			"Mixed (" + ", ".join(races) + ")" if LocationManager.is_mixed(selected[0]) else ", ".join(races),
+			current_character.get_max_floor(selected[0])
+		]
+	
+	for location_id in LocationManager.get_ids():
+		var btn = Button.new()
+		btn.text = "%s  (Floor %d)" % [LocationManager.get_display_name(location_id), current_character.get_max_floor(location_id)]
+		btn.toggle_mode = true
+		btn.custom_minimum_size = Vector2(440, 36)
+		btn.button_pressed = location_id == selected[0]
+		buttons.append(btn)
+		btn.pressed.connect(func():
+			selected[0] = location_id
+			for other in buttons:
+				other.button_pressed = other == btn
+			update_description.call()
+		)
+		vbox.add_child(btn)
+	
+	vbox.add_child(description)
+	update_description.call()
+	
+	dialog.add_child(vbox)
+	add_child(dialog)
+	dialog.popup_centered()
+	
+	dialog.confirmed.connect(func():
+		current_character.last_location = selected[0]
+		dialog.queue_free()
+		show_floor_selection_dialog(selected[0])
+	)
+	dialog.canceled.connect(func(): dialog.queue_free())
+
+func show_floor_selection_dialog(location_id: String = "the_dungeon"):
+	"""Step 2: choose a starting floor. Progress is tracked per location."""
+	var max_selectable = current_character.get_max_floor(location_id)
+	print("TownScene: Floor selection for %s - max unlocked floor %d" % [location_id, max_selectable])
+	
+	var dialog = ConfirmationDialog.new()
+	dialog.title = "%s - Select Starting Floor" % LocationManager.get_display_name(location_id)
+	dialog.ok_button_text = "Start Expedition"
+	dialog.cancel_button_text = "Back"
+	
 	var vbox = VBoxContainer.new()
 	vbox.custom_minimum_size = Vector2(300, 200)
 	
-	# Add info label
 	var info_label = Label.new()
 	info_label.text = "Choose which floor to start from:"
 	info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(info_label)
 	
-	# Add spacing
 	var spacer = Control.new()
 	spacer.custom_minimum_size = Vector2(0, 10)
 	vbox.add_child(spacer)
 	
-	# Create floor selection buttons in a grid
 	var grid = GridContainer.new()
 	grid.columns = 5
 	grid.add_theme_constant_override("h_separation", 5)
 	grid.add_theme_constant_override("v_separation", 5)
 	
-	var max_selectable
-	if current_character.max_floor_cleared == 1:
-		max_selectable = max(1, current_character.max_floor_cleared)
-	else:
-		max_selectable = max(1, current_character.max_floor_cleared)
-	var selected_floor = 1  # Default to floor 1
-	var floor_buttons = []
+	var floor_buttons: Array[Button] = []
+	current_character.current_floor = 1
 	
-	# Create floor buttons
-	for floor in range(1, 26):  # Floors 1-25
+	for floor_num in range(1, DungeonStateManager.max_floor + 1):
 		var btn = Button.new()
-		btn.text = str(floor)
+		btn.text = str(floor_num)
 		btn.custom_minimum_size = Vector2(50, 40)
 		btn.toggle_mode = true
-		btn.disabled = floor > max_selectable
-		
-		if floor == 1:
-			btn.button_pressed = true
-		
-		# Store floor number in button
-		btn.set_meta("floor", floor)
+		btn.disabled = floor_num > max_selectable
+		btn.button_pressed = floor_num == 1
 		floor_buttons.append(btn)
-		
-		# Connect button press
 		btn.pressed.connect(func():
-			# Unpress all other buttons
-			for other_btn in floor_buttons:
-				if other_btn != btn:
-					other_btn.button_pressed = false
-			btn.button_pressed = true
-			selected_floor = btn.get_meta("floor")
-			# CRITICAL FIX: Update character's floor immediately when selected
-			current_character.current_floor = selected_floor
-			print("TownScene: Selected floor %d, set current_character.current_floor to %d" % [
-				selected_floor,
-				current_character.current_floor
-			])
+			for other in floor_buttons:
+				other.button_pressed = other == btn
+			current_character.current_floor = floor_num
 		)
-		
 		grid.add_child(btn)
 	
 	vbox.add_child(grid)
 	
-	# Add info about max cleared floor
 	var progress_label = Label.new()
-	if current_character.max_floor_cleared > 0:
-		progress_label.text = "\nHighest Cleared: Floor %d\nYou can start from floors 1-%d" % [
-			current_character.max_floor_cleared,
-			max_selectable
-		]
-	else:
-		progress_label.text = "\nYou haven't cleared any floors yet.\nStart from Floor 1!"
+	progress_label.text = "\nYou can start from floors 1-%d here." % max_selectable
 	progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(progress_label)
 	
@@ -161,23 +178,17 @@ func show_floor_selection_dialog():
 	add_child(dialog)
 	dialog.popup_centered()
 	
-	# Handle confirmation
 	dialog.confirmed.connect(func():
-		# CRITICAL FIX: Use current_character.current_floor instead of selected_floor
-		# because selected_floor is captured by closure and may be stale
 		var final_floor = current_character.current_floor
-		print("TownScene: Confirmed floor selection - final_floor=%d, character.current_floor=%d" % [
-			final_floor,
-			current_character.current_floor
-		])
-		SceneManager.start_dungeon_from_floor(current_character, final_floor)
+		print("TownScene: Starting %s at floor %d" % [location_id, final_floor])
+		SceneManager.start_dungeon_from_floor(current_character, final_floor, location_id)
 		dialog.queue_free()
 	)
 	
-	# Handle cancellation
+	# "Back" returns to the location picker
 	dialog.canceled.connect(func():
-		print("Dungeon entry cancelled")
 		dialog.queue_free()
+		show_location_selection_dialog()
 	)
 
 func _on_equipment_pressed():
