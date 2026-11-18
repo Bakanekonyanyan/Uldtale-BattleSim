@@ -25,7 +25,8 @@ godot --headless res://tests/balance_sim.tscn -- mylabel
 | Magical defense | `spell_ward + armor × 0.25` |
 | Crit | `crit_rate` chance for ×1.5–2.0 |
 | Heal | `skill_power + spell_power × 0.5` |
-| Buff / debuff | `skill_power`% of the target's **base** attribute (Roar 40 = −40% Agility) |
+| Buff / debuff | `skill_power` × 1.5% of the target's **base** attribute (Roar 40 = −60% Agility), lasting the full listed number of the target's turns |
+| Debuff hit | Debuff skills also hit each target for 75% of a basic attack |
 | Status on damage skills | 35% chance per effect per target hit (dedicated status/debuff skills always apply) |
 
 Basic attacks are hit damage with skill power 0. A skill is a basic attack boosted
@@ -152,8 +153,43 @@ or debuffs, which pay back less than a turn of damage in a 5–8 turn fight. Sup
 skills (Arcane Clarity, Divine Shield, Bless, Curse of Weakness…) need a general pass,
 e.g. longer durations or an immediate effect.
 
+## Buff/debuff rework and class pass 2
+
+**Why buffs were weak:** durations tick at the start of the target's turn, so an
+N-turn buff boosted only N−1 of the caster's actions, after the caster spent a turn
+casting it. A +40% stat buff came out about even with just attacking.
+
+**Changes** (`BattleFormulas`):
+- `BUFF_DURATION_BONUS = 1`: the listed duration is now the number of turns affected.
+- `BUFF_PERCENT_PER_POWER` 1% → 1.5%.
+- `DEBUFF_HIT_SCALE = 0.75`: debuffs also hit, so they're never a wasted turn.
+
+**Compensation:** enemies use buffs and debuffs too, so regular enemy damage went
+0.85 → 0.8. Two classes also changed:
+- **Necromancer:** VIT 6→8, Life Tap cooldown 4→3.
+- **Cleric:** Smite cooldown 3→2 and MP 30→20; STR 6→8.
+
+**Result:** set-up play (buff/debuff first) now beats or ties damage-only for every
+class; before, damage-only won for 7 of 8. Floor-1 full-run clear rates (best style):
+
+| Class | No potions | 5+5 potions |
+|---|---|---|
+| Cleric | 28% | 63% |
+| Paladin | 23% | 60% |
+| Monk | 21% | 59% |
+| Elementalist | 28% | 56% |
+| Druid | 19% | 53% |
+| Necromancer | 23% | 51% |
+| Samurai | 15% | 46% |
+| Myrmidon | 18% | 44% |
+
+All classes are within about 20 points of each other. Average difficulty with
+potions (54%) matches pass 1 (56%). Samurai and Myrmidon are the next candidates
+for a pass. Myrmidon's Evasion buffs Agility, which barely moves dodge (dodge uses
+AGI/200).
+
 ## Known gaps and next steps
 
-- **Class balance.** Pass 1 is done (see above). Necromancer is now the lowest at 16% / 45%, and support skills are weak across the board.
+- **Class balance.** Two passes are done (see above). Samurai and Myrmidon are now the lowest, and Myrmidon's Agility-based Evasion is weak because of the dodge formula.
 - **Skill effect sizes in `skills.json` were authored against the old formulas.** Buff/debuff "power" now means percent. Values of 20–70 are reasonable, but worth a pass.
 - **Item effects (`Item.gd`) use their own fixed numbers** and weren't changed.
