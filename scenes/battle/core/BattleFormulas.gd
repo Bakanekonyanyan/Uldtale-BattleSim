@@ -44,10 +44,17 @@ const HEAL_SPELL_POWER_SCALE := 0.5  # heal = power + spell_power * this
 const DAMAGE_SKILL_STATUS_CHANCE := 0.35
 
 # --- Buffs / debuffs from skills ---
-# Skill power is a PERCENT of the target's base attribute (power 40 = +/-40%).
+# Skill power is a PERCENT of the target's base attribute (power 40 = +/-60%).
 # It used to be added as flat stat points: Roar (40) took 40 Agility off a
 # level-1 hero with ~6, and the boss's Royal Decree added +60 Strength.
-const BUFF_PERCENT_PER_POWER := 0.01
+const BUFF_PERCENT_PER_POWER := 0.015
+# Durations tick at the START of the target's turn, so a "3 turn" buff used to
+# boost only 2 of the caster's actions (after spending a turn to cast it). Buff/
+# debuff skills add this so the number on the skill = turns actually affected.
+const BUFF_DURATION_BONUS := 1
+# Debuff skills also hit each target for this fraction of a basic attack, so a
+# debuff is "an attack plus a debuff" rather than a turn spent not attacking.
+const DEBUFF_HIT_SCALE := 0.75
 
 # --- Basic attack resource regen ---
 const ATTACK_RESOURCE_REGEN := 0.08  # basic attacks restore 8% max MP and SP
@@ -96,6 +103,10 @@ static func buff_amount(target: CharacterData, attribute: Skill.AttributeTarget,
 	var attr_name = Skill.AttributeTarget.keys()[attribute].to_lower()
 	var base = float(target.get(attr_name)) if attr_name in target else 0.0
 	return max(1, int(round(base * skill_power * BUFF_PERCENT_PER_POWER)))
+
+## Stored duration for effects applied by BUFF/DEBUFF skills (see BUFF_DURATION_BONUS).
+static func effect_duration(skill_duration: int) -> int:
+	return skill_duration + BUFF_DURATION_BONUS
 
 static func status_procs(is_damage_skill: bool) -> bool:
 	return (not is_damage_skill) or RandomManager.randf() < DAMAGE_SKILL_STATUS_CHANCE

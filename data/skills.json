@@ -17,7 +17,7 @@
 	  "duration": 0,
 	  "mp_cost": 25,
 	  "sp_cost": 15,
-	  "cooldown": 4
+	  "cooldown": 3
 	},
 	"Mana Siphon": {
 	  "name": "Mana Siphon",
@@ -334,9 +334,9 @@
 	  "status_effect": ["BURN","BLIND"],
 	  "power": 45,
 	  "duration": 2,
-	  "mp_cost": 30,
+	  "mp_cost": 20,
 	  "sp_cost": 10,
-	  "cooldown": 3
+	  "cooldown": 2
 	},
 	"Dark Bolt": {
 	  "name": "Dark Bolt",

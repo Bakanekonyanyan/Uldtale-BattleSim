@@ -9,7 +9,7 @@
 	  "skills": ["Holy Strike", "Divine Shield", "Aura of Vitality"]
 	},
 	"Necromancer": {
-	  "base_vit": 6, "base_str": 4, "base_dex": 7, "base_int": 13,
+	  "base_vit": 8, "base_str": 4, "base_dex": 7, "base_int": 13,
 	  "base_fai": 8, "base_mnd": 12, "base_end": 6, "base_arc": 12,
 	  "base_agi": 6, "base_for": 7,
 	  "attack_power_type": "dexterity",
@@ -25,7 +25,7 @@
 	  "skills": ["Poison Blade", "Backstab", "Evasion"]
 	},
 	"Cleric": {
-	  "base_vit": 8, "base_str": 6, "base_dex": 6, "base_int": 10,
+	  "base_vit": 8, "base_str": 8, "base_dex": 6, "base_int": 10,
 	  "base_fai": 14, "base_mnd": 12, "base_end": 6, "base_arc": 6,
 	  "base_agi": 5, "base_for": 8,
 	  "attack_power_type": "strength",

@@ -194,6 +194,7 @@ func _phase0_checks() -> void:
 		"save v2 round trip keeps location progress, last location, carry limit, pack")
 	EnemyFactory.set_location("the_dungeon")
 	_reward_checks()
+	_buff_checks()
 
 # ------------------------------------------------------------------ momentum + gear drops
 
@@ -233,6 +234,32 @@ func _reward_checks() -> void:
 		if gear in r.equipment_instances: drops += 1
 	check(drops >= 20 and drops <= 39, "rare enemy gear drops ~75%% of the time (%d/40)" % drops)
 	EnemyFactory.set_location("the_dungeon")
+
+# ------------------------------------------------------------------ buff / debuff rework
+
+func _buff_checks() -> void:
+	var p = make_player()
+	var clarity: Skill = SkillManager.get_skill("Arcane Clarity").duplicate()
+	clarity.use(p, [p])
+	var int_buff = p.buff_manager.buffs.get(Skill.AttributeTarget.INTELLIGENCE, {})
+	var expected = max(1, int(round(p.intelligence * clarity.power * BattleFormulas.BUFF_PERCENT_PER_POWER)))
+	check(int_buff.get("value", 0) == expected, "buff size = power x %.1f%% of base stat (+%d INT)" % [BattleFormulas.BUFF_PERCENT_PER_POWER * 100, expected])
+	check(int_buff.get("duration", 0) == clarity.duration + BattleFormulas.BUFF_DURATION_BONUS, "buff duration covers the full listed turns")
+	# Each owner turn ticks durations first, then acts: a duration-N buff must
+	# still be active when acting on each of the next N turns, then expire.
+	var active_turns := 0
+	for turn in range(clarity.duration):
+		p.buff_manager.update_buffs_and_debuffs()
+		if p.buff_manager.buffs.has(Skill.AttributeTarget.INTELLIGENCE): active_turns += 1
+	p.buff_manager.update_buffs_and_debuffs()
+	check(active_turns == clarity.duration and not p.buff_manager.buffs.has(Skill.AttributeTarget.INTELLIGENCE),
+		"a %d-turn buff boosts exactly %d of the owner's turns" % [clarity.duration, active_turns])
+	
+	var foe = EnemyFactory.create_enemy(1, 1, 1)
+	var curse: Skill = SkillManager.get_skill("Curse of Weakness").duplicate()
+	var hp_before = foe.current_hp
+	var r = curse.use(p, [foe])
+	check(foe.current_hp < hp_before and r.damage > 0 and foe.buff_manager.has_debuffs(), "debuff skills also land a hit (%d dmg) and debuff" % r.damage)
 
 # ------------------------------------------------------------------ full battles
 

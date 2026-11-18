@@ -378,14 +378,14 @@ func apply_buff(_user: CharacterData, targets: Array) -> Dictionary:
 		for t in targets:
 			for effect in status_effects:
 				if effect != StatusEffect.NONE:
-					t.apply_status_effect(effect, duration)
+					t.apply_status_effect(effect, BattleFormulas.effect_duration(duration))
 	
 	# Then apply attribute buffs
 	if not attribute_targets.is_empty():
 		for t in targets:
 			for attribute in attribute_targets:
 				if attribute != AttributeTarget.NONE:
-					t.apply_buff(attribute, BattleFormulas.buff_amount(t, attribute, power), duration)
+					t.apply_buff(attribute, BattleFormulas.buff_amount(t, attribute, power), BattleFormulas.effect_duration(duration))
 	
 	# Build message
 	var result_parts = []
@@ -420,15 +420,22 @@ func apply_buff(_user: CharacterData, targets: Array) -> Dictionary:
 		"healing": 0
 	}
 
-func apply_debuff(_user: CharacterData, targets: Array) -> Dictionary:
+func apply_debuff(user: CharacterData, targets: Array) -> Dictionary:
+	# Debuffs also land a weaker hit so casting one is never a wasted turn
+	var total_damage := 0
 	for t in targets:
+		if t.is_alive() and BattleFormulas.DEBUFF_HIT_SCALE > 0.0:
+			var hit = BattleFormulas.finalize(BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL) * BattleFormulas.DEBUFF_HIT_SCALE)
+			t.take_damage(hit, user)
+			total_damage += hit
+		
 		for effect in status_effects:
 			if effect != StatusEffect.NONE:
-				t.apply_status_effect(effect, duration)
+				t.apply_status_effect(effect, BattleFormulas.effect_duration(duration))
 		
 		for attribute in attribute_targets:
 			if attribute != AttributeTarget.NONE:
-				t.apply_debuff(attribute, BattleFormulas.buff_amount(t, attribute, power), duration)
+				t.apply_debuff(attribute, BattleFormulas.buff_amount(t, attribute, power), BattleFormulas.effect_duration(duration))
 	
 	var result_parts = []
 	
@@ -451,16 +458,15 @@ func apply_debuff(_user: CharacterData, targets: Array) -> Dictionary:
 	if result_parts.is_empty():
 		return {"message": "%s had no effect!" % name, "damage": 0, "healing": 0}
 	
-	return {
-		"message": "%s %s on %d target(s) for %d turns" % [
-			name,
-			" and ".join(result_parts),
-			targets.size(),
-			duration
-		],
-		"damage": 0,
-		"healing": 0
-	}
+	var msg = "%s %s on %d target(s) for %d turns" % [
+		name,
+		" and ".join(result_parts),
+		targets.size(),
+		duration
+	]
+	if total_damage > 0:
+		msg = "%s dealt %d damage and %s" % [name, total_damage, msg.trim_prefix(name + " ")]
+	return {"message": msg, "damage": total_damage, "healing": 0}
 
 func restore(user: CharacterData, targets: Array) -> Dictionary:
 	var total_restore = 0

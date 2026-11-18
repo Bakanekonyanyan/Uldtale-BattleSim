@@ -9,7 +9,7 @@ const BOSS_STAT_MULT := 1.0
 ## Regular enemies have this fraction of a hero's HP / damage for the same stats.
 ## The hero fights alone against groups, so individual enemies are weaker.
 const ENEMY_HP_MULT := 0.5
-const ENEMY_DAMAGE_MULT := 0.85
+const ENEMY_DAMAGE_MULT := 0.8
 ## Boss HP pool vs a hero with the same stats (bosses should be long fights).
 ## Applied to HP only - raising vitality instead also inflated attack and defense.
 const BOSS_HP_MULT := 1.0

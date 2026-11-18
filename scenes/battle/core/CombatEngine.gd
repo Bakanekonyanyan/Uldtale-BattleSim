@@ -199,7 +199,7 @@ func _execute_skill(action: BattleAction) -> ActionResult:
 			if effect_enum != Skill.StatusEffect.NONE:
 				result.status_effects.append({
 					"name": Skill.StatusEffect.keys()[effect_enum],
-					"duration": skill.duration
+					"duration": BattleFormulas.effect_duration(skill.duration) if skill.type in [Skill.SkillType.BUFF, Skill.SkillType.DEBUFF] else skill.duration
 				})
 	
 	# Extract buffs/debuffs from skill data
@@ -210,7 +210,7 @@ func _execute_skill(action: BattleAction) -> ActionResult:
 					"stat": Skill.AttributeTarget.keys()[attr_enum],
 					# Actual stat points applied (power is a % of base stat) - PvP sync applies this
 					"amount": BattleFormulas.buff_amount(targets[0], attr_enum, skill.power) if not targets.is_empty() else 0,
-					"duration": skill.duration
+					"duration": BattleFormulas.effect_duration(skill.duration) if skill.type in [Skill.SkillType.BUFF, Skill.SkillType.DEBUFF] else skill.duration
 				}
 				
 				if skill.type == Skill.SkillType.BUFF:
