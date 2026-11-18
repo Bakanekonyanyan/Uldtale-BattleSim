@@ -1,7 +1,7 @@
 {
   "playable": {
 	"Paladin": {
-	  "base_vit": 12, "base_str": 11, "base_dex": 6, "base_int": 6,
+	  "base_vit": 11, "base_str": 11, "base_dex": 6, "base_int": 6,
 	  "base_fai": 10, "base_mnd": 9, "base_end": 11, "base_arc": 4,
 	  "base_agi": 5, "base_for": 12,
 	  "attack_power_type": "strength",
@@ -41,7 +41,7 @@
 	  "skills": ["Iaido", "Bushido", "Mystic Transfusion"]
 	},
 	"Elementalist": {
-	  "base_vit": 7, "base_str": 4, "base_dex": 6, "base_int": 14,
+	  "base_vit": 8, "base_str": 4, "base_dex": 6, "base_int": 14,
 	  "base_fai": 6, "base_mnd": 11, "base_end": 6, "base_arc": 12,
 	  "base_agi": 5, "base_for": 6,
 	  "attack_power_type": "dexterity",
@@ -50,7 +50,7 @@
 	},
 	"Druid": {
 	  "base_vit": 9, "base_str": 6, "base_dex": 7, "base_int": 10,
-	  "base_fai": 11, "base_mnd": 11, "base_end": 7, "base_arc": 10,
+	  "base_fai": 11, "base_mnd": 11, "base_end": 7, "base_arc": 12,
 	  "base_agi": 6, "base_for": 7,
 	  "attack_power_type": "arcane",
 	  "spell_power_type": "faith",

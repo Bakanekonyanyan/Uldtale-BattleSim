@@ -127,8 +127,33 @@ keeps going: most floor-1 clearers also clear floors 2–4 (campaign mode in the
 simulator). The floor-1 boss is the main gate. A death keeps the levels already
 earned, so a failed run still moves the character forward.
 
+## Class tuning (pass 1)
+
+Floor-1 full-run clear rate, judged by each class's better play style, from
+`godot --headless res://tests/balance_sim.tscn -- classes_<label>` (N=200, ±~5 points):
+
+| Class | Before (no potions / 5+5 potions) | After |
+|---|---|---|
+| Paladin | 43% / 83% | 27% / 68% |
+| Elementalist | 3% / 19% | 23% / 70% |
+| Druid | 4% / 10% | 18% / 52% |
+| Others (unchanged) | 14–30% / 41–60% | 16–31% / 45–58% |
+
+Changes (`data/skills.json`, `data/classes.json`):
+- **Paladin:** Holy Strike power 25→20, MP 10→20, cooldown 3→4, riders Confused+Blind+Burn → Blind+Burn. Base VIT 12→11.
+- **Elementalist:** Blazing Ice Spear is now the repeatable bread-and-butter spell: power 20→30, MP 25→20, cooldown 4→1. Volcanic Thunder Storm power 30→40, cooldown 6→4. Base VIT 7→8.
+- **Druid:** Plague Strike power 40→55, SP 25→15, cooldown 4→2. Wild Protection duration 3→4. Base ARC 10→12.
+
+The root problem for both casters was that their main damage skill was on a long
+cooldown, so most turns were weak basic attacks.
+
+**Finding:** for almost every class, damage-only play beats spending turns on buffs
+or debuffs, which pay back less than a turn of damage in a 5–8 turn fight. Support
+skills (Arcane Clarity, Divine Shield, Bless, Curse of Weakness…) need a general pass,
+e.g. longer durations or an immediate effect.
+
 ## Known gaps and next steps
 
-- **Class balance.** Elementalist and Druid are clearly behind in full runs. They win most single fights at level 1 but run out of resources and HP over a Press-On streak. That's a class-kit question (skill costs and power, HP formula for casters) rather than a core-formula one.
+- **Class balance.** Pass 1 is done (see above). Necromancer is now the lowest at 16% / 45%, and support skills are weak across the board.
 - **Skill effect sizes in `skills.json` were authored against the old formulas.** Buff/debuff "power" now means percent. Values of 20–70 are reasonable, but worth a pass.
 - **Item effects (`Item.gd`) use their own fixed numbers** and weren't changed.

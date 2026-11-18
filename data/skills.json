@@ -163,7 +163,7 @@
 	  "attribute_target": "FAITH",
 	  "status_effect": ["REFLECT","REGENERATION"],
 	  "power": 30,
-	  "duration": 3,
+	  "duration": 4,
 	  "mp_cost": 35,
 	  "sp_cost": 15,
 	  "cooldown": 5
@@ -177,12 +177,12 @@
 	  "category": "BASIC",
 	  "elements": ["HOLY","FIRE"],
 	  "attribute_target": "NONE",
-	  "status_effect": ["CONFUSED","BLIND","BURN"],
-	  "power": 25,
+	  "status_effect": ["BLIND","BURN"],
+	  "power": 20,
 	  "duration": 3,
-	  "mp_cost": 10,
+	  "mp_cost": 20,
 	  "sp_cost": 30,
-	  "cooldown": 3
+	  "cooldown": 4
 	},
 	"Divine Shield": {
 	  "name": "Divine Shield",
@@ -572,11 +572,11 @@
 	  "element": ["FIRE","ICE"],
 	  "attribute_target": "NONE",
 	  "status_effect": ["BURN","FREEZE"],
-	  "power": 20,
+	  "power": 30,
 	  "duration": 2,
-	  "mp_cost": 25,
+	  "mp_cost": 20,
 	  "sp_cost": 10,
-	  "cooldown": 4
+	  "cooldown": 1
 	},
 	"Frost Nova": {
 	  "name": "Frost Nova",
@@ -677,11 +677,11 @@
 	  "elements": ["DARK", "EARTH"],
 	  "attribute_target": "NONE",
 	  "status_effects": ["POISON", "BLEED"],
-	  "power": 40,
+	  "power": 55,
 	  "duration": 4,
 	  "mp_cost": 25,
-	  "sp_cost": 25,
-	  "cooldown": 4
+	  "sp_cost": 15,
+	  "cooldown": 2
 	},
 	"Arctic Blast": {
 	  "name": "Arctic Blast",
@@ -737,11 +737,11 @@
 	  "elements": ["LIGHTNING", "FIRE"],
 	  "attribute_target": "NONE",
 	  "status_effects": ["SHOCK", "BURN"],
-	  "power": 30,
+	  "power": 40,
 	  "duration": 3,
 	  "mp_cost": 40,
 	  "sp_cost": 0,
-	  "cooldown": 6
+	  "cooldown": 4
 	},
 	"Divine Blessing": {
 	  "name": "Divine Blessing",

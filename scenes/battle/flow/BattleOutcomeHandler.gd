@@ -130,8 +130,8 @@ func _on_press_on(xp_gained: int) -> void:
 	battle_ended.emit(true, -1)
 
 func _on_take_breather(xp_gained: int) -> void:
+	# Momentum is reset by SceneManager AFTER the Breather payout is calculated
 	var momentum_before = MomentumSystem.get_momentum()
-	MomentumSystem.reset_momentum()
 
 	if momentum_before >= 3:
 		context.player.set_meta("taking_breather_with_bonus", true)

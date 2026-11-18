@@ -12,37 +12,33 @@ var is_reward_session_active: bool = false
 
 # ===== REWARD CALCULATION =====
 
-func calculate_battle_rewards(battle_data: Dictionary) -> Dictionary:
+## Rewards for ONE won wave, before the momentum payout bonus.
+## Equipment drop chances are already boosted by the streak's momentum.
+func roll_wave_rewards(battle_data: Dictionary) -> Dictionary:
 	var current_wave = battle_data.get("current_wave", 1)
 	var current_floor = battle_data.get("current_floor", 1)
 	var is_boss = battle_data.get("is_boss_fight", false)
-	var xp_gained = battle_data.get("xp_gained", 0)
-	var enemy = battle_data.get("enemy")
 	var momentum_level = battle_data.get("momentum_level", 0)
-	var taking_breather = battle_data.get("taking_breather", false)
 	var player_class = battle_data.get("player_class", "")
 	
 	var rewards = {
 		"currency": (50 + (current_wave * 10)) * current_floor,
-		"xp": xp_gained,
 		"equipment_instances": []
 	}
 	
-	var momentum_bonus = 1.0
-	if momentum_level >= 3:
-		momentum_bonus = 1.0 + ((momentum_level - 2) * 0.25)
+	var momentum_mult = 1.0 + MomentumSystem.get_reward_bonus(momentum_level)
+	var drop_chance_multiplier = (1 + (current_floor * 0.1)) * momentum_mult
 	
-	var drop_chance_multiplier = (1 + (current_floor * 0.1)) * momentum_bonus
-	
-	# Enemy equipment drops
-	if enemy and enemy.has_meta("equipped_items"):
-		var equipped_items = enemy.get_meta("equipped_items")
-		for item in equipped_items:
-			if item is Equipment:
-				var drop_chance = get_equipment_drop_chance(item.rarity, is_boss, momentum_level)
-				if RandomManager.randf() < drop_chance:
-					rewards["equipment_instances"].append(item)
-					print("RewardsManager: Dropped enemy equipment - %s (ilvl %d)" % [item.display_name, item.item_level])
+	# Gear the defeated enemies were wearing. (This read a single
+	# battle_data["enemy"], which multi-enemy waves never set, so enemy gear
+	# had stopped dropping entirely.)
+	for enemy in battle_data.get("enemies", []):
+		if not (enemy is CharacterData and enemy.has_meta("equipped_items")):
+			continue
+		for item in enemy.get_meta("equipped_items"):
+			if item is Equipment and RandomManager.randf() < min(1.0, get_equipment_drop_chance(item.rarity, is_boss) * momentum_mult):
+				rewards["equipment_instances"].append(item)
+				print("RewardsManager: %s dropped %s (%s, ilvl %d)" % [enemy.name, item.display_name, item.rarity, item.item_level])
 	
 	# Regular loot drops
 	if is_boss:
@@ -56,29 +52,47 @@ func calculate_battle_rewards(battle_data: Dictionary) -> Dictionary:
 	
 	# Materials: from the races of the enemies just defeated (data/loot/material_tables.json)
 	_merge_counts(rewards, roll_material_drops(battle_data))
-	# ...plus anything banked while pressing on (see bank_material_drops)
-	_merge_counts(rewards, MomentumSystem.momentum_loot_accumulated.materials)
-	MomentumSystem.momentum_loot_accumulated.materials = {}
+	return rewards
+
+## Press On: no reward screen, so bank this wave's rewards for the next Breather.
+## Banked rewards are lost if the player dies.
+func bank_wave_rewards(battle_data: Dictionary) -> void:
+	MomentumSystem.bank_rewards(roll_wave_rewards(battle_data))
+
+## Momentum bonus applied to the last Breather payout (for the reward screen).
+var last_momentum_bonus: float = 0.0
+
+## Breather: this wave + everything banked during the Press-On streak, with gold
+## and item quantities boosted by the momentum reached (+10%/level, max +50%).
+## battle_data["momentum_level"] must be read BEFORE momentum is reset.
+func calculate_battle_rewards(battle_data: Dictionary) -> Dictionary:
+	var rewards = roll_wave_rewards(battle_data)
+	rewards["xp"] = battle_data.get("xp_gained", 0)
 	
-	# Accumulate loot during momentum runs
-	if momentum_level >= 1 and not taking_breather:
-		MomentumSystem.accumulate_loot(rewards)
-		print("RewardsManager: Accumulated loot for momentum run")
+	var banked = MomentumSystem.take_banked_rewards()
+	rewards["currency"] += banked.currency
+	rewards["equipment_instances"].append_array(banked.equipment_instances)
+	for key in banked:
+		if key not in ["currency", "equipment_instances"]:
+			rewards[key] = rewards.get(key, 0) + banked[key]
 	
-	# Apply momentum bonus on breather
-	if taking_breather and momentum_level >= 3:
-		print("RewardsManager: Player taking breather at momentum %d - applying bonus rewards" % momentum_level)
-		var bonus_rewards = MomentumSystem.get_momentum_bonus_rewards(current_floor)
-		
-		if bonus_rewards.has("currency"):
-			rewards["currency"] += bonus_rewards["currency"]
-		
-		if bonus_rewards.has("equipment_instances"):
-			for equip in bonus_rewards["equipment_instances"]:
-				rewards["equipment_instances"].append(equip)
+	var bonus = MomentumSystem.get_reward_bonus(battle_data.get("momentum_level", 0))
+	last_momentum_bonus = bonus
+	if bonus > 0.0:
+		rewards["currency"] = int(round(rewards["currency"] * (1.0 + bonus)))
+		for key in rewards.keys():
+			if key not in ["currency", "xp", "equipment_instances"]:
+				rewards[key] = _boost_count(rewards[key], bonus)
+		print("RewardsManager: Breather payout with +%d%% momentum bonus" % int(bonus * 100))
 	
 	emit_signal("rewards_calculated", rewards)
 	return rewards
+
+## Boost an item count by `bonus` using probabilistic rounding (3 x +50% = 4 or 5).
+func _boost_count(count: int, bonus: float) -> int:
+	var exact = count * (1.0 + bonus)
+	var whole = int(exact)
+	return whole + (1 if RandomManager.randf() < exact - whole else 0)
 
 # ===== STATE MANAGEMENT (NEW - moved from SceneManager) =====
 
@@ -126,9 +140,9 @@ func is_session_active() -> bool:
 
 # ===== HELPER METHODS =====
 
-func get_equipment_drop_chance(rarity: String, is_boss: bool, momentum_level: int) -> float:
+func get_equipment_drop_chance(rarity: String, is_boss: bool) -> float:
+	"""Chance an enemy's equipped item drops (common gear never drops)."""
 	var base_chance = 0.0
-	
 	match rarity:
 		"uncommon": base_chance = 0.50
 		"magic": base_chance = 0.65
@@ -136,13 +150,8 @@ func get_equipment_drop_chance(rarity: String, is_boss: bool, momentum_level: in
 		"epic": base_chance = 0.85
 		"legendary": base_chance = 0.95
 		_: return 0.0
-	
 	if is_boss:
 		base_chance = min(1.0, base_chance + 0.15)
-	
-	if momentum_level >= 3:
-		base_chance = min(1.0, base_chance + ((momentum_level - 2) * 0.10))
-	
 	return base_chance
 
 # ===== MATERIAL DROPS =====
@@ -203,13 +212,6 @@ func roll_material_drops(battle_data: Dictionary) -> Dictionary:
 				drops[id] = drops.get(id, 0) + 1
 	
 	return drops
-
-## Press On skips the reward screen, so bank this wave's materials until the
-## next Breather (lost if the player dies). Cleared when an expedition starts.
-func bank_material_drops(battle_data: Dictionary) -> void:
-	var banked: Dictionary = MomentumSystem.momentum_loot_accumulated.materials
-	_merge_counts(banked, roll_material_drops(battle_data))
-	MomentumSystem.momentum_loot_accumulated.materials = banked
 
 func _merge_counts(into: Dictionary, counts: Dictionary) -> void:
 	for id in counts:

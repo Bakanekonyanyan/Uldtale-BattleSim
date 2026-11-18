@@ -193,6 +193,46 @@ func _phase0_checks() -> void:
 		and loaded.carry_limit == 5 and loaded.inventory.get_quantity("health_potion") == 5,
 		"save v2 round trip keeps location progress, last location, carry limit, pack")
 	EnemyFactory.set_location("the_dungeon")
+	_reward_checks()
+
+# ------------------------------------------------------------------ momentum + gear drops
+
+func _reward_checks() -> void:
+	# Bonus grows +10% per momentum level and caps at +50%
+	check(MomentumSystem.get_reward_bonus(0) == 0.0 and is_equal_approx(MomentumSystem.get_reward_bonus(3), 0.3)
+		and MomentumSystem.get_reward_bonus(5) == 0.5 and MomentumSystem.get_reward_bonus(9) == 0.5,
+		"momentum reward bonus: +10%/level, capped at +50%")
+	
+	# Press-On waves are banked and paid out at the Breather with the bonus
+	EnemyFactory.set_location("orc_plains")
+	var foes: Array[CharacterData] = [EnemyFactory.create_enemy(1, 1, 1)]
+	MomentumSystem.clear_accumulated_loot()
+	MomentumSystem.bank_rewards({"currency": 100, "equipment_instances": [], "iron_ore": 4})
+	MomentumSystem.bank_rewards({"currency": 100, "equipment_instances": [], "iron_ore": 4})
+	var data = {"current_wave": 3, "current_floor": 1, "is_boss_fight": false, "enemies": foes, "momentum_level": 5}
+	var payout = RewardsManager.calculate_battle_rewards(data)
+	var wave_gold = (50 + 3 * 10) * 1
+	check(payout.currency == int(round((200 + wave_gold) * 1.5)),
+		"Breather pays banked + current gold with +50%% (%d)" % payout.currency)
+	check(payout.get("iron_ore", 0) >= 12, "banked materials paid out with bonus (%d iron ore from 8 banked)" % payout.get("iron_ore", 0))
+	check(MomentumSystem.momentum_loot_accumulated.currency == 0, "bank is empty after the payout")
+	
+	# No bonus without momentum
+	var plain = RewardsManager.calculate_battle_rewards({"current_wave": 3, "current_floor": 1, "is_boss_fight": false, "enemies": foes, "momentum_level": 0})
+	check(plain.currency == wave_gold and RewardsManager.last_momentum_bonus == 0.0, "no momentum = no bonus")
+	
+	# Enemy gear drops again (multi-enemy waves)
+	var gear = ItemManager.create_equipment_for_floor(ItemManager.get_random_weapon(), 1)
+	gear.rarity = "rare"
+	var wearer = EnemyFactory.create_enemy(1, 1, 1)
+	wearer.set_meta("equipped_items", [gear])
+	var crowd: Array[CharacterData] = [EnemyFactory.create_enemy(1, 1, 1), wearer]
+	var drops := 0
+	for i in range(40):
+		var r = RewardsManager.roll_wave_rewards({"current_wave": 1, "current_floor": 1, "is_boss_fight": false, "enemies": crowd, "momentum_level": 0})
+		if gear in r.equipment_instances: drops += 1
+	check(drops >= 20 and drops <= 39, "rare enemy gear drops ~75%% of the time (%d/40)" % drops)
+	EnemyFactory.set_location("the_dungeon")
 
 # ------------------------------------------------------------------ full battles
 

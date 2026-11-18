@@ -279,6 +279,7 @@ func _on_battle_completed(player_won: bool, xp_gained: int) -> void:
 	
 	if not player_won:
 		MomentumSystem.reset_momentum()
+		MomentumSystem.clear_accumulated_loot()  # banked Press-On rewards are lost
 		DungeonStateManager.end_dungeon(false)
 		change_to_character_selection()
 		return
@@ -299,7 +300,7 @@ func _on_battle_completed(player_won: bool, xp_gained: int) -> void:
 	
 	# Press on (-1) or take breather (xp)
 	if xp_gained == -1:
-		RewardsManager.bank_material_drops(DungeonStateManager.get_battle_data())
+		RewardsManager.bank_wave_rewards(DungeonStateManager.get_battle_data())
 		_continue_with_momentum()
 	else:
 		_show_rewards(xp_gained)
@@ -331,7 +332,11 @@ func _show_rewards(xp_gained: int) -> void:
 	var battle_data = DungeonStateManager.get_battle_data()
 	battle_data["xp_gained"] = xp_gained
 	
+	# Momentum is still the streak's value here; the payout bonus needs it,
+	# so only reset AFTER rewards are calculated (it used to be reset first,
+	# which meant the bonus never applied).
 	var rewards = RewardsManager.calculate_battle_rewards(battle_data)
+	MomentumSystem.reset_momentum()
 	
 	var reward_data = {
 		"rewards": rewards,

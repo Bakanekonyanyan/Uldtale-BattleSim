@@ -118,6 +118,8 @@ func display_rewards():
 			auto_text += "[color=#88FF88]✦ +%d XP[/color]\n" % xp_gained
 		if rewards.has("currency"):
 			auto_text += "[color=#FFD700]💰 +%d Gold[/color]\n" % rewards["currency"]
+		if RewardsManager.last_momentum_bonus > 0.0:
+			auto_text += "[color=#FF9944]🔥 Momentum bonus: +%d%% gold and items[/color]\n" % int(round(RewardsManager.last_momentum_bonus * 100))
 		if auto_rewards_given:
 			auto_text += "\n[color=#66DD66][i]✓ Collected[/i][/color]"
 		else:

@@ -53,10 +53,11 @@ func show_dialog(character: CharacterData, xp: int):
 		status_label.text = "Current Status:"
 		warning_label.text = "\n".join(warnings)
 	
-	# Show bonus notification for momentum 3
+	# Notify once when the reward bonus hits its cap
 	if MomentumSystem.should_show_bonus_notification():
 		var bonus_popup = AcceptDialog.new()
-		bonus_popup.dialog_text = "Momentum Bonus Unlocked!\n\nYou've reached Momentum x3!\nIncreased drop rates and rarity chances are now active."
+		bonus_popup.dialog_text = "Maximum Momentum Bonus!\n\nMomentum x%d: your next Breather pays out everything you've banked with +%d%% rewards.\nPressing on still raises your damage - and the danger." % [
+			MomentumSystem.get_momentum(), int(MomentumSystem.MAX_REWARD_BONUS * 100)]
 		bonus_popup.title = "Momentum Bonus!"
 		add_child(bonus_popup)
 		bonus_popup.popup_centered()

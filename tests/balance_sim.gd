@@ -15,6 +15,7 @@ const N = 150
 var out := []
 var sim_location := "the_dungeon"  # expedition location used by make_enemies()
 var start_potions := 0             # health + mana potions each hero starts a run with
+var use_setup := true              # auto-pilot casts buffs/debuffs (false = damage only)
 var t := {}  # tallies
 
 func log_line(s: String) -> void:
@@ -24,6 +25,11 @@ func _ready():
 	var args = OS.get_cmdline_user_args()
 	var mode = args[0] if args.size() > 0 else "baseline"
 	log_line("MODE " + mode)
+	if mode.begins_with("classes"):
+		class_report()
+		var f3 = FileAccess.open("user://balance_%s.txt" % mode, FileAccess.WRITE)
+		f3.store_string("\n".join(out)); f3.close()
+		get_tree().quit(); return
 	if mode.begins_with("diag"):
 		diag_boss()
 		var f2 = FileAccess.open("user://balance_%s.txt" % mode, FileAccess.WRITE)
@@ -126,6 +132,34 @@ func _ready():
 	f.close()
 	print("BALANCE REPORT WRITTEN: ", ProjectSettings.globalize_path("user://balance_%s.txt" % mode))
 	get_tree().quit()
+
+## Fast class-balance report: floor-1 full runs. Each class is judged by its
+## better play style (damage-only vs buff/debuff set-up), without and with potions.
+func class_report() -> void:
+	var n = 200
+	log_line("== Class balance: floor-1 full run clear %% (N=%d, The Dungeon) ==" % n)
+	log_line("class        dmg-only   set-up  | best, no potions   best, 5+5 potions")
+	for cls in CLASSES:
+		var rates := {}
+		for setup in [false, true]:
+			use_setup = setup
+			rates[setup] = _clear_rate(cls, n, 0)
+		var best_setup = rates[true] > rates[false]
+		use_setup = best_setup
+		var with_potions = _clear_rate(cls, n, 5)
+		log_line("%-12s %7d%%  %7d%%  | %10d%% (%s)  %12d%%" % [cls, rates[false], rates[true],
+			max(rates[false], rates[true]), "set-up" if best_setup else "dmg", with_potions])
+	use_setup = true
+	start_potions = 0
+
+func _clear_rate(cls: String, n: int, potions: int) -> int:
+	start_potions = potions
+	var clears := 0
+	for i in range(n):
+		MomentumSystem.reset_momentum()
+		if sim_run(cls, 1).cleared: clears += 1
+	start_potions = 0
+	return int(100.0 * clears / n)
 
 func diag_boss() -> void:
 	# Play waves 1-5 as a run, then log the boss fight in detail
@@ -275,20 +309,44 @@ func potion_policy(p: CharacterData) -> BattleAction:
 		return BattleAction.item(p, p.inventory.get_item("mana_potion"), [p])
 	return null
 
-# A sensible human-like policy: heal when low, use best ready damage skill, else attack weakest.
+# A sensible human-like policy:
+#   heal when low -> buff self early -> debuff a fresh enemy -> best damage skill -> attack weakest
 func player_policy(p: CharacterData, ctx: BattleContext) -> BattleAction:
 	var living = ctx.get_living_enemies()
 	living.sort_custom(func(a, b): return a.current_hp < b.current_hp)
+	var enemy_hp := 0.0
+	var enemy_max := 0.0
+	for e in ctx.enemies:
+		enemy_hp += e.current_hp; enemy_max += e.max_hp
+	var fight_young = enemy_hp > enemy_max * 0.5  # set-up skills only pay off early
+	
 	var best: Skill = null
+	var buff: Skill = null
+	var debuff: Skill = null
 	for sn in p.skills:
 		var s: Skill = p.get_skill_instance(sn)
 		if p.get_skill_cooldown(sn) > 0: continue
 		var cost_ok = (p.current_sp >= s.sp_cost) if s.ability_type == Skill.AbilityType.PHYSICAL else (p.current_mp >= s.mp_cost)
 		if not cost_ok: continue
-		if s.type == Skill.SkillType.HEAL and p.current_hp < p.max_hp * 0.4:
-			return BattleAction.skill(p, s, [p])
-		if s.type in [Skill.SkillType.DAMAGE, Skill.SkillType.DRAIN] and (best == null or s.power > best.power):
-			best = s
+		match s.type:
+			Skill.SkillType.HEAL:
+				if p.current_hp < p.max_hp * 0.4:
+					return BattleAction.skill(p, s, [p])
+			Skill.SkillType.BUFF:
+				buff = s
+			Skill.SkillType.DEBUFF, Skill.SkillType.INFLICT_STATUS:
+				debuff = s
+			Skill.SkillType.DAMAGE, Skill.SkillType.DRAIN:
+				if best == null or s.power > best.power:
+					best = s
+	
+	if use_setup and buff and fight_young and not p.buff_manager.has_buffs():
+		return BattleAction.skill(p, buff, [p])
+	if use_setup and debuff and fight_young:
+		var fresh = living.filter(func(e): return not e.buff_manager.has_debuffs())
+		if not fresh.is_empty():
+			var tg: Array = living if debuff.target == Skill.TargetType.ALL_ENEMIES else [fresh[-1]]
+			return BattleAction.skill(p, debuff, tg)
 	if best:
 		var tg: Array = living if best.target == Skill.TargetType.ALL_ENEMIES else [living[0]]
 		return BattleAction.skill(p, best, tg)

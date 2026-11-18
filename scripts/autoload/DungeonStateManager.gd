@@ -95,6 +95,7 @@ func get_battle_data() -> Dictionary:
 		"current_wave": current_wave,
 		"current_floor": current_floor,
 		"location_id": current_location,
+		"player_class": active_player.character_class if active_player else "",
 		"is_boss_fight": is_boss_fight,
 		"max_floor": max_floor,
 		"waves_per_floor": waves_per_floor,
