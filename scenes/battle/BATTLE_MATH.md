@@ -117,6 +117,11 @@ otherwise presses on:
 | Elementalist | 0% | 2% |
 | Druid | 0% | 0% |
 
+Results vary by roughly ±10 points between simulator runs, because each floor's
+enemy race is random. A repeat run of the same settings gave floor-1 clears of
+Paladin 49%, Myrmidon 50%, Samurai 40%, Monk 35%, Necromancer 23%, Cleric 21%,
+Druid 12% and Elementalist 6%.
+
 Before, no class ever cleared floor 1. After, a character that clears floor 1 usually
 keeps going: most floor-1 clearers also clear floors 2–4 (campaign mode in the
 simulator). The floor-1 boss is the main gate. A death keeps the levels already
