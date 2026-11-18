@@ -191,6 +191,12 @@ func calculate_secondary_attributes():
 	# Offensive
 	# Base 85%: at 75% a third of attacks missed once dodge was factored in
 	accuracy = 0.85 + (eff.dexterity * 0.35 + eff.agility * 0.25 + eff.mind * 0.25 + eff.fortitude * 0.15) / 200.0
+	# Status effects: Blind/Confused accuracy & dodge penalties, Evasive bonus
+	if status_manager:
+		var mods = status_manager.get_combat_modifiers()
+		accuracy *= mods.accuracy_mult
+		dodge = clamp(dodge * mods.dodge_mult + mods.dodge_bonus, 0.0, 0.75)
+	
 	critical_hit_rate = 0.05 + (eff.dexterity * 0.4 + eff.agility * 0.25 + eff.intelligence * 0.2 + eff.fortitude * 0.15) / 200.0
 	
 	# Attack power

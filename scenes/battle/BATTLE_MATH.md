@@ -188,8 +188,35 @@ potions (54%) matches pass 1 (56%). Samurai and Myrmidon are the next candidates
 for a pass. Myrmidon's Evasion buffs Agility, which barely moves dodge (dodge uses
 AGI/200).
 
+## Class pass 3: Samurai and Myrmidon
+
+**Bug fixed:** `accuracy_reduction`, `dodge_reduction` (Blind, Confused) in
+`status_effects.json` were never applied. They now feed `accuracy`/`dodge` in
+`calculate_secondary_attributes()`, along with a new `dodge_bonus` key.
+
+- **Myrmidon:** Evasion now also grants the new **Evasive** status (+25% dodge). A pure
+  Agility buff barely moves dodge (AGI/200).
+- **Samurai:** Iaido SP 50→30, cooldown 5→3. Bushido power 40→25, because Enraged + 60%
+  DEX made it the strongest set-up skill after the buff rework.
+- **Simulator:** MP/SP drains (Mystic Transfusion) no longer count as damage skills;
+  they deal no HP damage.
+
+| Class | No potions | 5+5 potions |
+|---|---|---|
+| Samurai | 31% | 70% |
+| Cleric | 30% | 47% |
+| Myrmidon | 29% | 50% |
+| Paladin | 27% | 57% |
+| Elementalist | 26% | 55% |
+| Monk | 25% | 55% |
+| Necromancer | 18% | 61% |
+| Druid | 16% | 47% |
+
+Run-to-run noise is about ±7 points (Cleric moved 15 points between runs with no
+changes), so treat these as a band: **16–31% without potions, 47–70% with**.
+
 ## Known gaps and next steps
 
-- **Class balance.** Two passes are done (see above). Samurai and Myrmidon are now the lowest, and Myrmidon's Agility-based Evasion is weak because of the dodge formula.
+- **Class balance.** Three passes are done (see above); all classes are within the noise band. For finer tuning, raise the simulator's N to cut the noise.
 - **Skill effect sizes in `skills.json` were authored against the old formulas.** Buff/debuff "power" now means percent. Values of 20–70 are reasonable, but worth a pass.
 - **Item effects (`Item.gd`) use their own fixed numbers** and weren't changed.

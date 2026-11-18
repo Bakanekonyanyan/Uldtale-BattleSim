@@ -32,10 +32,8 @@ func apply_effect(effect: Skill.StatusEffect, duration: int) -> String:
 		print("[STATUS MGR] Added to active_effects: key=%d, value=%d" % [effect, duration])
 		print("[STATUS MGR] active_effects now has %d entries" % active_effects.size())
 		
-		# Recalculate stats for ENRAGED
-		if effect == Skill.StatusEffect.ENRAGED:
-			character.calculate_secondary_attributes()
-			print("[STATUS] %s ENRAGED - Attack Power: %d" % [character.name, character.get_attack_power()])
+		# Recalculate derived stats (attack, accuracy/dodge modifiers...)
+		character.calculate_secondary_attributes()
 		
 		if effect == Skill.StatusEffect.REGENERATION:
 			print("[STATUS] %s gained REGENERATION" % character.name)
@@ -89,8 +87,7 @@ func remove_effect(effect: Skill.StatusEffect) -> String:
 		_apply_stat_modifiers(effect, false)
 		active_effects.erase(effect)
 		
-		if effect == Skill.StatusEffect.ENRAGED:
-			character.calculate_secondary_attributes()
+		character.calculate_secondary_attributes()
 		
 		if effect_stacks.has(effect):
 			effect_stacks.erase(effect)
@@ -364,6 +361,18 @@ func check_confusion_self_harm() -> Dictionary:
 		}
 	
 	return {"success": false, "damage": 0, "message": ""}
+
+## Accuracy/dodge changes from active effects (status_effects.json keys
+## accuracy_reduction, dodge_reduction, dodge_bonus). These keys existed in the
+## data (Blind, Confused) but were never applied before.
+func get_combat_modifiers() -> Dictionary:
+	var mods = {"accuracy_mult": 1.0, "dodge_mult": 1.0, "dodge_bonus": 0.0}
+	for effect in active_effects:
+		var data = _get_effect_data(Skill.StatusEffect.keys()[effect])
+		mods.accuracy_mult *= 1.0 - float(data.get("accuracy_reduction", 0.0))
+		mods.dodge_mult *= 1.0 - float(data.get("dodge_reduction", 0.0))
+		mods.dodge_bonus += float(data.get("dodge_bonus", 0.0))
+	return mods
 
 func get_total_reflection() -> float:
 	var total_reflection = 0.0

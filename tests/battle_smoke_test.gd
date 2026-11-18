@@ -212,6 +212,7 @@ func _phase0_checks() -> void:
 	_reward_checks()
 	_buff_checks()
 	_alchemy_checks()
+	_status_modifier_checks()
 
 # ------------------------------------------------------------------ momentum + gear drops
 
@@ -341,6 +342,26 @@ func _alchemy_checks() -> void:
 		if ItemManager.get_random_consumable() in ["greater_health_potion", "ether"]:
 			dropped_exclusive = true
 	check(not dropped_exclusive, "craft-only potions never drop as random loot")
+
+# ------------------------------------------------------------------ status accuracy/dodge modifiers
+
+func _status_modifier_checks() -> void:
+	var p = make_player()
+	var acc0 = p.accuracy
+	var dodge0 = p.dodge
+	p.apply_status_effect(Skill.StatusEffect.BLIND, 3)
+	# Blind also has -3 DEX, so accuracy ends up a little under half
+	check(p.accuracy <= acc0 * 0.5 + 0.001 and p.accuracy > acc0 * 0.45 and p.dodge < dodge0,
+		"Blind halves accuracy and lowers dodge (%.2f -> %.2f; was never applied)" % [acc0, p.accuracy])
+	p.remove_status_effect(Skill.StatusEffect.BLIND)
+	check(is_equal_approx(p.accuracy, acc0), "accuracy restored when Blind ends")
+	p.apply_status_effect(Skill.StatusEffect.EVASIVE, 3)
+	check(is_equal_approx(p.dodge, dodge0 + 0.25), "Evasive adds +25% dodge")
+	p.remove_status_effect(Skill.StatusEffect.EVASIVE)
+	check(is_equal_approx(p.dodge, dodge0), "dodge restored when Evasive ends")
+	var evasion: Skill = SkillManager.get_skill("Evasion").duplicate()
+	evasion.use(p, [p])
+	check(p.has_status_effect(Skill.StatusEffect.EVASIVE), "Myrmidon's Evasion grants Evasive")
 
 # ------------------------------------------------------------------ full battles
 

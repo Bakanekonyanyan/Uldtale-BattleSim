@@ -89,5 +89,10 @@
 			"fortitude": 3
 		},
 		"message": "{name} has a damage reflection barrier (30%)"
+	},
+	"EVASIVE": {
+		"damage_type": "none",
+		"dodge_bonus": 0.25,
+		"message": "{name} moves like a shadow (+25% dodge)"
 	}
 }

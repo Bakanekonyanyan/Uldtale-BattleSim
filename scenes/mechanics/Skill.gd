@@ -30,7 +30,8 @@ enum StatusEffect {
 	SLEEP,        # Dark element
 	REGENERATION, # Buff effect
 	ENRAGED,      # Buff effect
-	REFLECT       # Buff effect
+	REFLECT,      # Buff effect
+	EVASIVE       # Buff effect: flat dodge bonus (append new effects at the end - saves store the number)
 }
 enum AbilityType { PHYSICAL, MAGICAL }
 enum DrainTarget { HP, MP, SP }

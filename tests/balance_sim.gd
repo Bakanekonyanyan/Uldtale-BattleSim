@@ -337,6 +337,9 @@ func player_policy(p: CharacterData, ctx: BattleContext) -> BattleAction:
 			Skill.SkillType.DEBUFF, Skill.SkillType.INFLICT_STATUS:
 				debuff = s
 			Skill.SkillType.DAMAGE, Skill.SkillType.DRAIN:
+				# MP/SP drains deal no HP damage - don't treat them as attacks
+				if s.type == Skill.SkillType.DRAIN and s.drain_source != Skill.DrainTarget.HP:
+					continue
 				if best == null or s.power > best.power:
 					best = s
 	

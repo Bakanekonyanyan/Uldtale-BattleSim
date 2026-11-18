@@ -229,8 +229,8 @@
 	  "power": 55,
 	  "duration": 3,
 	  "mp_cost": 15,
-	  "sp_cost": 50,
-	  "cooldown": 5
+	  "sp_cost": 30,
+	  "cooldown": 3
 	},
 	"Bushido": {
 	  "name": "Bushido",
@@ -241,7 +241,7 @@
 	  "element": "HOLY",
 	  "attribute_target": "DEXTERITY",
 	  "status_effect": "ENRAGED",
-	  "power": 40,
+	  "power": 25,
 	  "duration": 3,
 	  "mp_cost": 15,
 	  "sp_cost": 30,
@@ -271,7 +271,7 @@
 	  "target": "SELF",
 	  "element": "NONE",
 	  "attribute_target": "AGILITY",
-	  "status_effect": "NONE",
+	  "status_effect": "EVASIVE",
 	  "power": 40,
 	  "duration": 3,
 	  "mp_cost": 15,
