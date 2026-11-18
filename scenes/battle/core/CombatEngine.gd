@@ -81,39 +81,20 @@ func _execute_attack(action: BattleAction) -> ActionResult:
 			if weapon.key != "" and weapon.key != null:
 				prof_level_up_msg = attacker.proficiency_manager.use_weapon(weapon.key)
 	
-	var momentum_mult = MomentumSystem.get_damage_multiplier()
-	var base_damage = attacker.get_attack_power() * 0.5 * momentum_mult
-	var resistance = target.get_defense()
-	
 	if RandomManager.randf() >= attacker.accuracy:
 		return ActionResult.missed_attack(attacker, target)
 	
 	if RandomManager.randf() < target.dodge:
 		return ActionResult.dodged_attack(attacker, target)
 	
-	var is_crit = RandomManager.randf() < attacker.critical_hit_rate
+	# All damage math lives in BattleFormulas
+	var crit_mult = BattleFormulas.roll_crit(attacker)
+	var is_crit = crit_mult > 1.0
+	var damage = BattleFormulas.finalize(BattleFormulas.hit_damage(attacker, target, true) * crit_mult)
 	
-	# NEW: Percentage-based damage reduction formula
-	# Formula: damage = base_damage * (100 / (100 + resistance * 0.5))
-	# Examples:
-	#   0 def   = 100% damage
-	#   50 def  = 80% damage  (100/(100+25))
-	#   100 def = 66% damage  (100/(100+50))
-	#   200 def = 50% damage  (100/(100+100))
-	var damage_multiplier = 100.0 / (100.0 + (resistance * 0.5))
-	var damage = base_damage * damage_multiplier
-	
-	# Ensure minimum damage (1% of base, min 1)
-	var min_damage = max(1, base_damage * 0.01)
-	damage = max(min_damage, damage)
-	
-	if is_crit:
-		damage *= 1.5 + RandomManager.randf() * 0.5
-	
-	damage = round(damage)
-	
-	print("[COMBAT] Attack: base=%.1f, def=%d, mult=%.2f%%, final=%d" % [
-		base_damage, resistance, damage_multiplier * 100, damage
+	print("[COMBAT] Attack: %s -> %s  offense=%.1f def=%.1f final=%d%s" % [
+		attacker.name, target.name, BattleFormulas.physical_offense(attacker),
+		BattleFormulas.physical_defense(target), damage, " CRIT" if is_crit else ""
 	])
 	
 	# Track reflection BEFORE applying damage
@@ -130,8 +111,8 @@ func _execute_attack(action: BattleAction) -> ActionResult:
 					if weapon.try_apply_status_effect(target):
 						status_msg = " and applied %s" % Skill.StatusEffect.keys()[weapon.status_effect_type]
 	
-	var mp_restore = int(attacker.max_mp * 0.08)
-	var sp_restore = int(attacker.max_sp * 0.08)
+	var mp_restore = int(attacker.max_mp * BattleFormulas.ATTACK_RESOURCE_REGEN)
+	var sp_restore = int(attacker.max_sp * BattleFormulas.ATTACK_RESOURCE_REGEN)
 	attacker.restore_mp(mp_restore)
 	attacker.restore_sp(sp_restore)
 	
@@ -227,7 +208,8 @@ func _execute_skill(action: BattleAction) -> ActionResult:
 			if attr_enum != Skill.AttributeTarget.NONE:
 				var effect_data = {
 					"stat": Skill.AttributeTarget.keys()[attr_enum],
-					"amount": skill.power,
+					# Actual stat points applied (power is a % of base stat) - PvP sync applies this
+					"amount": BattleFormulas.buff_amount(targets[0], attr_enum, skill.power) if not targets.is_empty() else 0,
 					"duration": skill.duration
 				}
 				

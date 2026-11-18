@@ -243,8 +243,6 @@ func use(user: CharacterData, targets: Array) -> Dictionary:
 func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 	var total_damage = 0
 	var target_results = []  #  Track per-target outcomes
-	var momentum_multiplier = MomentumSystem.get_damage_multiplier()
-	
 	# Convert elements (keep existing code)
 	var elemental_types = []
 	for elem in elements:
@@ -258,12 +256,10 @@ func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 				ElementType.HOLY: elemental_types.append(ElementalDamage.Element.HOLY)
 				ElementType.DARK: elemental_types.append(ElementalDamage.Element.DARK)
 	
+	var applied_effects := {}  # names of status effects that actually landed
+	
 	#  PROCESS EACH TARGET (don't early return)
 	for t in targets:
-		var base_damage = power + (user.attack_power if ability_type == AbilityType.PHYSICAL else user.spell_power)
-		base_damage *= momentum_multiplier
-		var resistance = (t.toughness if ability_type == AbilityType.PHYSICAL else t.spell_ward)
-		
 		var accuracy_check = RandomManager.randf() < user.accuracy
 		var dodge_check = RandomManager.randf() < t.dodge
 		
@@ -276,7 +272,8 @@ func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 			target_results.append({"target": t.name, "dodged": true})
 			continue
 		
-		var damage = max(1, base_damage - resistance)
+		# Basic-attack math boosted by skill power (see BattleFormulas)
+		var damage = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, power)
 		
 		# Apply elemental (keep existing code)
 		if not elemental_types.is_empty() and t.elemental_resistances:
@@ -290,9 +287,9 @@ func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 			damage *= total_multiplier
 		
 		# Crit check
-		var crit_check = RandomManager.randf() < user.critical_hit_rate
-		if crit_check:
-			damage *= 1.5 + RandomManager.randf() * 0.5
+		var crit_mult = BattleFormulas.roll_crit(user)
+		var crit_check = crit_mult > 1.0
+		damage = BattleFormulas.finalize(damage * crit_mult)
 		
 		# Reflection
 		var reflection_info = _track_reflection_damage(user, t, damage)
@@ -301,10 +298,11 @@ func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 		t.take_damage(damage, user)
 		total_damage += damage
 		
-		# Apply status
+		# Status riders on damage skills only proc some of the time
 		for effect in status_effects:
-			if effect != StatusEffect.NONE:
+			if effect != StatusEffect.NONE and t.is_alive() and BattleFormulas.status_procs(true):
 				t.apply_status_effect(effect, duration)
+				applied_effects[StatusEffect.keys()[effect]] = true
 		
 		#  Record successful hit
 		target_results.append({
@@ -355,13 +353,8 @@ func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 				result_msg += ("\n" if result_msg else "") + "%s dodged!" % res.target
 	
 	# Show status effects
-	if not status_effects.is_empty() and hit_count > 0:
-		var effect_names = []
-		for effect in status_effects:
-			if effect != StatusEffect.NONE:
-				effect_names.append(StatusEffect.keys()[effect])
-		if not effect_names.is_empty():
-			result_msg += "\nApplied: " + ", ".join(effect_names)
+	if not applied_effects.is_empty():
+		result_msg += "\nApplied: " + ", ".join(PackedStringArray(applied_effects.keys()))
 	
 	return {"message": result_msg, "damage": int(total_damage), "healing": 0}
 
@@ -370,9 +363,8 @@ func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 func heal(user: CharacterData, targets: Array) -> Dictionary:
 	var total_heal = 0
 	for t in targets:
-		var heal_amount = power + user.spell_power
-		t.heal(heal_amount)
-		total_heal += heal_amount
+		var heal_amount = BattleFormulas.heal_amount(user, power)
+		total_heal += t.heal(heal_amount)  # count actual HP restored, not overheal
 	
 	return {
 		"message": "%s healed %d HP to %d target(s)" % [name, total_heal, targets.size()],
@@ -393,7 +385,7 @@ func apply_buff(_user: CharacterData, targets: Array) -> Dictionary:
 		for t in targets:
 			for attribute in attribute_targets:
 				if attribute != AttributeTarget.NONE:
-					t.apply_buff(attribute, power, duration)
+					t.apply_buff(attribute, BattleFormulas.buff_amount(t, attribute, power), duration)
 	
 	# Build message
 	var result_parts = []
@@ -412,7 +404,7 @@ func apply_buff(_user: CharacterData, targets: Array) -> Dictionary:
 			if attr != AttributeTarget.NONE:
 				attr_names.append(AttributeTarget.keys()[attr])
 		if not attr_names.is_empty():
-			result_parts.append("buffed " + ", ".join(attr_names) + " by +" + str(power))
+			result_parts.append("buffed " + ", ".join(attr_names) + " by +%d%%" % power)
 	
 	if result_parts.is_empty():
 		return {"message": "%s had no effect!" % name, "damage": 0, "healing": 0}
@@ -436,7 +428,7 @@ func apply_debuff(_user: CharacterData, targets: Array) -> Dictionary:
 		
 		for attribute in attribute_targets:
 			if attribute != AttributeTarget.NONE:
-				t.apply_debuff(attribute, power, duration)
+				t.apply_debuff(attribute, BattleFormulas.buff_amount(t, attribute, power), duration)
 	
 	var result_parts = []
 	
@@ -454,7 +446,7 @@ func apply_debuff(_user: CharacterData, targets: Array) -> Dictionary:
 			if attr != AttributeTarget.NONE:
 				attr_names.append(AttributeTarget.keys()[attr])
 		if not attr_names.is_empty():
-			result_parts.append("debuffed " + ", ".join(attr_names) + " by " + str(power))
+			result_parts.append("debuffed " + ", ".join(attr_names) + " by -%d%%" % power)
 	
 	if result_parts.is_empty():
 		return {"message": "%s had no effect!" % name, "damage": 0, "healing": 0}
@@ -518,10 +510,9 @@ func drain(user: CharacterData, targets: Array) -> Dictionary:
 		
 		match drain_source:
 			DrainTarget.HP:
-				var base_damage = power + (user.attack_power if ability_type == AbilityType.PHYSICAL else user.spell_power)
-				var resistance = (t.toughness if ability_type == AbilityType.PHYSICAL else t.spell_ward)
-				drain_amount = max(1, base_damage - resistance)
-				t.take_damage(drain_amount)
+				drain_amount = BattleFormulas.finalize(BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, power))
+				drain_amount = min(drain_amount, t.current_hp)
+				t.take_damage(drain_amount, user)
 			
 			DrainTarget.MP:
 				drain_amount = min(power, t.current_mp)

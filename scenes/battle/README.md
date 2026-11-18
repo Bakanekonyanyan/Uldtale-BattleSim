@@ -22,7 +22,8 @@ the components below and runs **one explicit turn loop**. To follow a fight, rea
 | `core/BattleContext.gd` | Shared state for one battle: combatants, dungeon info, per-turn flags, `battle_over`. |
 | `core/BattleAction.gd` | A request: attack / skill / item / defend, plus actor and targets. |
 | `core/ActionResult.gd` | What happened: damage, healing, crit/miss/dodge, buffs, and the message. |
-| `core/CombatEngine.gd` | Combat rules: damage formulas, skill/item resolution, status ticks. Pure logic. |
+| `core/BattleFormulas.gd` | **All battle math and tuning constants**: damage, defense, crits, heals, buff sizes, and status proc chance. See `BATTLE_MATH.md`. |
+| `core/CombatEngine.gd` | Combat rules: resolves attacks, skills, items and status ticks using `BattleFormulas`. Pure logic. |
 | `core/ReflectionInfo.gd` | Predicts reflected damage for the combat log. Reflection itself is applied only in `CharacterData.take_damage()`. |
 | `flow/TurnQueue.gd` | Decides whose turn is next: rolls initiative by agility, rotates actors, and re-rolls each round. |
 | `flow/TurnStartProcessor.gd` | Runs the start of a turn: clears Defend, ticks status effects, then returns `CAN_ACT`, `STUNNED` or `DIED`. |

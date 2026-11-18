@@ -1,6 +1,22 @@
 # res://scripts/autoload/EnemyFactory.gd
 extends Node
 
+# --- Difficulty tuning (see also BattleFormulas for combat math) ---
+## Stat increase per wave within a floor: wave 1 = x1.00, wave 5 = x1.20, boss wave = x1.25
+const WAVE_SCALING := 0.05
+## Extra multiplier for bosses in apply_enemy_scaling (King stats already make them strong)
+const BOSS_STAT_MULT := 1.0
+## Regular enemies have this fraction of a hero's HP / damage for the same stats.
+## The hero fights alone against groups, so individual enemies are weaker.
+const ENEMY_HP_MULT := 0.5
+const ENEMY_DAMAGE_MULT := 0.85
+## Boss HP pool vs a hero with the same stats (bosses should be long fights).
+## Applied to HP only - raising vitality instead also inflated attack and defense.
+const BOSS_HP_MULT := 1.0
+const BOSS_DAMAGE_MULT := 0.7
+## How much of the minion class's base stats a boss inherits (flavor + skills)
+const BOSS_MINION_STAT_SHARE := 0.25
+
 var races = {}
 var classes = {}
 var skills = {}
@@ -86,6 +102,8 @@ func create_enemy(level: int = 1, floor: int = 1, wave: int = 1, momentum_level:
 	for _i in range(level - 1):
 		enemy.level_up()
 	
+	enemy.hp_multiplier = ENEMY_HP_MULT
+	enemy.damage_multiplier = ENEMY_DAMAGE_MULT
 	apply_enemy_scaling(enemy, floor, wave, false, momentum_level)
 	give_enemy_equipment(enemy, floor)
 	give_enemy_items(enemy, floor, false, momentum_level)
@@ -116,7 +134,7 @@ func create_boss(floor: int = 1, wave: int = 1, momentum_level: int = 0) -> Char
 	boss.race = current_dungeon_race
 	boss.character_class = "King (%s)" % chosen_minion
 	
-	var minion_contribution = 0.5
+	var minion_contribution = BOSS_MINION_STAT_SHARE
 	#  FIX: Use bracket notation for dictionary access
 	boss.vitality = int((king_data["base_vit"] + race_data["vit_mod"]) + (minion_data["base_vit"] * minion_contribution))
 	boss.strength = int((king_data["base_str"] + race_data["str_mod"]) + (minion_data["base_str"] * minion_contribution))
@@ -129,11 +147,9 @@ func create_boss(floor: int = 1, wave: int = 1, momentum_level: int = 0) -> Char
 	boss.agility = int((king_data["base_agi"] + race_data["agi_mod"]) + (minion_data["base_agi"] * minion_contribution))
 	boss.fortitude = int((king_data["base_for"] + race_data["for_mod"]) + (minion_data["base_for"] * minion_contribution))
 	
-	boss.vitality = int(boss.vitality * 2)
-	boss.strength = int(boss.strength * 1.5)
-	boss.intelligence = int(boss.intelligence * 1.5)
-	boss.faith = int(boss.faith * 1.5)
-	boss.endurance = int(boss.endurance * 1.5)
+	# Bosses get a bigger HP pool via BOSS_HP_MULT below. (Previously VIT x2 and
+	# STR/INT/FAI/END x1.5, then the whole block x1.5 again in apply_enemy_scaling,
+	# then x1.9 for wave 6 - a floor-1 boss had ~1400 HP and ~8x the player's attack.)
 	
 	boss.attack_power_type = king_data["attack_power_type"]
 	boss.spell_power_type = king_data["spell_power_type"]
@@ -154,6 +170,8 @@ func create_boss(floor: int = 1, wave: int = 1, momentum_level: int = 0) -> Char
 		boss.elemental_resistances = ElementalResistanceManager.new(boss)
 	boss.initialize_racial_elementals(true)
 	
+	boss.hp_multiplier = BOSS_HP_MULT
+	boss.damage_multiplier = BOSS_DAMAGE_MULT
 	apply_enemy_scaling(boss, floor, wave, true, momentum_level)
 	give_enemy_equipment(boss, floor, true)
 	give_enemy_items(boss, floor, true, momentum_level)
@@ -170,14 +188,14 @@ func apply_enemy_scaling(enemy: CharacterData, floor: int, wave: int, is_boss: b
 	# Progressive difficulty curve with breakpoints
 	var difficulty_tier = get_difficulty_tier(floor)
 	var base_multiplier = get_base_multiplier(floor)
-	var wave_multiplier = 1.0 + (0.15 * wave)  # Reduced from 0.25
+	var wave_multiplier = 1.0 + WAVE_SCALING * (wave - 1)
 	
 	var momentum_multiplier = 1.0
 	if momentum_level > 0:
 		momentum_multiplier = 1.0 + (momentum_level * 0.10)
 	
 	# Boss scaling
-	var boss_multiplier = 1.5 if is_boss else 1.0
+	var boss_multiplier = BOSS_STAT_MULT if is_boss else 1.0
 	
 	var total_multiplier = base_multiplier * wave_multiplier * momentum_multiplier * boss_multiplier
 	

@@ -55,6 +55,12 @@ var spell_power_type: String = "intelligence"
 
 # === COMBAT STATE ===
 var is_defending: bool = false
+## Scales max HP. Regular enemies use < 1.0 so a lone hero can beat a group
+## (set by EnemyFactory; players and PvP opponents keep 1.0).
+var hp_multiplier: float = 1.0
+## Scales damage this character deals (see BattleFormulas.hit_damage).
+## Set by EnemyFactory; players and PvP opponents keep 1.0.
+var damage_multiplier: float = 1.0
 var is_stunned: bool = false
 var last_attacker: CharacterData = null
 
@@ -142,7 +148,7 @@ func calculate_secondary_attributes():
 	var old_max_sp = max_sp
 	
 	# Resource pools - use BASE attributes only (no equipment/buffs)
-	max_hp = vitality * 8 + strength * 3
+	max_hp = int((vitality * 8 + strength * 3) * hp_multiplier)
 	max_mp = mind * 5 + intelligence * 3
 	max_sp = endurance * 5 + agility * 3
 	
@@ -163,12 +169,16 @@ func calculate_secondary_attributes():
 		current_sp = max_sp
 	
 	# Defensive
-	toughness = (eff.vitality * 0.45 + eff.strength * 0.25 + eff.endurance * 0.15 + eff.fortitude * 0.15) / 10.0
+	# Defense ratings feed BattleFormulas.mitigation(): 100 defense = half damage.
+	# (Toughness used to be divided by 10, making it ~1 at level 1 - i.e. useless.
+	# Spell ward was a product of two stats, so it grew quadratically.)
+	toughness = eff.vitality * 0.45 + eff.strength * 0.25 + eff.endurance * 0.15 + eff.fortitude * 0.15
 	dodge = 0.05 + (eff.agility * 0.55 + eff.dexterity * 0.35 + eff.fortitude * 0.10) / 200.0
-	spell_ward = (eff.fortitude * 0.5) * (0.6 * eff.arcane + 0.3 * eff.mind + 0.1 * eff.faith) / 10.0
+	spell_ward = eff.mind * 0.45 + eff.faith * 0.25 + eff.arcane * 0.15 + eff.fortitude * 0.15
 	
 	# Offensive
-	accuracy = 0.75 + (eff.dexterity * 0.35 + eff.agility * 0.25 + eff.mind * 0.25 + eff.fortitude * 0.15) / 200.0
+	# Base 85%: at 75% a third of attacks missed once dodge was factored in
+	accuracy = 0.85 + (eff.dexterity * 0.35 + eff.agility * 0.25 + eff.mind * 0.25 + eff.fortitude * 0.15) / 200.0
 	critical_hit_rate = 0.05 + (eff.dexterity * 0.4 + eff.agility * 0.25 + eff.intelligence * 0.2 + eff.fortitude * 0.15) / 200.0
 	
 	# Attack power
@@ -177,15 +187,26 @@ func calculate_secondary_attributes():
 			attack_power = eff.strength * 2 + eff.dexterity * 0.5 + eff.vitality * 0.5
 		"dexterity":
 			attack_power = eff.dexterity * 2 + eff.strength * 0.5 + eff.agility * 0.5
+		"arcane":  # Druid - previously unhandled, so attack_power stayed 0
+			attack_power = eff.arcane * 2 + eff.strength * 0.5 + eff.dexterity * 0.5
+		_:
+			push_warning("%s: unknown attack_power_type '%s'" % [name, attack_power_type])
+			attack_power = eff.strength * 2 + eff.dexterity * 0.5 + eff.vitality * 0.5
 	
-	# Spell power
+	# Spell power - same shape as attack power: primary x2 + two secondaries x0.5
+	# (the old formulas weighted 4 stats vs attack power's 3, so magic out-scaled physical)
 	match spell_power_type:
 		"balanced":
-			spell_power = (eff.intelligence * 1.5 + eff.faith * 1.5 + eff.arcane * 1.5) / 2
+			spell_power = eff.intelligence + eff.faith + eff.arcane
 		"intelligence":
-			spell_power = eff.intelligence * 2 + eff.faith + eff.arcane
+			spell_power = eff.intelligence * 2 + eff.faith * 0.5 + eff.arcane * 0.5
 		"arcane":
-			spell_power = eff.arcane * 2 + eff.intelligence + eff.faith
+			spell_power = eff.arcane * 2 + eff.intelligence * 0.5 + eff.faith * 0.5
+		"faith":  # Paladin/Cleric/Druid/Shaman - previously unhandled, so spell_power stayed 0
+			spell_power = eff.faith * 2 + eff.intelligence * 0.5 + eff.arcane * 0.5
+		_:
+			push_warning("%s: unknown spell_power_type '%s'" % [name, spell_power_type])
+			spell_power = eff.intelligence + eff.faith + eff.arcane
 
 # === RESOURCE MANAGEMENT (delegates to static utility) ===
 func heal(amount: int) -> int:

@@ -1,0 +1,129 @@
+# Battle Math
+
+Combat math lives in two places:
+
+- **`core/BattleFormulas.gd`**: how damage, defense, crits, heals, buffs and status procs work.
+- **`scripts/autoload/EnemyFactory.gd`** (constants at the top): how strong enemies and bosses are.
+
+Status effect strengths (DoT %, stun chance) live in `data/status_effects.json`.
+
+Check any change with the simulator before playtesting:
+
+```
+godot --headless res://tests/balance_sim.tscn -- mylabel
+```
+
+## Formulas
+
+| | Formula |
+|---|---|
+| Physical offense | `attack_power + weapon damage` |
+| Magical offense | `spell_power` |
+| Hit damage | `offense × 0.75 × (1 + skill_power × 1%) × mitigation(defense)` |
+| Mitigation | `100 / (100 + defense)` → 0 def = 100%, 100 def = 50%, 300 def = 25% |
+| Physical defense | `toughness + armor × 0.5` |
+| Magical defense | `spell_ward + armor × 0.25` |
+| Crit | `crit_rate` chance for ×1.5–2.0 |
+| Heal | `skill_power + spell_power × 0.5` |
+| Buff / debuff | `skill_power`% of the target's **base** attribute (Roar 40 = −40% Agility) |
+| Status on damage skills | 35% chance per effect per target hit (dedicated status/debuff skills always apply) |
+
+Basic attacks are hit damage with skill power 0. A skill is a basic attack boosted
+by its power (power 25 → ×1.25, power 55 → ×1.55). Its value comes from AoE, status
+effects and buffs, and it's paid for with MP/SP and cooldowns.
+
+### Character stats (`CharacterData.calculate_secondary_attributes`)
+
+Attack power and spell power share one shape: **primary stat ×2 + two secondaries ×0.5**.
+
+| Type | Attack power | Spell power |
+|---|---|---|
+| strength | STR×2 + DEX×0.5 + VIT×0.5 | |
+| dexterity | DEX×2 + STR×0.5 + AGI×0.5 | |
+| arcane | ARC×2 + STR×0.5 + DEX×0.5 | ARC×2 + INT×0.5 + FAI×0.5 |
+| intelligence | | INT×2 + FAI×0.5 + ARC×0.5 |
+| faith | | FAI×2 + INT×0.5 + ARC×0.5 |
+| balanced | | INT + FAI + ARC |
+
+- Toughness = VIT×0.45 + STR×0.25 + END×0.15 + FOR×0.15
+- Spell ward = MND×0.45 + FAI×0.25 + ARC×0.15 + FOR×0.15
+- Accuracy = 85% + small stat bonus. Dodge = 5% + small stat bonus.
+
+### Enemies (`EnemyFactory` constants)
+
+| Constant | Value | Meaning |
+|---|---|---|
+| `WAVE_SCALING` | 0.05 | +5% stats per wave in a floor (wave 1 ×1.00, wave 5 ×1.20) |
+| `ENEMY_HP_MULT` | 0.5 | Regular enemies have half a hero's HP for the same stats |
+| `ENEMY_DAMAGE_MULT` | 0.85 | ...and deal 85% damage. The hero fights alone against groups. |
+| `BOSS_HP_MULT` | 1.0 | Boss HP vs a hero with the same stats (King stats already make it ~2× a hero) |
+| `BOSS_DAMAGE_MULT` | 0.7 | Boss damage scale (bosses also gain phase/enrage buffs) |
+| `BOSS_MINION_STAT_SHARE` | 0.25 | Share of the minion class's stats a boss inherits |
+
+Floor scaling (`get_base_multiplier`) and momentum (+10% enemy stats per level) are unchanged.
+
+### Status effects (`data/status_effects.json`)
+
+| Effect | Old | New |
+|---|---|---|
+| Poison | 15% max HP / turn | 6% |
+| Burn | 10% | 4% |
+| Shock | 12.5%, 30% stun | 5%, 15% stun |
+| Freeze | 25% stun | 15% stun |
+| Bleed burst (3 stacks) | 30% max HP | 20% |
+
+## What was wrong before
+
+1. **Skills did 2–8× a basic attack.** A skill dealt `power + 100% of offense − defense`, while a basic attack dealt `50% of offense`. Enemy Fireball hit a 140 HP Paladin for ~86.
+2. **Spell power was 0 for "faith" casters** (Paladin, Cleric, Druid, Shaman), and **attack power was 0 for Druid** ("arcane"). Those types weren't handled.
+3. **Armor and weapon damage did nothing in combat.** They were only displayed.
+4. **Defense was cosmetic.** Toughness was divided by 10 (~1 at level 1). Spell ward multiplied two stats together, so it grew quadratically.
+5. **Buff/debuff skills added their raw power as stat points.** Roar (40) removed 40 Agility from a level-1 hero who had ~6. The boss's Royal Decree added +60 Strength.
+6. **The floor-1 boss was multiplied three times** (×2 VIT and ×1.5 other stats, then ×1.5 boss, then ×1.9 wave): ~1,400 HP and ~8× the hero's attack power.
+7. **Enemies scaled +15% per wave**, so floor-1 wave 5 enemies had 1.75× a level-1 hero's stats.
+
+## Simulated results
+
+150 simulated runs per cell, using the real engine, AI and enemy generation with an
+auto-pilot player. The player heals when low, uses its best ready damage skill, and
+otherwise attacks the weakest enemy. It never uses items, so real players should do
+somewhat better.
+
+**Single fights, floor 1, fresh level-1 hero with no gear (win %):**
+
+| Class | Wave 1 before → after | Wave 3 before → after | Wave 5 before → after |
+|---|---|---|---|
+| Paladin | 54 → 96 | 12 → 92 | 0 → 86 |
+| Necromancer | 59 → 90 | 25 → 79 | 2 → 62 |
+| Myrmidon | 45 → 93 | 10 → 87 | 0 → 77 |
+| Cleric | 30 → 87 | 5 → 80 | 0 → 65 |
+| Samurai | 58 → 92 | 17 → 86 | 2 → 81 |
+| Elementalist | 72 → 84 | 37 → 82 | 13 → 66 |
+| Druid | 24 → 69 | 4 → 58 | 0 → 40 |
+| Monk | 53 → 98 | 22 → 88 | 3 → 68 |
+
+**Full floor-1 run** (5 waves and a boss in one go, starting at level 1). The player
+levels up from XP, takes a Breather below 50% HP (below 80% before the boss), and
+otherwise presses on:
+
+| Class | Before | After |
+|---|---|---|
+| Paladin | 0% | 37% |
+| Myrmidon | 0% | 39% |
+| Samurai | 0% | 22% |
+| Cleric | 0% | 18% |
+| Monk | 0% | 16% |
+| Necromancer | 0% | 14% |
+| Elementalist | 0% | 2% |
+| Druid | 0% | 0% |
+
+Before, no class ever cleared floor 1. After, a character that clears floor 1 usually
+keeps going: most floor-1 clearers also clear floors 2–4 (campaign mode in the
+simulator). The floor-1 boss is the main gate. A death keeps the levels already
+earned, so a failed run still moves the character forward.
+
+## Known gaps and next steps
+
+- **Class balance.** Elementalist and Druid are clearly behind in full runs. They win most single fights at level 1 but run out of resources and HP over a Press-On streak. That's a class-kit question (skill costs and power, HP formula for casters) rather than a core-formula one.
+- **Skill effect sizes in `skills.json` were authored against the old formulas.** Buff/debuff "power" now means percent. Values of 20–70 are reasonable, but worth a pass.
+- **Item effects (`Item.gd`) use their own fixed numbers** and weren't changed.
