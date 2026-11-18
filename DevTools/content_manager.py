@@ -33,6 +33,7 @@ JSON_FILES = {
     "Recipes": "data/recipes.json",
     "Locations": "data/locations.json",
     "Material Drops": "data/loot/material_tables.json",
+    "Blacksmith": "data/blacksmith.json",
 }
 
 # -------------------------

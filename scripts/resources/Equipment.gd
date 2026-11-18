@@ -41,6 +41,16 @@ var flavor_text: String = ""
 var item_level: int = 1
 var base_item_level: int = 1
 
+# Blacksmith upgrades: damage/armor = base x (1 + UPGRADE_STEP x upgrade_level).
+# Base values are captured once (before the first upgrade) so repeated upgrades
+# never compound rounding.
+const UPGRADE_STEP := 0.08
+var upgrade_level: int = 0
+var base_damage: int = -1   # -1 = not captured yet
+var base_armor: int = -1
+## Consecutive failed upgrade attempts; each adds a success bonus ("Tempered")
+var tempered: int = 0
+
 # === MANAGERS (delegate complex operations) ===
 var rarity_generator: RarityGenerator
 var equipment_namer: EquipmentNamer
@@ -169,48 +179,34 @@ func allows_offhand(character: CharacterData, offhand_item: Equipment) -> bool:
 	
 	return false
 
+## Flat bonuses this item gives while equipped: {stat_name: amount}.
+## - `effects` (e.g. {"dodge": 0.03}) for secondary stats
+## - attribute_target/attribute_increase pairs (caster off-hands: "+3 intelligence,
+##   +5 spell_ward"), scaled by Blacksmith upgrades like damage/armor.
+## CharacterData.calculate_secondary_attributes() reads these every time, so they
+## can't be lost on recalculation. (Previously `effects` were added onto the stat
+## once and wiped by the next recalculation, and attribute_increase was never applied.)
+func get_flat_bonuses() -> Dictionary:
+	var bonuses := {}
+	for stat in effects:
+		bonuses[stat] = bonuses.get(stat, 0.0) + float(effects[stat])
+	var targets: Array = attribute_target if attribute_target is Array else ([attribute_target] if attribute_target is String and attribute_target != "" else [])
+	var amounts: Array = attribute_increase if attribute_increase is Array else ([attribute_increase] if attribute_increase is int or attribute_increase is float else [])
+	var upgrade_mult = 1.0 + UPGRADE_STEP * upgrade_level
+	for i in range(min(targets.size(), amounts.size())):
+		var stat = String(targets[i]).to_lower()
+		if stat == "" or stat == "none":
+			continue
+		bonuses[stat] = bonuses.get(stat, 0.0) + float(amounts[i]) * upgrade_mult
+	return bonuses
+
+## Kept for callers (equip/unequip/load): bonuses are computed in
+## calculate_secondary_attributes(), so this just refreshes the character.
 func apply_effects(character: CharacterData):
-	"""Apply secondary attribute effects (dodge, critical_hit_rate, etc)"""
-	if effects.is_empty():
-		return
-	
-	print("[EQUIPMENT] Applying effects from %s:" % display_name)
-	
-	for property_name in effects:
-		var effect_value = effects[property_name]
-		
-		# Check if character has this property
-		if property_name in character:
-			var old_value = character.get(property_name)
-			character.set(property_name, old_value + effect_value)
-			print("  - %s: %s -> %s (%+.3f)" % [
-				property_name, 
-				old_value, 
-				character.get(property_name),
-				effect_value
-			])
-		else:
-			push_warning("Equipment effect '%s' not found on character" % property_name)
+	character.calculate_secondary_attributes()
 
 func remove_effects(character: CharacterData):
-	"""Remove secondary attribute effects"""
-	if effects.is_empty():
-		return
-	
-	print("[EQUIPMENT] Removing effects from %s:" % display_name)
-	
-	for property_name in effects:
-		var effect_value = effects[property_name]
-		
-		if property_name in character:
-			var old_value = character.get(property_name)
-			character.set(property_name, old_value - effect_value)
-			print("  - %s: %s -> %s (%-.3f)" % [
-				property_name,
-				old_value,
-				character.get(property_name),
-				effect_value
-			])
+	character.calculate_secondary_attributes()
 
 func apply_stat_modifiers(character: CharacterData):
 	"""Apply equipment stat bonuses to separate equipment_bonuses dict"""
@@ -247,6 +243,55 @@ func try_apply_status_effect(target: CharacterData) -> bool:
 
 # === DISPLAY ===
 
+# === BLACKSMITH UPGRADES ===
+
+func ensure_upgrade_base() -> void:
+	if base_damage < 0:
+		base_damage = damage
+	if base_armor < 0:
+		base_armor = armor_value
+
+## Set the upgrade level and recompute damage/armor and the "+N" name.
+func set_upgrade_level(level: int) -> void:
+	ensure_upgrade_base()
+	upgrade_level = max(0, level)
+	damage = int(round(base_damage * (1.0 + UPGRADE_STEP * upgrade_level)))
+	armor_value = int(round(base_armor * (1.0 + UPGRADE_STEP * upgrade_level)))
+	display_name = ("+%d " % upgrade_level if upgrade_level > 0 else "") + get_base_name()
+
+## Display name without any "+N " upgrade prefix.
+func get_base_name() -> String:
+	var rx = RegEx.new()
+	rx.compile("^\\+\\d+ ")
+	return rx.sub(display_name, "")
+
+func is_weapon() -> bool:
+	return slot in ["main_hand", "off_hand"] and damage > 0
+
+## Fields the save file needs for upgrades (also item_level/value, which
+## weren't saved before, so reloaded gear lost its level and price).
+func get_upgrade_save_data() -> Dictionary:
+	ensure_upgrade_base()
+	return {
+		"upgrade_level": upgrade_level,
+		"base_damage": base_damage,
+		"base_armor": base_armor,
+		"tempered": tempered,
+		"item_level": item_level,
+		"value": value
+	}
+
+## Restore upgrade fields. Old saves have none: the current stats become the base.
+func apply_upgrade_save_data(data: Dictionary) -> void:
+	item_level = int(data.get("item_level", item_level))
+	value = int(data.get("value", value))
+	base_damage = int(data.get("base_damage", damage))
+	base_armor = int(data.get("base_armor", armor_value))
+	tempered = int(data.get("tempered", 0))
+	upgrade_level = int(data.get("upgrade_level", 0))
+	if upgrade_level > 0:
+		set_upgrade_level(upgrade_level)
+
 func get_rarity_color() -> String:
 	return rarity_generator.get_color(rarity)
 
@@ -258,6 +303,8 @@ func get_full_description() -> String:
 	desc += "[color=cyan][b]Slot: %s[/b][/color]\n" % _get_slot_display_name()
 	
 	desc += "[color=gray]Item Level: %d[/color]\n" % item_level
+	if upgrade_level > 0:
+		desc += "[color=gold]Upgraded +%d[/color]\n" % upgrade_level
 	desc += "[color=%s]%s[/color]\n" % [get_rarity_color(), rarity.capitalize()]
 	desc += "\n%s\n" % description
 	

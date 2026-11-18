@@ -213,6 +213,7 @@ func _phase0_checks() -> void:
 	_buff_checks()
 	_alchemy_checks()
 	_status_modifier_checks()
+	_blacksmith_checks()
 
 # ------------------------------------------------------------------ momentum + gear drops
 
@@ -362,6 +363,133 @@ func _status_modifier_checks() -> void:
 	var evasion: Skill = SkillManager.get_skill("Evasion").duplicate()
 	evasion.use(p, [p])
 	check(p.has_status_effect(Skill.StatusEffect.EVASIVE), "Myrmidon's Evasion grants Evasive")
+
+# ------------------------------------------------------------------ blacksmith
+
+func _give(p: CharacterData, id: String, qty: int) -> void:
+	p.stash.add_item(ItemManager.get_item(id), qty)
+
+func _make_gear(rarity: String, weapon := true) -> Equipment:
+	var id = ItemManager.get_random_weapon() if weapon else ItemManager.get_random_armor()
+	var e: Equipment = ItemManager.create_equipment_for_floor(id, 1)
+	e.rarity = rarity
+	e.item_level = 3
+	if weapon and e.damage <= 0: e.damage = 12
+	if not weapon and e.armor_value <= 0: e.armor_value = 6
+	return e
+
+func _blacksmith_checks() -> void:
+	var p = make_player()
+	var sword = _make_gear("rare")
+	var base_dmg = sword.damage
+	var base_name = sword.display_name
+	sword.set_upgrade_level(3)
+	check(sword.damage == int(round(base_dmg * 1.24)) and sword.display_name == "+3 " + base_name,
+		"+3 = +24%% damage and '+3' name (%d -> %d)" % [base_dmg, sword.damage])
+	sword.set_upgrade_level(0)
+	check(sword.damage == base_dmg and sword.display_name == base_name, "upgrade math never compounds (back to base at +0)")
+	
+	# Cost: gold = value x 0.25 x L, ore x L, +wood for weapons; reinforcement +25%/step
+	var c1 = BlacksmithManager.get_upgrade_cost(sword, 0)
+	check(c1.gold == max(10, int(round(sword.value * 0.25))) and c1.materials.get("iron_ore", 0) == 1 and c1.materials.get("wood", 0) == 1,
+		"+1 costs value x 25%%, 1 iron ore, 1 wood (%s)" % str(c1))
+	var c2 = BlacksmithManager.get_upgrade_cost(sword, 2)
+	check(c2.gold == int(ceil(c1.gold * 1.5)) and c2.materials.iron_ore == 2, "2 reinforcement steps = +50%% cost (%s)" % str(c2))
+	check(BlacksmithManager.get_success_chance(sword, 0) == 1.0, "+1..+3 always succeed")
+	sword.set_upgrade_level(3)
+	check(is_equal_approx(BlacksmithManager.get_success_chance(sword, 0), 0.9) and BlacksmithManager.steps_to_guarantee(sword) == 1,
+		"+4 is 90%, one reinforcement step guarantees it")
+	sword.set_upgrade_level(5)
+	check(BlacksmithManager.get_upgrade_cost(sword, 0).materials.has("monster_core"), "+6 needs a Monster Core")
+	
+	# A guaranteed upgrade spends the payment (pack/stash) and levels up
+	var armor = _make_gear("uncommon", false)
+	p.inventory.add_item(armor, 1)
+	p.currency.copper = 1000
+	_give(p, "iron_ore", 10)
+	var r = BlacksmithManager.upgrade(p, armor, 0)
+	check(r.ok and r.success and armor.upgrade_level == 1 and p.count_owned("iron_ore") == 9 and p.currency.copper < 1000,
+		"successful upgrade spends ore/gold and gives +1")
+	
+	# Failure below +7: item kept, Tempered stacks, payment lost
+	var mid = _make_gear("legendary")
+	mid.set_upgrade_level(4)
+	p.currency.copper = 1000000
+	_give(p, "mithril_ore", 500); _give(p, "adamant_ore", 500); _give(p, "wood", 500); _give(p, "monster_core", 200)
+	var failed_mid := false
+	for i in range(60):
+		mid.set_upgrade_level(4); mid.tempered = 0
+		r = BlacksmithManager.upgrade(p, mid, 0)
+		if not r.success:
+			failed_mid = mid.upgrade_level == 4 and mid.tempered == 1
+			break
+	check(failed_mid, "failing +4 -> +5 keeps the item at +4 and adds Tempered")
+	check(is_equal_approx(BlacksmithManager.get_success_chance(mid, 0), 0.85), "Tempered adds +5% to the next try")
+	
+	# Failure at +7 or higher drops a level
+	var high = _make_gear("legendary")
+	var dropped := false
+	for i in range(80):
+		high.set_upgrade_level(9); high.tempered = 0
+		r = BlacksmithManager.upgrade(p, high, 0)
+		if not r.success:
+			dropped = high.upgrade_level == 8
+			break
+	check(dropped, "failing at +9 drops the item to +8")
+	high.tempered = 3
+	high.set_upgrade_level(1)
+	r = BlacksmithManager.upgrade(p, high, 0)
+	check(r.success and high.tempered == 0, "Tempered resets after a success")
+	var capped = _make_gear("common"); capped.set_upgrade_level(3)
+	check(not BlacksmithManager.can_upgrade(capped) and not BlacksmithManager.upgrade(p, capped, 0).ok, "common gear caps at +3")
+	
+	# Salvage: pack item -> ore by item level; equipped items refused
+	var junk = _make_gear("magic")
+	p.inventory.add_item(junk, 1)
+	var iron_before = p.count_owned("iron_ore")
+	r = BlacksmithManager.salvage(p, junk)
+	check(r.ok and r.materials.get("iron_ore", 0) >= 3 and p.count_owned("iron_ore") >= iron_before + 3
+		and not p.inventory.items.has(junk.inventory_key), "salvaging a magic item gives 3-4 iron ore and removes it")
+	var worn = _make_gear("rare")
+	p.equipment["main_hand"] = worn
+	check(not BlacksmithManager.salvage(p, worn).ok, "can't salvage equipped gear")
+	
+	# Caster off-hand bonuses now apply, survive recalculation, and scale with upgrades
+	var mage = make_player()
+	var ward0 = mage.spell_ward
+	var tome: Equipment = ItemManager.create_equipment_for_floor("tome", 1)
+	mage.equipment["off_hand"] = tome
+	tome.apply_effects(mage)
+	var tome_ward = tome.get_flat_bonuses().get("spell_ward", 0.0)
+	check(tome_ward > 0 and is_equal_approx(mage.spell_ward, ward0 + tome_ward), "equipped Tome adds its Spell Ward (+%.1f) - was never applied" % tome_ward)
+	mage.apply_buff(Skill.AttributeTarget.STRENGTH, 2, 3)  # triggers a full recalculation
+	check(is_equal_approx(mage.spell_ward, ward0 + tome_ward), "equipment bonus survives stat recalculation")
+	tome.set_upgrade_level(3)
+	mage.calculate_secondary_attributes()
+	check(is_equal_approx(mage.spell_ward, ward0 + tome_ward * 1.24), "upgrading the Tome +3 scales its bonuses by +24%")
+	
+	# Upgrades survive save/load (pack and equipped), with item level and value
+	worn.set_upgrade_level(2)
+	worn.tempered = 1
+	var worn_dmg = worn.damage
+	armor.item_level = 7
+	p.name = "ZZ_SmokeTest_Smith"
+	SaveManager.save_game(p)
+	var loaded = SaveManager.load_game(p.name)
+	SaveManager.delete_character(p.name)
+	var lw: Equipment = loaded.equipment.get("main_hand") if loaded else null
+	var la: Equipment = null
+	if loaded:
+		for key in loaded.inventory.items:
+			if loaded.inventory.items[key].item is Equipment and loaded.inventory.items[key].item.upgrade_level == 1:
+				la = loaded.inventory.items[key].item
+	check(lw != null and lw.upgrade_level == 2 and lw.damage == worn_dmg and lw.tempered == 1 and lw.display_name.begins_with("+2 "),
+		"equipped +2 item survives save/load")
+	check(la != null and la.item_level == 7, "pack item keeps upgrade and item level through save/load")
+	# One more upgrade after load uses the saved base (no compounding)
+	if lw:
+		lw.set_upgrade_level(3)
+		check(lw.damage == int(round(lw.base_damage * 1.24)), "upgrades after reload use the original base stats")
 
 # ------------------------------------------------------------------ full battles
 

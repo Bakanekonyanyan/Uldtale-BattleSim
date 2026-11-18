@@ -77,6 +77,7 @@ func save_game(player: CharacterData):
 				"damage": item.damage,
 				"armor_value": item.armor_value
 			}
+			equip_save_data.merge(item.get_upgrade_save_data())
 			
 			# CRITICAL FIX: Convert enum keys to strings for JSON
 			if "stat_modifiers" in item and not item.stat_modifiers.is_empty():
@@ -123,6 +124,7 @@ func save_game(player: CharacterData):
 				"damage": item.damage,
 				"armor_value": item.armor_value
 			}
+			equip_save_data.merge(item.get_upgrade_save_data())
 			
 			# CRITICAL FIX: Convert enum keys to strings
 			if "stat_modifiers" in item and not item.stat_modifiers.is_empty():
@@ -166,6 +168,7 @@ func save_game(player: CharacterData):
 				"armor_value": equipped_item.armor_value,
 				"inventory_key": equipped_item.inventory_key
 			}
+			equip_data.merge(equipped_item.get_upgrade_save_data())
 			
 			# CRITICAL FIX: Convert enum keys to strings
 			if "stat_modifiers" in equipped_item and not equipped_item.stat_modifiers.is_empty():
@@ -280,6 +283,7 @@ func load_game(character_name: String) -> CharacterData:
 					base_item.damage = item_data.get("damage", base_item.damage)
 					base_item.armor_value = item_data.get("armor_value", base_item.armor_value)
 					base_item.inventory_key = item_key
+					base_item.apply_upgrade_save_data(item_data)
 					
 					# CRITICAL FIX: Convert string keys back to enum
 					if "stat_modifiers" in item_data:
@@ -327,6 +331,7 @@ func load_game(character_name: String) -> CharacterData:
 					base_item.damage = item_data.get("damage", base_item.damage)
 					base_item.armor_value = item_data.get("armor_value", base_item.armor_value)
 					base_item.inventory_key = item_key
+					base_item.apply_upgrade_save_data(item_data)
 					
 					# CRITICAL FIX: Convert string keys back to enum
 					if "stat_modifiers" in item_data:
@@ -373,6 +378,7 @@ func load_game(character_name: String) -> CharacterData:
 					item.damage = equip_data.get("damage", item.damage)
 					item.armor_value = equip_data.get("armor_value", item.armor_value)
 					item.inventory_key = equip_data.get("inventory_key", item.id)
+					item.apply_upgrade_save_data(equip_data)
 					
 					# CRITICAL FIX: Convert string keys back to enum
 					if "stat_modifiers" in equip_data:

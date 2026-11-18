@@ -139,12 +139,25 @@ func initialize_racial_elementals(load_from_race_data: bool = true):
 	RaceElementalData.apply_to_character(self, race, is_player)
 	print("[ELEMENTAL] Initialized racial elementals for %s (%s)" % [name, race])
 
+## Flat bonuses from everything currently equipped (Equipment.get_flat_bonuses):
+## primary attributes (intelligence...) and secondary stats (dodge, spell_ward...).
+func get_equipment_flat_bonuses() -> Dictionary:
+	var total := {}
+	for slot in equipment:
+		var item = equipment[slot]
+		if item is Equipment:
+			var b = item.get_flat_bonuses()
+			for stat in b:
+				total[stat] = total.get(stat, 0.0) + b[stat]
+	return total
+
 func calculate_secondary_attributes():
 	# Calculate effective attributes: base + equipment + buffs/debuffs
+	var flat = get_equipment_flat_bonuses()
 	var eff = {}
 	for stat in ["vitality", "strength", "dexterity", "intelligence", "faith", "mind", "endurance", "arcane", "agility", "fortitude"]:
 		var base_value = get(stat)
-		var equipment_bonus = equipment_bonuses.get(stat, 0)
+		var equipment_bonus = equipment_bonuses.get(stat, 0) + int(round(flat.get(stat, 0.0)))
 		var enum_val = Skill.AttributeTarget[stat.to_upper()]
 		
 		# Get buff/debuff modifier (this should NOT include equipment)
@@ -198,6 +211,11 @@ func calculate_secondary_attributes():
 		dodge = clamp(dodge * mods.dodge_mult + mods.dodge_bonus, 0.0, 0.75)
 	
 	critical_hit_rate = 0.05 + (eff.dexterity * 0.4 + eff.agility * 0.25 + eff.intelligence * 0.2 + eff.fortitude * 0.15) / 200.0
+	
+	# Equipment bonuses to secondary stats (e.g. Talisman dodge, source spell_ward)
+	for stat in ["toughness", "dodge", "spell_ward", "accuracy", "critical_hit_rate"]:
+		if flat.has(stat):
+			set(stat, get(stat) + flat[stat])
 	
 	# Attack power
 	match attack_power_type:
@@ -548,7 +566,7 @@ func get_attribute_breakdown(attribute_name: String) -> Dictionary:
 	Returns: {base: int, equipment: int, buffs: int, total: int}
 	"""
 	var base = get(attribute_name)
-	var equipment_bonus = equipment_bonuses.get(attribute_name, 0)
+	var equipment_bonus = equipment_bonuses.get(attribute_name, 0) + int(round(get_equipment_flat_bonuses().get(attribute_name, 0.0)))
 	
 	var buff_modifier = 0
 	if buff_manager and attribute_name.to_upper() in Skill.AttributeTarget:
@@ -676,6 +694,18 @@ func enforce_carry_limit() -> int:
 			stash.add_item(item, excess)
 			moved += excess
 	return moved
+
+## Quantity owned across pack + stash (town crafting/upgrading can use both).
+func count_owned(item_id: String) -> int:
+	return inventory.get_quantity(item_id) + stash.get_quantity(item_id)
+
+## Remove `amount` of an item, pack first then stash. Caller checks count_owned first.
+func take_owned(item_id: String, amount: int) -> void:
+	var from_pack = min(amount, inventory.get_quantity(item_id))
+	if from_pack > 0:
+		inventory.remove_item(item_id, from_pack)
+	if amount - from_pack > 0:
+		stash.remove_item(item_id, amount - from_pack)
 
 # === LOCATION PROGRESS ===
 ## Highest floor the player may start from at this location (at least 1).

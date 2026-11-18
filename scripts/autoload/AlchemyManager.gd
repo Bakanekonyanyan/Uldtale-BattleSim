@@ -67,7 +67,7 @@ func get_purchase_price(recipe_id: String) -> int:
 
 ## Pack + stash quantity of a material.
 func count_available(player: CharacterData, item_id: String) -> int:
-	return player.inventory.get_quantity(item_id) + player.stash.get_quantity(item_id)
+	return player.count_owned(item_id)
 
 ## How many times this recipe can be crafted right now (0 if unknown).
 func max_craftable(player: CharacterData, recipe_id: String) -> int:
@@ -114,7 +114,7 @@ func craft(player: CharacterData, recipe_id: String, times: int = 1) -> Dictiona
 		return {"ok": false, "reason": "Not enough materials or money."}
 
 	for mat in recipe.ingredients:
-		_take(player, mat, int(recipe.ingredients[mat]) * times)
+		player.take_owned(mat, int(recipe.ingredients[mat]) * times)
 	player.currency.subtract(int(recipe.get("fee", 0)) * times)
 
 	var output: Item = ItemManager.get_item(recipe.output)
@@ -129,14 +129,6 @@ func craft(player: CharacterData, recipe_id: String, times: int = 1) -> Dictiona
 	return {"ok": true, "reason": reason, "made": made, "to_pack": placed.pack, "to_stash": placed.stash}
 
 # === INTERNAL ===
-
-## Remove `amount` of an item, pack first then stash.
-func _take(player: CharacterData, item_id: String, amount: int) -> void:
-	var from_pack = min(amount, player.inventory.get_quantity(item_id))
-	if from_pack > 0:
-		player.inventory.remove_item(item_id, from_pack)
-	if amount - from_pack > 0:
-		player.stash.remove_item(item_id, amount - from_pack)
 
 func _state(player: CharacterData) -> Dictionary:
 	if not player.town_state.has("alchemy"):

@@ -23,7 +23,8 @@ enum ScenePath {
 	DUNGEON,
 	BATTLE,
 	REWARDS,
-	ALCHEMIST
+	ALCHEMIST,
+	BLACKSMITH
 }
 
 # Scene path lookup
@@ -40,7 +41,8 @@ const SCENE_PATHS = {
 	ScenePath.DUNGEON: "res://scenes/DungeonScene.tscn",
 	ScenePath.BATTLE: "res://scenes/battle/Battle.tscn",
 	ScenePath.REWARDS: "res://scenes/RewardScene.tscn",
-	ScenePath.ALCHEMIST: "res://scenes/town/AlchemistScene.tscn"
+	ScenePath.ALCHEMIST: "res://scenes/town/AlchemistScene.tscn",
+	ScenePath.BLACKSMITH: "res://scenes/town/BlacksmithScene.tscn"
 }
 
 # ===== STATE =====
@@ -178,6 +180,9 @@ func change_to_shop(character: CharacterData) -> void:
 
 func change_to_alchemist(character: CharacterData) -> void:
 	navigate(ScenePath.ALCHEMIST, TransitionType.PUSH, character)
+
+func change_to_blacksmith(character: CharacterData) -> void:
+	navigate(ScenePath.BLACKSMITH, TransitionType.PUSH, character)
 
 func change_to_equipment(character: CharacterData) -> void:
 	navigate(ScenePath.EQUIPMENT, TransitionType.PUSH, character)
