@@ -182,7 +182,10 @@
 	  "duration": 3,
 	  "mp_cost": 20,
 	  "sp_cost": 30,
-	  "cooldown": 4
+	  "cooldown": 4,
+	  "weapon_bonus": {
+	    "shield": 1.2
+	  }
 	},
 	"Divine Shield": {
 	  "name": "Divine Shield",
@@ -231,7 +234,11 @@
 	  "duration": 3,
 	  "mp_cost": 15,
 	  "sp_cost": 30,
-	  "cooldown": 3
+	  "cooldown": 3,
+	  "weapon_bonus": {
+	    "katana": 1.2,
+	    "great_katana": 1.2
+	  }
 	},
 	"Bushido": {
 	  "name": "Bushido",
@@ -946,7 +953,10 @@
 	  "duration": 0,
 	  "mp_cost": 0,
 	  "sp_cost": 25,
-	  "cooldown": 3
+	  "cooldown": 3,
+	  "weapon_bonus": {
+	    "two_handed": 1.25
+	  }
 	},
 	"Cleave": {
 	  "name": "Cleave",
@@ -960,6 +970,55 @@
 	  "duration": 3,
 	  "mp_cost": 0,
 	  "sp_cost": 20,
+	  "cooldown": 2,
+	  "weapon_bonus": {
+	    "two_handed": 1.25
+	  }
+	},
+	"Crane Stance": {
+	  "name": "Crane Stance",
+	  "description": "Take the crane's stance: balanced, light, impossible to pin down. Raises Agility and grants evasion.",
+	  "ability_type": "PHYSICAL",
+	  "type": "BUFF",
+	  "target": "SELF",
+	  "category": "ADVANCED",
+	  "attribute_target": "AGILITY",
+	  "status_effect": "EVASIVE",
+	  "power": 30,
+	  "duration": 3,
+	  "mp_cost": 0,
+	  "sp_cost": 15,
+	  "cooldown": 5
+	},
+	"Mantis Strike": {
+	  "name": "Mantis Strike",
+	  "description": "A precise mantis jab to the pressure points that leaves the target reeling and confused.",
+	  "ability_type": "PHYSICAL",
+	  "type": "DEBUFF",
+	  "target": "ENEMY",
+	  "category": "ADVANCED",
+	  "damage_type": "BLUNT",
+	  "attribute_target": "DEXTERITY",
+	  "status_effect": "CONFUSED",
+	  "power": 20,
+	  "duration": 2,
+	  "mp_cost": 0,
+	  "sp_cost": 20,
+	  "cooldown": 2
+	},
+	"Tiger Claw": {
+	  "name": "Tiger Claw",
+	  "description": "Strike with the ferocity of a tiger: fingers hooked into claws that tear and leave bleeding wounds.",
+	  "ability_type": "PHYSICAL",
+	  "type": "DAMAGE",
+	  "target": "ENEMY",
+	  "category": "BASIC",
+	  "damage_type": "SLASH",
+	  "status_effect": "BLEED",
+	  "power": 45,
+	  "duration": 3,
+	  "mp_cost": 0,
+	  "sp_cost": 25,
 	  "cooldown": 2
 	}
   }

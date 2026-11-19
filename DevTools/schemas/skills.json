@@ -95,6 +95,27 @@
      "help": "PHYSICAL skills only: fixed Slash/Pierce/Blunt. Leave unset to use the attacker's weapon."
     },
     {
+     "name": "weapon_bonus",
+     "type": "map",
+     "optional": true,
+     "key": {
+      "type": "enum",
+      "source": "weapons",
+      "options": [
+       "one_handed",
+       "two_handed",
+       "shield",
+       "source"
+      ]
+     },
+     "value": {
+      "type": "float",
+      "min": 1,
+      "max": 3
+     },
+     "help": "Damage multiplier while wielding this weapon id or type (main or off hand), e.g. two_handed -> 1.25."
+    },
+    {
      "name": "element",
      "type": "enum_multi",
      "source": "gd:SkillElement",

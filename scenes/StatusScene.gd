@@ -244,6 +244,8 @@ func _skills_text() -> String:
 			t += "[color=%s]%s[/color]\n" % [MUTED, "  ·  ".join(parts)]
 		if s.description != "":
 			t += "%s\n" % s.description
+		if s.weapon_bonus_text() != "":
+			t += "[color=%s]Weapon bonus: %s[/color]\n" % [ACCENT, s.weapon_bonus_text()]
 		t += "\n"
 	return t
 

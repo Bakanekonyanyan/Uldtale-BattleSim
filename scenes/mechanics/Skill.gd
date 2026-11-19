@@ -67,6 +67,10 @@ enum ElementType {
 @export var drain_efficiency: float = 0.5  # Conversion rate (0.0 to 1.0+)
 ## Physical damage type (DamageTypes.Type); FROM_WEAPON (-1) = use the attacker's weapon
 @export var damage_type: int = -1
+## Bonus when wielding certain gear: {weapon id or type: multiplier}, e.g.
+## {"two_handed": 1.25} (Berserker Cleave) or {"shield": 1.2} (Paladin Holy Strike).
+## Matches the main hand's or off hand's id or type; the best match applies.
+@export var weapon_bonus: Dictionary = {}
 
 @export var power: int
 @export var duration: int
@@ -93,6 +97,7 @@ static func create_from_dict(data: Dictionary) -> Skill:
 	skill.type = SkillType[data.type.to_upper()]
 	skill.target = TargetType[data.target.to_upper()]
 	skill.damage_type = DamageTypes.parse(String(data.get("damage_type", "")))
+	skill.weapon_bonus = data.get("weapon_bonus", {})
 	
 	# Parse elements
 	skill.elements = []
@@ -171,6 +176,26 @@ static func create_from_dict(data: Dictionary) -> Skill:
 	skill.duration = skill.base_duration
 	
 	return skill
+
+## Damage multiplier from weapon_bonus for what `user` is wielding (1.0 = none).
+func weapon_multiplier(user: CharacterData) -> float:
+	if weapon_bonus.is_empty() or user == null:
+		return 1.0
+	var best := 1.0
+	for slot in ["main_hand", "off_hand"]:
+		var item = user.equipment.get(slot)
+		if item is Equipment:
+			for k in [item.key, item.type]:
+				if weapon_bonus.has(k):
+					best = max(best, float(weapon_bonus[k]))
+	return best
+
+## e.g. "x1.25 with two-handed" for UI text ("" when no bonus).
+func weapon_bonus_text() -> String:
+	var parts: Array = []
+	for k in weapon_bonus:
+		parts.append("x%.2f with %s" % [float(weapon_bonus[k]), String(k).replace("_", " ")])
+	return ", ".join(parts)
 
 func get_level_string() -> String:
 	return "Max" if level >= 6 else str(level)
@@ -283,7 +308,7 @@ func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 			continue
 		
 		# Basic-attack math boosted by skill power (see BattleFormulas)
-		var damage = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, power, damage_type)
+		var damage = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, power, damage_type) * weapon_multiplier(user)
 		# Set-up / payoff combo (data/combos.json): checked before this hit's own statuses land
 		var combo = Combos.find(t, Combos.hit_from_skill(user, self))
 		if not combo.is_empty():
@@ -457,7 +482,7 @@ func apply_debuff(user: CharacterData, targets: Array) -> Dictionary:
 	var combo_lines: Array = []
 	for t in targets:
 		if t.is_alive() and BattleFormulas.DEBUFF_HIT_SCALE > 0.0:
-			var raw = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, 0.0, damage_type) * BattleFormulas.DEBUFF_HIT_SCALE
+			var raw = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, 0.0, damage_type) * BattleFormulas.DEBUFF_HIT_SCALE * weapon_multiplier(user)
 			var combo = Combos.find(t, Combos.hit_from_skill(user, self))
 			if not combo.is_empty():
 				raw *= combo.multiplier
@@ -557,7 +582,7 @@ func drain(user: CharacterData, targets: Array) -> Dictionary:
 		
 		match drain_source:
 			DrainTarget.HP:
-				var raw_drain = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, power, damage_type)
+				var raw_drain = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, power, damage_type) * weapon_multiplier(user)
 				var combo = Combos.find(t, Combos.hit_from_skill(user, self))
 				if not combo.is_empty():
 					raw_drain *= combo.multiplier

@@ -141,6 +141,60 @@ func _unit_checks() -> void:
 
 # ------------------------------------------------------------------ phase 0 (locations, drops, carry limit, saves)
 
+## Classes follow their philosophies (docs/lore/CLASS_PHILOSOPHIES.md)
+func _philosophy_checks() -> void:
+	var monk = CharacterFactory.create_character("M", "Hume", "Monk", true)
+	check("Tiger Claw" in monk.skills and "Crane Stance" in monk.skills and "Mantis Strike" in monk.skills, "Monk has animal-style skills")
+	
+	# weapon_bonus: Berserker Cleave x1.25 with a two-hander
+	var zerk = CharacterFactory.create_character("B", "Hume", "Berserker", true)
+	var cleave = zerk.get_skill_instance("Cleave")
+	check(is_equal_approx(cleave.weapon_multiplier(zerk), 1.0), "Cleave: no bonus unarmed")
+	var axe = Equipment.new(ItemManager.get_equipment_template("great_axe").duplicate(true))
+	zerk.equipment["main_hand"] = axe
+	check(is_equal_approx(cleave.weapon_multiplier(zerk), 1.25), "Cleave: x1.25 with a great axe (two-handed)")
+	var pal = CharacterFactory.create_character("P", "Hume", "Paladin", true)
+	pal.equipment["off_hand"] = Equipment.new(ItemManager.get_equipment_template("buckler").duplicate(true))
+	check(is_equal_approx(pal.get_skill_instance("Holy Strike").weapon_multiplier(pal), 1.2), "Holy Strike: x1.2 with a shield")
+	
+	# off-hand sources' spell_power is applied
+	var necro = CharacterFactory.create_character("N", "Hume", "Necromancer", true)
+	var sp_before = necro.spell_power
+	var tome = Equipment.new(ItemManager.get_equipment_template("tome").duplicate(true))
+	necro.equipment["off_hand"] = tome
+	necro.calculate_secondary_attributes()
+	check(necro.spell_power >= sp_before + tome.spell_power_bonus - 0.01 and tome.spell_power_bonus > 0, "tome spell power applies (%.0f -> %.0f)" % [sp_before, necro.spell_power])
+	
+	# Cleric wears mail, not plate
+	var cleric = CharacterFactory.create_character("C", "Hume", "Cleric", true)
+	var mail_ok := false
+	var plate_ok := false
+	for id in ItemManager.armors:
+		var t = ItemManager.get_equipment_template(id)
+		if t.type == "mail" and cleric.character_class in t.class_restriction: mail_ok = true
+		if t.type == "plate" and cleric.character_class in t.class_restriction: plate_ok = true
+	check(mail_ok and not plate_ok, "Cleric: mail yes, plate no")
+	
+	# every class can use at least two main-hand weapon types
+	var classes = JSON.parse_string(FileAccess.open("res://data/classes.json", FileAccess.READ).get_as_text())["playable"]
+	var all_ok := true
+	for cls in classes:
+		var count := 0
+		for id in ItemManager.weapons:
+			var t = ItemManager.get_equipment_template(id)
+			if t.slot == "main_hand" and cls in t.class_restriction: count += 1
+		if count < 2:
+			all_ok = false
+			print("  %s can only use %d weapon types" % [cls, count])
+	check(all_ok, "every class can use 2+ weapon types")
+	
+	# preferred weapons bias drops: Paladin mostly sword and board
+	var sword_board := 0
+	for i in 200:
+		var id = ClassEquipmentBias.get_biased_equipment_id("Paladin", "weapons")
+		if id in ["short_sword", "mace", "buckler", "great_shield"]: sword_board += 1
+	check(sword_board > 90, "Paladin weapon drops lean sword and board (%d/200)" % sword_board)
+
 ## Water element, status elements, Soaked combos, the four new classes
 func _element_and_class_checks() -> void:
 	check(ElementalDamage.Element.has("WATER") and Skill.ElementType.has("WATER"), "Water element exists")
@@ -258,6 +312,7 @@ func _phase0_checks() -> void:
 
 	_combo_checks()
 	_element_and_class_checks()
+	_philosophy_checks()
 	
 	# Class-biased loot rolls (Breather drops pass the player's class)
 	var biased_ok := true

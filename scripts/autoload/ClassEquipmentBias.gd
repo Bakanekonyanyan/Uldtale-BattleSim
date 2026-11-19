@@ -193,13 +193,37 @@ func _roll_biased_weapon(character_class: String, slot_filter: String) -> String
 		return cannot_use[RandomManager.randi() % cannot_use.size()]
 	
 	if cannot_use.is_empty():
-		return can_use[RandomManager.randi() % can_use.size()]
+		return _prefer(character_class, can_use)
 	
-	# 65% chance for preferred, 35% for other
+	# 65% chance for something the class can use, 35% for other
 	if RandomManager.randf() < BIAS_WEIGHT:
-		return can_use[RandomManager.randi() % can_use.size()]
+		return _prefer(character_class, can_use)
 	else:
 		return cannot_use[RandomManager.randi() % cannot_use.size()]
+
+## Within usable weapons, lean toward the class's style (classes.json
+## "preferred_weapons", ids or types: Paladin sword-and-board, Berserker two-handers).
+const PREFERRED_WEIGHT = 0.75
+var _preferred_cache: Dictionary = {}
+
+func get_preferred_weapons(character_class: String) -> Array:
+	if _preferred_cache.is_empty():
+		var f = FileAccess.open("res://data/classes.json", FileAccess.READ)
+		var data = JSON.parse_string(f.get_as_text()) if f else {}
+		for group in (data if data is Dictionary else {}):
+			for cls in data[group]:
+				_preferred_cache[cls] = data[group][cls].get("preferred_weapons", [])
+	return _preferred_cache.get(character_class, [])
+
+func _prefer(character_class: String, can_use: Array) -> String:
+	var pref = get_preferred_weapons(character_class)
+	if not pref.is_empty() and RandomManager.randf() < PREFERRED_WEIGHT:
+		var matches = can_use.filter(func(id):
+			var t = ItemManager.get_equipment_template(id)
+			return id in pref or String(t.get("type", "")) in pref)
+		if not matches.is_empty():
+			return matches[RandomManager.randi() % matches.size()]
+	return can_use[RandomManager.randi() % can_use.size()]
 
 func _roll_biased_armor(character_class: String) -> String:
 	# Roll armor with bias toward class restrictions

@@ -12,7 +12,11 @@
 		"spear": "PIERCE",
 		"greatsword": "SLASH",
 		"great_katana": "SLASH",
-		"great_hammer": "BLUNT"
+		"great_hammer": "BLUNT",
+		"staff": "BLUNT",
+		"great_axe": "SLASH",
+		"katana": "SLASH",
+		"axe": "SLASH"
 	},
 	"armor": {
 		"cloth":   {"SLASH": 0.05, "PIERCE": 0.05, "BLUNT": -0.10},

@@ -32,7 +32,7 @@
 		"attribute_increase": 2,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin", "Cleric", "Monk", "Druid", "Minion", "Brute", "Shaman", "King", "Berserker", "Beastmaster"],
+		"class_restriction": ["Paladin", "Cleric", "Monk", "Druid", "Minion", "Brute", "Shaman", "King", "Berserker", "Beastmaster", "Myrmidon"],
 		"effects": {
 		  "dodge": 0,
 		  "critical_hit_rate": 0,
@@ -66,6 +66,50 @@
 		"preferred_slot": "off_hand",
 		"blocks_offhand": false,
 		"offhand_exceptions": []
+	  },
+	  "katana": {
+	    "name": "Katana",
+	    "description": "A curved single-edged blade, the soul of the Amakiri Reiken style. Slash.",
+	    "value": 140,
+	    "damage": 11,
+	    "attribute_target": "dexterity",
+	    "attribute_increase": 2,
+	    "type": "one_handed",
+	    "slot": "main_hand",
+	    "class_restriction": ["Samurai", "Shinobi", "Myrmidon", "King"],
+	    "effects": {
+	      "dodge": 0.01,
+	      "critical_hit_rate": 0.08,
+	      "armor_penetration": 0
+	    },
+	    "rarity": "",
+	    "dual_wieldable": true,
+	    "dual_wield_classes": ["Samurai", "Shinobi", "Myrmidon"],
+	    "preferred_slot": "main_hand",
+	    "blocks_offhand": false,
+	    "offhand_exceptions": []
+	  },
+	  "axe": {
+	    "name": "Axe",
+	    "description": "A heavy-headed one-handed axe that bites deep. Slash.",
+	    "value": 110,
+	    "damage": 11,
+	    "attribute_target": "strength",
+	    "attribute_increase": 2,
+	    "type": "one_handed",
+	    "slot": "main_hand",
+	    "class_restriction": ["Berserker", "Myrmidon", "Beastmaster", "Druid", "Minion", "Brute", "King"],
+	    "effects": {
+	      "dodge": 0,
+	      "critical_hit_rate": 0.03,
+	      "armor_penetration": 0.05
+	    },
+	    "rarity": "",
+	    "dual_wieldable": true,
+	    "dual_wield_classes": ["Myrmidon", "Beastmaster"],
+	    "preferred_slot": "main_hand",
+	    "blocks_offhand": false,
+	    "offhand_exceptions": []
 	  }
 	},
 	"two_handed": {
@@ -78,7 +122,7 @@
 		"attribute_increase": 4,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin", "Myrmidon", "Samurai", "Druid", "Minion", "Brute", "King", "Berserker", "Beastmaster"],
+		"class_restriction": ["Paladin", "Myrmidon", "Samurai", "Druid", "Minion", "Brute", "King", "Berserker", "Beastmaster", "Kannagi", "Monk"],
 		"effects": {
 		  "dodge": 0,
 		  "critical_hit_rate": 0.05,
@@ -100,7 +144,7 @@
 		"attribute_increase": 5,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin", "Cleric", "Druid", "Brute", "King", "Berserker"],
+		"class_restriction": ["Paladin", "Cleric", "Druid", "Brute", "King", "Berserker", "Myrmidon"],
 		"effects": {
 		  "dodge": -0.10,
 		  "critical_hit_rate": -0.03,
@@ -144,7 +188,7 @@
 		"attribute_increase": 5,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Samurai","Brute","King"],
+		"class_restriction": ["Myrmidon", "Samurai", "Brute", "King"],
 		"effects": {
 		  "dodge": -0.06,
 		  "critical_hit_rate": 0.10,
@@ -156,6 +200,50 @@
 		"preferred_slot": "main_hand",
 		"blocks_offhand": true,
 		"offhand_exceptions": []
+	  },
+	  "staff": {
+	    "name": "Staff",
+	    "description": "A carved staff that focuses spells and strikes like a cudgel. Blunt.",
+	    "value": 130,
+	    "damage": 9,
+	    "attribute_target": "intelligence",
+	    "attribute_increase": 3,
+	    "type": "two_handed",
+	    "slot": "main_hand",
+	    "class_restriction": ["Elementalist", "Necromancer", "Druid", "Cleric", "Kannagi", "Monk", "Mage", "Shaman", "King"],
+	    "effects": {
+	      "dodge": 0,
+	      "critical_hit_rate": 0,
+	      "spell_power": 6
+	    },
+	    "rarity": "",
+	    "dual_wieldable": false,
+	    "dual_wield_classes": [],
+	    "preferred_slot": "main_hand",
+	    "blocks_offhand": true,
+	    "offhand_exceptions": []
+	  },
+	  "great_axe": {
+	    "name": "Great Axe",
+	    "description": "A massive two-handed axe built to cleave through ranks. Slash.",
+	    "value": 220,
+	    "damage": 23,
+	    "attribute_target": "strength",
+	    "attribute_increase": 5,
+	    "type": "two_handed",
+	    "slot": "main_hand",
+	    "class_restriction": ["Berserker", "Myrmidon", "Brute", "King"],
+	    "effects": {
+	      "dodge": -0.08,
+	      "critical_hit_rate": 0.05,
+	      "armor_penetration": 0.1
+	    },
+	    "rarity": "",
+	    "dual_wieldable": false,
+	    "dual_wield_classes": [],
+	    "preferred_slot": "main_hand",
+	    "blocks_offhand": true,
+	    "offhand_exceptions": []
 	  }
 	}
   },

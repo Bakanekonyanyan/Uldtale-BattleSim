@@ -16,6 +16,9 @@ var slot: String
 var class_restriction: Array
 var effects: Dictionary
 var inventory_key: String = ""
+## Off-hand sources (tome, talisman...) list "spell_power" in the item data.
+## It used to be read by nothing; now it's a flat bonus (scaled by upgrades).
+var spell_power_bonus: int = 0
 
 # === DUAL WIELD & BLOCKING ===
 var dual_wieldable: bool = false
@@ -193,6 +196,8 @@ func get_flat_bonuses() -> Dictionary:
 	var targets: Array = attribute_target if attribute_target is Array else ([attribute_target] if attribute_target is String and attribute_target != "" else [])
 	var amounts: Array = attribute_increase if attribute_increase is Array else ([attribute_increase] if attribute_increase is int or attribute_increase is float else [])
 	var upgrade_mult = 1.0 + UPGRADE_STEP * upgrade_level
+	if spell_power_bonus > 0:
+		bonuses["spell_power"] = bonuses.get("spell_power", 0.0) + spell_power_bonus * upgrade_mult
 	for i in range(min(targets.size(), amounts.size())):
 		var stat = String(targets[i]).to_lower()
 		if stat == "" or stat == "none":
@@ -316,6 +321,8 @@ func get_full_description() -> String:
 	
 	if armor_value > 0:
 		desc += "[b]Armor:[/b] %d\n" % armor_value
+	if spell_power_bonus > 0:
+		desc += "[b]Spell power:[/b] +%d\n" % int(round(spell_power_bonus * (1.0 + UPGRADE_STEP * upgrade_level)))
 	
 	# Physical damage types (data/damage_types.json)
 	if is_weapon():
@@ -396,6 +403,7 @@ func _load_base_data(data: Dictionary):
 	slot = data.get("slot", "")
 	class_restriction = data.get("class_restriction", [])
 	effects = data.get("effects", {})
+	spell_power_bonus = int(data.get("spell_power", 0))
 	inventory_key = data.get("inventory_key", "")
 	item_level = data.get("item_level", 1)
 	base_item_level = data.get("base_item_level", 1)

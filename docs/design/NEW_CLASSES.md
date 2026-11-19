@@ -77,10 +77,29 @@ Pacts with legendary beasts; channels them through the body (claws, fangs, wings
 - **Damage-over-time statuses have elements:** Burn = Fire, Freeze = Ice, Shock = Lightning, Poison = Earth. Resistances and weaknesses now apply to their ticks.
 - **Bushido** (Samurai) has no element; it's a physical self-buff.
 
-## Noticed while doing this (not changed)
-- The Cleric philosophy says "clad in mail armor", but Clerics can't wear mail (only cloth and leather).
-- The Monk philosophy is about nature and animal forms, but its skills are lightning and ice.
-- The Paladin is described as sword-and-shield, but it is tuned around two-handers.
+## Existing classes aligned with their philosophies
+- **Cleric:** can wear mail (not plate).
+- **Monk:** animal-style kit: Tiger Claw (Slash, Bleed), Mantis Strike (debuff that always Confuses), Crane Stance (Agility + Evasive).
+  - Fists are Blunt.
+  - Combos: Tiger Claw pays off its own Bleeds (Open Wound); any hit after Mantis Strike is a Sucker Punch.
+  - The old Fists of Thunder, Ice Splitter and Meditation remain in skills.json, unused, for enemies or talents.
+- **Paladin:** sword and board first, two-handers allowed.
+  - Drops lean toward short sword, mace, buckler and great shield.
+  - Holy Strike does x1.2 with a shield.
+  - Great katana removed (it's the Samurai's).
+- **Berserker:** drops lean toward great axe, greatsword and great hammer; Cleave and Blood Feast do x1.25 with any two-hander.
+- **Samurai:** Iaido does x1.2 with a katana or great katana.
+
+## Weapon variety
+Every class can use at least three main-hand weapon types.
+- **New weapons:**
+  - Axe (one-handed, Slash)
+  - Katana (one-handed, Slash)
+  - Great Axe (two-handed, Slash)
+  - Staff (two-handed, Blunt, +6 spell power)
+- **`preferred_weapons`** (per class, in classes.json) only biases drops (75% of usable drops come from the list). Players can still equip anything their class allows.
+- **`weapon_bonus`** (per skill) is a damage multiplier while wielding a weapon id or type.
+- **Fix:** off-hand sources' `spell_power` (Tome, Talisman, Fetish, Relic: +10) was never applied; it is now.
 
 ## Balance (sim, floor-1 full runs, 300 per class, best play style)
 | Class | Clear rate |
@@ -89,6 +108,7 @@ Pacts with legendary beasts; channels them through the body (claws, fangs, wings
 | Shinobi | 31% |
 | Kannagi | 19% |
 | Beastmaster | 20% |
+| Monk (new kit) | 15% |
 
 The original eight classes range from 13% (Druid) to 31% (Samurai). Tuning passes:
 - **Berserker:** 65% → 31%. Core stats lowered from 13 to 10, Blood Feast heals 40% of damage (was 60%), Cleave power 20.

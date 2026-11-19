@@ -130,6 +130,19 @@
      "type": "ref_list",
      "source": "skills",
      "help": "Skills the class starts with (by skill name)."
+    },
+    {
+     "name": "preferred_weapons",
+     "type": "enum_list",
+     "source": "weapons",
+     "options": [
+      "one_handed",
+      "two_handed",
+      "shield",
+      "source"
+     ],
+     "optional": true,
+     "help": "Weapon ids or types this class leans toward in drops (still free to use anything it's allowed). E.g. Paladin: sword and board."
     }
    ]
   }

@@ -189,7 +189,7 @@
 		"attribute_increase": 1,
 		"type": "mail",
 		"slot": "head",
-		"class_restriction": ["Myrmidon", "Paladin", "Samurai", "Brute", "Shaman", "King", "Berserker", "Beastmaster"],
+		"class_restriction": ["Myrmidon", "Paladin", "Samurai", "Brute", "Shaman", "King", "Berserker", "Beastmaster", "Cleric"],
 		"effects": {
 		  "dodge": -0.02
 		},
@@ -206,7 +206,7 @@
 		"attribute_increase": 2,
 		"type": "mail",
 		"slot": "chest",
-		"class_restriction": ["Myrmidon", "Paladin", "Samurai", "Brute", "Shaman", "King", "Berserker", "Beastmaster"],
+		"class_restriction": ["Myrmidon", "Paladin", "Samurai", "Brute", "Shaman", "King", "Berserker", "Beastmaster", "Cleric"],
 		"effects": {
 		  "dodge": -0.04
 		},
@@ -223,7 +223,7 @@
 		"attribute_increase": 1,
 		"type": "mail",
 		"slot": "hands",
-		"class_restriction": ["Myrmidon", "Paladin", "Samurai", "Brute", "Shaman", "King", "Berserker", "Beastmaster"],
+		"class_restriction": ["Myrmidon", "Paladin", "Samurai", "Brute", "Shaman", "King", "Berserker", "Beastmaster", "Cleric"],
 		"effects": {
 		  "dodge": -0.02
 		},
@@ -240,7 +240,7 @@
 		"attribute_increase": 2,
 		"type": "mail",
 		"slot": "legs",
-		"class_restriction": ["Myrmidon", "Paladin", "Samurai", "Brute", "Shaman", "King", "Berserker", "Beastmaster"],
+		"class_restriction": ["Myrmidon", "Paladin", "Samurai", "Brute", "Shaman", "King", "Berserker", "Beastmaster", "Cleric"],
 		"effects": {
 		  "dodge": -0.03
 		},
@@ -257,7 +257,7 @@
 		"attribute_increase": 1,
 		"type": "mail",
 		"slot": "feet",
-		"class_restriction": ["Myrmidon", "Paladin", "Samurai", "Brute", "Shaman", "King", "Berserker", "Beastmaster"],
+		"class_restriction": ["Myrmidon", "Paladin", "Samurai", "Brute", "Shaman", "King", "Berserker", "Beastmaster", "Cleric"],
 		"effects": {
 		  "dodge": -0.02
 		},
