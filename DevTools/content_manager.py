@@ -35,6 +35,7 @@ JSON_FILES = {
     "Material Drops": "data/loot/material_tables.json",
     "Blacksmith": "data/blacksmith.json",
     "Bounties": "data/bounties.json",
+    "Damage Types": "data/damage_types.json",
 }
 
 # -------------------------

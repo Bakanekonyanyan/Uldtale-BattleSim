@@ -23,6 +23,28 @@
 		"blocks_offhand": false,
 		"offhand_exceptions": []
 	  },
+	  "mace": {
+		"name": "Mace",
+		"description": "A flanged one-handed mace. Blunt: crushes plate and fragile foes alike.",
+		"value": 100,
+		"damage": 9,
+		"attribute_target": "strength",
+		"attribute_increase": 2,
+		"type": "one_handed",
+		"slot": "main_hand",
+		"class_restriction": ["Paladin","Cleric","Monk","Druid","Minion","Brute","Shaman","King"],
+		"effects": {
+		  "dodge": 0,
+		  "critical_hit_rate": 0,
+		  "armor_penetration": 0
+		},
+		"rarity": "",
+		"dual_wieldable": false,
+		"dual_wield_classes": [],
+		"preferred_slot": "main_hand",
+		"blocks_offhand": false,
+		"offhand_exceptions": []
+	  },
 	  "dagger": {
 		"name": "Dagger",
 		"description": "A swift dagger with low damage but high crit chance.",
@@ -47,6 +69,50 @@
 	  }
 	},
 	"two_handed": {
+	  "spear": {
+		"name": "Spear",
+		"description": "A long two-handed spear. Pierce: finds the gaps in mail and hide.",
+		"value": 180,
+		"damage": 18,
+		"attribute_target": "dexterity",
+		"attribute_increase": 4,
+		"type": "two_handed",
+		"slot": "main_hand",
+		"class_restriction": ["Paladin","Myrmidon","Samurai","Druid","Minion","Brute","King"],
+		"effects": {
+		  "dodge": 0,
+		  "critical_hit_rate": 0.05,
+		  "armor_penetration": 0.1
+		},
+		"rarity": "",
+		"dual_wieldable": false,
+		"dual_wield_classes": [],
+		"preferred_slot": "main_hand",
+		"blocks_offhand": true,
+		"offhand_exceptions": []
+	  },
+	  "great_hammer": {
+		"name": "Great Hammer",
+		"description": "A huge two-handed hammer that hits hard but swings slowly. Blunt.",
+		"value": 210,
+		"damage": 24,
+		"attribute_target": "strength",
+		"attribute_increase": 5,
+		"type": "two_handed",
+		"slot": "main_hand",
+		"class_restriction": ["Paladin","Cleric","Druid","Brute","King"],
+		"effects": {
+		  "dodge": -0.10,
+		  "critical_hit_rate": -0.03,
+		  "armor_penetration": 0
+		},
+		"rarity": "",
+		"dual_wieldable": false,
+		"dual_wield_classes": [],
+		"preferred_slot": "main_hand",
+		"blocks_offhand": true,
+		"offhand_exceptions": ["shield"]
+	  },
 	  "greatsword": {
 		"name": "Greatsword",
 		"description": "A massive two-handed sword that greatly increases damage but moderately reduces dodge.",

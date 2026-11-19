@@ -317,6 +317,14 @@ func get_full_description() -> String:
 	if armor_value > 0:
 		desc += "[b]Armor:[/b] %d\n" % armor_value
 	
+	# Physical damage types (data/damage_types.json)
+	if is_weapon():
+		desc += "[b]Damage type:[/b] %s\n" % DamageTypes.type_name(DamageTypes.weapon_type(self))
+	elif slot in DamageTypes.ARMOR_SLOTS:
+		var aff = DamageTypes.cfg().get("armor", {}).get(type, {})
+		if not aff.is_empty():
+			desc += "[color=gray]Full %s set: %s[/color]\n" % [type, DamageTypes.describe(aff)]
+	
 	# Show equipment type (weapon/armor type)
 	if type:
 		desc += "[color=gray]Type: %s[/color]\n" % type.capitalize()

@@ -221,6 +221,11 @@ func _comparison_text(new_item: Equipment, old_item) -> String:
 		return t + "  [color=%s](%s slot is empty)[/color]\n%s" % [MUTED, ScreenChrome.slot_name(new_item.slot), _delta_lines(_item_stats(new_item), {})]
 	t += "  [color=%s]replaces %s[/color]\n" % [MUTED, old_item.display_name]
 	var lines = _delta_lines(_item_stats(new_item), _item_stats(old_item))
+	if new_item.is_weapon() and old_item.is_weapon():
+		var a = DamageTypes.weapon_type(old_item)
+		var b = DamageTypes.weapon_type(new_item)
+		if a != b:
+			lines += "  [color=%s]%s -> %s damage[/color]\n" % [ACCENT, DamageTypes.type_name(a), DamageTypes.type_name(b)]
 	return t + (lines if lines != "" else "[color=%s]No stat difference.[/color]\n" % MUTED)
 
 func _item_stats(item: Equipment) -> Dictionary:
@@ -263,7 +268,7 @@ func _stats_text() -> String:
 		["Physical defense", "%d  [color=%s](take %d%%)[/color]" % [int(round(phys)), MUTED, int(round(BattleFormulas.mitigation(phys) * 100))]],
 		["Magic defense", "%d  [color=%s](take %d%%)[/color]" % [int(round(mag)), MUTED, int(round(BattleFormulas.mitigation(mag) * 100))]],
 		["Accuracy", "%d%%" % int(round(c.accuracy * 100))],
-		["Dodge", "%d%%" % int(round(c.dodge * 100))],
+		["Dodge", "%d%%" % int(round(maxf(c.dodge, 0.0) * 100))],
 		["Critical hit", "%d%%" % int(round(c.critical_hit_rate * 100))],
 	]
 	if BattleFormulas.get_armor_penetration(c) > 0.0:

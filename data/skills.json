@@ -218,6 +218,7 @@
 	},
 	"Iaido": {
 	  "name": "Iaido",
+	  "damage_type": "SLASH",
 	  "description": "A quick draw strike for massive damage.",
 	  "ability_type": "PHYSICAL",
 	  "type": "DAMAGE",
@@ -249,6 +250,7 @@
 	},
 	"Backstab": {
 	  "name": "Backstab",
+	  "damage_type": "PIERCE",
 	  "description": "Strike from the shadows for massive damage.",
 	  "ability_type": "PHYSICAL",
 	  "type": "DAMAGE",
@@ -370,6 +372,7 @@
 	},
 	"Fists of Thunder": {
 	  "name": "Fists of Thunder",
+	  "damage_type": "BLUNT",
 	  "description": "A flurry of punches that disorient and shock the enemy.",
 	  "ability_type": "PHYSICAL",
 	  "type": "DAMAGE",
@@ -385,6 +388,7 @@
 	},
 	"Ice Splitter": {
 	  "name": "Ice Splitter",
+	  "damage_type": "BLUNT",
 	  "description": "A powerful glacial strike that could split an iceberg.",
 	  "ability_type": "PHYSICAL",
 	  "type": "DAMAGE",
@@ -415,6 +419,7 @@
 	},
 	"Scratch": {
 	  "name": "Scratch",
+	  "damage_type": "SLASH",
 	  "description": "Quick claw attack.",
 	  "ability_type": "PHYSICAL",
 	  "type": "DAMAGE",
@@ -430,6 +435,7 @@
 	},
 	"Bite": {
 	  "name": "Bite",
+	  "damage_type": "PIERCE",
 	  "description": "Savage bite attack.",
 	  "ability_type": "PHYSICAL",
 	  "type": "DAMAGE",
@@ -460,6 +466,7 @@
 	},
 	"Smash": {
 	  "name": "Smash",
+	  "damage_type": "BLUNT",
 	  "description": "Powerful overhead smash.",
 	  "ability_type": "PHYSICAL",
 	  "type": "DAMAGE",
@@ -490,6 +497,7 @@
 	},
 	"Stomp": {
 	  "name": "Stomp",
+	  "damage_type": "BLUNT",
 	  "description": "Ground-shaking stomp that hits all enemies.",
 	  "ability_type": "PHYSICAL",
 	  "type": "DAMAGE",
@@ -625,6 +633,7 @@
 	},
 	"Execution": {
 	  "name": "Execution",
+	  "damage_type": "SLASH",
 	  "description": "Deliver a devastating execution blow.",
 	  "ability_type": "PHYSICAL",
 	  "type": "DAMAGE",

@@ -24,6 +24,7 @@ godot --headless res://tests/balance_sim.tscn -- mylabel
 | Physical defense | `toughness + armor × 0.5` |
 | Magical defense | `spell_ward + armor × 0.25` |
 | Armor penetration | physical hits use `defense × (1 − armor_penetration)`; from gear (e.g. Greatsword 20%), capped at 75% |
+| Damage type (physical) | Slash / Pierce / Blunt from the skill, else the weapon; unarmed hits are untyped. Hit × `1 + race + armor`, clamped 0.5–1.75. See below |
 | Crit | `crit_rate` chance for ×1.5–2.0 |
 | Heal | `skill_power + spell_power × 0.5` |
 | Buff / debuff | `skill_power` × 1.5% of the target's **base** attribute (Roar 40 = −60% Agility), lasting the full listed number of the target's turns |
@@ -221,3 +222,26 @@ changes), so treat these as a band: **16–31% without potions, 47–70% with**.
 - **Class balance.** Three passes are done (see above); all classes are within the noise band. For finer tuning, raise the simulator's N to cut the noise.
 - **Skill effect sizes in `skills.json` were authored against the old formulas.** Buff/debuff "power" now means percent. Values of 20–70 are reasonable, but worth a pass.
 - **Item effects (`Item.gd`) use their own fixed numbers** and weren't changed.
+
+## Physical damage types
+
+Tuning: `data/damage_types.json`. Code: `scripts/resources/DamageTypes.gd`. Magic uses elements instead.
+
+- **What a hit deals:** the skill's `damage_type` (e.g. Backstab = Pierce), else the main-hand weapon's type. Unarmed hits are untyped (neutral), so a fresh hero with no weapon is unaffected.
+- **What a defender takes:** `1 + race affinity + armor affinity`, clamped to 0.5-1.75. Positive = weak, negative = resists.
+- **Armor:** each equipped armor piece adds its type's value / 5, so a full set gives the full value.
+
+| Armor | Slash | Pierce | Blunt |
+|---|---|---|---|
+| Cloth | +5% | +5% | -10% |
+| Leather | - | +10% | -10% |
+| Mail | -15% | +10% | +5% |
+| Plate | -20% | -10% | +20% |
+
+| Weapon | Type |
+|---|---|
+| Short Sword, Greatsword, Great Katana | Slash |
+| Dagger, Spear | Pierce |
+| Mace, Great Hammer | Blunt |
+
+Enemy races: Troll resists Blunt (-20%) and is weak to Slash (+20%); Fairy resists Pierce (-20%) and is weak to Blunt (+25%); Goblin and Orc are weak to Pierce (+15%), Orc also resists Slash (-10%). Heroes and enemies use the same tables.

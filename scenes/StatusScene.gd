@@ -6,7 +6,7 @@
 extends Control
 
 enum Tab { SKILLS, EQUIPMENT, ELEMENTS, PROFICIENCIES }
-const TAB_NAMES := ["Skills", "Equipment", "Elements", "Proficiencies"]
+const TAB_NAMES := ["Skills", "Equipment", "Resistances", "Proficiencies"]
 
 const ATTRIBUTES := ["vitality", "strength", "dexterity", "intelligence", "faith",
 	"mind", "endurance", "arcane", "agility", "fortitude"]
@@ -208,7 +208,7 @@ func _combat_text() -> String:
 		["Spell power", "%d" % int(BattleFormulas.magical_offense(c)), "magic damage and healing"],
 		["Physical defense", "%d" % int(round(phys_def)), "you take %d%% of physical damage" % int(round(BattleFormulas.mitigation(phys_def) * 100))],
 		["Magic defense", "%d" % int(round(mag_def)), "you take %d%% of magic damage" % int(round(BattleFormulas.mitigation(mag_def) * 100))],
-		["Accuracy / Dodge", "%d%% / %d%%" % [int(round(c.accuracy * 100)), int(round(c.dodge * 100))], "chance to hit / to evade"],
+		["Accuracy / Dodge", "%d%% / %d%%" % [int(round(c.accuracy * 100)), int(round(maxf(c.dodge, 0.0) * 100))], "chance to hit / to evade"],
 		["Critical hit", "%d%%" % int(round(c.critical_hit_rate * 100)), "x1.5 to x2 damage"],
 	]
 	var pen = BattleFormulas.get_armor_penetration(c)
@@ -266,7 +266,8 @@ func _elements_text() -> String:
 	var c = current_character
 	if c.get("elemental_resistances") == null:
 		return "[color=%s][i]Elemental data not set up for this character.[/i][/color]" % MUTED
-	var t := "[table=3][cell][color=%s]Element[/color][/cell][cell][color=%s]Damage taken[/color][/cell][cell][color=%s]Damage dealt[/color][/cell]" % [MUTED, MUTED, MUTED]
+	var t := _physical_text() + "\n[b]Elements[/b]\n"
+	t += "[table=3][cell][color=%s]Element[/color][/cell][cell][color=%s]Damage taken[/color][/cell][cell][color=%s]Damage dealt[/color][/cell]" % [MUTED, MUTED, MUTED]
 	for element in ElementalDamage.Element.values():
 		if element == ElementalDamage.Element.NONE:
 			continue
@@ -281,6 +282,31 @@ func _elements_text() -> String:
 		t += "[cell][color=%s]%s[/color][/cell][cell]%s[/cell][cell]%s[/cell]" % [
 			ElementalDamage.get_element_color(element), ElementalDamage.get_element_name(element), taken_text, dealt_text]
 	return t + "[/table]"
+
+## Physical damage types: what you deal, and what you take (race + armor).
+func _physical_text() -> String:
+	var c = current_character
+	var dealt = DamageTypes.attack_type(c)
+	var weapon = c.equipment.get("main_hand")
+	var dealt_name = DamageTypes.type_name(dealt) if dealt >= 0 else "untyped"
+	var t := "[b]Physical[/b]   [color=%s]your attacks deal [/color][color=%s]%s[/color][color=%s] (%s)[/color]\n" % [
+		MUTED, ACCENT, dealt_name, MUTED, weapon.display_name if weapon else "unarmed"]
+	t += "[table=4][cell][color=%s]Type[/color][/cell][cell][color=%s]Damage taken[/color][/cell][cell][color=%s]Race[/color][/cell][cell][color=%s]Armor[/color][/cell]" % [MUTED, MUTED, MUTED, MUTED]
+	for i in DamageTypes.Type.size():
+		var mult = DamageTypes.multiplier(c, i)
+		var taken = "normal"
+		if mult < 0.999:
+			taken = "[color=%s]%d%% (resist)[/color]" % [GOOD, int(round(mult * 100))]
+		elif mult > 1.001:
+			taken = "[color=%s]%d%% (weak)[/color]" % [BAD, int(round(mult * 100))]
+		t += "[cell]%s[/cell][cell]%s[/cell][cell]%s[/cell][cell]%s[/cell]" % [
+			DamageTypes.type_name(i), taken, _pct(DamageTypes.race_affinity(String(c.race), i)), _pct(DamageTypes.armor_affinity(c, i))]
+	return t + "[/table]\n"
+
+func _pct(v: float) -> String:
+	if abs(v) < 0.005:
+		return "[color=%s]-[/color]" % MUTED
+	return "[color=%s]%+d%%[/color]" % [BAD if v > 0 else GOOD, int(round(v * 100))]
 
 func _proficiency_text() -> String:
 	var pm = current_character.proficiency_manager

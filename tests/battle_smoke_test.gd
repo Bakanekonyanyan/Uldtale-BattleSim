@@ -157,6 +157,31 @@ func _phase0_checks() -> void:
 	caster.calculate_secondary_attributes()
 	check(is_equal_approx(caster.spell_power, sp_before), "gear spell_power bonus removed on unequip")
 
+	# Physical damage types: weapon/skill/unarmed source, race + armor affinities, clamp
+	var troll = make_player(); troll.race = "Troll"
+	for slot in DamageTypes.ARMOR_SLOTS: troll.equipment[slot] = null
+	check(is_equal_approx(DamageTypes.multiplier(troll, DamageTypes.Type.SLASH), 1.2), "Troll takes +20% Slash")
+	check(is_equal_approx(DamageTypes.multiplier(troll, DamageTypes.Type.BLUNT), 0.8), "Troll resists Blunt")
+	var brawler = make_player(); brawler.equipment["main_hand"] = null
+	check(DamageTypes.attack_type(brawler) == DamageTypes.FROM_WEAPON and DamageTypes.multiplier(troll, DamageTypes.attack_type(brawler)) == 1.0, "unarmed hits are untyped (neutral)")
+	check(DamageTypes.attack_type(brawler, DamageTypes.Type.PIERCE) == DamageTypes.Type.PIERCE, "skill damage_type overrides the weapon")
+	var mace = Equipment.new(ItemManager.get_equipment_template("mace").duplicate(true))
+	check(mace.key == "mace" and DamageTypes.weapon_type(mace) == DamageTypes.Type.BLUNT, "Mace deals Blunt")
+	var knight = make_player(); knight.race = "Hume"
+	for slot in DamageTypes.ARMOR_SLOTS:
+		var piece = Equipment.new({"id": "test_plate_" + slot, "name": "Test Plate", "type": "plate", "slot": slot, "armor_value": 1, "rarity": "common"})
+		knight.equipment[slot] = piece
+	check(is_equal_approx(DamageTypes.multiplier(knight, DamageTypes.Type.BLUNT), 1.2) and is_equal_approx(DamageTypes.multiplier(knight, DamageTypes.Type.SLASH), 0.8), "full plate: weak to Blunt, resists Slash")
+	knight.equipment["head"] = null
+	check(is_equal_approx(DamageTypes.multiplier(knight, DamageTypes.Type.BLUNT), 1.16), "partial plate gives a partial effect")
+	var crusher = make_player(); crusher.equipment["main_hand"] = null
+	var slash_hit = BattleFormulas.hit_damage(crusher, troll, true, 0.0, DamageTypes.Type.SLASH)
+	var blunt_hit = BattleFormulas.hit_damage(crusher, troll, true, 0.0, DamageTypes.Type.BLUNT)
+	check(is_equal_approx(slash_hit / blunt_hit, 1.5), "hit_damage applies the type multiplier (Slash/Blunt on Troll = 1.2/0.8)")
+	check(is_equal_approx(BattleFormulas.hit_damage(crusher, troll, false, 0.0, DamageTypes.Type.SLASH), BattleFormulas.hit_damage(crusher, troll, false)), "magic ignores damage types")
+	var iaido = Skill.create_from_dict({"name": "T", "description": "", "ability_type": "PHYSICAL", "type": "DAMAGE", "target": "ENEMY", "power": 10, "cooldown": 0, "duration": 0, "damage_type": "slash"})
+	check(iaido.damage_type == DamageTypes.Type.SLASH, "skills read damage_type from data")
+	
 	# Armor penetration: gear sets it, recalculation doesn't stack it, physical hits ignore that much defense
 	var striker = make_player(); var wall = make_player()
 	wall.toughness = 100.0

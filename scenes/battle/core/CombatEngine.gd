@@ -117,6 +117,8 @@ func _execute_attack(action: BattleAction) -> ActionResult:
 	attacker.restore_sp(sp_restore)
 	
 	var result = ActionResult.attack_result(attacker, target, int(damage), is_crit)
+	var dt = DamageTypes.attack_type(attacker)
+	result.message += DamageTypes.log_tag(DamageTypes.multiplier(target, dt), dt)
 	result.message += " and restores %d MP, %d SP%s" % [mp_restore, sp_restore, status_msg]
 	
 	# Add reflection info to result

@@ -63,6 +63,8 @@ enum ElementType {
 @export var drain_source: DrainTarget = DrainTarget.HP  # What to drain FROM target
 @export var drain_restore: DrainTarget = DrainTarget.HP  # What to restore TO user
 @export var drain_efficiency: float = 0.5  # Conversion rate (0.0 to 1.0+)
+## Physical damage type (DamageTypes.Type); FROM_WEAPON (-1) = use the attacker's weapon
+@export var damage_type: int = -1
 
 @export var power: int
 @export var duration: int
@@ -88,6 +90,7 @@ static func create_from_dict(data: Dictionary) -> Skill:
 	skill.ability_type = AbilityType[data.ability_type.to_upper()]
 	skill.type = SkillType[data.type.to_upper()]
 	skill.target = TargetType[data.target.to_upper()]
+	skill.damage_type = DamageTypes.parse(String(data.get("damage_type", "")))
 	
 	# Parse elements
 	skill.elements = []
@@ -274,7 +277,11 @@ func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 			continue
 		
 		# Basic-attack math boosted by skill power (see BattleFormulas)
-		var damage = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, power)
+		var damage = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, power, damage_type)
+		var type_tag = ""
+		if ability_type == AbilityType.PHYSICAL:
+			var dt = DamageTypes.attack_type(user, damage_type)
+			type_tag = DamageTypes.log_tag(DamageTypes.multiplier(t, dt), dt)
 		
 		# Apply elemental (keep existing code)
 		if not elemental_types.is_empty() and t.elemental_resistances:
@@ -310,6 +317,7 @@ func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 			"target": t.name,
 			"damage": int(damage),
 			"crit": crit_check,
+			"type_tag": type_tag,
 			"reflected": reflection_info.reflected,
 			"reflection_msg": ("[color=cyan]%s's barrier reflects %d damage back![/color]" % [t.name, reflection_info.amount]) if reflection_info.reflected else ""
 		})
@@ -331,6 +339,11 @@ func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 	# Show hits first
 	if hit_count > 0:
 		result_msg = "%s dealt %d damage to %d target(s)" % [name, total_damage, hit_count]
+		
+		# Weak spots / resisted damage types
+		for res in target_results:
+			if res.get("type_tag", "") != "":
+				result_msg += "\n  %s%s" % [res.target, res.type_tag]
 		
 		# Show individual crits
 		for res in target_results:
@@ -426,7 +439,7 @@ func apply_debuff(user: CharacterData, targets: Array) -> Dictionary:
 	var total_damage := 0
 	for t in targets:
 		if t.is_alive() and BattleFormulas.DEBUFF_HIT_SCALE > 0.0:
-			var hit = BattleFormulas.finalize(BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL) * BattleFormulas.DEBUFF_HIT_SCALE)
+			var hit = BattleFormulas.finalize(BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, 0.0, damage_type) * BattleFormulas.DEBUFF_HIT_SCALE)
 			t.take_damage(hit, user)
 			total_damage += hit
 		
@@ -517,7 +530,7 @@ func drain(user: CharacterData, targets: Array) -> Dictionary:
 		
 		match drain_source:
 			DrainTarget.HP:
-				drain_amount = BattleFormulas.finalize(BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, power))
+				drain_amount = BattleFormulas.finalize(BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, power, damage_type))
 				drain_amount = min(drain_amount, t.current_hp)
 				t.take_damage(drain_amount, user)
 			

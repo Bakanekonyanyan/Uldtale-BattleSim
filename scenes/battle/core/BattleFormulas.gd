@@ -79,8 +79,9 @@ static func mitigation(defense: float) -> float:
 	return DEFENSE_K / (DEFENSE_K + max(0.0, defense))
 
 ## Raw (pre-crit, pre-element) damage for a hit.
-## skill_power = 0 for basic attacks.
-static func hit_damage(attacker: CharacterData, target: CharacterData, is_physical: bool, skill_power: float = 0.0) -> float:
+## skill_power = 0 for basic attacks. damage_type: DamageTypes.Type, or
+## FROM_WEAPON (-1) to use the attacker's main-hand weapon (physical hits only).
+static func hit_damage(attacker: CharacterData, target: CharacterData, is_physical: bool, skill_power: float = 0.0, damage_type: int = -1) -> float:
 	var offense = physical_offense(attacker) if is_physical else magical_offense(attacker)
 	var defense = physical_defense(target) if is_physical else magical_defense(target)
 	if is_physical:
@@ -88,6 +89,8 @@ static func hit_damage(attacker: CharacterData, target: CharacterData, is_physic
 	var raw = offense * BASE_SCALE * (1.0 + skill_power * SKILL_POWER_SCALE)
 	raw *= attacker.damage_multiplier  # enemy tuning (EnemyFactory), 1.0 for players
 	raw *= MomentumSystem.get_damage_multiplier() if attacker.is_player else 1.0
+	if is_physical:
+		raw *= DamageTypes.multiplier(target, DamageTypes.attack_type(attacker, damage_type))
 	return raw * mitigation(defense)
 
 static func roll_crit(attacker: CharacterData) -> float:

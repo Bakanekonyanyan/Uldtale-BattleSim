@@ -1,0 +1,38 @@
+{
+	"_doc": "Physical damage types. Positive = takes MORE damage (weak), negative = takes LESS (resists). A hit's multiplier = 1 + race + armor, clamped to [min_multiplier, max_multiplier]. Armor counts each equipped armor piece's type, averaged over the 5 armor slots (so a full plate set gives the full plate value). Magic uses elements instead. unarmed: type for hits with no weapon (\"\" = untyped/neutral; skills can still set their own, e.g. Monk fists are Blunt).",
+	"types": ["SLASH", "PIERCE", "BLUNT"],
+	"unarmed": "",
+	"min_multiplier": 0.5,
+	"max_multiplier": 1.75,
+	"weapons": {
+		"short_sword": "SLASH",
+		"dagger": "PIERCE",
+		"mace": "BLUNT",
+		"spear": "PIERCE",
+		"greatsword": "SLASH",
+		"great_katana": "SLASH",
+		"great_hammer": "BLUNT"
+	},
+	"armor": {
+		"cloth":   {"SLASH": 0.05, "PIERCE": 0.05, "BLUNT": -0.10},
+		"leather": {"SLASH": 0.0, "PIERCE": 0.10, "BLUNT": -0.10},
+		"mail":    {"SLASH": -0.15, "PIERCE": 0.10, "BLUNT": 0.05},
+		"plate":   {"SLASH": -0.20, "PIERCE": -0.10, "BLUNT": 0.20}
+	},
+	"races": {
+		"Hume": {},
+		"Ursari": {"BLUNT": -0.15},
+		"Lycan": {"SLASH": -0.10},
+		"Felis": {"BLUNT": 0.10},
+		"Kitsune": {},
+		"Elvarian": {"PIERCE": 0.10},
+		"Durgar": {"BLUNT": -0.10},
+		"Drakoan": {"SLASH": -0.15, "PIERCE": 0.10},
+		"Djinn": {"PIERCE": -0.10},
+		"Dhampyr": {"PIERCE": 0.10},
+		"Goblin": {"PIERCE": 0.15},
+		"Orc": {"SLASH": -0.10, "PIERCE": 0.15},
+		"Troll": {"BLUNT": -0.20, "SLASH": 0.20},
+		"Fairy": {"PIERCE": -0.20, "BLUNT": 0.25}
+	}
+}
