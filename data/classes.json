@@ -90,7 +90,7 @@
 	  "base_arc": 12,
 	  "base_agi": 6,
 	  "base_for": 7,
-	  "attack_power_type": "dexterity",
+	  "attack_power_type": "arcane",
 	  "spell_power_type": "arcane",
 	  "skills": ["Ancestral Mending", "Spirit Barrier", "Wrath of the Ancients"]
 	},
@@ -110,16 +110,16 @@
 	  "skills": ["Lightning Kunai", "Water Dragon Jutsu", "Smoke Bomb"]
 	},
 	"Berserker": {
-	  "base_vit": 13,
-	  "base_str": 13,
-	  "base_dex": 6,
+	  "base_vit": 10,
+	  "base_str": 10,
+	  "base_dex": 7,
 	  "base_int": 4,
 	  "base_fai": 5,
 	  "base_mnd": 5,
-	  "base_end": 13,
+	  "base_end": 10,
 	  "base_arc": 4,
-	  "base_agi": 7,
-	  "base_for": 13,
+	  "base_agi": 6,
+	  "base_for": 10,
 	  "attack_power_type": "strength",
 	  "spell_power_type": "balanced",
 	  "skills": ["Cleave", "Blood Feast", "Wolf's Frenzy"]

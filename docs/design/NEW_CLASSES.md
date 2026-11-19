@@ -12,7 +12,7 @@ Larger ideas from the philosophies that need new systems are listed under **Late
 ## Berserker (Warden): Howl of the War Wolf, Arathorn and Fenrisulfr
 Massive weapons, area damage, lifesteal, a frenzy that grows in battle, high health.
 
-- **Stats:** highest VIT, STR, END and FOR of any class; little magic. Attack from Strength.
+- **Stats:** high VIT, STR, END and FOR; little magic. Attack from Strength.
 - **Gear:** greatsword, great hammer, spear, mace, short sword; mail and plate.
 - **Skills:**
 
@@ -44,7 +44,7 @@ Stealth, speed, elemental ninjutsu (fire, water, lightning, shadow), kunai and s
 ## Kannagi (Mender): Path of the Ancients, the Ancient (Eternal) Ones
 Bridge to the Ancient Ones: barriers, healing, mana and stamina, devastating spells.
 
-- **Stats:** high MND, ARC and FAI. Spells from Arcane.
+- **Stats:** high MND, ARC and FAI. Attacks and spells from Arcane.
 - **Gear:** dagger and talisman (ofuda-like symbols); cloth and leather.
 - **Skills:**
 
@@ -81,3 +81,16 @@ Pacts with legendary beasts; channels them through the body (claws, fangs, wings
 - The Cleric philosophy says "clad in mail armor", but Clerics can't wear mail (only cloth and leather).
 - The Monk philosophy is about nature and animal forms, but its skills are lightning and ice.
 - The Paladin is described as sword-and-shield, but it is tuned around two-handers.
+
+## Balance (sim, floor-1 full runs, 300 per class, best play style)
+| Class | Clear rate |
+|---|---|
+| Berserker | 31% |
+| Shinobi | 31% |
+| Kannagi | 19% |
+| Beastmaster | 20% |
+
+The original eight classes range from 13% (Druid) to 31% (Samurai). Tuning passes:
+- **Berserker:** 65% → 31%. Core stats lowered from 13 to 10, Blood Feast heals 40% of damage (was 60%), Cleave power 20.
+- **Kannagi:** 6% → 19%. Attacks scale off Arcane; Wrath of the Ancients power 45 with a 2-turn cooldown.
+- **Shinobi:** Lightning Kunai power 30.
