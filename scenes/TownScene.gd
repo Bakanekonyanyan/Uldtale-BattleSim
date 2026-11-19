@@ -49,6 +49,14 @@ func _ready():
 		blacksmith_button.pressed.connect(func(): SceneManager.change_to_blacksmith(current_character))
 	if guild_button:
 		guild_button.pressed.connect(func(): SceneManager.change_to_guild(current_character))
+	# Talents (built in code; same size as the other town buttons)
+	var talents_button := Button.new()
+	talents_button.name = "TalentsButton"
+	talents_button.text = "Talents"
+	talents_button.position = Vector2(472, 352)
+	talents_button.size = Vector2(180, 60)
+	talents_button.pressed.connect(func(): SceneManager.change_to_talents(current_character))
+	$UI.add_child(talents_button)
 		
 	update_ui()
 

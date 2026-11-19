@@ -224,6 +224,7 @@ func diag_boss() -> void:
 				if not r.won: ok = false; break
 				p.gain_xp(xp)
 				while p.attribute_points > 0: spend_point(p)
+				spend_talents(p)
 				if p.current_hp < p.max_hp * 0.5:
 					MomentumSystem.reset_momentum()
 					p.current_hp = p.max_hp; p.current_mp = p.max_mp; p.current_sp = p.max_sp
@@ -274,6 +275,7 @@ func sim_run(cls: String, floor_num: int, p: CharacterData = null) -> Dictionary
 		p.gain_xp(xp)
 		while p.attribute_points > 0:
 			spend_point(p)
+		spend_talents(p)
 		# Breather below 50% HP, or below 80% right before the boss
 		var threshold = 0.8 if wave == 5 else 0.5
 		if p.current_hp < p.max_hp * threshold:
@@ -286,6 +288,17 @@ func sim_run(cls: String, floor_num: int, p: CharacterData = null) -> Dictionary
 	p.reset_for_new_battle()
 	MomentumSystem.reset_momentum()
 	return {"cleared": true, "wave": 7, "player": p}
+
+## Talent policy for the sim: fill the first branch tier by tier, then the next.
+var talent_branch_order := []   # empty = class order
+func spend_talents(p: CharacterData) -> void:
+	var branches = TalentManager.branches_for(p.character_class)
+	for b in branches:
+		for nd in TalentManager.nodes_for(p.character_class, b.id):
+			while p.talents.can_learn(nd.key):
+				p.talents.learn(nd.key)
+			if p.talents.available_points() <= 0:
+				return
 
 func spend_point(p: CharacterData) -> void:
 	var main = p.attack_power_type if p.attack_power_type != "" else "strength"

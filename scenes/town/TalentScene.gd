@@ -1,0 +1,251 @@
+# res://scenes/town/TalentScene.gd
+# Talents screen: the class's three branches, node details with Learn, the
+# 6-skill battle loadout, and Respec. Rules live in TalentManager.
+extends Control
+
+var player_character: CharacterData
+var chrome: ScreenChrome
+var branch_index := 0
+var selected_key := ""
+
+var branch_buttons: Array[Button] = []
+var branch_desc: Label
+var node_buttons: Array[Button] = []
+var node_keys: Array = []
+var details: RichTextLabel
+var learn_button: Button
+var respec_button: Button
+var status_label: Label
+var loadout_box: GridContainer
+var loadout_label: Label
+
+const MUTED := "#a99f90"
+const ACCENT := "#e5c34a"
+const GOOD := "#8fd46a"
+
+func _ready():
+	if player_character == null:
+		player_character = CharacterManager.get_current_character()
+	_build_ui()
+	_refresh()
+
+func set_player(character: CharacterData) -> void:
+	player_character = character
+	if is_node_ready() and chrome:
+		_refresh()
+
+# === UI ===
+
+func _build_ui() -> void:
+	chrome = ScreenChrome.attach(self, "Talents", _on_back_pressed)
+	var ui: CanvasLayer = $UI
+	for i in 3:
+		var b := Button.new()
+		b.toggle_mode = true
+		ScreenChrome.place(b, Rect2(32 + i * 150, 72, 142, 36))
+		b.pressed.connect(func(): _set_branch(i))
+		ui.add_child(b)
+		branch_buttons.append(b)
+	branch_desc = Label.new()
+	branch_desc.add_theme_color_override("font_color", Color(MUTED))
+	branch_desc.autowrap_mode = TextServer.AUTOWRAP_WORD
+	ScreenChrome.place(branch_desc, Rect2(32, 112, 440, 40))
+	ui.add_child(branch_desc)
+	for i in 5:
+		var nb := Button.new()
+		nb.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		nb.clip_text = true
+		ScreenChrome.place(nb, Rect2(32, 156 + i * 92, 440, 80))
+		nb.pressed.connect(func(): _select(i))
+		ui.add_child(nb)
+		node_buttons.append(nb)
+		if i < 4:
+			var link := ColorRect.new()
+			link.color = Color(0.29, 0.26, 0.31)
+			ScreenChrome.place(link, Rect2(250, 236 + i * 92, 4, 12))
+			ui.add_child(link)
+	
+	var panel := Panel.new()
+	ScreenChrome.place(panel, Rect2(496, 72, 672, 330))
+	ui.add_child(panel)
+	details = RichTextLabel.new()
+	details.bbcode_enabled = true
+	details.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	ScreenChrome.place(details, Rect2(14, 10, 644, 260))
+	panel.add_child(details)
+	learn_button = Button.new()
+	learn_button.text = "Learn"
+	ScreenChrome.place(learn_button, Rect2(14, 276, 160, 42))
+	learn_button.pressed.connect(_on_learn)
+	panel.add_child(learn_button)
+	
+	var lp := Panel.new()
+	ScreenChrome.place(lp, Rect2(496, 412, 672, 212))
+	ui.add_child(lp)
+	loadout_label = Label.new()
+	loadout_label.add_theme_color_override("font_color", Color(ACCENT))
+	ScreenChrome.place(loadout_label, Rect2(14, 8, 644, 24))
+	lp.add_child(loadout_label)
+	loadout_box = GridContainer.new()
+	loadout_box.columns = 3
+	ScreenChrome.place(loadout_box, Rect2(14, 38, 644, 166))
+	lp.add_child(loadout_box)
+	
+	respec_button = Button.new()
+	ScreenChrome.place(respec_button, Rect2(32, 640, 260, 48))
+	respec_button.pressed.connect(_on_respec)
+	ui.add_child(respec_button)
+	status_label = Label.new()
+	ScreenChrome.place(status_label, Rect2(308, 648, 680, 32))
+	ui.add_child(status_label)
+
+# === REFRESH ===
+
+func _branches() -> Array:
+	return TalentManager.branches_for(player_character.character_class)
+
+func _set_branch(i: int) -> void:
+	branch_index = i
+	selected_key = ""
+	_refresh()
+
+func _select(i: int) -> void:
+	if i < node_keys.size():
+		selected_key = node_keys[i]
+		_refresh()
+
+func _refresh() -> void:
+	if player_character == null or chrome == null:
+		return
+	var t: TalentManager = player_character.talents
+	chrome.set_info("Talent points: %d   (Level %d)" % [t.available_points(), player_character.level])
+	var branches = _branches()
+	for i in branch_buttons.size():
+		var b = branch_buttons[i]
+		b.visible = i < branches.size()
+		if i < branches.size():
+			b.text = "%s (%d)" % [branches[i].name, t.spent_in_branch(branches[i].id)]
+			b.set_pressed_no_signal(i == branch_index)
+	if branches.is_empty():
+		details.text = "[i]No talents for this class yet.[/i]"
+		return
+	var br = branches[clamp(branch_index, 0, branches.size() - 1)]
+	branch_desc.text = br.get("description", "")
+	var nodes = TalentManager.nodes_for(player_character.character_class, br.id)
+	node_keys = nodes.map(func(n): return n.key)
+	if selected_key == "" and not nodes.is_empty():
+		selected_key = nodes[0].key
+	for i in node_buttons.size():
+		var nb = node_buttons[i]
+		nb.visible = i < nodes.size()
+		if i >= nodes.size():
+			continue
+		var n = nodes[i]
+		var r = t.rank(n.key)
+		var kind = "Skill" if n.has("skill") else "Passive"
+		if n.has("skill") and int(n.tier) == 5:
+			kind = "Ultimate"
+		nb.text = "  Tier %d  -  %s\n  %s   %d / %d" % [n.tier, n.name, kind, r, int(n.max_rank)]
+		var color = Color(ACCENT) if r > 0 else (Color("e6dccb") if t.can_learn(n.key) else Color(MUTED))
+		nb.add_theme_color_override("font_color", color)
+		nb.add_theme_color_override("font_hover_color", color)
+		nb.set_pressed_no_signal(false)
+		nb.toggle_mode = true
+		nb.set_pressed_no_signal(n.key == selected_key)
+	_update_details()
+	_update_loadout()
+	respec_button.text = "Respec (%s)" % Currency.format_copper(t.respec_cost())
+	respec_button.disabled = t.spent_points() == 0
+
+func _update_details() -> void:
+	var t: TalentManager = player_character.talents
+	var n = t.node(selected_key)
+	if n.is_empty():
+		details.text = ""
+		learn_button.disabled = true
+		return
+	var r = t.rank(selected_key)
+	var txt = "[b][font_size=20]%s[/font_size][/b]   [color=%s]Tier %d  -  rank %d / %d[/color]\n" % [n.name, MUTED, n.tier, r, int(n.max_rank)]
+	txt += "[i]%s[/i]\n\n" % n.get("description", "")
+	if n.has("skill"):
+		var s = SkillManager.get_skill(n.skill)
+		if s:
+			txt += "[color=%s]Unlocks skill[/color] [b]%s[/b]  (%s)\n" % [ACCENT, s.name, s.category.capitalize() if s.category != "" else "Skill"]
+			var bits: Array = []
+			if s.power > 0: bits.append("power %d" % s.power)
+			if s.mp_cost > 0 and s.ability_type != Skill.AbilityType.PHYSICAL: bits.append("%d MP" % s.mp_cost)
+			if s.sp_cost > 0 and s.ability_type == Skill.AbilityType.PHYSICAL: bits.append("%d SP" % s.sp_cost)
+			if s.hp_cost > 0: bits.append("%d%% max HP" % int(s.hp_cost * 100))
+			if s.cooldown > 0: bits.append("%d turn cooldown" % s.cooldown)
+			if s.duration > 0: bits.append("%d turns" % s.duration)
+			txt += "[color=%s]%s[/color]\n" % [MUTED, "  -  ".join(bits)]
+			if s.weapon_bonus_text() != "":
+				txt += "[color=%s]Weapon bonus: %s[/color]\n" % [MUTED, s.weapon_bonus_text()]
+	else:
+		var now = TalentManager.describe_effects(n, r) if r > 0 else []
+		var nxt = TalentManager.describe_effects(n, r + 1) if r < int(n.max_rank) else []
+		if not now.is_empty():
+			txt += "[b]Now:[/b] %s\n" % "; ".join(now)
+		if not nxt.is_empty():
+			txt += "[b]Next rank:[/b] [color=%s]%s[/color]\n" % [GOOD, "; ".join(nxt)]
+	var why = t.why_not(selected_key)
+	learn_button.disabled = why != ""
+	learn_button.text = "Learn" if r == 0 else "Rank up"
+	if why != "" and r < int(n.max_rank):
+		txt += "\n[color=%s]%s[/color]" % [MUTED, why]
+	details.text = txt
+
+func _update_loadout() -> void:
+	for c in loadout_box.get_children():
+		c.queue_free()
+	var equipped = player_character.get_battle_skills()
+	loadout_label.text = "BATTLE LOADOUT  %d / %d   (skills you can use in battle)" % [equipped.size(), TalentManager.loadout_size()]
+	for sn in player_character.skills:
+		var cb := CheckBox.new()
+		cb.text = sn
+		cb.button_pressed = sn in equipped
+		cb.clip_text = true
+		cb.custom_minimum_size = Vector2(210, 26)
+		var skill = player_character.get_skill_instance(sn)
+		if skill and skill.category == "ULTIMATE":
+			cb.add_theme_color_override("font_color", Color(ACCENT))
+		cb.toggled.connect(func(on): _toggle_skill(sn, on))
+		loadout_box.add_child(cb)
+
+func _toggle_skill(skill_name: String, on: bool) -> void:
+	var eq: Array = player_character.get_battle_skills().duplicate()
+	if on and not skill_name in eq:
+		if eq.size() >= TalentManager.loadout_size():
+			status_label.text = "The loadout is full (%d). Untick a skill first." % TalentManager.loadout_size()
+			_update_loadout()
+			return
+		eq.append(skill_name)
+	elif not on:
+		eq.erase(skill_name)
+	player_character.set_equipped_skills(eq)
+	status_label.text = ""
+	_update_loadout()
+
+# === ACTIONS ===
+
+func _on_learn() -> void:
+	var t: TalentManager = player_character.talents
+	var n = t.node(selected_key)
+	if t.learn(selected_key):
+		status_label.text = "Learned %s (rank %d)." % [n.name, t.rank(selected_key)]
+		if n.has("skill") and not n.skill in player_character.get_battle_skills():
+			status_label.text += " Equip %s in the loadout to use it." % n.skill
+	_refresh()
+
+func _on_respec() -> void:
+	var t: TalentManager = player_character.talents
+	if t.respec():
+		status_label.text = "All talent points refunded."
+	else:
+		status_label.text = "Respec costs %s - not enough money." % Currency.format_copper(t.respec_cost())
+	selected_key = ""
+	_refresh()
+
+func _on_back_pressed() -> void:
+	SaveManager.save_game(player_character)
+	SceneManager.change_to_town(player_character)

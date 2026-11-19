@@ -146,6 +146,9 @@ func learn(key: String) -> bool:
 	ranks[key] = rank(key) + 1
 	var n = node(key)
 	if n.has("skill") and rank(key) == 1:
+		# keep the current loadout (implicitly "first N known" if never chosen)
+		if character.equipped_skills.is_empty():
+			character.equipped_skills = character.get_battle_skills().duplicate()
 		character.add_skills([String(n.skill)])
 		if character.equipped_skills.size() < loadout_size() and not String(n.skill) in character.equipped_skills:
 			character.equipped_skills.append(String(n.skill))

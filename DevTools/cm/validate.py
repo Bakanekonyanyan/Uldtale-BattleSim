@@ -240,6 +240,7 @@ class Validator:
             if not e.get("ingredients"):
                 add("warning", "Recipes", ref, "ingredients", "no ingredients")
         self._combos()
+        self._talents()
         self._blacksmith()
         self._material_drops()
         self._damage_types()
@@ -269,6 +270,53 @@ class Validator:
             if key in seen:
                 add("warning", "Combos", ref, "payoff", f"same set-up and payoff as '{seen[key]}' - only the stronger one ever applies")
             seen.setdefault(key, ref.key)
+
+    EFFECT_TYPES = {"stats", "damage", "defense", "heal_bonus", "lifesteal", "skill", "combo", "status_chance", "regen"}
+    CONDITIONS = {"with", "element", "elements", "damage_type", "ability", "skill", "category", "target_status",
+                  "user_hp_below", "target_hp_below", "weak_spot"}
+
+    def _talents(self):
+        p, add = self.p, self.r.add
+        if "Talents" not in p.data:
+            return
+        skills = set(p.source("skills"))
+        combos = set(p.source("combos"))
+        statuses = set(p.source("gd:StatusEffect"))
+        classes = set(p.source("playable_classes"))
+        branches = p.data["Talents"].get("branches", {})
+        for cls in classes:
+            if len(branches.get(cls, {})) != 3:
+                add("warning", "Talents", None, "", f"{cls} has {len(branches.get(cls, {}))} talent branches (expected 3)")
+        for ref in self.refs("Talents", 2):
+            n = p.get(ref)
+            cls, branch = ref.groups
+            if cls not in classes:
+                add("error", "Talents", ref, "", f"'{cls}' is not a playable class")
+            if branch not in branches.get(cls, {}):
+                add("error", "Talents", ref, "", f"branch '{branch}' is not listed under Branches for {cls}")
+            if n.get("skill") and n["skill"] not in skills:
+                add("error", "Talents", ref, "skill", f"skill '{n['skill']}' does not exist")
+            for i, e in enumerate(n.get("effects", []) or []):
+                t = e.get("type") if isinstance(e, dict) else None
+                where = f"effects[{i + 1}]"
+                if t not in self.EFFECT_TYPES:
+                    add("error", "Talents", ref, where, f"unknown effect type '{t}'")
+                    continue
+                if t == "skill" and e.get("skill") not in skills:
+                    add("error", "Talents", ref, where, f"upgrades unknown skill '{e.get('skill')}'")
+                if t == "combo" and e.get("combo") not in combos:
+                    add("error", "Talents", ref, where, f"unknown combo '{e.get('combo')}'")
+                if e.get("target_status") and e["target_status"] not in statuses:
+                    add("error", "Talents", ref, where, f"unknown status '{e['target_status']}'")
+                if t in ("damage", "defense", "lifesteal"):
+                    extra = set(e) - self.CONDITIONS - {"type", "mult", "reduce", "fraction"}
+                    if extra:
+                        add("warning", "Talents", ref, where, f"unknown condition(s): {', '.join(sorted(extra))}")
+        for cls, bs in (p.data["Talents"].get("nodes") or {}).items():
+            for b, nodes in bs.items():
+                tiers = sorted(int(v.get("tier", 0)) for k, v in nodes.items() if isinstance(v, dict))
+                if tiers != [1, 2, 3, 4, 5]:
+                    add("warning", "Talents", None, "", f"{cls}/{b}: tiers are {tiers} (expected one node per tier 1-5)")
 
     def _blacksmith(self):
         p, add = self.p, self.r.add
@@ -388,9 +436,13 @@ class Validator:
         skill_users = set()
         for ref in self.refs("Classes"):
             skill_users.update(p.get(ref).get("skills", []))
+        if "Talents" in p.data:
+            for ref in self.refs("Talents", 2):
+                if p.get(ref).get("skill"):
+                    skill_users.add(p.get(ref)["skill"])
         for ref in self.refs("Skills"):
             if ref.key not in skill_users:
-                add("info", "Skills", ref, "", "no class has this skill")
+                add("info", "Skills", ref, "", "no class or talent grants this skill")
 
     def run(self) -> Report:
         self.schema_checks()

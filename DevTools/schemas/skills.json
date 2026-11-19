@@ -48,9 +48,14 @@
      "type": "enum",
      "options": [
       "BASIC",
-      "ADVANCED"
+      "ADVANCED",
+      "LINK",
+      "ULTIMATE",
+      "TRANSCENDENT",
+      "HIDDEN"
      ],
-     "optional": true
+     "optional": true,
+     "help": "Ability type (docs/lore/ABILITY_TYPES.md). Talents can key off it; ULTIMATE skills come from tier-5 talents."
     },
     {
      "name": "power",
@@ -114,6 +119,14 @@
       "max": 3
      },
      "help": "Damage multiplier while wielding this weapon id or type (main or off hand), e.g. two_handed -> 1.25."
+    },
+    {
+     "name": "hp_cost",
+     "type": "float",
+     "min": 0,
+     "max": 0.5,
+     "optional": true,
+     "help": "Fraction of the user's max HP paid on use (never lethal), e.g. 0.08 for Blood Rite."
     },
     {
      "name": "element",

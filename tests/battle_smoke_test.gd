@@ -154,6 +154,7 @@ func _talent_checks() -> void:
 	check(t.learn("bulwark/shield_discipline") and t.learn("bulwark/shield_discipline"), "learn a passive twice")
 	check(is_equal_approx(p.toughness, tough_before + 6.0), "Shield Discipline: +3 toughness per rank (%.1f -> %.1f)" % [tough_before, p.toughness])
 	check(t.learn("bulwark/shield_bash") and "Shield Bash" in p.skills and "Shield Bash" in p.get_battle_skills(), "tier-2 node unlocks Shield Bash and equips it")
+	check("Holy Strike" in p.get_battle_skills() and p.get_battle_skills().size() == 4, "starting skills stay equipped alongside it")
 	check(not t.can_learn("bulwark/aegis_of_dawn"), "ultimate needs 8 points in the branch")
 	
 	# defense with a shield

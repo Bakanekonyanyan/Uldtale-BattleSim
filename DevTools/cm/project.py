@@ -182,7 +182,7 @@ class Project:
         known = set(section.field_map)
         if section.kind == "settings":
             # keys owned by other sections nested under this one (e.g. "races") aren't "other"
-            for other in self.by_tab[ref.tab].sections:
+            for other in self.by_tab[ref.tab].sections:  # (talents: "branches"/"nodes" sections sit beside "settings")
                 if other is not section and other.path[: len(section.path)] == section.path and len(other.path) > len(section.path):
                     known.add(other.path[len(section.path)])
         return [k for k in entry if k not in known]

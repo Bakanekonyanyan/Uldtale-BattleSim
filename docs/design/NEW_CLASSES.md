@@ -52,7 +52,7 @@ Bridge to the Ancient Ones: barriers, healing, mana and stamina, devastating spe
 |---|---|---|
 | Ancestral Mending | Heal + Regeneration | healing |
 | Spirit Barrier | Ally buff: Fortitude up + Reflect barrier | barriers |
-| Wrath of the Ancients | Element-less magic hit on all enemies, costs MP **and** SP | primal power older than the elements; uses both pools |
+| Wrath of the Ancients | Element-less magic hit on all enemies | primal power older than the elements |
 
 - **Later (talents):** transfer MP and SP between allies; seals; party barriers once parties exist.
 
@@ -113,4 +113,6 @@ Every class can use at least three main-hand weapon types.
 The original eight classes range from 13% (Druid) to 31% (Samurai). Tuning passes:
 - **Berserker:** 65% → 31%. Core stats lowered from 13 to 10, Blood Feast heals 40% of damage (was 60%), Cleave power 20.
 - **Kannagi:** 6% → 19%. Attacks scale off Arcane; Wrath of the Ancients power 45 with a 2-turn cooldown.
+
+Note: the game charges only one resource per skill (MP for magical, SP for physical), so the SP listed on Wrath of the Ancients is not actually paid.
 - **Shinobi:** Lightning Kunai power 30.
