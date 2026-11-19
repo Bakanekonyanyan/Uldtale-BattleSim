@@ -157,6 +157,12 @@ func get_biased_equipment_id(character_class: String, slot_category: String) -> 
 	
 	return ""
 
+## Armor types (cloth, leather, ...) this class can wear; [] if unknown.
+func get_armor_types(character_class: String) -> Array:
+	if not _cache_built:
+		_build_class_caches()
+	return _class_armor_cache.get(character_class, {}).keys()
+
 func _has_class_data(character_class: String) -> bool:
 	# Check if we have cached data for this class
 	return _class_weapon_cache.has(character_class) or _class_armor_cache.has(character_class)

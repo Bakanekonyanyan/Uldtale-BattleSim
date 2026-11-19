@@ -157,6 +157,30 @@ func _phase0_checks() -> void:
 	caster.calculate_secondary_attributes()
 	check(is_equal_approx(caster.spell_power, sp_before), "gear spell_power bonus removed on unequip")
 
+	# Class-biased loot rolls (Breather drops pass the player's class)
+	var biased_ok := true
+	for i in 40:
+		for cls in ["Paladin", "Elementalist", "NotAClass"]:
+			var w = ItemManager.get_random_weapon_biased(cls)
+			var ar = ItemManager.get_random_armor_biased(cls)
+			var ar_head = ItemManager.get_random_armor_biased(cls, "head")
+			var any = ItemManager.get_random_equipment_biased(cls)
+			if w == "" or ar == "" or any == "" or ItemManager.get_equipment_template(ar_head).get("slot", "") != "head":
+				biased_ok = false
+	check(biased_ok, "class-biased weapon/armor/slot rolls return valid items")
+	var drop_rewards = {"equipment_instances": []}
+	for i in 30:
+		RewardsManager.add_random_item_to_rewards(drop_rewards, "weapon", 1.0, 1, "Paladin")
+		RewardsManager.add_random_item_to_rewards(drop_rewards, "armor", 1.0, 1, "Paladin")
+	check(drop_rewards.equipment_instances.size() == 60, "Breather gear drops with a player class (%d/60)" % drop_rewards.equipment_instances.size())
+	# The real Breather payout path, boss and regular waves, with a player class
+	var breather_gear := 0
+	for i in 60:
+		var r = RewardsManager.calculate_battle_rewards({"current_wave": 1 + i % 6, "current_floor": 3, "is_boss_fight": i % 6 == 5,
+			"momentum_level": i % 4, "player_class": "Paladin", "enemies": [], "xp_gained": 10})
+		breather_gear += r.equipment_instances.size()
+	check(breather_gear > 0, "Breather reward calculation runs with a player class (%d gear drops in 60)" % breather_gear)
+	
 	# Physical damage types: weapon/skill/unarmed source, race + armor affinities, clamp
 	var troll = make_player(); troll.race = "Troll"
 	for slot in DamageTypes.ARMOR_SLOTS: troll.equipment[slot] = null
