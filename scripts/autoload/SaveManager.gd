@@ -272,13 +272,11 @@ func load_game(character_name: String) -> CharacterData:
 		Log.debug("save", "Warning: Skills data not found or invalid")
 	
 	# Class skills added since the save was made (e.g. the Monk's animal-style kit)
-	var cls_file = FileAccess.open("res://data/classes.json", FileAccess.READ)
-	if cls_file:
-		var cls_data = JSON.parse_string(cls_file.get_as_text())
-		var class_skills = cls_data.get("playable", {}).get(player.character_class, {}).get("skills", []) if cls_data is Dictionary else []
-		var missing = class_skills.filter(func(s): return not player.skills.has(s))
-		if not missing.is_empty():
-			player.add_skills(missing)
+	var cls_data = DataRegistry.get_data("classes")
+	var class_skills = cls_data.get("playable", {}).get(player.character_class, {}).get("skills", []) if cls_data is Dictionary else []
+	var missing = class_skills.filter(func(s): return not player.skills.has(s))
+	if not missing.is_empty():
+		player.add_skills(missing)
 	
 	# Talents (spent points; unlock their skills) and the battle loadout
 	if player.talents:

@@ -12,11 +12,7 @@ func _ready():
 	_load()
 
 func _load() -> void:
-	var file = FileAccess.open("res://data/locations.json", FileAccess.READ)
-	if file == null:
-		push_error("LocationManager: data/locations.json not found")
-		return
-	var data = JSON.parse_string(file.get_as_text())
+	var data = DataRegistry.get_data("locations")
 	locations = data.get("locations", {}) if data is Dictionary else {}
 
 func has_location(location_id: String) -> bool:

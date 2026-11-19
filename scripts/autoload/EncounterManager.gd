@@ -17,8 +17,7 @@ var cfg: Dictionary = {}
 var _count: int = 0          # encounters this expedition
 
 func _ready():
-	var f = FileAccess.open("res://data/encounters.json", FileAccess.READ)
-	var d = JSON.parse_string(f.get_as_text()) if f else null
+	var d = DataRegistry.get_data("encounters")
 	cfg = d if d is Dictionary else {}
 	GameEvents.expedition_started.connect(func(_l, _f): _count = 0)
 

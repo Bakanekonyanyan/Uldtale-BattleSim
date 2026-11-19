@@ -38,11 +38,7 @@ func _on_momentum_changed(level: int) -> void:
 		_streak = 0
 
 func _load() -> void:
-	var file = FileAccess.open("res://data/bounties.json", FileAccess.READ)
-	if file == null:
-		push_error("GuildManager: data/bounties.json not found")
-		return
-	var data = JSON.parse_string(file.get_as_text())
+	var data = DataRegistry.get_data("bounties")
 	if data is Dictionary:
 		templates = data.get("templates", {})
 		settings = data.get("settings", {})

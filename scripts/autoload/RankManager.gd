@@ -21,8 +21,7 @@ var cfg: Dictionary = {}
 var _order: Array = []        # rank ids, lowest first
 
 func _ready():
-	var f = FileAccess.open("res://data/ranks.json", FileAccess.READ)
-	var d = JSON.parse_string(f.get_as_text()) if f else null
+	var d = DataRegistry.get_data("ranks")
 	cfg = d if d is Dictionary else {}
 	if cfg.is_empty():
 		push_error("RankManager: data/ranks.json missing or invalid")

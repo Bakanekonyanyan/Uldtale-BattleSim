@@ -10,25 +10,8 @@ func _ready():
 	_load_status_effects()
 
 func _load_status_effects():
-	var path = "res://data/status_effects.json"
-	
-	Log.debug("status", "[StatusEffects] Looking for JSON at: %s" % path)
-	
-	if not FileAccess.file_exists(path):
-		push_error("StatusEffects: JSON file not found at " + path)
-		return
-	
-	var file = FileAccess.open(path, FileAccess.READ)
-	if not file:
-		push_error("StatusEffects: Could not open file at " + path)
-		return
-	
-	var json_text = file.get_as_text()
-	file.close()
-	
-	Log.debug("status", "[StatusEffects] JSON text length: %d" % json_text.length())
-	
-	var result = JSON.parse_string(json_text)
+	var path = DataRegistry.path_of("status_effects")
+	var result = DataRegistry.get_data("status_effects")
 	if typeof(result) != TYPE_DICTIONARY:
 		push_error("StatusEffects: Invalid JSON format in " + path)
 		push_error("StatusEffects: JSON parse result type: %d" % typeof(result))

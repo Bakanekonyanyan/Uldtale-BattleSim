@@ -21,8 +21,7 @@ var cfg: Dictionary = {}
 var stats: Dictionary = {}
 
 func _ready():
-	var f = FileAccess.open("res://data/adventurers.json", FileAccess.READ)
-	var d = JSON.parse_string(f.get_as_text()) if f else null
+	var d = DataRegistry.get_data("adventurers")
 	cfg = d if d is Dictionary else {}
 	if cfg.is_empty():
 		push_error("AdventurerManager: data/adventurers.json missing or invalid")

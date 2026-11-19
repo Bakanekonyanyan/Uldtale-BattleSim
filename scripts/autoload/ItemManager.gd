@@ -24,9 +24,7 @@ func _ready():
 	Log.debug("items", "Loaded armors: ", armors.keys())
 
 func load_consumables():
-	var file = FileAccess.open("res://data/items/consumables.json", FileAccess.READ)
-	var json = JSON.parse_string(file.get_as_text())
-	file.close()
+	var json = DataRegistry.get_data("items/consumables")
 	
 	for item_id in json:
 		consumables[item_id] = Item.create_from_dict(item_id, json[item_id])
@@ -34,17 +32,13 @@ func load_consumables():
 			craft_only_consumables.append(item_id)
 
 func load_materials():
-	var file = FileAccess.open("res://data/items/materials.json", FileAccess.READ)
-	var json = JSON.parse_string(file.get_as_text())
-	file.close()
+	var json = DataRegistry.get_data("items/materials")
 	
 	for item_id in json:
 		materials[item_id] = Item.create_from_dict(item_id, json[item_id])
 
 func load_weapons():
-	var file = FileAccess.open("res://data/items/weapons.json", FileAccess.READ)
-	var json = JSON.parse_string(file.get_as_text())
-	file.close()
+	var json = DataRegistry.get_data("items/weapons")
 	
 	for hand_type in json:
 		for weapon_category in json[hand_type]:
@@ -59,9 +53,7 @@ func load_weapons():
 						Log.debug("items", "ItemManager: Loaded weapon '%s' with key '%s'" % [weapon_data.get("name", ""), weapon_id])
 
 func load_armors():
-	var file = FileAccess.open("res://data/items/armors.json", FileAccess.READ)
-	var json = JSON.parse_string(file.get_as_text())
-	file.close()
+	var json = DataRegistry.get_data("items/armors")
 	
 	for armor_type in json:
 		for slot in json[armor_type]:

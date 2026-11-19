@@ -33,14 +33,9 @@ func _ready():
 	load_data()
 
 func load_data():
-	var file = FileAccess.open("res://data/races.json", FileAccess.READ)
-	races = JSON.parse_string(file.get_as_text())
-
-	file = FileAccess.open("res://data/classes.json", FileAccess.READ)
-	classes = JSON.parse_string(file.get_as_text())
-
-	file = FileAccess.open("res://data/skills.json", FileAccess.READ)
-	skills = JSON.parse_string(file.get_as_text())["skills"]
+	races = DataRegistry.get_data("races")
+	classes = DataRegistry.get_data("classes")
+	skills = DataRegistry.section("skills", "skills")
 
 func get_dungeon_race() -> String:
 	return current_dungeon_race

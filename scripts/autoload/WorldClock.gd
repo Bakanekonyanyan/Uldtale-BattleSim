@@ -15,8 +15,7 @@ extends Node
 var cfg: Dictionary = {}
 
 func _ready():
-	var f = FileAccess.open("res://data/world.json", FileAccess.READ)
-	var d = JSON.parse_string(f.get_as_text()) if f else null
+	var d = DataRegistry.get_data("world")
 	cfg = d if d is Dictionary else {}
 	if cfg.is_empty():
 		push_error("WorldClock: data/world.json missing or invalid")

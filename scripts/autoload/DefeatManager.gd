@@ -13,8 +13,7 @@ extends Node
 var cfg: Dictionary = {}
 
 func _ready():
-	var f = FileAccess.open("res://data/defeat.json", FileAccess.READ)
-	var d = JSON.parse_string(f.get_as_text()) if f else null
+	var d = DataRegistry.get_data("defeat")
 	cfg = d if d is Dictionary else {}
 	GameEvents.day_passed.connect(func(player, _day): tick(player))
 

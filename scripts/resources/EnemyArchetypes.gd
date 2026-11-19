@@ -6,17 +6,9 @@
 class_name EnemyArchetypes
 extends RefCounted
 
-static var _data: Dictionary = {}
-
 static func data() -> Dictionary:
-	if _data.is_empty():
-		var f = FileAccess.open("res://data/enemy_archetypes.json", FileAccess.READ)
-		var d = JSON.parse_string(f.get_as_text()) if f else null
-		_data = d if d is Dictionary else {}
-		if _data.is_empty():
-			push_error("EnemyArchetypes: data/enemy_archetypes.json missing or invalid")
-			_data = {"archetypes": {}, "races": {}, "ai_roles": {}, "boss": {}, "settings": {}}
-	return _data
+	var d = DataRegistry.get_data("enemy_archetypes")
+	return d if d is Dictionary and not d.is_empty() else {"archetypes": {}, "races": {}, "ai_roles": {}, "boss": {}, "settings": {}}
 
 static func archetypes() -> Dictionary:
 	return data().get("archetypes", {})

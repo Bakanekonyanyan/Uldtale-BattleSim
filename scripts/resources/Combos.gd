@@ -12,18 +12,9 @@
 class_name Combos
 extends RefCounted
 
-static var _cfg: Dictionary = {}
-
 static func cfg() -> Dictionary:
-	if _cfg.is_empty():
-		var file = FileAccess.open("res://data/combos.json", FileAccess.READ)
-		if file:
-			var data = JSON.parse_string(file.get_as_text())
-			_cfg = data if data is Dictionary else {}
-		if not _cfg.has("combos"):
-			push_error("Combos: data/combos.json missing or invalid")
-			_cfg = {"combos": {}}
-	return _cfg
+	var d = DataRegistry.get_data("combos")
+	return d if d is Dictionary and d.has("combos") else {"combos": {}}
 
 static func all() -> Dictionary:
 	return cfg().get("combos", {})

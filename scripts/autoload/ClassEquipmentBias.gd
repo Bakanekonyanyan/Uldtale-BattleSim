@@ -92,23 +92,7 @@ func _add_armor_to_all_classes(armor_id: String, armor_type: String):
 func _get_all_class_names() -> Array:
 	# Get all class names from classes.json
 	var classes = []
-	var file_path = "res://data/classes.json"
-	
-	if not FileAccess.file_exists(file_path):
-		Log.debug("items", "[ClassEquipmentBias] ERROR: classes.json not found!")
-		return classes
-	
-	var file = FileAccess.open(file_path, FileAccess.READ)
-	var json_text = file.get_as_text()
-	file.close()
-	
-	var json = JSON.new()
-	var error = json.parse(json_text)
-	if error != OK:
-		Log.debug("items", "[ClassEquipmentBias] ERROR: Failed to parse classes.json")
-		return classes
-	
-	var data = json.data
+	var data = DataRegistry.get_data("classes")
 	
 	# Extract all class names from playable, non_playable, and boss sections
 	for category in ["playable", "non_playable", "boss"]:
@@ -208,8 +192,7 @@ var _preferred_cache: Dictionary = {}
 
 func get_preferred_weapons(character_class: String) -> Array:
 	if _preferred_cache.is_empty():
-		var f = FileAccess.open("res://data/classes.json", FileAccess.READ)
-		var data = JSON.parse_string(f.get_as_text()) if f else {}
+		var data = DataRegistry.get_data("classes")
 		for group in (data if data is Dictionary else {}):
 			for cls in data[group]:
 				_preferred_cache[cls] = data[group][cls].get("preferred_weapons", [])

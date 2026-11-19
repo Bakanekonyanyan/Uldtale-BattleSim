@@ -27,7 +27,6 @@
 class_name TalentManager
 extends RefCounted
 
-static var _data: Dictionary = {}
 
 ## Weak back-reference: the character owns this manager, so a strong
 ## reference here would be a cycle and neither would ever be freed.
@@ -49,14 +48,8 @@ func _init(owner_character: CharacterData):
 # ------------------------------------------------------------------ data
 
 static func data() -> Dictionary:
-	if _data.is_empty():
-		var f = FileAccess.open("res://data/talents.json", FileAccess.READ)
-		var d = JSON.parse_string(f.get_as_text()) if f else null
-		_data = d if d is Dictionary else {}
-		if _data.is_empty():
-			push_error("TalentManager: data/talents.json missing or invalid")
-			_data = {"settings": {}, "branches": {}, "nodes": {}}
-	return _data
+	var d = DataRegistry.get_data("talents")
+	return d if d is Dictionary and not d.is_empty() else {"settings": {}, "branches": {}, "nodes": {}}
 
 static func settings() -> Dictionary:
 	return data().get("settings", {})

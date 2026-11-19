@@ -336,43 +336,11 @@ func _can_equip_armor(armor_data: Dictionary, char_class: String) -> bool:
 
 func _load_weapons_data() -> Dictionary:
 	"""Load weapons.json data"""
-	var file_path = "res://data/items/weapons.json"
-	if not FileAccess.file_exists(file_path):
-		Log.debug("proficiency", "ProficiencyManager: weapons.json not found at: ", file_path)
-		return {}
-	
-	var file = FileAccess.open(file_path, FileAccess.READ)
-	var json_text = file.get_as_text()
-	file.close()
-	
-	var json = JSON.new()
-	var error = json.parse(json_text)
-	
-	if error != OK:
-		Log.debug("proficiency", "ProficiencyManager: Error parsing weapons.json")
-		return {}
-	
-	return json.data
+	return DataRegistry.get_data("items/weapons")
 
 func _load_armors_data() -> Dictionary:
 	"""Load armors.json data"""
-	var file_path = "res://data/items/armors.json"
-	if not FileAccess.file_exists(file_path):
-		Log.debug("proficiency", "ProficiencyManager: armors.json not found at: ", file_path)
-		return {}
-	
-	var file = FileAccess.open(file_path, FileAccess.READ)
-	var json_text = file.get_as_text()
-	file.close()
-	
-	var json = JSON.new()
-	var error = json.parse(json_text)
-	
-	if error != OK:
-		Log.debug("proficiency", "ProficiencyManager: Error parsing armors.json")
-		return {}
-	
-	return json.data
+	return DataRegistry.get_data("items/armors")
 
 # === SAVE/LOAD ===
 

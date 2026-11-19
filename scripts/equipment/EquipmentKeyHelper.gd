@@ -169,68 +169,11 @@ static func _search_armors(equipment_name: String) -> String:
 
 ## Load JSON data into cache
 static func _load_caches():
-	"""Load weapons.json and armors.json into memory cache"""
-	# Try multiple possible paths
-	var weapons_paths = [
-		"res://data/items/weapons.json",
-		"res://Data/items/weapons.json",
-		"res://Data/weapons.json",
-		"res://data/weapons.json"
-	]
-	
-	var armors_paths = [
-		"res://data/items/armors.json",
-		"res://Data/items/armors.json",
-		"res://Data/armors.json",
-		"res://data/armors.json"
-	]
-	
-	# Load weapons
-	for path in weapons_paths:
-		if FileAccess.file_exists(path):
-			_weapons_cache = _load_json_file(path)
-			if not _weapons_cache.is_empty():
-				Log.debug("items", "EquipmentKeyHelper: Loaded weapons from: ", path)
-				break
-	
-	# Load armors
-	for path in armors_paths:
-		if FileAccess.file_exists(path):
-			_armors_cache = _load_json_file(path)
-			if not _armors_cache.is_empty():
-				Log.debug("items", "EquipmentKeyHelper: Loaded armors from: ", path)
-				break
-	
+	"""Weapon and armor tables from DataRegistry (one path, parsed once)"""
+	_weapons_cache = DataRegistry.get_data("items/weapons")
+	_armors_cache = DataRegistry.get_data("items/armors")
 	_cache_loaded = true
-	
-	if _weapons_cache.is_empty():
-		Log.debug("items", "EquipmentKeyHelper: ERROR - Failed to load weapons.json from any path!")
-	if _armors_cache.is_empty():
-		Log.debug("items", "EquipmentKeyHelper: ERROR - Failed to load armors.json from any path!")
 
-## Load and parse a JSON file
-static func _load_json_file(file_path: String) -> Dictionary:
-	"""Load and parse a JSON file, return empty dict on error"""
-	if not FileAccess.file_exists(file_path):
-		return {}
-	
-	var file = FileAccess.open(file_path, FileAccess.READ)
-	if not file:
-		Log.debug("items", "EquipmentKeyHelper: Could not open file: ", file_path)
-		return {}
-	
-	var json_text = file.get_as_text()
-	file.close()
-	
-	var json = JSON.new()
-	var error = json.parse(json_text)
-	
-	if error != OK:
-		Log.debug("items", "EquipmentKeyHelper: Error parsing JSON file: ", file_path)
-		Log.debug("items", "EquipmentKeyHelper: Parse error: ", json.get_error_message())
-		return {}
-	
-	return json.data
 
 ## Clear cache (useful if JSON files are updated at runtime)
 static func clear_cache():

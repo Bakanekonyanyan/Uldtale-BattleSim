@@ -170,11 +170,9 @@ var _material_tables: Dictionary = {}
 
 func _get_material_tables() -> Dictionary:
 	if _material_tables.is_empty():
-		var file = FileAccess.open("res://data/loot/material_tables.json", FileAccess.READ)
-		if file:
-			var parsed = JSON.parse_string(file.get_as_text())
-			if parsed is Dictionary:
-				_material_tables = parsed
+		var parsed = DataRegistry.get_data("loot/material_tables")
+		if parsed is Dictionary:
+			_material_tables = parsed
 		if _material_tables.is_empty():
 			push_error("RewardsManager: data/loot/material_tables.json missing or invalid")
 	return _material_tables

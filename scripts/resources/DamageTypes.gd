@@ -16,18 +16,9 @@ enum Type { SLASH, PIERCE, BLUNT }
 const FROM_WEAPON := -1          # skill/attack has no fixed type: use the weapon
 const ARMOR_SLOTS := ["head", "chest", "hands", "legs", "feet"]
 
-static var _cfg: Dictionary = {}
-
 static func cfg() -> Dictionary:
-	if _cfg.is_empty():
-		var file = FileAccess.open("res://data/damage_types.json", FileAccess.READ)
-		if file:
-			var data = JSON.parse_string(file.get_as_text())
-			_cfg = data if data is Dictionary else {}
-		if _cfg.is_empty():
-			push_error("DamageTypes: data/damage_types.json missing or invalid")
-			_cfg = {"weapons": {}, "armor": {}, "races": {}}
-	return _cfg
+	var d = DataRegistry.get_data("damage_types")
+	return d if d is Dictionary and not d.is_empty() else {"weapons": {}, "armor": {}, "races": {}}
 
 static func type_name(t: int) -> String:
 	return Type.keys()[t].capitalize() if t >= 0 and t < Type.size() else "None"

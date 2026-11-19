@@ -625,6 +625,17 @@ func _leak_checks() -> void:
 	var e = EnemyFactory.create_enemy(1, 1, 1)
 	check(e.status_manager.character == e and e.talents.character == e, "managers still reach their character through the weak reference")
 
+## DataRegistry: each data file parsed once and shared; reload re-reads it.
+func _data_registry_checks() -> void:
+	var a = DataRegistry.get_data("classes")
+	check(a is Dictionary and a.has("playable") and is_same(a, DataRegistry.get_data("classes")) and is_same(a, EnemyFactory.classes), "classes.json is parsed once and shared")
+	DataRegistry.reload("combos")
+	check(Combos.all().size() > 0, "a reloaded file is read again on next use")
+	var src = ""
+	for f in ["res://scripts/autoload/EnemyFactory.gd", "res://scripts/factories/CharacterFactory.gd", "res://scripts/autoload/ItemManager.gd", "res://scripts/resources/TalentManager.gd"]:
+		src += FileAccess.get_file_as_string(f)
+	check(not src.contains("FileAccess.open(\"res://data"), "core systems load data only through DataRegistry")
+
 ## Talent trees (data/talents.json, TalentManager.gd)
 func _talent_checks() -> void:
 	# skills charge every cost they list
@@ -890,6 +901,7 @@ func _phase0_checks() -> void:
 	_party_checks()
 	_revive_and_encounter_checks()
 	_leak_checks()
+	_data_registry_checks()
 	
 	# Class-biased loot rolls (Breather drops pass the player's class)
 	var biased_ok := true

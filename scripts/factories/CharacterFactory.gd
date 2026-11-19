@@ -2,28 +2,13 @@
 class_name CharacterFactory
 extends RefCounted
 
-const RACES_PATH = "res://data/races.json"
-const CLASSES_PATH = "res://data/classes.json"
-
-static var _races_data: Dictionary = {}
-static var _classes_data: Dictionary = {}
-
-static func _load_data():
-	if _races_data.is_empty():
-		var file = FileAccess.open(RACES_PATH, FileAccess.READ)
-		if file:
-			_races_data = JSON.parse_string(file.get_as_text())
-			file.close()
-	
-	if _classes_data.is_empty():
-		var file = FileAccess.open(CLASSES_PATH, FileAccess.READ)
-		if file:
-			_classes_data = JSON.parse_string(file.get_as_text())
-			file.close()
+## Race and class tables come from DataRegistry (parsed once, shared).
+static var _races_data: Dictionary:
+	get: return DataRegistry.get_data("races")
+static var _classes_data: Dictionary:
+	get: return DataRegistry.get_data("classes")
 
 static func create_character(char_name: String, race: String, char_class: String, is_player: bool = false) -> CharacterData:
-	_load_data()
-	
 	var char = CharacterData.new(char_name, race, char_class)
 	char.is_player = is_player
 	

@@ -10,25 +10,12 @@ func _ready():
 	load_data()
 
 func load_data():
-	var path = "res://data/races.json"
-	
-	if not FileAccess.file_exists(path):
-		push_error("RaceElementalData: races.json not found at " + path)
-		return
-	
-	var file = FileAccess.open(path, FileAccess.READ)
-	if file:
-		var result = JSON.parse_string(file.get_as_text())
-		if typeof(result) == TYPE_DICTIONARY:
-			race_data = result
-			Log.debug("elements", " Loaded race elemental data from races.json")
-			Log.debug("elements", "   Playable races: ", race_data.get("playable", {}).keys())
-			Log.debug("elements", "   NPC races: ", race_data.get("non_playable", {}).keys())
-		else:
-			push_error("RaceElementalData: Invalid JSON format in races.json")
-		file.close()
+	var result = DataRegistry.get_data("races")
+	if typeof(result) == TYPE_DICTIONARY:
+		race_data = result
+		Log.debug("elements", "Playable races: ", race_data.get("playable", {}).keys(), " | NPC races: ", race_data.get("non_playable", {}).keys())
 	else:
-		push_error("RaceElementalData: Could not open races.json")
+		push_error("RaceElementalData: invalid races.json")
 
 func get_race_elemental_data(race_name: String, is_playable: bool = true) -> Dictionary:
 	"""Get elemental data for a specific race"""

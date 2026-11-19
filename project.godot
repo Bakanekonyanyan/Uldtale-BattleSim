@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 Log="*res://scripts/autoload/Log.gd"
+DataRegistry="*res://scripts/autoload/DataRegistry.gd"
 GameEvents="*res://scripts/autoload/GameEvents.gd"
 LocationManager="*res://scripts/autoload/LocationManager.gd"
 AlchemyManager="*res://scripts/autoload/AlchemyManager.gd"

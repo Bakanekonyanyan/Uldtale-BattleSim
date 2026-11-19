@@ -18,10 +18,8 @@ func _ready():
 	setup_ui()
 
 func load_data():
-	var file = FileAccess.open("res://data/races.json", FileAccess.READ)
-	races = JSON.parse_string(file.get_as_text())
-	file = FileAccess.open("res://data/classes.json", FileAccess.READ)
-	classes = JSON.parse_string(file.get_as_text())
+	races = DataRegistry.get_data("races")
+	classes = DataRegistry.get_data("classes")
 
 func setup_ui():
 	for race in races["playable"].keys():

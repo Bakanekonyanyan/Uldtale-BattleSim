@@ -14,11 +14,7 @@ func _ready():
 	_load()
 
 func _load() -> void:
-	var file = FileAccess.open("res://data/recipes.json", FileAccess.READ)
-	if file == null:
-		push_error("AlchemyManager: data/recipes.json not found")
-		return
-	var data = JSON.parse_string(file.get_as_text())
+	var data = DataRegistry.get_data("recipes")
 	recipes = data.get("recipes", {}) if data is Dictionary else {}
 
 # === QUERIES ===
