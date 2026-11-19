@@ -12,6 +12,7 @@ from . import widgets
 from .config import Config, is_project_root
 from .project import EntryRef, Project
 from .panels import ProblemsPanel
+from .testpanel import TestRunner
 from .validate import validate
 from .widgets import COLORS, Form, JsonEditor
 
@@ -527,6 +528,7 @@ class App(tk.Tk):
         self.problems = ProblemsPanel(self.dock, self)
         self.dock.add(self.problems, text="Problems")
         ttk.Button(self.tools, text="Validate", command=self.run_validate).pack(side="left")
+        self.tests = TestRunner(self)
 
         self.status_var = tk.StringVar(value="Ready. Ctrl+S saves all changed files; Ctrl+F searches the current tab.")
         ttk.Label(self, textvariable=self.status_var, style="Bar.TLabel", padding=(8, 3)).pack(fill="x", side="bottom")
@@ -625,6 +627,10 @@ class App(tk.Tk):
         self.status("Theme changed - restart to recolour every text box.")
 
     def on_close(self):
+        if getattr(self, "tests", None) and self.tests.job is not None:
+            if not messagebox.askyesno(APP_TITLE, "Godot is still running. Stop it and close?", parent=self):
+                return
+            self.tests.stop()
         dirty = self.project.dirty_tabs()
         if dirty:
             ans = messagebox.askyesnocancel(APP_TITLE, "Save changes to " + ", ".join(dirty) + " before closing?", parent=self)

@@ -40,6 +40,32 @@ one to jump to the entry and field. It also runs automatically after each save.
 skill, class, enemy group, recipe and bounty board through the real game code.
 Run it from the Tests buttons, or `godot --headless res://tests/validate_content.tscn`.
 
+## Running the game's tests
+The toolbar buttons run headless Godot in the background. Output streams into the
+**Godot output** tab and **Stop** cancels. Unsaved edits are saved first, so the tests
+always see what's on screen.
+
+| Button | Runs | Shows |
+|---|---|---|
+| Validate in Godot | `tests/validate_content.tscn` | errors added to Problems (marked "godot") |
+| Smoke test | `tests/battle_smoke_test.tscn` | "N passed, M failed" and the failing checks |
+| Balance sim... | `tests/balance_sim.tscn -- tool ...` | per-class floor clear rates in the **Balance sim** tab |
+
+- **Finding Godot:** the first run looks for Godot 4 automatically: the `GODOT`
+  environment variable, PATH, Program Files / AppData / Downloads / Desktop, Steam,
+  Scoop (Windows); /Applications (macOS). If it can't find it, it asks once and
+  remembers. **Godot...** changes it. On Windows pick the `*_console.exe` build if
+  you have it.
+- **Fresh checkout:** on a fresh checkout it first runs a one-time import
+  (`--editor --quit`).
+- **Balance sim options:** classes, location, play style (set-up, damage-only, or
+  the best of both), potions carried, runs per class and floor. Each run is saved in
+  `DevTools/sim_history/`, which stays on this computer and is git-ignored.
+- **Comparing sim runs:** after a run, the tab selects it next to the previous run
+  with the same options. Select any two runs to compare them. Changes smaller than
+  the noise band are grey. The band is about 141/sqrt(runs) points: ±12 at 150 runs,
+  ±6 at 500. Raise **Runs per class** to see smaller effects.
+
 ## Adding or changing fields
 Each data file has a schema in `DevTools/schemas/<name>.json`; the format is documented at
 the top of `DevTools/cm/schema.py`. A new data file only needs a new schema file. A new

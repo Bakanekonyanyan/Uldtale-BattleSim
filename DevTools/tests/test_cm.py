@@ -213,5 +213,65 @@ class TestValidate(TempProject):
         self.assertCaught("'Gobbo' is not a race")
 
 
+class TestGodotHelpers(unittest.TestCase):
+    def test_parsers(self):
+        from cm import godot
+        out = ["noise", "VALIDATE ERROR|Skills|Iaido|Skill.create_from_dict failed", "SCRIPT ERROR: Invalid access to 'DAMAG'",
+               "   at: create_from_dict (res://scenes/mechanics/Skill.gd:89)",
+               "ERROR: 20 resources still in use at exit (run with --verbose for details).", "VALIDATE RESULT: 1 errors, 600 checks"]
+        issues, summary = godot.parse_validate(out, lambda tab, entry: EntryRef(tab, 0, (), entry) if entry == "Iaido" else None)
+        self.assertEqual(summary, "Godot: 1 errors, 600 checks")
+        self.assertEqual(len(issues), 2)                       # the VALIDATE line + the SCRIPT ERROR, not the noise
+        self.assertEqual(issues[0].ref.key, "Iaido")
+        self.assertIn("Skill.gd:89", issues[1].message)
+        smoke = godot.parse_smoke(["PASS: a", "FAIL: b went wrong", "SMOKE RESULT: 9 passed, 1 failed"])
+        self.assertEqual((smoke["passed"], smoke["failed"], smoke["failures"], smoke["finished"]), (9, 1, ["b went wrong"], True))
+        sim = godot.parse_sim(["SIM PROGRESS|1|2", "SIM ROW|Monk|20|40|40|set-up", "SIM DONE"])
+        self.assertEqual(sim["rows"][0], {"class": "Monk", "damage_only": 20, "set_up": 40, "best": 40, "style": "set-up"})
+        self.assertTrue(sim["finished"])
+
+    def test_sim_args_history_and_compare(self):
+        from cm import godot
+        args = godot.sim_args({"classes": ["Monk"], "location": "troll_caves", "set_up": "both", "potions": 5, "runs": 60, "floor": 2})
+        self.assertEqual(args[:3], ["res://tests/balance_sim.tscn", "--", "tool"])
+        self.assertIn("--classes=Monk", args)
+        self.assertIn("--setup=both", args)
+        self.assertIn("--runs=60", args)
+        tmp = tempfile.mkdtemp()
+        try:
+            h = godot.SimHistory(tmp)
+            h.save({"runs": 60}, [{"class": "Monk", "best": 30}], "before")
+            import time
+            time.sleep(1.1)
+            h.save({"runs": 60}, [{"class": "Monk", "best": 45}, {"class": "Druid", "best": 10}], "after")
+            recs = h.load_all()
+            self.assertEqual([r["label"] for r in recs], ["after", "before"])
+            rows = godot.compare(recs[1], recs[0])
+            self.assertEqual(rows[0], {"class": "Monk", "a": 30, "b": 45, "change": 15})
+            self.assertEqual(rows[1]["change"], None)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_noise_band(self):
+        band = lambda runs: max(3, round(141 / max(1, runs) ** 0.5))  # mirrors testpanel.noise_band
+        self.assertEqual(band(150), 12)
+        self.assertEqual(band(30), 26)
+        self.assertEqual(band(2000), 3)
+
+    def test_godot_candidates_prefer_console_build(self):
+        from cm import godot
+        tmp = tempfile.mkdtemp()
+        try:
+            d = os.path.join(tmp, "Godot_v4.4.1-stable_win64")
+            os.makedirs(d)
+            for n in ("Godot_v4.4.1-stable_win64.exe", "Godot_v4.4.1-stable_win64_console.exe"):
+                open(os.path.join(d, n), "w").close()
+            env = {"LOCALAPPDATA": tmp, "PATH": ""}
+            c = godot._candidates(env=env, platform="win32")
+            self.assertTrue(c and c[0].endswith("_console.exe"), c)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
 if __name__ == "__main__":
     unittest.main()

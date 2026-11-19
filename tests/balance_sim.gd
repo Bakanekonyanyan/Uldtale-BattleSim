@@ -7,7 +7,9 @@ extends Node
 #
 # Run:   godot --headless res://tests/balance_sim.tscn -- <label>
 # Output: user://balance_<label>.txt (path is printed). Labels starting with
-#         "diag" print a detailed boss-fight breakdown instead.
+#         "diag" print a detailed boss-fight breakdown instead; "classes..." is
+#         the fast class report; "tool" is the content manager's mode (see
+#         tool_report for its options).
 
 const CLASSES = ["Paladin", "Necromancer", "Myrmidon", "Cleric", "Samurai", "Elementalist", "Druid", "Monk"]
 const N = 150
@@ -29,6 +31,9 @@ func _ready():
 		class_report()
 		var f3 = FileAccess.open("user://balance_%s.txt" % mode, FileAccess.WRITE)
 		f3.store_string("\n".join(out)); f3.close()
+		get_tree().quit(); return
+	if mode == "tool":
+		tool_report(args)
 		get_tree().quit(); return
 	if mode.begins_with("diag"):
 		diag_boss()
@@ -151,6 +156,47 @@ func class_report() -> void:
 			max(rates[false], rates[true]), "set-up" if best_setup else "dmg", with_potions])
 	use_setup = true
 	start_potions = 0
+
+## Mode used by the content manager's "Balance sim" button. Options:
+##   --classes=Paladin,Monk  --location=goblin_forest  --setup=both|on|off
+##   --potions=5  --runs=150  --floor=1
+## Prints (parsed by DevTools/cm/godot.py):
+##   SIM PROGRESS|<done>|<total>
+##   SIM ROW|<class>|<dmg-only %>|<set-up %>|<best %>|<best style>   (-1 = not run)
+##   SIM DONE
+func tool_report(args: Array) -> void:
+	var opts := {"classes": ",".join(CLASSES), "location": "the_dungeon", "setup": "both", "potions": "0", "runs": "150", "floor": "1"}
+	for a in args.slice(1):
+		var kv = String(a).trim_prefix("--").split("=", true, 1)
+		if kv.size() == 2:
+			opts[kv[0]] = kv[1]
+	var classes = Array(String(opts.classes).split(",", false))
+	sim_location = String(opts.location)
+	var runs = max(1, int(opts.runs))
+	var potions = int(opts.potions)
+	var floor_num = max(1, int(opts.floor))
+	var styles: Array = [false, true] if opts.setup == "both" else ([true] if opts.setup == "on" else [false])
+	var total = classes.size() * styles.size()
+	var done := 0
+	print("SIM PROGRESS|0|%d" % total)
+	for cls in classes:
+		var rates := {false: -1, true: -1}
+		for setup in styles:
+			use_setup = setup
+			start_potions = potions
+			var clears := 0
+			for i in range(runs):
+				MomentumSystem.reset_momentum()
+				if sim_run(cls, floor_num).cleared: clears += 1
+			rates[setup] = int(round(100.0 * clears / runs))
+			done += 1
+			print("SIM PROGRESS|%d|%d" % [done, total])
+		var best_setup = rates[true] >= rates[false]
+		print("SIM ROW|%s|%d|%d|%d|%s" % [cls, rates[false], rates[true], max(rates[false], rates[true]), "set-up" if best_setup else "damage-only"])
+	use_setup = true
+	start_potions = 0
+	sim_location = "the_dungeon"
+	print("SIM DONE")
 
 func _clear_rate(cls: String, n: int, potions: int) -> int:
 	start_potions = potions

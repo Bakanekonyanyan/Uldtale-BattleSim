@@ -17,7 +17,14 @@ Decisions already made:
 
 ---
 
-## 1. Where it is today
+> **Status:** Phases 1-3 are done (see `DevTools/README.md`). The open questions were
+> answered as follows:
+> - **Godot path:** auto-detect first, then ask once.
+> - **Sim history:** kept on your computer only (git-ignored).
+>
+> Phases 4-5 are next.
+
+## 1. Where it was before Phases 1-3
 
 About 790 lines, one generic editor for 14 JSON files:
 
