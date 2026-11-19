@@ -20,9 +20,7 @@ func initialize(p_enemy: CharacterData, p_heroes: Variant, floor: int):
 	super.initialize(p_enemy, p_heroes, floor)
 	
 	# Bosses are more aggressive and intelligent
-	aggression = randf_range(0.6, 0.9)
-	intelligence = randf_range(0.7, 1.0)
-	desperation_threshold = randf_range(0.15, 0.25)
+	_roll_personality("boss")
 	
 	# Set enrage timer based on floor
 	max_enrage_turns = max(10, 20 - floor)

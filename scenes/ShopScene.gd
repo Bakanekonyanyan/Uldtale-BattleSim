@@ -37,17 +37,17 @@ func _ready():
 	if not buy_button.pressed.is_connected(_on_buy_pressed):
 		buy_button.pressed.connect(_on_buy_pressed)
 	if exit_button:
-		exit_button.connect("pressed", Callable(self, "_on_exit_pressed"))
+		exit_button.pressed.connect(_on_exit_pressed)
 	if item_list:
-		item_list.connect("item_clicked", Callable(self, "_on_shop_item_clicked"))
+		item_list.item_clicked.connect(_on_shop_item_clicked)
 	if sell_button:
 		sell_button.text = "Sell Selected"
-		sell_button.connect("pressed", Callable(self, "_on_sell_pressed"))
+		sell_button.pressed.connect(_on_sell_pressed)
 	if sell_all_button:
 		sell_all_button.text = "Sell Whole Stacks"
-		sell_all_button.connect("pressed", Callable(self, "_on_sell_all_pressed"))
+		sell_all_button.pressed.connect(_on_sell_all_pressed)
 	if sell_item_list:
-		sell_item_list.connect("item_clicked", Callable(self, "_on_sell_item_clicked"))
+		sell_item_list.item_clicked.connect(_on_sell_item_clicked)
 	
 	player_character = CharacterManager.get_current_character()
 	if player_character == null:

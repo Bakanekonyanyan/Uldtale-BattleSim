@@ -397,68 +397,7 @@ func potion_policy(p: CharacterData) -> BattleAction:
 		return BattleAction.item(p, p.inventory.get_item("mana_potion"), [p])
 	return null
 
-# A sensible human-like policy:
-#   heal when low -> buff self early -> debuff a fresh enemy -> best damage skill -> attack weakest
+# The hero's turn: the same policy companions on Auto and NPC battles use
+# (AutoBattler.hero_policy), so balance numbers match the game.
 func player_policy(p: CharacterData, ctx: BattleContext) -> BattleAction:
-	var living = ctx.get_living_enemies()
-	living.sort_custom(func(a, b): return a.current_hp < b.current_hp)
-	var enemy_hp := 0.0
-	var enemy_max := 0.0
-	for e in ctx.enemies:
-		enemy_hp += e.current_hp; enemy_max += e.max_hp
-	var fight_young = enemy_hp > enemy_max * 0.5  # set-up skills only pay off early
-	
-	var best: Skill = null
-	var buff: Skill = null
-	var debuff: Skill = null
-	for sn in p.get_battle_skills():
-		var s: Skill = p.get_skill_instance(sn)
-		if p.get_skill_cooldown(sn) > 0: continue
-		var cost_ok = s.can_afford(p)
-		if not cost_ok: continue
-		match s.type:
-			Skill.SkillType.HEAL:
-				if p.current_hp < p.max_hp * 0.4:
-					return BattleAction.skill(p, s, [p])
-			Skill.SkillType.BUFF:
-				buff = s
-			Skill.SkillType.DEBUFF, Skill.SkillType.INFLICT_STATUS:
-				debuff = s
-			Skill.SkillType.DAMAGE, Skill.SkillType.DRAIN:
-				# MP/SP drains deal no HP damage - don't treat them as attacks
-				if s.type == Skill.SkillType.DRAIN and s.drain_source != Skill.DrainTarget.HP:
-					continue
-				if best == null or s.power > best.power:
-					best = s
-	
-	# Pay off a combo when one is ready (any style: it's just a better hit)
-	var combo_pick: Skill = null
-	var combo_target: CharacterData = null
-	var combo_mult := 1.0
-	for sn in p.get_battle_skills():
-		var s: Skill = p.get_skill_instance(sn)
-		if p.get_skill_cooldown(sn) > 0: continue
-		var cost_ok = s.can_afford(p)
-		if not cost_ok or (s.type == Skill.SkillType.DRAIN and s.drain_source != Skill.DrainTarget.HP): continue
-		for e in living:
-			var c = Combos.preview(p, s, e)
-			if not c.is_empty() and c.multiplier > combo_mult:
-				combo_pick = s; combo_target = e; combo_mult = c.multiplier
-	if combo_pick:
-		var ctg: Array = living if combo_pick.target == Skill.TargetType.ALL_ENEMIES else [combo_target]
-		return BattleAction.skill(p, combo_pick, ctg)
-	for e in living:
-		if not Combos.find(e, Combos.hit_from_attack(p)).is_empty() and (best == null or best.power < 40):
-			return BattleAction.attack(p, e)
-	
-	if use_setup and buff and fight_young and not p.buff_manager.has_buffs():
-		return BattleAction.skill(p, buff, [p])
-	if use_setup and debuff and fight_young:
-		var fresh = living.filter(func(e): return not e.buff_manager.has_debuffs())
-		if not fresh.is_empty():
-			var tg: Array = living if debuff.target == Skill.TargetType.ALL_ENEMIES else [fresh[-1]]
-			return BattleAction.skill(p, debuff, tg)
-	if best:
-		var tg: Array = living if best.target == Skill.TargetType.ALL_ENEMIES else [living[0]]
-		return BattleAction.skill(p, best, tg)
-	return BattleAction.attack(p, living[0])
+	return AutoBattler.hero_policy(p, ctx, use_setup)

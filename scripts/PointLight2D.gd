@@ -32,7 +32,7 @@ func _create_new_tween():
 		tween.kill()
 	
 	tween = create_tween()
-	tween.connect("finished", Callable(self, "_on_tween_completed"))
+	tween.finished.connect(_on_tween_completed)
 	
 	var random_duration = base_pulse_duration * (1 + randf_range(-randomness, randomness))
 	tween.tween_property(self, "energy", max_energy, random_duration / 2).set_trans(Tween.TRANS_SINE)

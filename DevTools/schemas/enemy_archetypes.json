@@ -51,6 +51,71 @@
    ]
   },
   {
+   "kind": "settings",
+   "label": "Scaling",
+   "path": [
+    "scaling"
+   ],
+   "fields": [
+    {
+     "name": "enemy_hp_mult",
+     "type": "float",
+     "min": 0,
+     "help": "Regular enemies: HP vs a hero with the same stats."
+    },
+    {
+     "name": "enemy_damage_mult",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "boss_hp_mult",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "boss_damage_mult",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "boss_stat_mult",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "wave_scaling",
+     "type": "float",
+     "min": 0,
+     "help": "+stats per wave within a floor."
+    },
+    {
+     "name": "boss_minion_stat_share",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "AI personality",
+   "path": [
+    "ai_personality"
+   ],
+   "fields": [
+    {
+     "name": "enemy",
+     "type": "json",
+     "help": "{aggression, intelligence, desperation: [min, max]}"
+    },
+    {
+     "name": "boss",
+     "type": "json"
+    }
+   ]
+  },
+  {
    "kind": "collection",
    "label": "Archetypes",
    "path": [

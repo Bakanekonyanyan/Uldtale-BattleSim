@@ -30,9 +30,9 @@ func _ready():
 	setup_tabs()
 	refresh_inventory()
 	
-	use_button.connect("pressed", Callable(self, "_on_use_pressed"))
-	back_button.connect("pressed", Callable(self, "_on_back_pressed"))
-	item_list.connect("item_selected", Callable(self, "_on_item_selected"))
+	use_button.pressed.connect(_on_use_pressed)
+	back_button.pressed.connect(_on_back_pressed)
+	item_list.item_selected.connect(_on_item_selected)
 	
 	clear_item_info()
 
@@ -52,15 +52,15 @@ func _apply_chrome():
 func setup_tabs():
 	"""Setup category filter tabs with enhanced visuals"""
 	if all_tab:
-		all_tab.connect("pressed", Callable(self, "_on_category_changed").bind(ItemCategory.ALL))
+		all_tab.pressed.connect(_on_category_changed.bind(ItemCategory.ALL))
 	if consumables_tab:
-		consumables_tab.connect("pressed", Callable(self, "_on_category_changed").bind(ItemCategory.CONSUMABLES))
+		consumables_tab.pressed.connect(_on_category_changed.bind(ItemCategory.CONSUMABLES))
 	if weapons_tab:
-		weapons_tab.connect("pressed", Callable(self, "_on_category_changed").bind(ItemCategory.WEAPONS))
+		weapons_tab.pressed.connect(_on_category_changed.bind(ItemCategory.WEAPONS))
 	if armor_tab:
-		armor_tab.connect("pressed", Callable(self, "_on_category_changed").bind(ItemCategory.ARMOR))
+		armor_tab.pressed.connect(_on_category_changed.bind(ItemCategory.ARMOR))
 	if materials_tab:
-		materials_tab.connect("pressed", Callable(self, "_on_category_changed").bind(ItemCategory.MATERIALS))
+		materials_tab.pressed.connect(_on_category_changed.bind(ItemCategory.MATERIALS))
 	
 	_update_tab_visuals()
 

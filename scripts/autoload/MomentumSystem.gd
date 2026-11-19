@@ -31,7 +31,7 @@ func get_damage_multiplier() -> float:
 func gain_momentum() -> void:
 	if current_momentum < MAX_MOMENTUM:
 		current_momentum += 1
-		emit_signal("momentum_changed", current_momentum)
+		momentum_changed.emit(current_momentum)
 		Log.debug("momentum", "Momentum increased to: ", current_momentum)
 
 func reset_momentum() -> void:
@@ -40,7 +40,7 @@ func reset_momentum() -> void:
 	if current_momentum > 0:
 		Log.debug("momentum", "Momentum reset from %d" % current_momentum)
 		current_momentum = 0
-		emit_signal("momentum_changed", current_momentum)
+		momentum_changed.emit(current_momentum)
 
 func clear_accumulated_loot() -> void:
 	"""Discard banked rewards (death, or a new expedition)."""
@@ -95,7 +95,7 @@ func apply_momentum_effects(character: CharacterData) -> void:
 		Log.debug("momentum", "Breather: Restored 50%% HP/MP/SP, cleared status effects, kept cooldowns")
 	# else: press on - keep everything as-is (including cooldowns)
 	
-	emit_signal("momentum_bonus_applied", character)
+	momentum_bonus_applied.emit(character)
 
 func get_momentum_status() -> String:
 	"""Get formatted momentum status string"""

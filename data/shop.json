@@ -1,0 +1,17 @@
+{
+  "_doc": "Shop consumables and their base prices in copper (ShopManager). Prices drift weekly and with world events (WorldClock).",
+  "consumables": {
+    "health_potion": 25,
+    "mana_potion": 30,
+    "stamina_potion": 30,
+    "flame_flask": 50,
+    "frost_crystal": 50,
+    "thunder_orb": 50,
+    "venom_vial": 50,
+    "stone_shard": 10,
+    "rotten_dung": 10,
+    "smoke_bomb": 15,
+    "berserker_brew": 30,
+    "holy_water": 50
+  }
+}

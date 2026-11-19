@@ -90,7 +90,7 @@ func _on_peer_disconnected(id: int):
 	
 	if players.has(id):
 		players.erase(id)
-		emit_signal("player_disconnected", id)
+		player_disconnected.emit(id)
 	
 	if not is_host:
 		disconnect_from_match()
@@ -107,11 +107,11 @@ func _on_connected_to_server():
 	Log.debug("pvp", "[ARENA NET] Registered self (ID: %d) locally" % local_player_id)
 	
 	rpc_id(1, "_register_player", local_player_id, _serialize_character(character))
-	emit_signal("connection_success")
+	connection_success.emit()
 
 func _on_connection_failed():
 	Log.debug("pvp", "[ARENA NET] Connection failed")
-	emit_signal("connection_failed")
+	connection_failed.emit()
 	disconnect_from_match()
 
 func _on_server_disconnected():
@@ -132,7 +132,7 @@ func _register_player(peer_id: int, character_data: Dictionary):
 	}
 	
 	Log.debug("pvp", "[ARENA NET] Players dict now has %d players: %s" % [players.size(), players.keys()])
-	emit_signal("player_connected", peer_id, players[peer_id])
+	player_connected.emit(peer_id, players[peer_id])
 	
 	if is_host and peer_id != local_player_id:
 		Log.debug("pvp", "[ARENA NET] Sending host character to client %d" % peer_id)
@@ -154,7 +154,7 @@ func _receive_host_character(host_id: int, character_data: Dictionary):
 	}
 	
 	Log.debug("pvp", "[ARENA NET] Players dict now has %d players: %s" % [players.size(), players.keys()])
-	emit_signal("player_connected", host_id, players[host_id])
+	player_connected.emit(host_id, players[host_id])
 
 @rpc("authority", "reliable")
 func _receive_match_setup(seed: int):
@@ -180,19 +180,19 @@ func _player_ready(peer_id: int):
 @rpc("any_peer", "call_remote", "reliable")
 func _start_match_signal(is_host_flag: bool):
 	Log.debug("pvp", "[ARENA NET] Match starting! (is_host: %s)" % is_host_flag)
-	emit_signal("match_started", is_host_flag)
+	match_started.emit(is_host_flag)
 
 #  CRITICAL FIX: Changed to reliable to prevent duplicate/lost actions
 @rpc("any_peer", "call_remote", "reliable")
 func _send_action(action_data: Dictionary):
 	var sender_id = multiplayer.get_remote_sender_id()
 	Log.debug("pvp", "[ARENA NET] Action received from %d (timestamp: %d)" % [sender_id, action_data.get("timestamp", 0)])
-	emit_signal("action_received", sender_id, action_data)
+	action_received.emit(sender_id, action_data)
 
 @rpc("any_peer", "call_local", "reliable")
 func _end_match(winner_id: int):
 	Log.debug("pvp", "[ARENA NET] Match ended, winner: %d" % winner_id)
-	emit_signal("match_ended", winner_id)
+	match_ended.emit(winner_id)
 
 # === PUBLIC API ===
 
@@ -249,7 +249,7 @@ func _start_match():
 	
 	# Emit locally with correct is_host value
 	Log.debug("pvp", "[ARENA NET] Match starting! (is_host: %s)" % is_host)
-	emit_signal("match_started", is_host)
+	match_started.emit(is_host)
 
 # === CHARACTER SERIALIZATION ===
 

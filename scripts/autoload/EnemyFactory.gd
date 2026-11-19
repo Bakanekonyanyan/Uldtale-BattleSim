@@ -3,19 +3,9 @@ extends Node
 
 # --- Difficulty tuning (see also BattleFormulas for combat math) ---
 ## Stat increase per wave within a floor: wave 1 = x1.00, wave 5 = x1.20, boss wave = x1.25
-const WAVE_SCALING := 0.05
-## Extra multiplier for bosses in apply_enemy_scaling (King stats already make them strong)
-const BOSS_STAT_MULT := 1.0
-## Regular enemies have this fraction of a hero's HP / damage for the same stats.
-## The hero fights alone against groups, so individual enemies are weaker.
-const ENEMY_HP_MULT := 0.5
-const ENEMY_DAMAGE_MULT := 0.72   # was 0.8 before archetype skill pools and talents (2026-11)
-## Boss HP pool vs a hero with the same stats (bosses should be long fights).
-## Applied to HP only - raising vitality instead also inflated attack and defense.
-const BOSS_HP_MULT := 1.0
-const BOSS_DAMAGE_MULT := 0.65   # was 0.7 before boss ultimates, signatures and talents
-## How much of the minion class's base stats a boss inherits (flavor + skills)
-const BOSS_MINION_STAT_SHARE := 0.25
+## Enemy tuning lives in data/enemy_archetypes.json "scaling" (Content Manager).
+func _scale(key: String, default_value: float) -> float:
+	return float(EnemyArchetypes.data().get("scaling", {}).get(key, default_value))
 
 var races = {}
 var classes = {}
@@ -98,8 +88,8 @@ func create_enemy(level: int = 1, floor: int = 1, wave: int = 1, momentum_level:
 	for _i in range(level - 1):
 		enemy.level_up()
 	
-	enemy.hp_multiplier = ENEMY_HP_MULT
-	enemy.damage_multiplier = ENEMY_DAMAGE_MULT
+	enemy.hp_multiplier = _scale("enemy_hp_mult", 0.5)
+	enemy.damage_multiplier = _scale("enemy_damage_mult", 0.72)
 	EnemyArchetypes.apply_talents(enemy, archetype, EnemyArchetypes.enemy_points(floor))
 	apply_enemy_scaling(enemy, floor, wave, false, momentum_level)
 	give_enemy_equipment(enemy, floor)
@@ -138,7 +128,7 @@ func create_boss(floor: int = 1, wave: int = 1, momentum_level: int = 0) -> Char
 	boss.race = boss_race
 	boss.character_class = "King (%s)" % archetype
 	
-	var minion_contribution = BOSS_MINION_STAT_SHARE
+	var minion_contribution = _scale("boss_minion_stat_share", 0.25)
 	boss.vitality = int((king_data["base_vit"] + race_data["vit_mod"]) + (minion_data["base_vit"] * minion_contribution))
 	boss.strength = int((king_data["base_str"] + race_data["str_mod"]) + (minion_data["base_str"] * minion_contribution))
 	boss.dexterity = int((king_data["base_dex"] + race_data["dex_mod"]) + (minion_data["base_dex"] * minion_contribution))
@@ -178,8 +168,8 @@ func create_boss(floor: int = 1, wave: int = 1, momentum_level: int = 0) -> Char
 		boss.elemental_resistances = ElementalResistanceManager.new(boss)
 	boss.initialize_racial_elementals(true)
 	
-	boss.hp_multiplier = BOSS_HP_MULT
-	boss.damage_multiplier = BOSS_DAMAGE_MULT
+	boss.hp_multiplier = _scale("boss_hp_mult", 1.0)
+	boss.damage_multiplier = _scale("boss_damage_mult", 0.65)
 	# A full branch: the ultimate is learned as soon as it is reachable
 	var branch = String(named.get("branch", ""))
 	EnemyArchetypes.apply_talents(boss, archetype, EnemyArchetypes.boss_points(floor), true, branch)
@@ -200,14 +190,14 @@ func apply_enemy_scaling(enemy: CharacterData, floor: int, wave: int, is_boss: b
 	# Progressive difficulty curve with breakpoints
 	var difficulty_tier = get_difficulty_tier(floor)
 	var base_multiplier = get_base_multiplier(floor)
-	var wave_multiplier = 1.0 + WAVE_SCALING * (wave - 1)
+	var wave_multiplier = 1.0 + _scale("wave_scaling", 0.05) * (wave - 1)
 	
 	var momentum_multiplier = 1.0
 	if momentum_level > 0:
 		momentum_multiplier = 1.0 + (momentum_level * 0.10)
 	
 	# Boss scaling
-	var boss_multiplier = BOSS_STAT_MULT if is_boss else 1.0
+	var boss_multiplier = _scale("boss_stat_mult", 1.0) if is_boss else 1.0
 	
 	# World event in this location (e.g. a Monster Surge)
 	var event_multiplier = WorldClock.current_modifier("enemy_power", current_location)

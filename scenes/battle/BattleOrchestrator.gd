@@ -431,7 +431,7 @@ func _on_ally_auto_toggled(ally: CharacterData, auto: bool) -> void:
 		var action = AutoBattler.hero_policy(ally, context)
 		if action:
 			ui_controller.lock_ui()
-			ui_controller.emit_signal("action_selected", action)
+			ui_controller.action_selected.emit(action)
 
 func _run_auto_hero_turn(ally: CharacterData) -> void:
 	ui_controller.set_active_hero(ally)

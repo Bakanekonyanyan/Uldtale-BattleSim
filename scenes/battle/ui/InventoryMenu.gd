@@ -162,22 +162,22 @@ func _on_use_pressed():
 	match selected_item.target_type:
 		Item.TargetType.SELF:
 			hide_inventory()
-			emit_signal("item_selected", selected_item, player)
+			item_selected.emit(selected_item, player)
 		
 		Item.TargetType.ALLY:
 			hide_inventory()
-			emit_signal("item_selected", selected_item, player)
+			item_selected.emit(selected_item, player)
 		
 		Item.TargetType.ENEMY:
 			_show_enemy_target_selection()
 		
 		Item.TargetType.ALL_ENEMIES:
 			hide_inventory()
-			emit_signal("item_selected", selected_item, null)
+			item_selected.emit(selected_item, null)
 		
 		Item.TargetType.ALL_ALLIES:
 			hide_inventory()
-			emit_signal("item_selected", selected_item, player)
+			item_selected.emit(selected_item, player)
 
 func _show_enemy_target_selection():
 	"""Show target selector for enemy-targeted items"""
@@ -213,7 +213,7 @@ func _show_enemy_target_selection():
 		living_enemies,
 		func(target: CharacterData):
 			Log.debug("battle", "InventoryMenu: Enemy target selected: %s" % target.name)
-			emit_signal("item_selected", selected_item, target),
+			item_selected.emit(selected_item, target),
 		func():
 			Log.debug("battle", "InventoryMenu: Target selection cancelled")
 			# Re-show inventory if cancelled

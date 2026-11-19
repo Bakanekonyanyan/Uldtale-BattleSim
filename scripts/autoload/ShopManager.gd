@@ -2,21 +2,14 @@
 # Manages persistent shop inventory across game sessions
 extends Node
 
-# Consumables: unlimited stock, always available
-var consumable_inventory: Dictionary = {
-	"health_potion": {"price": 25},
-	"mana_potion": {"price": 30},
-	"stamina_potion": {"price": 30},
-	"flame_flask": {"price": 50},
-	"frost_crystal": {"price": 50},
-	"thunder_orb": {"price": 50},
-	"venom_vial": {"price": 50},
-	"stone_shard": {"price": 10},
-	"rotten_dung": {"price": 10},
-	"smoke_bomb": {"price": 15},
-	"berserker_brew": {"price": 30},
-	"holy_water": {"price": 50},
-}
+# Consumables: unlimited stock, prices from data/shop.json ({item_id: {"price"}})
+var consumable_inventory: Dictionary:
+	get:
+		var out := {}
+		var prices: Dictionary = DataRegistry.section("shop", "consumables")
+		for id in prices:
+			out[id] = {"price": int(prices[id])}
+		return out
 
 # Equipment: one-time purchases, removed when bought
 var equipment_inventory: Dictionary = {}

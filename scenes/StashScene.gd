@@ -43,14 +43,14 @@ func _ready():
 	_apply_chrome()
 	refresh_lists()
 	
-	move_to_stash_button.connect("pressed", Callable(self, "_on_move_to_stash_pressed"))
-	move_all_to_stash_button.connect("pressed", Callable(self, "_on_move_all_to_stash_pressed"))
-	move_to_inventory_button.connect("pressed", Callable(self, "_on_move_to_inventory_pressed"))
-	move_all_to_inventory_button.connect("pressed", Callable(self, "_on_move_all_to_inventory_pressed"))
-	back_button.connect("pressed", Callable(self, "_on_back_pressed"))
+	move_to_stash_button.pressed.connect(_on_move_to_stash_pressed)
+	move_all_to_stash_button.pressed.connect(_on_move_all_to_stash_pressed)
+	move_to_inventory_button.pressed.connect(_on_move_to_inventory_pressed)
+	move_all_to_inventory_button.pressed.connect(_on_move_all_to_inventory_pressed)
+	back_button.pressed.connect(_on_back_pressed)
 	
-	inventory_list.connect("item_clicked", Callable(self, "_on_inventory_item_clicked"))
-	stash_list.connect("item_clicked", Callable(self, "_on_stash_item_clicked"))
+	inventory_list.item_clicked.connect(_on_inventory_item_clicked)
+	stash_list.item_clicked.connect(_on_stash_item_clicked)
 	
 	Log.debug("stash", "StashScene ready - Multi-select enabled")
 

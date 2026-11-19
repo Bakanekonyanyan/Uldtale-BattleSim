@@ -309,7 +309,7 @@ func _setup_battle_scene(battle_data: Dictionary) -> void:
 	)
 	
 	# Connect battle completion
-	if not current_scene.is_connected("battle_completed", _on_battle_completed):
+	if not current_scene.battle_completed.is_connected(_on_battle_completed):
 		current_scene.battle_completed.connect(_on_battle_completed)
 
 

@@ -113,7 +113,9 @@ static func fight(p: CharacterData, enemies: Array[CharacterData], floor_num: in
 
 ## Heal when low -> pay off a combo -> buff early -> debuff a fresh enemy ->
 ## strongest damage skill -> attack the weakest enemy.
-static func hero_policy(p: CharacterData, ctx: BattleContext) -> BattleAction:
+## use_setup = false plays "damage only" (no buffs/debuffs) - the balance sim
+## compares both styles. Companions on Auto and NPC battles use set-ups.
+static func hero_policy(p: CharacterData, ctx: BattleContext, use_setup := true) -> BattleAction:
 	var living = ctx.get_living_enemies()
 	if living.is_empty():
 		return null
@@ -167,6 +169,13 @@ static func hero_policy(p: CharacterData, ctx: BattleContext) -> BattleAction:
 				combo_mult = c.multiplier
 	if combo_pick:
 		return BattleAction.skill(p, combo_pick, living if combo_pick.target == Skill.TargetType.ALL_ENEMIES else [combo_target])
+	# a basic attack that triggers a combo beats a weak skill
+	for e in living:
+		if not Combos.find(e, Combos.hit_from_attack(p)).is_empty() and (best == null or best.power < 40):
+			return BattleAction.attack(p, e)
+	if not use_setup:
+		buff = null
+		debuff = null
 	if buff and fight_young and not p.buff_manager.has_buffs():
 		return BattleAction.skill(p, buff, [p])
 	if debuff and fight_young:

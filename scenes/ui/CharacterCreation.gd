@@ -27,10 +27,10 @@ func setup_ui():
 	for character_class in classes["playable"].keys():
 		class_option.add_item(character_class)
 	
-	race_option.connect("item_selected", Callable(self, "_on_race_selected"))
-	class_option.connect("item_selected", Callable(self, "_on_class_selected"))
-	create_button.connect("pressed", Callable(self, "_on_create_pressed"))
-	cancel_button.connect("pressed", Callable(self, "_on_cancel_pressed"))
+	race_option.item_selected.connect(_on_race_selected)
+	class_option.item_selected.connect(_on_class_selected)
+	create_button.pressed.connect(_on_create_pressed)
+	cancel_button.pressed.connect(_on_cancel_pressed)
 	
 	update_info_display()
 

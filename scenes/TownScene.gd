@@ -29,23 +29,23 @@ func _ready():
 	if name_label:
 		name_label.visible = false
 	if shop_button:
-		shop_button.connect("pressed", Callable(self, "_on_shop_pressed"))
+		shop_button.pressed.connect(_on_shop_pressed)
 	if dungeon_button:
-		dungeon_button.connect("pressed", Callable(self, "_on_dungeon_pressed"))
+		dungeon_button.pressed.connect(_on_dungeon_pressed)
 	if equipment_button:
-		equipment_button.connect("pressed", Callable(self, "_on_equipment_pressed"))
+		equipment_button.pressed.connect(_on_equipment_pressed)
 	if status_button:
-		status_button.connect("pressed", Callable(self, "_on_status_pressed"))
+		status_button.pressed.connect(_on_status_pressed)
 	if inventory_button:
-		inventory_button.connect("pressed", Callable(self, "_on_inventory_pressed"))
+		inventory_button.pressed.connect(_on_inventory_pressed)
 	if stash_button:
-		stash_button.connect("pressed", Callable(self, "_on_stash_pressed"))
+		stash_button.pressed.connect(_on_stash_pressed)
 	if character_select_button:
-		character_select_button.connect("pressed", Callable(self, "_on_charselect_pressed"))
+		character_select_button.pressed.connect(_on_charselect_pressed)
 	if quit_button:
-		quit_button.connect("pressed", Callable(self, "_on_quit_pressed"))
+		quit_button.pressed.connect(_on_quit_pressed)
 	if arena_button:
-		arena_button.connect("pressed", Callable(self, "_on_arena_pressed"))
+		arena_button.pressed.connect(_on_arena_pressed)
 	if alchemist_button:
 		alchemist_button.pressed.connect(func(): SceneManager.change_to_alchemist(current_character))
 	if blacksmith_button:

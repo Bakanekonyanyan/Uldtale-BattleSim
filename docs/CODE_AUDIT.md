@@ -20,6 +20,8 @@ Date: 2026-11-19. Scope: the Godot project (115 GDScript files, about 26,000 lin
 | O4 | Low | Two copies of the hero battle policy (`AutoBattler` vs `tests/balance_sim.gd`) | Sim uses `AutoBattler` | S |
 | O5 | Low | Shop prices and enemy multipliers hard-coded in scripts | Move to data | S |
 
+**Status (2026-11-19): all findings below are fixed** except the maintainability notes in section 4. See "Resolution" at the end.
+
 Performance is **not** a problem today (see "Measurements"). The real costs are the leaks, log spam and maintainability.
 
 ---
@@ -236,3 +238,15 @@ No hot spot needs work now. Watch the world day as the roster and real battles g
 4. **O2 `DataRegistry`** (removes D4 and gives hot-reload).
 5. **D3** typed signals, **O3** RNG, **O4** single policy, **O5** data-driven tuning, **L4** cap.
 6. Split the smoke test; add a PvP loopback test.
+
+## Resolution
+
+| # | Fixed in | Result |
+|---|---|---|
+| L1, L2 | `cc7a38c` | Weak back-references. Smoke-test leaks at exit: 5,120 → **0**. A new check asserts released characters are freed |
+| L3, L4, D1, D2 | `334b439` | 1,833 lines removed; deprecated SceneManager calls replaced; REPLACE clears the back-stack; last 30 departed NPCs kept |
+| O1 | `4204196` | `Log` autoload; all 495 prints converted. Smoke log 1.69 MB → 17 KB; balance sim 96 MB → 244 bytes and 11% faster |
+| O2, D4 | `a2a7ee1` | `DataRegistry`: 36 loaders → one; each file parsed once (23 loads per smoke run); `reload()`; the orphaned `StatusEffectData.gd` duplicate deleted |
+| D3, O3, O4, O5 | step 5 | 57 connections and 39 emits now typed; AI personality via `RandomManager` with ranges in data; the balance sim uses `AutoBattler.hero_policy` (one policy, same balance band); shop prices in `data/shop.json`, enemy scaling in `enemy_archetypes.json` "scaling" (Content Manager tabs Shop and Enemy Archetypes) |
+
+**Still open:** section 4 (split the big files and the smoke test; a PvP loopback test; the ~60 old "FIX:" comment markers).

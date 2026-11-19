@@ -44,7 +44,7 @@ func start_dungeon(player: CharacterData, start_floor: int = 1, location_id: Str
 	MomentumSystem.clear_accumulated_loot()  # no leftovers from a previous expedition
 	
 	Log.debug("dungeon_state", "DungeonState: Started %s at floor %d" % [LocationManager.get_display_name(current_location), current_floor])
-	emit_signal("floor_changed", current_floor)
+	floor_changed.emit(current_floor)
 	GameEvents.expedition_started.emit(current_location, current_floor)
 
 func advance_wave() -> Dictionary:
@@ -54,11 +54,11 @@ func advance_wave() -> Dictionary:
 	# Boss is wave 6 (after 5 regular waves)
 	if current_wave == waves_per_floor + 1:
 		is_boss_fight = true
-		emit_signal("boss_spawned")
+		boss_spawned.emit()
 		Log.debug("dungeon_state", "DungeonState: Boss wave! (Wave %d)" % current_wave)
 	else:
 		is_boss_fight = false
-		emit_signal("wave_changed", current_wave)
+		wave_changed.emit(current_wave)
 		Log.debug("dungeon_state", "DungeonState: Wave %d/%d" % [current_wave, waves_per_floor])
 	
 	# Generate enemy group
@@ -91,7 +91,7 @@ func advance_floor() -> bool:
 	EnemyFactory.set_location(current_location)  # mixed locations re-roll the boss race
 	
 	Log.debug("dungeon_state", "DungeonState: Advanced to floor %d, wave reset to 0" % current_floor)
-	emit_signal("floor_changed", current_floor)
+	floor_changed.emit(current_floor)
 	return true
 
 func get_battle_data() -> Dictionary:

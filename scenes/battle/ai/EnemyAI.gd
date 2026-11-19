@@ -30,15 +30,24 @@ func initialize(p_enemy: CharacterData, p_heroes: Variant, floor: int):
 	current_floor = floor
 	
 	# Randomize personality traits for variety
-	aggression = randf_range(0.3, 0.8)
-	intelligence = randf_range(0.4, 0.9)
-	desperation_threshold = randf_range(0.2, 0.35)
+	_roll_personality("enemy")
 	role = EnemyArchetypes.role(String(enemy.get_meta("ai_role", "")))
 	
 	Log.debug("ai", "EnemyAI: Initialized for %s (Aggression: %.2f, Intelligence: %.2f)" % [
 		enemy.name, aggression, intelligence
 	])
 	
+## Personality from data/enemy_archetypes.json "ai_personality", rolled with
+## RandomManager so seeded runs are reproducible.
+func _roll_personality(kind: String) -> void:
+	var r: Dictionary = EnemyArchetypes.data().get("ai_personality", {}).get(kind, {})
+	var roll = func(key: String, lo: float, hi: float) -> float:
+		var v: Array = r.get(key, [lo, hi])
+		return RandomManager.randf_range(float(v[0]), float(v[1]))
+	aggression = roll.call("aggression", 0.3, 0.8)
+	intelligence = roll.call("intelligence", 0.4, 0.9)
+	desperation_threshold = roll.call("desperation", 0.2, 0.35)
+
 ## Entry point: pick which hero to act against, then decide what to do.
 func decide_action() -> BattleAction:
 	target = choose_target()

@@ -2,8 +2,8 @@
 extends Control
 
 func _ready():
-	$VBoxContainer/StartButton.connect("pressed", Callable(self, "_on_start_pressed"))
-	$VBoxContainer/QuitButton.connect("pressed", Callable(self, "_on_quit_pressed"))
+	$VBoxContainer/StartButton.pressed.connect(_on_start_pressed)
+	$VBoxContainer/QuitButton.pressed.connect(_on_quit_pressed)
 
 func _on_start_pressed():
 	# QOL: Check if any characters exist

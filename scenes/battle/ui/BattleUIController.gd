@@ -326,13 +326,13 @@ func _on_attack_pressed():
 	
 	lock_ui()
 	show_target_selection(living_enemies,
-		func(target): emit_signal("action_selected", BattleAction.attack(player, target)),
+		func(target): action_selected.emit(BattleAction.attack(player, target)),
 		func(): unlock_ui(); enable_actions()
 	)
 
 func _on_defend_pressed():
 	lock_ui()
-	emit_signal("action_selected", BattleAction.defend(player))
+	action_selected.emit(BattleAction.defend(player))
 
 func _on_skills_pressed():
 	_show_skill_menu()
@@ -519,7 +519,7 @@ func _on_skill_selected(skill: Skill):
 			enable_actions()
 			return
 		show_target_selection(fallen,
-			func(target): emit_signal("action_selected", BattleAction.skill(player, skill, [target])),
+			func(target): action_selected.emit(BattleAction.skill(player, skill, [target])),
 			func(): unlock_ui(); enable_actions()
 		)
 		return
@@ -527,7 +527,7 @@ func _on_skill_selected(skill: Skill):
 	# Ally skills: choose which party member (alone, it's yourself)
 	if skill.target == Skill.TargetType.ALLY and _living_heroes().size() > 1:
 		show_target_selection(_living_heroes(),
-			func(target): emit_signal("action_selected", BattleAction.skill(player, skill, [target])),
+			func(target): action_selected.emit(BattleAction.skill(player, skill, [target])),
 			func(): unlock_ui(); enable_actions()
 		)
 		return
@@ -541,12 +541,12 @@ func _on_skill_selected(skill: Skill):
 			return
 		
 		show_target_selection(living_enemies,
-			func(target): emit_signal("action_selected", BattleAction.skill(player, skill, [target])),
+			func(target): action_selected.emit(BattleAction.skill(player, skill, [target])),
 			func(): unlock_ui(); enable_actions()
 		)
 	else:
 		var targets = _get_skill_targets(skill)
-		emit_signal("action_selected", BattleAction.skill(player, skill, targets))
+		action_selected.emit(BattleAction.skill(player, skill, targets))
 
 func _get_skill_targets(skill: Skill) -> Array[CharacterData]:
 	var targets: Array[CharacterData] = []
@@ -572,7 +572,7 @@ func _on_inventory_item_selected(item: Item, target: CharacterData):
 	
 	if item.target_type == Item.TargetType.ALLY and _living_heroes().size() > 1:
 		show_target_selection(_living_heroes(),
-			func(t): emit_signal("action_selected", BattleAction.item(player, item, [t])),
+			func(t): action_selected.emit(BattleAction.item(player, item, [t])),
 			func(): unlock_ui(); enable_actions()
 		)
 		return
@@ -589,7 +589,7 @@ func _on_inventory_item_selected(item: Item, target: CharacterData):
 	else:
 		targets.append(target)
 	
-	emit_signal("action_selected", BattleAction.item(player, item, targets))
+	action_selected.emit(BattleAction.item(player, item, targets))
 
 # === TARGET SELECTION ===
 

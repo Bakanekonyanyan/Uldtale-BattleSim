@@ -367,5 +367,46 @@
   },
   "named_bosses": {
     "_doc": "Hand-authored bosses that override the generated one. Key: any id. Fields: location, floors (list), name, race, archetype, branch (optional), signature (optional), skills (extra, optional). Empty until the first named boss is designed."
+  },
+  "scaling": {
+    "_doc": "Enemy tuning (EnemyFactory). Regular enemies have this fraction of a hero's HP/damage for the same stats (the hero fights groups); bosses are full-HP long fights. wave_scaling: +stats per wave within a floor. boss_minion_stat_share: share of the archetype's base stats a boss inherits.",
+    "enemy_hp_mult": 0.5,
+    "enemy_damage_mult": 0.72,
+    "boss_hp_mult": 1.0,
+    "boss_damage_mult": 0.65,
+    "boss_stat_mult": 1.0,
+    "wave_scaling": 0.05,
+    "boss_minion_stat_share": 0.25
+  },
+  "ai_personality": {
+    "_doc": "Per-enemy random personality (EnemyAI/BossAI), rolled with RandomManager.",
+    "enemy": {
+      "aggression": [
+        0.3,
+        0.8
+      ],
+      "intelligence": [
+        0.4,
+        0.9
+      ],
+      "desperation": [
+        0.2,
+        0.35
+      ]
+    },
+    "boss": {
+      "aggression": [
+        0.6,
+        0.9
+      ],
+      "intelligence": [
+        0.7,
+        1.0
+      ],
+      "desperation": [
+        0.15,
+        0.25
+      ]
+    }
   }
 }

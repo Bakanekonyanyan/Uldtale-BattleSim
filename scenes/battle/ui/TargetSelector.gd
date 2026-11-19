@@ -96,12 +96,12 @@ func _on_confirm_pressed():
 	if selected_index >= 0 and selected_index < available_targets.size():
 		var target = available_targets[selected_index]
 		hide()
-		emit_signal("target_selected", target)
+		target_selected.emit(target)
 
 func _on_cancel_pressed():
 	"""Cancel target selection"""
 	hide()
-	emit_signal("target_cancelled")
+	target_cancelled.emit()
 
 func _input(event):
 	"""Keyboard navigation"""

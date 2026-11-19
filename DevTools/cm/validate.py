@@ -427,7 +427,8 @@ class Validator:
         archetypes = d.get("archetypes", {})
         roles = {k for k in d.get("ai_roles", {}) if not k.startswith("_")}
         talents = p.data.get("Talents", {}).get("branches", {})
-        for ref in self.refs(tab, 1):
+        secs = {x.label: i for i, x in enumerate(p.by_tab[tab].sections)}
+        for ref in self.refs(tab, secs.get("Archetypes", 1)):
             a = p.get(ref)
             if a.get("ai_role") and a["ai_role"] not in roles:
                 add("error", tab, ref, "ai_role", f"unknown AI role '{a['ai_role']}'")
@@ -440,11 +441,11 @@ class Validator:
             pool_count = sum(len(v) for v in (a.get("skill_pools") or {}).values())
             if pool_count < int(a.get("skills_per_enemy", 3)):
                 add("warning", tab, ref, "skill_pools", f"only {pool_count} skills in the pools for {a.get('skills_per_enemy', 3)} picks")
-        for ref in self.refs(tab, 2):
+        for ref in self.refs(tab, secs.get("Races", 2)):
             for k in (p.get(ref).get("archetype_weights") or {}):
                 if k not in archetypes:
                     add("error", tab, ref, "archetype_weights", f"unknown archetype '{k}'")
-        for ref in self.refs(tab, 5):
+        for ref in self.refs(tab, secs.get("Named bosses", 5)):
             n = p.get(ref)
             if n.get("archetype") and n["archetype"] not in archetypes:
                 add("error", tab, ref, "archetype", f"unknown archetype '{n['archetype']}'")

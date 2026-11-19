@@ -17,8 +17,8 @@ var xp_gained: int = 0
 var player_character: CharacterData
 
 func _ready():
-	press_on_button.connect("pressed", Callable(self, "_on_press_on"))
-	breather_button.connect("pressed", Callable(self, "_on_breather"))
+	press_on_button.pressed.connect(_on_press_on)
+	breather_button.pressed.connect(_on_breather)
 	
 	# Hide by default
 	hide()
@@ -80,10 +80,10 @@ func show_dialog(character: CharacterData, xp: int):
 
 func _on_press_on():
 	# Player gains momentum, no reward screen, no recovery
-	emit_signal("press_on_selected")
+	press_on_selected.emit()
 	queue_free()
 
 func _on_breather():
 	# Reset momentum, show rewards, full recovery
-	emit_signal("take_breather_selected")
+	take_breather_selected.emit()
 	queue_free()

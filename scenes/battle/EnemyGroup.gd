@@ -148,7 +148,7 @@ func remove_dead_enemies():
 		Log.debug("enemies", "EnemyGroup: Removed %d defeated enemies" % removed_count)
 		
 		if enemies.is_empty():
-			emit_signal("all_enemies_defeated")
+			all_enemies_defeated.emit()
 
 func get_living_enemies() -> Array[CharacterData]:
 	"""Get all alive enemies"""

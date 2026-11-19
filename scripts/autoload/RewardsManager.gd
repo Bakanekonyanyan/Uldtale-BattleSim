@@ -95,7 +95,7 @@ func calculate_battle_rewards(battle_data: Dictionary) -> Dictionary:
 	last_party_share = 0
 	if DungeonStateManager.active_player:
 		last_party_share = PartyManager.take_share(DungeonStateManager.active_player, rewards)
-	emit_signal("rewards_calculated", rewards)
+	rewards_calculated.emit(rewards)
 	return rewards
 
 ## Boost an item count by `bonus` using probabilistic rounding (3 x +50% = 4 or 5).
@@ -121,7 +121,7 @@ func save_state(rewards: Dictionary, xp_gained: int, rewards_collected: bool, co
 	}
 	
 	is_reward_session_active = true
-	emit_signal("rewards_state_changed")
+	rewards_state_changed.emit()
 	
 	Log.debug("rewards", "RewardsManager: Saved state - Wave %d, Boss: %s, Items: %d" % [
 		DungeonStateManager.current_wave,
@@ -137,7 +137,7 @@ func clear_saved_state() -> void:
 	"""Clear saved reward state"""
 	saved_reward_state.clear()
 	is_reward_session_active = false
-	emit_signal("rewards_state_changed")
+	rewards_state_changed.emit()
 	Log.debug("rewards", "RewardsManager: Cleared saved state")
 
 func has_saved_state() -> bool:
