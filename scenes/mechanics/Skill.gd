@@ -3,7 +3,7 @@ class_name Skill
 extends Resource
 
 
-enum SkillType { DAMAGE, HEAL, BUFF, DEBUFF, RESTORE, INFLICT_STATUS, DRAIN }
+enum SkillType { DAMAGE, HEAL, BUFF, DEBUFF, RESTORE, INFLICT_STATUS, DRAIN, REVIVE }
 enum TargetType { SELF, ALLY, ENEMY, ALL_ALLIES, ALL_ENEMIES }
 enum AttributeTarget { 
 	NONE, 
@@ -308,8 +308,30 @@ func use(user: CharacterData, targets: Array) -> Dictionary:
 			return inflict_status(user, targets)
 		SkillType.DRAIN:
 			return drain(user, targets)
+		SkillType.REVIVE:
+			return revive(user, targets)
 	
 	return {"message": "Unknown skill type", "damage": 0, "healing": 0}
+
+## Bring knocked-out allies back with `power`% of their max HP (+ any listed
+## status, e.g. Regeneration). The battle loop puts them back in the turn order.
+func revive(_user: CharacterData, targets: Array) -> Dictionary:
+	var raised: Array = []
+	var total := 0
+	for t in targets:
+		if t == null or t.current_hp > 0:
+			continue
+		if t.status_manager:
+			t.status_manager.clear_all_effects()
+		t.current_hp = max(1, int(t.max_hp * power / 100.0))
+		total += t.current_hp
+		for effect in status_effects:
+			if effect != StatusEffect.NONE:
+				t.apply_status_effect(effect, max(1, duration))
+		raised.append(t.name)
+	if raised.is_empty():
+		return {"message": "%s finds no one to raise." % name, "damage": 0, "healing": 0}
+	return {"message": "%s raises %s! (%d HP)" % [name, ", ".join(raised), total], "damage": 0, "healing": total}
 
 # ===== UPDATE ALL SKILL METHODS TO RETURN DICTIONARY =====
 

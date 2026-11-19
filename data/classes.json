@@ -33,7 +33,7 @@
 	  "base_agi": 5, "base_for": 8,
 	  "attack_power_type": "strength",
 	  "spell_power_type": "faith",
-	  "skills": ["Smite", "Bless", "Healing Light"],
+	  "skills": ["Smite", "Bless", "Healing Light", "Dawn's Return"],
 	  "preferred_weapons": ["mace", "relic", "buckler"]
 	},
 	"Samurai": {
@@ -60,7 +60,7 @@
 	  "base_agi": 6, "base_for": 7,
 	  "attack_power_type": "arcane",
 	  "spell_power_type": "faith",
-	  "skills": ["Plague Strike", "Arctic Blast", "Wild Protection"],
+	  "skills": ["Plague Strike", "Arctic Blast", "Wild Protection", "Rebirth"],
 	  "preferred_weapons": ["staff", "fetish"]
 	},
 	"Monk": {
@@ -101,7 +101,7 @@
 	  "base_for": 7,
 	  "attack_power_type": "arcane",
 	  "spell_power_type": "arcane",
-	  "skills": ["Ancestral Mending", "Spirit Barrier", "Wrath of the Ancients"],
+	  "skills": ["Ancestral Mending", "Spirit Barrier", "Wrath of the Ancients", "Spirit Recall"],
 	  "preferred_weapons": ["spear", "staff", "talisman"]
 	},
 	"Shinobi": {

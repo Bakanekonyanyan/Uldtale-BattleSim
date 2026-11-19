@@ -68,6 +68,18 @@ func _ready():
 	tavern_button.size = Vector2(180, 60)
 	tavern_button.pressed.connect(func(): SceneManager.change_to_tavern(current_character))
 	$UI.add_child(tavern_button)
+	# Combo guide
+	var combo_button := Button.new()
+	combo_button.name = "CombosButton"
+	combo_button.text = "Combos"
+	combo_button.position = Vector2(40, 440)
+	combo_button.size = Vector2(180, 60)
+	combo_button.pressed.connect(func():
+		var party: Array = [current_character]
+		for n in PartyManager.members(current_character):
+			party.append(AutoBattler.build_hero(n))
+		ComboGuide.open(self, party))
+	$UI.add_child(combo_button)
 	# Inn: rest to pass days (WorldClock)
 	var inn_button := Button.new()
 	inn_button.name = "InnButton"

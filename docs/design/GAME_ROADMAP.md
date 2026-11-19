@@ -259,6 +259,39 @@ Data: `data/adventurers.json` `party` (Content Manager tab **Adventurers**, sect
 - Floor-1 clear: about 20% solo, 42% with one companion, 50% with two.
 - Class gaps also narrow in a party.
 
+### What was built (expedition encounters)
+
+Data: `data/encounters.json` (Content Manager tab **Encounters**). Code: `scripts/autoload/EncounterManager.gd`, plus join hooks in `BattleOrchestrator`.
+
+**When:**
+- SceneManager rolls before each wave: 22% chance, never wave 1 or a boss wave, at most 2 per expedition.
+- The cast is real Guild adventurers (never your party), chosen by rapport, rivalry and traits.
+
+**Encounter types:**
+- **Helper** (rapport 20+): fights beside you on Auto, either from the start ("Mind if I lend a blade?") or **arriving mid-battle** from round 2–3. +3 rapport and a news item afterwards.
+- **Wounded adventurer:** give a Health Potion (+10 rapport, remembered in their history) or refuse (−4).
+- **Rival theft** (only with banked Press-On loot; rivals or low-rapport competitors): they take 30–50% of the banked gold.
+  - **Confront** them: they fight you right after this wave's enemies fall. Win it back, and they go home injured.
+  - **Let it go:** −3 rapport and a news item.
+- **Saboteur ambush** (rapport −10 or worse, or a rival, plus Greedy, Ambitious, Cruel or Boastful):
+  - The NPC is built with their real class, level, talents and gear, and fights on the enemy side with their role's AI.
+  - They either **join mid-battle** (round 2–3) or **attack right when the wave's enemies fall**. Sometimes you get a warning first.
+  - Beaten: they limp off injured (rivalry +1, rapport −8, news). If they beat you, it's a normal defeat (news).
+- No sprites yet for encounter adventurers; the battle runs without them.
+
+**Also in this step:**
+- **Revival:** a new REVIVE skill type, one skill per mender, each in their starting kit (older saves get it on load):
+  - Cleric: Dawn's Return, 45% HP.
+  - Druid: Rebirth, 30% HP + Regeneration.
+  - Kannagi: Spirit Recall, 35% HP, costs MP and SP.
+  - It targets a knocked-out ally, who rejoins the turn order. The hero AI revives fallen allies first.
+- **Combo guide** (battle action menu, free action, and the Town "Combos" button):
+  - Every combo with its set-up, payoff and bonus.
+  - ⚡ = an enemy is primed right now; ★ = your party can set up and pay off.
+  - Which hero's skills do each.
+- **Item tips** in the battle item menu: effect, amount, status, duration and target (`ItemTips.gd`), also shown as hover tooltips.
+- **Fix:** the Breather reward screen now shows the level-up screen when the payout levels you up. Before, only Press On did.
+
 ## 5. World clock (recommended, light version)
 
 Not real time. A **day counter** advances on actions:
@@ -311,7 +344,7 @@ Data: `data/world.json` (Content Manager tab **World**), plus `travel_days` per 
 3. ~~**World clock** (days, inn rest, deadlines in days, news ledger).~~ Done.
 4. ~~**NPC adventurers:** generator, roster, rapport, simulated quests on the clock.~~ Done.
 5. ~~**Party of 3 in battle** (B2), then **recruitment** from the roster.~~ Done.
-6. **Expedition encounters:** helpers, rivals, saboteurs between waves.
+6. ~~**Expedition encounters:** helpers, rivals, saboteurs between waves.~~ Done.
 7. **Exploration mode** for the themed locations (decided earlier: waves now, exploration later).
 8. **Battle HUD with art** (B4) whenever the art is ready; forms, stealth and summons (B5); advanced combos (B6).
 

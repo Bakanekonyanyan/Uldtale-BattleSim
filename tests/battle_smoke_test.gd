@@ -43,6 +43,10 @@ func _ready():
 	await _battle_run("victory vs three", 3, false, -2)
 	await _battle_run("victory vs boss", 1, true, -2)
 	await _party_battle_run()
+	await _encounter_battle_run("saboteur", "mid")
+	await _encounter_battle_run("saboteur", "after")
+	await _encounter_battle_run("helper", "mid")
+	await _levelup_on_breather_check()
 	print("SMOKE RESULT: %d passed, %d failed" % [passes, failures.size()])
 	for f in failures:
 		print("  FAILED -> ", f)
@@ -473,6 +477,136 @@ func _party_checks() -> void:
 	check(PartyManager.dismiss(p, int(a.id)).ok and a.status == "idle" and PartyManager.members(p).is_empty() or PartyManager.members(p).size() <= 1, "dismissing sends them back to the Guild")
 	DungeonStateManager.active_player = prev_active
 
+## Revival skills and encounter rules
+func _revive_and_encounter_checks() -> void:
+	for pair in [["Cleric", "Dawn's Return"], ["Druid", "Rebirth"], ["Kannagi", "Spirit Recall"]]:
+		var m = CharacterFactory.create_character("M", "Hume", pair[0], true)
+		check(m.skills.has(pair[1]), "%s starts with %s" % pair)
+	var healer = CharacterFactory.create_character("Healer", "Hume", "Cleric", true)
+	healer.current_mp = healer.max_mp
+	var fallen = CharacterFactory.create_character("Fallen", "Hume", "Berserker", true)
+	var foe = EnemyFactory.create_enemy(1, 1, 1)
+	var engine = CombatEngine.new()
+	var foes: Array[CharacterData] = [foe]
+	var mates: Array[CharacterData] = [fallen]
+	engine.initialize_multi(healer, foes, mates)
+	var q = TurnQueue.new()
+	q.initialize(healer, foes, mates)
+	fallen.current_hp = 0
+	q.remove(fallen)
+	var res = engine.execute_action(BattleAction.skill(healer, healer.get_skill_instance("Dawn's Return"), [fallen]))
+	check(res.success and fallen.current_hp > 0 and fallen.current_hp <= int(fallen.max_hp * 0.5), "Dawn's Return raises a knocked-out ally (%d HP)" % fallen.current_hp)
+	check(q.rejoin_revived().has(fallen) and fallen in q.all_combatants, "the revived ally rejoins the turn order")
+	var ctx = BattleContext.new()
+	ctx.player = healer; ctx.allies = mates; ctx.enemies = foes
+	fallen.current_hp = 0
+	healer.skill_manager.clear_cooldowns()
+	healer.current_mp = 999   # a level-1 Cleric can't yet afford Dawn's Return
+	var ai_act = AutoBattler.hero_policy(healer, ctx)
+	check(ai_act != null and ai_act.skill_data and ai_act.skill_data.type == Skill.SkillType.REVIVE, "the hero AI revives a fallen ally")
+	# encounter rolls pick the right people
+	var p = make_player()
+	p.name = "ZZ_SmokeTest_Enc"
+	DungeonStateManager.active_player = p
+	var roster = AdventurerManager.active(p)
+	for n in roster:
+		n.status = "idle"; n.rapport = 0
+	roster[0].rapport = 60
+	roster[1].rapport = -50
+	if not roster[1].traits.has("greedy"):
+		roster[1].traits.append("greedy")
+	var bd = {"player_character": p, "current_wave": 3, "is_boss_fight": false}
+	var h = EncounterManager.roll(bd, "helper")
+	check(h.get("type", "") == "helper" and AdventurerManager.get_npc(p, int(h.npc_id)).rapport >= 20, "helpers are friends (rapport 20+)")
+	var sab = EncounterManager.roll(bd, "saboteur")
+	var sab_npc = AdventurerManager.get_npc(p, int(sab.get("npc_id", -1)))
+	check(sab.get("type", "") == "saboteur" and (int(sab_npc.rapport) <= -10 or "Rival" in AdventurerManager.tags(sab_npc)), "saboteurs are schemers who dislike you, or rivals")
+	MomentumSystem.momentum_loot_accumulated.currency = 0
+	check(EncounterManager.roll(bd, "rival_theft").is_empty(), "no theft without banked loot")
+	# wounded: give a potion
+	p.add_to_pack(ItemManager.get_item("health_potion"), 1)
+	EncounterManager.auto_choice = "give"
+	var w = {"type": "wounded", "npc_id": int(roster[2].id), "location": "the_dungeon"}
+	var r0 = int(roster[2].rapport)
+	await EncounterManager.begin(w, p, self)
+	check(p.inventory.get_quantity("health_potion") == 0 and int(roster[2].rapport) > r0, "giving a wounded adventurer a potion earns rapport")
+	# theft: let it go loses the loot
+	MomentumSystem.momentum_loot_accumulated.currency = 1000
+	EncounterManager.auto_choice = "let_go"
+	await EncounterManager.begin({"type": "rival_theft", "npc_id": int(roster[1].id), "location": "the_dungeon"}, p, self)
+	check(int(MomentumSystem.momentum_loot_accumulated.currency) < 1000 and int(MomentumSystem.momentum_loot_accumulated.currency) >= 500, "a rival steals part of your banked loot (%d left)" % int(MomentumSystem.momentum_loot_accumulated.currency))
+	MomentumSystem.clear_accumulated_loot()
+	EncounterManager.auto_choice = ""
+
+## A real Battle.tscn wave with an encounter: someone joins mid-battle or
+## after the wave's enemies fall.
+func _encounter_battle_run(type: String, mode: String) -> void:
+	print("=== BATTLE: encounter ", type, " ", mode)
+	var player = make_player(-2)
+	player.name = "ZZ_SmokeTest_EncB"
+	DungeonStateManager.active_player = player
+	var npc: Dictionary = AdventurerManager.active(player)[0]
+	npc.status = "idle"
+	var enemies: Array[CharacterData] = [EnemyFactory.create_enemy(1, 1, 2), EnemyFactory.create_enemy(1, 1, 2)]
+	var battle = load("res://scenes/battle/Battle.tscn").instantiate()
+	get_tree().root.add_child(battle)
+	var done := [false, false]
+	battle.battle_completed.connect(func(won, _xp): done[0] = true; done[1] = won)
+	battle.set_player(player)
+	battle.set_enemies(enemies)
+	battle.set_encounter({"type": type, "npc_id": int(npc.id), "location": "the_dungeon", "mode": mode, "round": 2})
+	battle.set_dungeon_info(false, 2, 1, 5, "Encounter smoke test")
+	var frames := 0
+	var joined_at_round := -1
+	var n0 = enemies.size()
+	while not done[0] and frames < 90000:
+		frames += 1
+		await get_tree().process_frame
+		for child in battle.get_children():
+			if child.has_signal("take_breather_selected") and not child.has_meta("clicked"):
+				child.set_meta("clicked", true)
+				child.take_breather_selected.emit()
+		if joined_at_round < 0 and battle.get("_encounter_joined") and not battle._encounter_joined.is_empty():
+			joined_at_round = battle.turn_queue.round_number
+		if battle.get("_awaiting_player_action") and not battle.get("_action_in_progress") and not battle.context.main_action_taken:
+			var living = battle.context.get_living_enemies()
+			if living.is_empty():
+				continue
+			battle.ui_controller.action_selected.emit(BattleAction.attack(battle.ui_controller.player, living[0]))
+	check(done[0], "%s/%s: battle completed (frames=%d)" % [type, mode, frames])
+	check(joined_at_round >= 0, "%s/%s: they joined the fight (round %d)" % [type, mode, joined_at_round])
+	if type == "saboteur":
+		check(battle.context.enemies.size() == n0 + 1, "%s/%s: the saboteur fought on the enemy side" % [type, mode])
+		if done[1]:
+			check(npc.status == "injured" and int(npc.rivalry) > 0, "%s/%s: a beaten saboteur limps off injured" % [type, mode])
+	else:
+		check(battle.context.allies.size() == 1 and battle.context.allies[0].has_meta("npc_id"), "helper/mid: they fought on your side")
+	battle.queue_free()
+	await get_tree().process_frame
+
+## The Breather reward screen shows the level-up screen when XP levels you.
+func _levelup_on_breather_check() -> void:
+	var p = make_player(-2)
+	p.name = "ZZ_SmokeTest_Lvl"
+	var lv = p.level
+	var rs = load("res://scenes/RewardScene.tscn").instantiate()
+	rs.set_player_character(p)
+	rs.set_rewards({"currency": 10, "equipment_instances": []})
+	rs.set_xp_gained(LevelSystem.calculate_xp_for_level(p.level) + 5)
+	get_tree().root.add_child(rs)
+	await get_tree().process_frame
+	var watcher := [false]
+	var timer = get_tree().create_timer(0.5)
+	timer.timeout.connect(func():
+		for n in rs.find_children("*", "Control", true, false):
+			if n.has_signal("level_up_complete"):
+				watcher[0] = true
+				n.level_up_complete.emit())
+	await rs._add_auto_rewards()
+	check(p.level > lv and watcher[0], "a Breather level-up shows the level-up screen (level %d -> %d)" % [lv, p.level])
+	rs.queue_free()
+	await get_tree().process_frame
+
 ## Talent trees (data/talents.json, TalentManager.gd)
 func _talent_checks() -> void:
 	# skills charge every cost they list
@@ -643,10 +777,10 @@ func _element_and_class_checks() -> void:
 	# the four new classes
 	for cls in ["Berserker", "Shinobi", "Kannagi", "Beastmaster"]:
 		var c = CharacterFactory.create_character("T", "Hume", cls, true)
-		var ok = c != null and c.skills.size() == 3
+		var ok = c != null and c.skills.size() >= 3   # Kannagi also starts with Spirit Recall
 		for sn in (c.skills if c else []):
 			ok = ok and c.get_skill_instance(sn) != null
-		check(ok and c.attack_power > 0 and c.spell_power > 0, "%s: created with 3 working skills" % cls)
+		check(ok and c.attack_power > 0 and c.spell_power > 0, "%s: created with working starting skills" % cls)
 		check(not c.proficiency_manager.get_available_weapon_types().is_empty(), "%s: can use some weapons" % cls)
 
 ## Set-up / payoff combos (data/combos.json, scripts/resources/Combos.gd)
@@ -736,6 +870,7 @@ func _phase0_checks() -> void:
 	_world_checks()
 	_adventurer_checks()
 	_party_checks()
+	_revive_and_encounter_checks()
 	
 	# Class-biased loot rolls (Breather drops pass the player's class)
 	var biased_ok := true

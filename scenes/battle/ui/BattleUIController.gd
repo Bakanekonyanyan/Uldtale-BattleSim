@@ -282,6 +282,10 @@ func setup_player_actions(item_used: bool, main_action_taken: bool):
 			_add_skills_button()
 	
 	_add_items_button(item_used)
+	var combos = _create_action_button("Combos")
+	combos.tooltip_text = "Combo guide (free - doesn't use your turn)"
+	combos.pressed.connect(func(): ComboGuide.open(self, heroes if not heroes.is_empty() else [player], enemies))
+	action_buttons.add_child(combos)
 
 func _add_attack_button():
 	var btn = _create_action_button("Attack")
@@ -372,7 +376,8 @@ func _show_skill_menu():
 func _can_use_skill(skill: Skill, cooldown: int) -> bool:
 	if cooldown > 0:
 		return false
-	
+	if skill.type == Skill.SkillType.REVIVE and _fallen_heroes().is_empty():
+		return false   # nobody to raise
 	return skill.can_afford(player)
 
 func _create_skill_button(skill: Skill, cooldown: int, can_use: bool) -> HBoxContainer:
@@ -505,6 +510,20 @@ func _on_skill_selected(skill: Skill):
 	
 	var needs_target = (skill.target == Skill.TargetType.ENEMY)
 	
+	# Revive: choose a knocked-out party member
+	if skill.type == Skill.SkillType.REVIVE:
+		var fallen = _fallen_heroes()
+		if fallen.is_empty():
+			add_combat_log("No one has fallen.", "gray")
+			unlock_ui()
+			enable_actions()
+			return
+		show_target_selection(fallen,
+			func(target): emit_signal("action_selected", BattleAction.skill(player, skill, [target])),
+			func(): unlock_ui(); enable_actions()
+		)
+		return
+	
 	# Ally skills: choose which party member (alone, it's yourself)
 	if skill.target == Skill.TargetType.ALLY and _living_heroes().size() > 1:
 		show_target_selection(_living_heroes(),
@@ -634,6 +653,13 @@ func hide_battle_ui():
 	if dungeon_description_label: dungeon_description_label.hide()
 
 # === HELPERS ===
+
+func _fallen_heroes() -> Array[CharacterData]:
+	var out: Array[CharacterData] = []
+	for h in heroes:
+		if not h.is_alive():
+			out.append(h)
+	return out
 
 func _living_heroes() -> Array[CharacterData]:
 	var out: Array[CharacterData] = []

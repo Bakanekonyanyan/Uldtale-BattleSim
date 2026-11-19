@@ -36,6 +36,12 @@ var enemy_planner: EnemyTurnPlanner
 var outcome: BattleOutcomeHandler
 var network_sync: BattleNetworkSync  # PvP only
 
+# Expedition encounter for this battle (EncounterManager), and people waiting
+# to join: [{side: "enemy"/"ally", chars, trigger: "round"/"victory", round, text}]
+var encounter: Dictionary = {}
+var _pending_joins: Array = []
+var _encounter_joined: Array = []
+
 # Player-input guards
 var _awaiting_player_action: bool = false
 var _action_in_progress: bool = false
@@ -72,6 +78,10 @@ func _ready():
 func set_player(character: CharacterData) -> void:
 	_ensure_context()
 	context.player = character
+
+## An expedition encounter rolled for this wave (EncounterManager.roll).
+func set_encounter(enc: Dictionary) -> void:
+	encounter = enc
 
 ## Party members fighting beside the player (PartyManager).
 func set_allies(ally_list: Array) -> void:
@@ -163,6 +173,9 @@ func start_battle() -> void:
 	ui_controller.setup_player_actions(false, false)
 	ui_controller.disable_actions()
 
+	if not encounter.is_empty() and not context.is_pvp_mode:
+		await _begin_encounter()
+
 	_run_battle_loop()
 
 func _validate_setup() -> bool:
@@ -228,12 +241,20 @@ func _initialize_visuals() -> void:
 
 func _run_battle_loop() -> void:
 	while not context.battle_over:
+		await _check_joins("round")
 		var actor := turn_queue.current_actor()
 		if actor == null:
 			break
 
 		await _run_turn(actor)
+		# revived heroes rejoin the turn order
+		for h in turn_queue.rejoin_revived():
+			ui_controller.add_combat_log("%s is back in the fight!" % h.name, "lime")
+			ui_controller.update_all_character_info()
 
+		# an ambush waiting for the wave to end strikes now
+		if context.get_living_enemies().is_empty() and not context.get_living_heroes().is_empty():
+			await _check_joins("victory")
 		if await outcome.check_battle_end():
 			break
 		turn_queue.advance()
@@ -335,7 +356,8 @@ func _handle_player_main_action(action: BattleAction) -> void:
 			ui_controller.add_combat_log("Error: No target", "red")
 			_present_player_actions()
 			return
-		if action.primary_target and not action.primary_target.is_alive():
+		var reviving = action.skill_data and action.skill_data.type == Skill.SkillType.REVIVE
+		if action.primary_target and not action.primary_target.is_alive() and not reviving:
 			ui_controller.add_combat_log("Target already defeated!", "red")
 			_present_player_actions()
 			return
@@ -351,6 +373,53 @@ func _handle_player_main_action(action: BattleAction) -> void:
 	await outcome.handle_deaths(result.dead)
 	_action_in_progress = false
 	_player_turn_finished.emit()
+
+# --- Expedition encounters ---
+
+func _begin_encounter() -> void:
+	var r: Dictionary = await EncounterManager.begin(encounter, context.player, self)
+	for line in r.get("log", []):
+		ui_controller.add_combat_log(line, "gold")
+	for a in r.get("allies_now", []):
+		_join("ally", a)
+	_pending_joins = r.get("pending", [])
+
+## Bring in waiting encounter combatants whose trigger has come.
+func _check_joins(trigger: String) -> void:
+	for p in _pending_joins.duplicate():
+		var due = p.trigger == trigger and (trigger != "round" or turn_queue.round_number >= int(p.get("round", 2)))
+		if not due:
+			continue
+		_pending_joins.erase(p)
+		ui_controller.add_combat_log(String(p.get("text", "")), "orange" if p.side == "enemy" else "lime")
+		for c in p.chars:
+			_join(p.side, c)
+		if visual_manager:
+			visual_manager.shake_and_flash_screen(0.2)
+		await get_tree().create_timer(1.0).timeout
+
+func _join(side: String, c: CharacterData) -> void:
+	_encounter_joined.append(c)
+	if side == "ally":
+		context.allies.append(c)
+		turn_queue.join(c, true)
+		ui_controller.heroes.append(c)
+		ui_controller._create_party_strip()
+	else:
+		context.enemies.append(c)
+		turn_queue.join(c, false)
+		if enemy_planner:
+			enemy_planner.add_enemy(c)
+		ui_controller._create_enemy_panels()
+	ui_controller.update_all_character_info()
+
+## Encounter consequences (called by BattleOutcomeHandler when the fight ends).
+func finish_encounter(won: bool) -> void:
+	if encounter.is_empty():
+		return
+	for line in EncounterManager.finish(encounter, context.player, won, _encounter_joined):
+		ui_controller.add_combat_log(line, "gold")
+	encounter = {}
 
 # --- Party member on Auto ---
 

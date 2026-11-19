@@ -107,6 +107,7 @@ static func fight(p: CharacterData, enemies: Array[CharacterData], floor_num: in
 		for c in ctx.get_heroes() + enemies:
 			if not c.is_alive():
 				q.remove(c)
+		q.rejoin_revived()
 		q.advance()
 	return {"won": ctx.did_player_win(), "turns": turns, "hp_frac": float(max(0, p.current_hp)) / max(1, p.max_hp)}
 
@@ -131,6 +132,11 @@ static func hero_policy(p: CharacterData, ctx: BattleContext) -> BattleAction:
 		if s == null or p.get_skill_cooldown(sn) > 0 or not s.can_afford(p):
 			continue
 		match s.type:
+			Skill.SkillType.REVIVE:
+				var fallen = ctx.get_heroes().filter(func(h): return not h.is_alive())
+				if not fallen.is_empty():
+					return BattleAction.skill(p, s, [fallen[0]])
+				continue
 			Skill.SkillType.HEAL:
 				if p.current_hp < p.max_hp * 0.4:
 					return BattleAction.skill(p, s, [p])

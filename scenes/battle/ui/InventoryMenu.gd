@@ -14,6 +14,8 @@ var selected_item: Item = null
 @onready var use_button: Button = $Panel/VBoxContainer/ButtonContainer/UseButton
 @onready var cancel_button: Button = $Panel/VBoxContainer/ButtonContainer/CancelButton
 @onready var currency_label: Label = $CurrencyLabel
+## What the selected item does (ItemTips)
+var tip_label: RichTextLabel
 
 func _ready():
 	if panel:
@@ -27,12 +29,24 @@ func _ready():
 	
 	if item_list:
 		item_list.item_selected.connect(_on_item_list_selected)
+		tip_label = RichTextLabel.new()
+		tip_label.bbcode_enabled = true
+		tip_label.fit_content = true
+		tip_label.scroll_active = false
+		tip_label.custom_minimum_size = Vector2(370, 84)
+		tip_label.add_theme_font_size_override("normal_font_size", 14)
+		tip_label.add_theme_font_size_override("bold_font_size", 15)
+		var box = item_list.get_parent()
+		box.add_child(tip_label)
+		box.move_child(tip_label, item_list.get_index() + 1)
 
 func show_inventory(p_player: CharacterData, p_enemies: Array[CharacterData] = []):
 	"""Display inventory for item selection"""
 	player = p_player
 	enemies = p_enemies
 	selected_item = null
+	if tip_label:
+		tip_label.text = "[color=#a99f90]Select an item to see what it does. Items don't end your turn (one per turn).[/color]"
 	
 	_populate_item_list()
 	
@@ -79,6 +93,7 @@ func _populate_item_list():
 		var display_text = str(item_name) + " x" + str(quantity)
 		item_list.add_item(display_text)
 		item_list.set_item_metadata(item_list.item_count - 1, item)
+		item_list.set_item_tooltip(item_list.item_count - 1, ItemTips.effect_line(item))
 
 func _get_item_type(item) -> int:
 	"""Safely get item type with multiple fallback methods"""
@@ -127,6 +142,8 @@ func _on_item_list_selected(index: int):
 		return
 	
 	selected_item = item_list.get_item_metadata(index)
+	if tip_label and selected_item:
+		tip_label.text = ItemTips.describe(selected_item, player.inventory.get_quantity(selected_item.id) if player else -1)
 	
 	if use_button:
 		use_button.disabled = (selected_item == null)

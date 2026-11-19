@@ -2112,6 +2112,50 @@
 	  "mp_cost": 0,
 	  "sp_cost": 35,
 	  "cooldown": 5
+	},
+	"Spirit Recall": {
+	  "name": "Spirit Recall",
+	  "description": "The ancestors refuse to let a soul pass: they push the fallen back into the world.",
+	  "ability_type": "MAGICAL",
+	  "type": "REVIVE",
+	  "target": "ALLY",
+	  "category": "ADVANCED",
+	  "status_effect": "NONE",
+	  "power": 35,
+	  "duration": 0,
+	  "mp_cost": 30,
+	  "sp_cost": 15,
+	  "cooldown": 5
+	},
+	"Rebirth": {
+	  "name": "Rebirth",
+	  "description": "Roots and blossoms knit a fallen ally whole again, and keep on mending.",
+	  "ability_type": "MAGICAL",
+	  "type": "REVIVE",
+	  "target": "ALLY",
+	  "category": "ADVANCED",
+	  "elements": ["EARTH"],
+	  "status_effect": "REGENERATION",
+	  "power": 30,
+	  "duration": 3,
+	  "mp_cost": 50,
+	  "sp_cost": 0,
+	  "cooldown": 6
+	},
+	"Dawn's Return": {
+	  "name": "Dawn's Return",
+	  "description": "Solara's first light finds a fallen ally and calls them back to their feet.",
+	  "ability_type": "MAGICAL",
+	  "type": "REVIVE",
+	  "target": "ALLY",
+	  "category": "ADVANCED",
+	  "elements": ["HOLY"],
+	  "status_effect": "NONE",
+	  "power": 45,
+	  "duration": 0,
+	  "mp_cost": 55,
+	  "sp_cost": 0,
+	  "cooldown": 6
 	}
   }
 }

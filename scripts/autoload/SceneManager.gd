@@ -288,6 +288,9 @@ func _setup_battle_scene(battle_data: Dictionary) -> void:
 	# Your party fights beside you
 	if current_scene.has_method("set_allies"):
 		current_scene.set_allies(PartyManager.battle_allies())
+	# Something may happen on the way to this wave (EncounterManager)
+	if current_scene.has_method("set_encounter"):
+		current_scene.set_encounter(EncounterManager.roll(battle_data))
 	
 	# Set dungeon info
 	current_scene.set_dungeon_info(

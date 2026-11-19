@@ -1,0 +1,197 @@
+{
+ "tab": "Encounters",
+ "file": "data/encounters.json",
+ "order": 50,
+ "description": "Expedition encounters between waves (EncounterManager.gd): helpers, wounded adventurers, rival thieves and saboteur ambushes, drawn from the Guild roster. Text fields use {name} and {location}.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Settings",
+   "path": [
+    "settings"
+   ],
+   "fields": [
+    {
+     "name": "chance_per_wave",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "max_per_expedition",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "skip_waves",
+     "type": "json",
+     "help": "Waves that never have an encounter, e.g. [1]."
+    },
+    {
+     "name": "allow_boss_waves",
+     "type": "bool"
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Types",
+   "path": [
+    "types"
+   ],
+   "key_style": "snake",
+   "summary": "weight {weight}",
+   "fields": [
+    {
+     "name": "weight",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "min_rapport",
+     "type": "int",
+     "optional": true,
+     "help": "helper: friends only."
+    },
+    {
+     "name": "max_rapport",
+     "type": "int",
+     "optional": true,
+     "help": "rival_theft / saboteur: only people who dislike you this much."
+    },
+    {
+     "name": "rival_counts",
+     "type": "bool",
+     "optional": true
+    },
+    {
+     "name": "traits_any",
+     "type": "json",
+     "optional": true,
+     "help": "saboteur: needs one of these traits."
+    },
+    {
+     "name": "modes",
+     "type": "json",
+     "optional": true,
+     "help": "{start|mid|after: weight} - when they join the fight."
+    },
+    {
+     "name": "mid_round",
+     "type": "json",
+     "optional": true
+    },
+    {
+     "name": "needs_banked_loot",
+     "type": "bool",
+     "optional": true
+    },
+    {
+     "name": "steal_fraction",
+     "type": "json",
+     "optional": true
+    },
+    {
+     "name": "item",
+     "type": "ref",
+     "source": "consumables",
+     "optional": true
+    },
+    {
+     "name": "give_rapport",
+     "type": "int",
+     "optional": true
+    },
+    {
+     "name": "refuse_rapport",
+     "type": "int",
+     "optional": true
+    },
+    {
+     "name": "rapport_after",
+     "type": "int",
+     "optional": true
+    },
+    {
+     "name": "let_go_rapport",
+     "type": "int",
+     "optional": true
+    },
+    {
+     "name": "confront_win_rapport",
+     "type": "int",
+     "optional": true
+    },
+    {
+     "name": "beaten_rapport",
+     "type": "int",
+     "optional": true
+    },
+    {
+     "name": "warning_chance",
+     "type": "float",
+     "optional": true,
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "hp_mult",
+     "type": "float",
+     "optional": true,
+     "min": 0
+    },
+    {
+     "name": "damage_mult",
+     "type": "float",
+     "optional": true,
+     "min": 0
+    },
+    {
+     "name": "injury_days",
+     "type": "json",
+     "optional": true
+    },
+    {
+     "name": "text",
+     "type": "text",
+     "optional": true
+    },
+    {
+     "name": "text_start",
+     "type": "text",
+     "optional": true
+    },
+    {
+     "name": "text_mid",
+     "type": "text",
+     "optional": true
+    },
+    {
+     "name": "text_after",
+     "type": "text",
+     "optional": true
+    },
+    {
+     "name": "warning",
+     "type": "text",
+     "optional": true
+    },
+    {
+     "name": "news",
+     "type": "text",
+     "optional": true
+    },
+    {
+     "name": "news_beaten",
+     "type": "text",
+     "optional": true
+    },
+    {
+     "name": "news_lost",
+     "type": "text",
+     "optional": true
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,56 @@
+{
+  "_doc": "Expedition encounters (EncounterManager.gd, GAME_ROADMAP.md section 4). After a won wave, before the next one starts, an encounter may happen with an adventurer from the Guild roster. Who shows up depends on rapport, rivalry and traits. Helpers and saboteurs can join at the start of the battle, mid-battle (from round mid_round) or right after the wave's enemies fall (saboteurs).",
+  "settings": {
+    "chance_per_wave": 0.22,
+    "max_per_expedition": 2,
+    "skip_waves": [1],
+    "allow_boss_waves": false
+  },
+  "types": {
+    "helper": {
+      "weight": 3,
+      "min_rapport": 20,
+      "modes": {"start": 0.5, "mid": 0.5},
+      "mid_round": [2, 3],
+      "rapport_after": 3,
+      "text_start": "{name} catches up with you on the trail. \"Mind if I lend a blade? This next lot looks nasty.\"",
+      "text_mid": "Shouts behind the enemy line: {name} has followed the noise of battle and charges in to help!",
+      "news": "{name} came to your aid in {location}."
+    },
+    "wounded": {
+      "weight": 2,
+      "item": "health_potion",
+      "give_rapport": 10,
+      "refuse_rapport": -4,
+      "text": "You find {name} slumped against the wall, bleeding. \"Please... do you have a potion to spare?\""
+    },
+    "rival_theft": {
+      "weight": 2,
+      "needs_banked_loot": true,
+      "max_rapport": 10,
+      "steal_fraction": [0.3, 0.5],
+      "let_go_rapport": -3,
+      "confront_win_rapport": -6,
+      "text": "{name} strolls out of the shadows jingling a purse that looks a lot like yours. \"Finders keepers, rookie.\"",
+      "news": "{name} lifted part of your loot in {location}."
+    },
+    "saboteur": {
+      "weight": 2,
+      "max_rapport": -10,
+      "rival_counts": true,
+      "traits_any": ["greedy", "ambitious", "cruel", "boastful"],
+      "modes": {"mid": 0.5, "after": 0.5},
+      "mid_round": [2, 3],
+      "warning_chance": 0.4,
+      "hp_mult": 1.0,
+      "damage_mult": 0.75,
+      "injury_days": [3, 6],
+      "beaten_rapport": -8,
+      "warning": "You feel watched. Was that {name} slipping behind the rocks?",
+      "text_mid": "{name} drops from cover and joins the enemy! An ambush!",
+      "text_after": "As the last enemy falls, {name} steps out, blade drawn. \"Tired already? Good.\"",
+      "news_beaten": "You beat off {name}'s ambush in {location}.",
+      "news_lost": "{name}'s ambush left you for dead in {location}."
+    }
+  }
+}

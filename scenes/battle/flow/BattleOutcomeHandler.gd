@@ -85,6 +85,8 @@ func _handle_victory() -> void:
 			network_sync.on_battle_end(true)
 		return
 
+	if parent_node.has_method("finish_encounter"):
+		parent_node.finish_encounter(true)
 	var total_xp = _calculate_xp_reward()
 	# Knocked-out heroes get back up after a won fight (injured: PartyManager)
 	for h in context.get_heroes():
@@ -102,6 +104,8 @@ func _handle_defeat() -> void:
 			network_sync.on_battle_end(false)
 		return
 
+	if parent_node.has_method("finish_encounter"):
+		parent_node.finish_encounter(false)
 	await _wait(1.0)
 	battle_ended.emit(false, 0)
 

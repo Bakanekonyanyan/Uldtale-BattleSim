@@ -27,6 +27,15 @@ func initialize(p_context: BattleContext) -> void:
 
 	print("EnemyTurnPlanner: %d AI controllers ready" % _brains.size())
 
+## An enemy that joins mid-battle (encounters) gets its own brain.
+func add_enemy(enemy: CharacterData) -> void:
+	if _brains.has(enemy):
+		return
+	var ai := EnemyAI.new()
+	ai.initialize(enemy, context.get_living_heroes, context.current_floor)
+	ai.set_allies_source(context.get_living_enemies)
+	_brains[enemy] = ai
+
 ## Returns the action this enemy will take, or null if it cannot act.
 func plan_action(enemy: CharacterData) -> BattleAction:
 	var ai: EnemyAI = _brains.get(enemy)

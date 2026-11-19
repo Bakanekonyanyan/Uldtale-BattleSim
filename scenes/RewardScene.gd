@@ -123,7 +123,8 @@ func initialize_display():
 
 func _check_and_auto_collect():
 	if not _has_collectable_items() and not auto_rewards_given:
-		_add_auto_rewards()
+		await _add_auto_rewards()
+		display_rewards()
 
 func _has_collectable_items() -> bool:
 	for item_id in rewards:
@@ -369,7 +370,7 @@ func _on_continue_pressed():
 		_show_collection_prompt("continue")
 		return
 	
-	_add_auto_rewards()
+	await _add_auto_rewards()
 	_cleanup_and_continue()
 
 func _on_next_floor_pressed():
@@ -377,14 +378,14 @@ func _on_next_floor_pressed():
 		_show_collection_prompt("advance to the next floor")
 		return
 	
-	_add_auto_rewards()
+	await _add_auto_rewards()
 	_cleanup_and_next_floor()
 
 func _on_quit_pressed():
 	if not _all_items_collected():
 		_on_accept_all_pressed()
 	
-	_add_auto_rewards()
+	await _add_auto_rewards()
 	_cleanup()
 	SaveManager.save_game(player_character)
 	SceneManager.change_to_town(player_character)
@@ -414,17 +415,32 @@ func _all_items_collected() -> bool:
 	
 	return true
 
+## Gold and XP. A level-up shows the level-up screen first (the Breather path
+## never did - only Press On, inside the battle, showed it).
 func _add_auto_rewards():
 	if auto_rewards_given:
 		return
+	auto_rewards_given = true
 	
 	if rewards.has("currency"):
 		player_character.currency.add(rewards["currency"])
 	
 	if xp_gained > 0:
+		var level_before = player_character.level
 		player_character.gain_xp(xp_gained)
-	
-	auto_rewards_given = true
+		if player_character.level > level_before:
+			await _show_level_up()
+
+func _show_level_up() -> void:
+	var layer = CanvasLayer.new()
+	layer.layer = 50
+	add_child(layer)
+	var scene = load("res://scenes/LevelUpScene.tscn").instantiate()
+	layer.add_child(scene)
+	scene.setup(player_character)
+	await scene.level_up_complete
+	layer.queue_free()
+	SaveManager.save_game(player_character)
 
 func _save_state():
 	RewardsManager.save_state(rewards, xp_gained, _all_items_collected(), collected_items, auto_rewards_given)

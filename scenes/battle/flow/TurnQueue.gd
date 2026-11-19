@@ -69,6 +69,33 @@ func advance() -> void:
 		print("TurnQueue: Round %d - re-rolling turn order" % round_number)
 		_roll_turn_order()
 
+## Someone joining mid-battle (encounter reinforcements) acts from next round.
+func join(character: CharacterData, is_hero_side: bool) -> void:
+	if character in all_combatants:
+		return
+	if is_hero_side and not character in heroes:
+		heroes.append(character)
+	all_combatants.append(character)
+	queue.append(character)
+	_acted_this_round[character] = true
+
+## A revived hero rejoins at the back of the current round.
+func rejoin(character: CharacterData) -> void:
+	if character in all_combatants or not character.is_alive():
+		return
+	all_combatants.append(character)
+	queue.append(character)
+	_acted_this_round[character] = true
+
+## Heroes that are alive again but out of the order (after a revive).
+func rejoin_revived() -> Array[CharacterData]:
+	var back: Array[CharacterData] = []
+	for h in heroes:
+		if h.is_alive() and not h in all_combatants:
+			rejoin(h)
+			back.append(h)
+	return back
+
 func remove(character: CharacterData) -> void:
 	all_combatants.erase(character)
 	queue.erase(character)
