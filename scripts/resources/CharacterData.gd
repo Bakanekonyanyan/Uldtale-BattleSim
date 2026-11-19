@@ -243,6 +243,11 @@ func calculate_secondary_attributes():
 		_:
 			push_warning("%s: unknown spell_power_type '%s'" % [name, spell_power_type])
 			spell_power = eff.intelligence + eff.faith + eff.arcane
+	
+	# Flat gear bonuses to the powers (e.g. cloth armor "spell_power": 1). These are
+	# computed after the loop above, so they must be added here or they are lost.
+	attack_power += flat.get("attack_power", 0.0)
+	spell_power += flat.get("spell_power", 0.0)
 
 # === RESOURCE MANAGEMENT (delegates to static utility) ===
 func heal(amount: int) -> int:

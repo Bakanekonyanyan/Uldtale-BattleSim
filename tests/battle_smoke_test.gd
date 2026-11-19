@@ -142,6 +142,20 @@ func _unit_checks() -> void:
 # ------------------------------------------------------------------ phase 0 (locations, drops, carry limit, saves)
 
 func _phase0_checks() -> void:
+	# Gear "spell_power" bonuses (cloth armor) actually raise spell power
+	var caster = make_player()
+	var sp_before = caster.spell_power
+	var robe = Equipment.new({"id": "test_robe", "name": "Test Robe", "type": "cloth", "slot": "chest",
+		"armor_value": 1, "rarity": "common", "effects": {"spell_power": 5}})
+	robe.effects = {"spell_power": 5}   # strip any rolled extras so the check is exact
+	robe.stat_modifiers = {}
+	robe.attribute_target = ""
+	caster.equipment["chest"] = robe
+	caster.calculate_secondary_attributes()
+	check(is_equal_approx(caster.spell_power, sp_before + 5), "gear spell_power bonus applies (%.1f -> %.1f)" % [sp_before, caster.spell_power])
+	caster.equipment["chest"] = null
+	caster.calculate_secondary_attributes()
+	check(is_equal_approx(caster.spell_power, sp_before), "gear spell_power bonus removed on unequip")
 	# Themed location: only that race (regular enemies and boss)
 	EnemyFactory.set_location("goblin_forest")
 	var all_goblin := true
