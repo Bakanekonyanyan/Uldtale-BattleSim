@@ -31,7 +31,8 @@ enum StatusEffect {
 	REGENERATION, # Buff effect
 	ENRAGED,      # Buff effect
 	REFLECT,      # Buff effect
-	EVASIVE       # Buff effect: flat dodge bonus (append new effects at the end - saves store the number)
+	EVASIVE,      # Buff effect: flat dodge bonus (append new effects at the end - saves store the number)
+	SOAKED        # Water element: drenched (combos: Conduction, Flash Freeze)
 }
 enum AbilityType { PHYSICAL, MAGICAL }
 enum DrainTarget { HP, MP, SP }
@@ -44,7 +45,8 @@ enum ElementType {
 	LIGHTNING,
 	HOLY,
 	DARK,
-	PHYSICAL
+	PHYSICAL,
+	WATER       # appended last: saves store the number
 }
 
 @export var element: ElementType = ElementType.NONE
@@ -262,6 +264,7 @@ func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 				ElementType.LIGHTNING: elemental_types.append(ElementalDamage.Element.LIGHTNING)
 				ElementType.HOLY: elemental_types.append(ElementalDamage.Element.HOLY)
 				ElementType.DARK: elemental_types.append(ElementalDamage.Element.DARK)
+				ElementType.WATER: elemental_types.append(ElementalDamage.Element.WATER)
 	
 	var applied_effects := {}  # names of status effects that actually landed
 	

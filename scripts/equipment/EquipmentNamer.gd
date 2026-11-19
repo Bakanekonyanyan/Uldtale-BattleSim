@@ -152,5 +152,7 @@ func get_status_color(status: Skill.StatusEffect) -> String:
 			return "green"
 		Skill.StatusEffect.SHOCK:
 			return "yellow"
+		Skill.StatusEffect.SOAKED:
+			return "dodgerblue"
 		_:
 			return "purple"

@@ -11,7 +11,8 @@ extends Node
 #         the fast class report; "tool" is the content manager's mode (see
 #         tool_report for its options).
 
-const CLASSES = ["Paladin", "Necromancer", "Myrmidon", "Cleric", "Samurai", "Elementalist", "Druid", "Monk"]
+const CLASSES = ["Paladin", "Necromancer", "Myrmidon", "Cleric", "Samurai", "Elementalist", "Druid", "Monk",
+	"Berserker", "Shinobi", "Kannagi", "Beastmaster"]
 const N = 150
 
 var out := []

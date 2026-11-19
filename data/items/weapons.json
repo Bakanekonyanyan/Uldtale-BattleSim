@@ -10,7 +10,7 @@
 		"attribute_increase": 2,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
+		"class_restriction": ["Paladin", "Myrmidon", "Cleric", "Necromancer", "Samurai", "Elementalist", "Monk", "Druid", "Minion", "Brute", "Shaman", "Mage", "King", "Berserker", "Shinobi", "Beastmaster"],
 		"effects": {
 		  "dodge": 0,
 		  "critical_hit_rate": 0,
@@ -18,7 +18,7 @@
 		},
 		"rarity": "",
 		"dual_wieldable": true,
-		"dual_wield_classes": ["Myrmidon", "Samurai", "Monk"],
+		"dual_wield_classes": ["Myrmidon", "Samurai", "Monk", "Shinobi"],
 		"preferred_slot": "main_hand",
 		"blocks_offhand": false,
 		"offhand_exceptions": []
@@ -32,7 +32,7 @@
 		"attribute_increase": 2,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Cleric","Monk","Druid","Minion","Brute","Shaman","King"],
+		"class_restriction": ["Paladin", "Cleric", "Monk", "Druid", "Minion", "Brute", "Shaman", "King", "Berserker", "Beastmaster"],
 		"effects": {
 		  "dodge": 0,
 		  "critical_hit_rate": 0,
@@ -54,7 +54,7 @@
 		"attribute_increase": 1,
 		"type": "one_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Cleric","Necromancer","Samurai","Elementalist","Monk","Druid","Minion","Brute","Shaman","Mage","King"],
+		"class_restriction": ["Paladin", "Myrmidon", "Cleric", "Necromancer", "Samurai", "Elementalist", "Monk", "Druid", "Minion", "Brute", "Shaman", "Mage", "King", "Shinobi", "Kannagi", "Beastmaster"],
 		"effects": {
 		  "dodge": 0.02,
 		  "critical_hit_rate": 0.15,
@@ -62,7 +62,7 @@
 		},
 		"rarity": "",
 		"dual_wieldable": true,
-		"dual_wield_classes": ["Myrmidon", "Samurai", "Monk", "Necromancer"],
+		"dual_wield_classes": ["Myrmidon", "Samurai", "Monk", "Necromancer", "Shinobi", "Beastmaster"],
 		"preferred_slot": "off_hand",
 		"blocks_offhand": false,
 		"offhand_exceptions": []
@@ -78,7 +78,7 @@
 		"attribute_increase": 4,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Samurai","Druid","Minion","Brute","King"],
+		"class_restriction": ["Paladin", "Myrmidon", "Samurai", "Druid", "Minion", "Brute", "King", "Berserker", "Beastmaster"],
 		"effects": {
 		  "dodge": 0,
 		  "critical_hit_rate": 0.05,
@@ -100,7 +100,7 @@
 		"attribute_increase": 5,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Cleric","Druid","Brute","King"],
+		"class_restriction": ["Paladin", "Cleric", "Druid", "Brute", "King", "Berserker"],
 		"effects": {
 		  "dodge": -0.10,
 		  "critical_hit_rate": -0.03,
@@ -122,7 +122,7 @@
 		"attribute_increase": 5,
 		"type": "two_handed",
 		"slot": "main_hand",
-		"class_restriction": ["Paladin","Myrmidon","Brute","King"],
+		"class_restriction": ["Paladin", "Myrmidon", "Brute", "King", "Berserker"],
 		"effects": {
 		  "dodge": -0.08,
 		  "critical_hit_rate": 0,
@@ -230,7 +230,7 @@
 		"attribute_increase": [3, 5],
 		"type": "source",
 		"slot": "off_hand",
-		"class_restriction": ["Elementalist"],
+		"class_restriction": ["Elementalist", "Kannagi"],
 		"effects": {
 		  "dodge": 0.03
 		},

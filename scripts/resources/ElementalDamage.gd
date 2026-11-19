@@ -13,7 +13,8 @@ enum Element {
 	WIND,       # Bleed
 	LIGHTNING,  # Shock
 	HOLY,       # Confused/Blind
-	DARK        # Sleep/Blind
+	DARK,       # Sleep/Blind
+	WATER       # Soaked (appended last: saves and data store the number)
 }
 
 # Map elements to their primary status effect
@@ -24,7 +25,8 @@ const ELEMENT_TO_STATUS = {
 	Element.WIND: Skill.StatusEffect.BLEED,
 	Element.LIGHTNING: Skill.StatusEffect.SHOCK,
 	Element.HOLY: Skill.StatusEffect.CONFUSED,
-	Element.DARK: Skill.StatusEffect.SLEEP
+	Element.DARK: Skill.StatusEffect.SLEEP,
+	Element.WATER: Skill.StatusEffect.SOAKED
 }
 
 # Alternative status effects for some elements
@@ -41,7 +43,8 @@ const ELEMENT_COLORS = {
 	Element.WIND: "lightgreen",
 	Element.LIGHTNING: "yellow",
 	Element.HOLY: "gold",
-	Element.DARK: "purple"
+	Element.DARK: "purple",
+	Element.WATER: "dodgerblue"
 }
 
 # Calculate final damage after elemental modifiers

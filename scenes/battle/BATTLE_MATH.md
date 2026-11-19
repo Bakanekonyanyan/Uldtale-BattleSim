@@ -265,6 +265,8 @@ Tuning: `data/combos.json` (also the Combos tab in the content manager). Code: `
 | Blight | Poison | Dark | 1.4 |
 | Judgement | Blind | Holy | 1.35 |
 | Sucker Punch | Confused | any physical hit | 1.25 |
+| Conduction | Soaked | Lightning | 1.5 |
+| Flash Freeze | Soaked | Ice | 1.35 |
 
 Every class can trigger at least one with its own skills, e.g.:
 - Monk: Ice Splitter, then Fists of Thunder (Shatter).
@@ -276,3 +278,7 @@ Enemies use them too, e.g.:
 - Brute: Stomp confuses, then Smash (Sucker Punch).
 
 The advanced form (sequence chains) comes after more skills and talents exist.
+
+## Status elements
+
+Damage-over-time statuses have an element (`element` in `data/status_effects.json`): Burn = Fire, Freeze = Ice, Shock = Lightning, Poison = Earth, Soaked = Water. A tick is multiplied by `(1 - resistance) x (1 + weakness)` for that element, like a skill hit (minimum 10%).

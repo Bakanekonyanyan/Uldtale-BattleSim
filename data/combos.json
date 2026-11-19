@@ -49,6 +49,22 @@
 			"multiplier": 1.35,
 			"consume": true
 		},
+		"conduction": {
+			"name": "Conduction",
+			"description": "Lightning races through a soaked target.",
+			"setup": "SOAKED",
+			"payoff": { "elements": ["LIGHTNING"] },
+			"multiplier": 1.5,
+			"consume": true
+		},
+		"flash_freeze": {
+			"name": "Flash Freeze",
+			"description": "Ice locks the water on a soaked target solid.",
+			"setup": "SOAKED",
+			"payoff": { "elements": ["ICE"] },
+			"multiplier": 1.35,
+			"consume": true
+		},
 		"sucker_punch": {
 			"name": "Sucker Punch",
 			"description": "A confused target never sees the hit coming.",

@@ -2,6 +2,8 @@
 
 Source: *Class Philosophies* (design doc from the game's author). Use this when designing talents, skills and new classes.
 
+The Kannagi's *Eternal Ones* are the *Ancient Ones* of the creation myth (same beings).
+
 Classes fall into four categories:
 
 - **Wardens**: Paladin, Samurai, Berserker *(not in game yet)*

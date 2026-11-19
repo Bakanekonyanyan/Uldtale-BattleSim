@@ -189,7 +189,7 @@
 		"attribute_increase": 1,
 		"type": "mail",
 		"slot": "head",
-		"class_restriction": ["Myrmidon","Paladin","Samurai","Brute","Shaman","King"],
+		"class_restriction": ["Myrmidon", "Paladin", "Samurai", "Brute", "Shaman", "King", "Berserker", "Beastmaster"],
 		"effects": {
 		  "dodge": -0.02
 		},
@@ -206,7 +206,7 @@
 		"attribute_increase": 2,
 		"type": "mail",
 		"slot": "chest",
-		"class_restriction": ["Myrmidon","Paladin","Samurai","Brute","Shaman","King"],
+		"class_restriction": ["Myrmidon", "Paladin", "Samurai", "Brute", "Shaman", "King", "Berserker", "Beastmaster"],
 		"effects": {
 		  "dodge": -0.04
 		},
@@ -223,7 +223,7 @@
 		"attribute_increase": 1,
 		"type": "mail",
 		"slot": "hands",
-		"class_restriction": ["Myrmidon","Paladin","Samurai","Brute","Shaman","King"],
+		"class_restriction": ["Myrmidon", "Paladin", "Samurai", "Brute", "Shaman", "King", "Berserker", "Beastmaster"],
 		"effects": {
 		  "dodge": -0.02
 		},
@@ -240,7 +240,7 @@
 		"attribute_increase": 2,
 		"type": "mail",
 		"slot": "legs",
-		"class_restriction": ["Myrmidon","Paladin","Samurai","Brute","Shaman","King"],
+		"class_restriction": ["Myrmidon", "Paladin", "Samurai", "Brute", "Shaman", "King", "Berserker", "Beastmaster"],
 		"effects": {
 		  "dodge": -0.03
 		},
@@ -257,7 +257,7 @@
 		"attribute_increase": 1,
 		"type": "mail",
 		"slot": "feet",
-		"class_restriction": ["Myrmidon","Paladin","Samurai","Brute","Shaman","King"],
+		"class_restriction": ["Myrmidon", "Paladin", "Samurai", "Brute", "Shaman", "King", "Berserker", "Beastmaster"],
 		"effects": {
 		  "dodge": -0.02
 		},
@@ -276,7 +276,7 @@
 		"attribute_increase": 2,
 		"type": "plate",
 		"slot": "head",
-		"class_restriction": ["Myrmidon","Paladin","Samurai","Brute","Shaman","King"],
+		"class_restriction": ["Myrmidon", "Paladin", "Samurai", "Brute", "Shaman", "King", "Berserker"],
 		"effects": {
 		  "dodge": -0.04
 		},
@@ -293,7 +293,7 @@
 		"attribute_increase": 3,
 		"type": "plate",
 		"slot": "chest",
-		"class_restriction": ["Paladin","Brute","King"],
+		"class_restriction": ["Paladin", "Brute", "King", "Berserker"],
 		"effects": {
 		  "dodge": -0.08
 		},
@@ -310,7 +310,7 @@
 		"attribute_increase": 2,
 		"type": "plate",
 		"slot": "hands",
-		"class_restriction": ["Paladin","Brute","King"],
+		"class_restriction": ["Paladin", "Brute", "King", "Berserker"],
 		"effects": {
 		  "dodge": -0.04
 		},
@@ -327,7 +327,7 @@
 		"attribute_increase": 3,
 		"type": "plate",
 		"slot": "legs",
-		"class_restriction": ["Paladin","Brute","King"],
+		"class_restriction": ["Paladin", "Brute", "King", "Berserker"],
 		"effects": {
 		  "dodge": -0.06
 		},
@@ -344,7 +344,7 @@
 		"attribute_increase": 2,
 		"type": "plate",
 		"slot": "feet",
-		"class_restriction": ["Paladin","Brute","King"],
+		"class_restriction": ["Paladin", "Brute", "King", "Berserker"],
 		"effects": {
 		  "dodge": -0.04
 		},

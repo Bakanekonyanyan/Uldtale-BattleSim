@@ -1,10 +1,12 @@
 {
 	"POISON": {
+		"element": "EARTH",
 		"damage_type": "hp_percent",
 		"damage_value": 0.06,
 		"message": "{name} took {damage} poison damage"
 	},
 	"BURN": {
+		"element": "FIRE",
 		"damage_type": "hp_percent",
 		"damage_value": 0.04,
 		"stat_modifiers": {
@@ -13,12 +15,14 @@
 		"message": "{name} took {damage} burn damage"
 	},
 	"SHOCK": {
+		"element": "LIGHTNING",
 		"damage_type": "hp_percent",
 		"damage_value": 0.05,
 		"stun_chance": 0.15,
 		"message": "{name} took {damage} shock damage"
 	},
 	"FREEZE": {
+		"element": "ICE",
 		"damage_type": "none",
 		"stat_modifiers": {
 			"dexterity": -3,
@@ -94,5 +98,11 @@
 		"damage_type": "none",
 		"dodge_bonus": 0.25,
 		"message": "{name} moves like a shadow (+25% dodge)"
+	},
+	"SOAKED": {
+		"element": "WATER",
+		"damage_type": "none",
+		"stat_modifiers": { "agility": -2 },
+		"message": "{name} is soaked to the bone"
 	}
 }

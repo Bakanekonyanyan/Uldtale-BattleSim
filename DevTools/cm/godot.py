@@ -226,7 +226,8 @@ def sim_args(opts: dict) -> list[str]:
             f"--floor={int(opts.get('floor', 1))}"]
 
 
-DEFAULT_CLASSES = ["Paladin", "Necromancer", "Myrmidon", "Cleric", "Samurai", "Elementalist", "Druid", "Monk"]
+DEFAULT_CLASSES = ["Paladin", "Necromancer", "Myrmidon", "Cleric", "Samurai", "Elementalist", "Druid", "Monk",
+                   "Berserker", "Shinobi", "Kannagi", "Beastmaster"]
 
 
 # ------------------------------------------------------------------ sim history

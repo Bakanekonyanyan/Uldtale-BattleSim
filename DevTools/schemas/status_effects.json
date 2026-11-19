@@ -12,6 +12,16 @@
    "key_help": "Must match a StatusEffect enum value in Skill.gd.",
    "fields": [
     {
+     "name": "element",
+     "type": "enum",
+     "source": "gd:Element",
+     "exclude": [
+      "NONE"
+     ],
+     "optional": true,
+     "help": "Element of the status (Poison = EARTH). Its damage ticks use the target's resistance/weakness to it."
+    },
+    {
      "name": "damage_type",
      "type": "enum",
      "options": [

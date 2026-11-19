@@ -238,9 +238,21 @@ func _process_effect_damage(effect: Skill.StatusEffect) -> String:
 		elif data.damage_type == "flat":
 			dmg = int(data.damage_value)
 		
+		# The status's element (data "element", e.g. Poison = EARTH) applies the
+		# target's resistance/weakness, the same way it does for skill hits
+		var note = ""
+		var elem_name = String(data.get("element", ""))
+		if dmg > 0 and ElementalDamage.Element.has(elem_name):
+			var elem = ElementalDamage.Element[elem_name]
+			var res = character.get_elemental_resistance(elem)
+			var weak = character.get_elemental_weakness(elem)
+			var mult = max(0.1, (1.0 - res) * (1.0 + weak))
+			dmg = max(1, int(round(dmg * mult)))
+			note = " (resisted)" if mult < 0.99 else (" (weak!)" if mult > 1.01 else "")
+		
 		if dmg > 0:
 			character.take_damage(dmg)
-			message += "[color=red]%s took %d %s damage[/color]\n" % [character.name, dmg, effect_name.to_lower()]
+			message += "[color=red]%s took %d %s damage%s[/color]\n" % [character.name, dmg, effect_name.to_lower(), note]
 	
 	# Stun chance
 	if data.has("stun_chance"):

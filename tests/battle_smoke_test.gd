@@ -141,6 +141,44 @@ func _unit_checks() -> void:
 
 # ------------------------------------------------------------------ phase 0 (locations, drops, carry limit, saves)
 
+## Water element, status elements, Soaked combos, the four new classes
+func _element_and_class_checks() -> void:
+	check(ElementalDamage.Element.has("WATER") and Skill.ElementType.has("WATER"), "Water element exists")
+	var jutsu = SkillManager.get_skill("Water Dragon Jutsu")
+	check(jutsu != null and Skill.ElementType.WATER in jutsu.elements, "Water Dragon Jutsu is a Water skill")
+	var bushido = SkillManager.get_skill("Bushido")
+	check(bushido != null and bushido.elements.is_empty(), "Bushido has no element")
+	
+	# Conduction: Soaked + Lightning; Water Dragon Jutsu (debuff) always soaks
+	var ninja = CharacterFactory.create_character("N", "Hume", "Shinobi", true)
+	var dummy = make_player(); dummy.name = "Dummy"
+	dummy.vitality += 300; dummy.calculate_secondary_attributes(); dummy.current_hp = dummy.max_hp
+	ninja.get_skill_instance("Water Dragon Jutsu").use(ninja, [dummy])
+	check(dummy.status_manager.has_effect(Skill.StatusEffect.SOAKED), "Water Dragon Jutsu soaks the target")
+	var kunai = ninja.get_skill_instance("Lightning Kunai")
+	check(Combos.preview(ninja, kunai, dummy).get("name", "") == "Conduction", "Lightning Kunai on a soaked target = Conduction")
+	
+	# Status ticks use the status's element: Poison is Earth
+	var earthy = make_player(); earthy.name = "Earthy"
+	var plain = make_player(); plain.name = "Plain"
+	earthy.add_temp_elemental_resistance(ElementalDamage.Element.EARTH, 0.5)
+	for c in [earthy, plain]:
+		c.vitality += 200; c.calculate_secondary_attributes(); c.current_hp = c.max_hp
+		c.apply_status_effect(Skill.StatusEffect.POISON, 3)
+	var hp_e = earthy.current_hp; var hp_p = plain.current_hp
+	earthy.status_manager.update_effects(); plain.status_manager.update_effects()
+	var lost_e = hp_e - earthy.current_hp; var lost_p = hp_p - plain.current_hp
+	check(lost_p > 0 and abs(float(lost_e) / lost_p - 0.5) < 0.05, "Poison ticks are Earth: 50%% Earth resist halves them (%d vs %d)" % [lost_e, lost_p])
+	
+	# the four new classes
+	for cls in ["Berserker", "Shinobi", "Kannagi", "Beastmaster"]:
+		var c = CharacterFactory.create_character("T", "Hume", cls, true)
+		var ok = c != null and c.skills.size() == 3
+		for sn in (c.skills if c else []):
+			ok = ok and c.get_skill_instance(sn) != null
+		check(ok and c.attack_power > 0 and c.spell_power > 0, "%s: created with 3 working skills" % cls)
+		check(not c.proficiency_manager.get_available_weapon_types().is_empty(), "%s: can use some weapons" % cls)
+
 ## Set-up / payoff combos (data/combos.json, scripts/resources/Combos.gd)
 func _combo_checks() -> void:
 	check(Combos.all().size() >= 7, "combos load (%d)" % Combos.all().size())
@@ -219,6 +257,7 @@ func _phase0_checks() -> void:
 	check(is_equal_approx(caster.spell_power, sp_before), "gear spell_power bonus removed on unequip")
 
 	_combo_checks()
+	_element_and_class_checks()
 	
 	# Class-biased loot rolls (Breather drops pass the player's class)
 	var biased_ok := true

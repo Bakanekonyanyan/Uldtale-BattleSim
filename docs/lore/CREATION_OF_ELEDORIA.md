@@ -30,7 +30,7 @@ Thus, Eledoria was born from the essence of Nyxara, a world of wonder shaped by 
 |---|---|---|---|
 | Nyxara, the Eternal Void | - | creation and destruction in balance | - |
 | Xalathar, the Everchanging Abyss | - | chaos and entropy (the enemy of balance) | - |
-| The Ancient Ones | Nyxara's essence | primal creation and destruction | (Kannagi's "Eternal Ones"?) |
+| The Ancient Ones (also called the Eternal Ones) | Nyxara's essence | primal creation and destruction | Kannagi |
 | Aetherion, the Omnielemental Spirit | heart | unity of the elements | Elementalist |
 | Nimue, the Spirit Weaver | blood | the flow of life | Monk, Druid, Beastmaster |
 | Elandria, the Earth Mother | lungs | breath of life, nature | Monk, Druid, Beastmaster |
