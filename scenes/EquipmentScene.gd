@@ -266,6 +266,8 @@ func _stats_text() -> String:
 		["Dodge", "%d%%" % int(round(c.dodge * 100))],
 		["Critical hit", "%d%%" % int(round(c.critical_hit_rate * 100))],
 	]
+	if BattleFormulas.get_armor_penetration(c) > 0.0:
+		rows.append(["Armor penetration", "%d%%" % int(round(BattleFormulas.get_armor_penetration(c) * 100))])
 	var t := "[color=%s][font_size=14]YOUR STATS[/font_size][/color]\n[table=2]" % ACCENT
 	for r in rows:
 		t += "[cell]%s[/cell][cell][b]%s[/b][/cell]" % r

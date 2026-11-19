@@ -28,6 +28,7 @@ const MIN_DAMAGE := 1
 
 # --- Defense ---
 const DEFENSE_K := 100.0           # defense needed to halve damage
+const MAX_ARMOR_PENETRATION := 0.75 # physical attacks ignore at most 75% of defense
 const ARMOR_SCALE := 0.5           # each point of armor = 0.5 defense
 const ARMOR_VS_MAGIC := 0.5        # ...and half of that again against magic
 
@@ -82,6 +83,8 @@ static func mitigation(defense: float) -> float:
 static func hit_damage(attacker: CharacterData, target: CharacterData, is_physical: bool, skill_power: float = 0.0) -> float:
 	var offense = physical_offense(attacker) if is_physical else magical_offense(attacker)
 	var defense = physical_defense(target) if is_physical else magical_defense(target)
+	if is_physical:
+		defense *= 1.0 - get_armor_penetration(attacker)
 	var raw = offense * BASE_SCALE * (1.0 + skill_power * SKILL_POWER_SCALE)
 	raw *= attacker.damage_multiplier  # enemy tuning (EnemyFactory), 1.0 for players
 	raw *= MomentumSystem.get_damage_multiplier() if attacker.is_player else 1.0
@@ -112,6 +115,10 @@ static func status_procs(is_damage_skill: bool) -> bool:
 	return (not is_damage_skill) or RandomManager.randf() < DAMAGE_SKILL_STATUS_CHANCE
 
 # --- Equipment helpers ---
+
+## Fraction of the target's physical defense this attacker ignores (gear "armor_penetration").
+static func get_armor_penetration(c: CharacterData) -> float:
+	return clamp(float(c.armor_penetration), 0.0, MAX_ARMOR_PENETRATION)
 
 static func get_armor(c: CharacterData) -> float:
 	var total := 0.0

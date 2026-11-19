@@ -23,6 +23,7 @@ godot --headless res://tests/balance_sim.tscn -- mylabel
 | Mitigation | `100 / (100 + defense)` → 0 def = 100%, 100 def = 50%, 300 def = 25% |
 | Physical defense | `toughness + armor × 0.5` |
 | Magical defense | `spell_ward + armor × 0.25` |
+| Armor penetration | physical hits use `defense × (1 − armor_penetration)`; from gear (e.g. Greatsword 20%), capped at 75% |
 | Crit | `crit_rate` chance for ×1.5–2.0 |
 | Heal | `skill_power + spell_power × 0.5` |
 | Buff / debuff | `skill_power` × 1.5% of the target's **base** attribute (Roar 40 = −60% Agility), lasting the full listed number of the target's turns |

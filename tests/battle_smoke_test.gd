@@ -156,6 +156,28 @@ func _phase0_checks() -> void:
 	caster.equipment["chest"] = null
 	caster.calculate_secondary_attributes()
 	check(is_equal_approx(caster.spell_power, sp_before), "gear spell_power bonus removed on unequip")
+
+	# Armor penetration: gear sets it, recalculation doesn't stack it, physical hits ignore that much defense
+	var striker = make_player(); var wall = make_player()
+	wall.toughness = 100.0
+	var axe = Equipment.new({"id": "test_axe", "name": "Test Axe", "type": "two_handed", "slot": "main_hand",
+		"damage": 10, "rarity": "common"})
+	axe.effects = {"armor_penetration": 0.2}
+	axe.stat_modifiers = {}
+	axe.attribute_target = ""
+	var plain_hit = BattleFormulas.hit_damage(striker, wall, true)
+	striker.equipment["main_hand"] = axe
+	striker.calculate_secondary_attributes()
+	striker.calculate_secondary_attributes()
+	check(is_equal_approx(striker.armor_penetration, 0.2), "armor penetration from gear, not stacked by recalcs (%.2f)" % striker.armor_penetration)
+	var expected = (BattleFormulas.physical_offense(striker) * BattleFormulas.BASE_SCALE) * BattleFormulas.mitigation(BattleFormulas.physical_defense(wall) * 0.8)
+	check(is_equal_approx(BattleFormulas.hit_damage(striker, wall, true), expected), "physical hit ignores 20 percent of defense")
+	check(is_equal_approx(BattleFormulas.hit_damage(striker, wall, false), BattleFormulas.magical_offense(striker) * BattleFormulas.BASE_SCALE * BattleFormulas.mitigation(BattleFormulas.magical_defense(wall))), "armor penetration doesn't affect magic")
+	striker.armor_penetration = 5.0
+	check(is_equal_approx(BattleFormulas.get_armor_penetration(striker), BattleFormulas.MAX_ARMOR_PENETRATION), "armor penetration capped")
+	striker.equipment["main_hand"] = null
+	striker.calculate_secondary_attributes()
+	check(striker.armor_penetration == 0.0 and plain_hit > 0.0, "armor penetration removed on unequip")
 	# Themed location: only that race (regular enemies and boss)
 	EnemyFactory.set_location("goblin_forest")
 	var all_goblin := true

@@ -212,8 +212,12 @@ func calculate_secondary_attributes():
 	
 	critical_hit_rate = 0.05 + (eff.dexterity * 0.4 + eff.agility * 0.25 + eff.intelligence * 0.2 + eff.fortitude * 0.15) / 200.0
 	
+	# Armor penetration only comes from gear: reset, then add (so it never stacks
+	# across recalculations). Used by BattleFormulas.hit_damage on physical hits.
+	armor_penetration = 0.0
+	
 	# Equipment bonuses to secondary stats (e.g. Talisman dodge, source spell_ward)
-	for stat in ["toughness", "dodge", "spell_ward", "accuracy", "critical_hit_rate"]:
+	for stat in ["toughness", "dodge", "spell_ward", "accuracy", "critical_hit_rate", "armor_penetration"]:
 		if flat.has(stat):
 			set(stat, get(stat) + flat[stat])
 	

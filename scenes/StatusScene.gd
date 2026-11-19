@@ -211,6 +211,9 @@ func _combat_text() -> String:
 		["Accuracy / Dodge", "%d%% / %d%%" % [int(round(c.accuracy * 100)), int(round(c.dodge * 100))], "chance to hit / to evade"],
 		["Critical hit", "%d%%" % int(round(c.critical_hit_rate * 100)), "x1.5 to x2 damage"],
 	]
+	var pen = BattleFormulas.get_armor_penetration(c)
+	if pen > 0.0:  # the card fits six rows, so share the crit row
+		rows[5] = ["Crit / Armor pen.", "%d%% / %d%%" % [int(round(c.critical_hit_rate * 100)), int(round(pen * 100))], "x1.5-2 damage / ignores that much physical defense"]
 	var t := "[table=3]"
 	for r in rows:
 		t += "[cell]%s[/cell][cell][b]%s[/b][/cell][cell][color=%s]%s[/color][/cell]" % [r[0], r[1], MUTED, r[2]]
