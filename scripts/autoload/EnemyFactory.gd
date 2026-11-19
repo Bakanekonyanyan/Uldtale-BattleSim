@@ -214,7 +214,9 @@ func apply_enemy_scaling(enemy: CharacterData, floor: int, wave: int, is_boss: b
 	# Boss scaling
 	var boss_multiplier = BOSS_STAT_MULT if is_boss else 1.0
 	
-	var total_multiplier = base_multiplier * wave_multiplier * momentum_multiplier * boss_multiplier
+	# World event in this location (e.g. a Monster Surge)
+	var event_multiplier = WorldClock.current_modifier("enemy_power", current_location)
+	var total_multiplier = base_multiplier * wave_multiplier * momentum_multiplier * boss_multiplier * event_multiplier
 	
 	# Apply scaling
 	enemy.vitality = int(enemy.vitality * total_multiplier)

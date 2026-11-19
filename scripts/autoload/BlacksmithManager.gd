@@ -84,7 +84,7 @@ func get_upgrade_cost(item: Equipment, steps: int = 0) -> Dictionary:
 		mats["monster_core"] = mats.get("monster_core", 0) + 1
 	for id in mats:
 		mats[id] = int(ceil(mats[id] * mult))
-	return {"gold": int(ceil(base_gold * mult)), "materials": mats}
+	return {"gold": int(ceil(base_gold * mult * WorldClock.current_modifier("upgrade_fee"))), "materials": mats}
 
 func can_afford(player: CharacterData, cost: Dictionary) -> bool:
 	if player.currency.copper < cost.gold:

@@ -5,16 +5,16 @@
 	"items_lost": 1,
 	"items_lost_boss": 2,
 	"lost_found": {
-		"expires_after_expeditions": 5,
 		"price_fraction": 0.6,
 		"level_step": 0.08,
 		"upgrade_step": 0.15,
-		"rarity_mult": { "common": 1.0, "uncommon": 1.5, "magic": 2.0, "rare": 3.0, "epic": 4.5, "legendary": 6.5 }
+		"rarity_mult": { "common": 1.0, "uncommon": 1.5, "magic": 2.0, "rare": 3.0, "epic": 4.5, "legendary": 6.5 },
+		"expires_after_days": 10
 	},
 	"injury": {
-		"expeditions": 2,
-		"extra_expeditions_boss": 1,
-		"treatment_copper_per_level": 40
+		"treatment_copper_per_level": 40,
+		"extra_days_boss": 2,
+		"days": 4
 	},
 	"injuries": {
 		"cracked_ribs": { "name": "Cracked Ribs", "description": "Every breath hurts.", "weight": 3, "stats": { "max_hp_pct": -0.15, "toughness": -3 } },

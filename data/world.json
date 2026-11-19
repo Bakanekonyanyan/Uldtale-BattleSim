@@ -1,0 +1,87 @@
+{
+  "_doc": "World clock (WorldClock.gd, GAME_ROADMAP.md section 5). Time is a day counter that moves on actions: expeditions (travel + floors) and resting at the Inn. Each day the world ticks: bounty deadlines, injuries and Lost & Found count down; the shop restocks weekly; a world event can start each week. What happened goes to the news ledger shown in town.",
+  "calendar": {
+    "days_per_week": 7,
+    "weeks_per_season": 4,
+    "seasons": [
+      "Bloomtide",
+      "Suncrest",
+      "Emberfall",
+      "Frostmere"
+    ],
+    "weekdays": [
+      "Solday",
+      "Mooneve",
+      "Stoneday",
+      "Tideday",
+      "Windday",
+      "Flameday",
+      "Starday"
+    ]
+  },
+  "time_costs": {
+    "expedition_base_days": 1,
+    "days_per_extra_floor": 0.5,
+    "defeat_extra_days": 1,
+    "_doc": "An expedition costs the location's travel_days (Locations tab) + expedition_base_days + days_per_extra_floor x (floors entered - 1), rounded down; +defeat_extra_days if you were carried back."
+  },
+  "inn": {
+    "copper_per_level": 5,
+    "_doc": "One night costs copper_per_level x level. Resting passes days (injuries heal, the board refreshes, the shop restocks)."
+  },
+  "shop": {
+    "restock_every_days": 7,
+    "price_drift": 0.12,
+    "_doc": "Consumable prices drift up to +/- price_drift per item each week."
+  },
+  "news": {
+    "max_entries": 40
+  },
+  "events": {
+    "_doc": "At the start of each week one event may begin (chance), lasting duration_days. Effects: enemy_power and reward_mult apply in the event's location (a random one if location is 'random_themed'); consumable_price, upgrade_fee and inn_price apply everywhere.",
+    "chance_per_week": 0.6,
+    "list": {
+      "monster_surge": {
+        "name": "Monster Surge",
+        "news": "Scouts report a monster surge in {location}! The creatures are stronger, but so are the spoils.",
+        "end_news": "The monster surge in {location} has died down.",
+        "weight": 3,
+        "duration_days": 7,
+        "location": "random_themed",
+        "effects": {
+          "enemy_power": 1.1,
+          "reward_mult": 1.3
+        }
+      },
+      "harvest_festival": {
+        "name": "Harvest Festival",
+        "news": "The Harvest Festival fills the square. Merchants and the inn are offering festival prices.",
+        "end_news": "The festival stalls are packed away.",
+        "weight": 2,
+        "duration_days": 5,
+        "effects": {
+          "consumable_price": 0.8,
+          "inn_price": 0.5
+        }
+      },
+      "smiths_fair": {
+        "name": "Smiths' Fair",
+        "news": "The Smiths' Fair has come to town. The Blacksmith's upgrade fees are lower this week.",
+        "end_news": "The Smiths' Fair has moved on.",
+        "weight": 2,
+        "duration_days": 7,
+        "effects": {
+          "upgrade_fee": 0.85
+        }
+      },
+      "caravan": {
+        "name": "Merchant Caravan",
+        "news": "A merchant caravan rolls in: the shop has fresh stock today.",
+        "weight": 2,
+        "duration_days": 1,
+        "restock": true,
+        "effects": {}
+      }
+    }
+  }
+}

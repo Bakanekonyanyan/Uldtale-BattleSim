@@ -178,6 +178,34 @@ Each day, the world simulates a little:
 - **Shops restock and prices drift;** events fire (festival, monster surge in a location).
 - **Bounty deadlines** move from "expeditions" to days (they already tick per expedition, so this is a small change).
 
+### What was built (world clock)
+
+Data: `data/world.json` (Content Manager tab **World**), plus `travel_days` per location. Code: `scripts/autoload/WorldClock.gd`; `GameEvents.day_passed` / `days_advanced`. State: `town_state["world"]` per character.
+
+**Time costs:**
+- Expeditions: travel (The Dungeon 0 days, themed locations 1) + 1 + ½ per extra floor, rounded down. Being carried back after a defeat adds 1 day.
+- The **Inn** (Town) costs 5 copper × level per night, passes 1 or 3 nights and restores you fully.
+
+**What counts down per day:**
+- Bounty deadlines: **6 days**.
+- Injuries: **4 days**, 6 after a boss.
+- Lost & Found: **10 days**.
+- The Guild board refreshes whenever time passes.
+- Old saves: timers that were in expeditions are doubled on load.
+
+**Calendar:** 7-day weeks (Solday … Starday) and 4 seasons (Bloomtide, Suncrest, Emberfall, Frostmere) of 4 weeks.
+
+**Weekly:**
+- The shop restocks the common gear.
+- Consumable prices drift up to ±12% per item.
+- A world event may start (60% chance):
+  - **Monster Surge** in one themed location: enemies ×1.1, gold ×1.3.
+  - **Harvest Festival**: consumables ×0.8, Inn half price.
+  - **Smiths' Fair**: upgrade fees ×0.85.
+  - **Merchant Caravan**: an instant restock.
+
+**News ledger:** a Town panel shows the date, the current event and recent news: time passing, events, failed bounties and promotions. NPC adventurer news will go here (§4).
+
 **Why build it light and early:**
 - It's cheap (a seeded tick function, no real-time scheduling).
 - Several systems want a shared clock (deadlines, recovery, restocks, NPC progress).
@@ -187,7 +215,7 @@ Each day, the world simulates a little:
 
 1. ~~**Finish the battle core:** enemy/boss archetypes (B1), defeat consequences (B3).~~ Done.
 2. ~~**Adventurer ranks** in the Guild.~~ Done.
-3. **World clock** (days, inn rest, deadlines in days, news ledger).
+3. ~~**World clock** (days, inn rest, deadlines in days, news ledger).~~ Done.
 4. **NPC adventurers:** generator, roster, rapport, simulated quests on the clock.
 5. **Party of 3 in battle** (B2), then **recruitment** from the roster.
 6. **Expedition encounters:** helpers, rivals, saboteurs between waves.

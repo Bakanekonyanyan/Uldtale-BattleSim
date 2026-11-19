@@ -286,6 +286,59 @@ func _rank_checks() -> void:
 	DungeonStateManager.active_player = prev_active
 	EnemyFactory.set_location(LocationManager.DEFAULT_LOCATION)
 
+## World clock (data/world.json, WorldClock.gd)
+func _world_checks() -> void:
+	var p = make_player()
+	p.name = "ZZ_SmokeTest_World"
+	var prev_active = DungeonStateManager.active_player
+	DungeonStateManager.active_player = p
+	check(WorldClock.day(p) == 1 and "Day 1" in WorldClock.date_text(p), "a new adventurer starts on day 1 (%s)" % WorldClock.date_text(p))
+	check(WorldClock.expedition_days("the_dungeon", 1, false) == 1 and WorldClock.expedition_days("goblin_forest", 3, false) == 3
+		and WorldClock.expedition_days("goblin_forest", 3, true) == 4, "expeditions cost travel + floors (+1 day after a defeat)")
+	# an expedition through the real lifecycle
+	DungeonStateManager.start_dungeon(p, 1, "goblin_forest")
+	DungeonStateManager.advance_floor()
+	DungeonStateManager.end_dungeon(true)
+	check(WorldClock.day(p) == 3, "Goblin Forest, 2 floors: 2 days pass (day %d)" % WorldClock.day(p))
+	DungeonStateManager.active_player = p
+	# daily ticks
+	var b = _bounty(p, "hunt_class", "KILL", {"location": "orc_plains", "class": "Brute"}, 9)
+	b.deadline = 2
+	DefeatManager.get_injuries(p).append({"id": "cracked_ribs", "remaining": 3})
+	WorldClock.advance(p, 2, "test")
+	check(not GuildManager.get_active(p).has(b), "a 2-day deadline fails after 2 days")
+	check(int(DefeatManager.get_injuries(p)[0].remaining) == 1, "injuries heal a day at a time")
+	check(WorldClock.get_news(p, 5).any(func(n): return "Bounty failed" in n.text), "failed bounties make the news")
+	# Inn
+	p.currency.copper = 1000
+	p.current_hp = 1
+	var day0 = WorldClock.day(p)
+	var cost = WorldClock.inn_price(p, 1)
+	check(WorldClock.rest(p, 1).ok and WorldClock.day(p) == day0 + 1 and p.currency.copper == 1000 - cost and p.current_hp == p.max_hp,
+		"a night at the Inn costs %d copper, passes a day and restores HP" % cost)
+	p.currency.copper = 0
+	check(not WorldClock.rest(p, 1).ok and WorldClock.day(p) == day0 + 1, "no money, no room")
+	# events
+	WorldClock.start_event(p, "monster_surge", "troll_caves")
+	check(WorldClock.modifier(p, "enemy_power", "troll_caves") > 1.0 and WorldClock.modifier(p, "enemy_power", "orc_plains") == 1.0
+		and WorldClock.modifier(p, "reward_mult", "troll_caves") > 1.0, "a Monster Surge strengthens one location and its rewards")
+	var before = ShopManager.get_consumable_price("health_potion")
+	WorldClock.start_event(p, "harvest_festival")
+	check(ShopManager.get_consumable_price("health_potion") < before, "the Harvest Festival lowers potion prices (%d -> %d)" % [before, ShopManager.get_consumable_price("health_potion")])
+	WorldClock.advance(p, 5, "test")
+	check(WorldClock.current_event(p).is_empty(), "events end after their duration")
+	# weekly restock
+	ShopManager.equipment_inventory.clear()
+	while (WorldClock.day(p) - 1) % WorldClock.days_per_week() != 0:
+		WorldClock.advance(p, 1, "")
+	check(not ShopManager.equipment_inventory.is_empty(), "the shop restocks at the start of each week (day %d)" % WorldClock.day(p))
+	# old-save migration: timers were in expeditions
+	var old = make_player()
+	old.town_state = {"guild": {"active": [{"uid": 1, "deadline": 3}]}, "injuries": [{"id": "deep_gash", "remaining": 2}]}
+	WorldClock.migrate_old_save(old)
+	check(int(old.town_state.guild.active[0].deadline) == 6 and int(old.town_state.injuries[0].remaining) == 4, "old saves: expedition timers become days (x2)")
+	DungeonStateManager.active_player = prev_active
+
 ## Talent trees (data/talents.json, TalentManager.gd)
 func _talent_checks() -> void:
 	# skills charge every cost they list
@@ -546,6 +599,7 @@ func _phase0_checks() -> void:
 	_defeat_checks()
 	_archetype_checks()
 	_rank_checks()
+	_world_checks()
 	
 	# Class-biased loot rolls (Breather drops pass the player's class)
 	var biased_ok := true
@@ -1074,7 +1128,7 @@ func _guild_checks() -> void:
 	var dem1 = GuildManager.get_demerits(p)
 	for i in range(3):
 		GameEvents.expedition_ended.emit("the_dungeon", true)
-	check(not GuildManager.get_active(p).has(late) and GuildManager.get_demerits(p) == dem1 + 1, "missing the 3-expedition deadline fails the bounty with a demerit")
+	check(not GuildManager.get_active(p).has(late) and GuildManager.get_demerits(p) == dem1 + 1, "missing the deadline (3 one-day expeditions) fails the bounty with a demerit")
 	check(GuildManager.get_active(p).has(boss) and GuildManager.get_active(p).has(depth), "finished bounties don't expire before turn-in")
 	check(GuildManager.state(p).board.size() == 3, "the board refreshes after an expedition")
 	

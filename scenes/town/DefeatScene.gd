@@ -25,7 +25,7 @@ func _ready():
 	var inj: Dictionary = s.get("injury", {})
 	if not inj.is_empty():
 		t += "[b]Injury:[/b] [color=#e07a5f]%s[/color] - %s\n" % [inj.name, inj.description]
-		t += "[color=#a99f90]  Lasts %d expedition(s). The Guild Infirmary can treat it sooner.[/color]\n" % int(inj.expeditions)
+		t += "[color=#a99f90]  Lasts %d day(s). The Guild Infirmary can treat it sooner.[/color]\n" % int(inj.days)
 	var items: Array = s.get("items", [])
 	if items.is_empty():
 		t += "[b]Gear:[/b] nothing lost.\n"
@@ -35,6 +35,9 @@ func _ready():
 			t += "  %s  [color=#a99f90](%s - buy back for %s)[/color]\n" % [it.name, String(it.rarity).capitalize(), Currency.format_copper(int(it.price))]
 		t += "[color=#a99f90]Buy it back at the Guild before it's sold off.[/color]\n"
 	t += "\n[color=#a99f90]Any loot banked by pressing on was lost.[/color]"
+	var who = CharacterManager.get_current_character()
+	if who:
+		t += "\n[color=#a99f90]You wake in the Guild infirmary on %s.[/color]" % WorldClock.date_text(who)
 	text.text = t
 
 func set_player(character: CharacterData) -> void:

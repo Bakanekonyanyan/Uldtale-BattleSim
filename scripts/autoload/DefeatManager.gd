@@ -2,13 +2,12 @@
 # Losing a battle (decided in docs/design/GAME_ROADMAP.md section 7): the Guild
 # recovers you, and you pay for it.
 #   - a gold fee (gold_fee_fraction of the money you carry)
-#   - an injury: stat penalties for a few expeditions (Infirmary can treat it)
+#   - an injury: stat penalties for a few days (Infirmary can treat it)
 #   - equipped gear lost to the Guild's Lost & Found (more on a boss fight),
 #     bought back for a price scaling with rarity, item level and upgrades,
 #     before it expires
 # Tuning: data/defeat.json. State lives in player.town_state ("injuries",
-# "lost_found") so it saves with the character. Expedition-based timers move to
-# days once the world clock exists.
+# "lost_found") so it saves with the character. Timers count days (WorldClock).
 extends Node
 
 var cfg: Dictionary = {}
@@ -17,7 +16,7 @@ func _ready():
 	var f = FileAccess.open("res://data/defeat.json", FileAccess.READ)
 	var d = JSON.parse_string(f.get_as_text()) if f else null
 	cfg = d if d is Dictionary else {}
-	GameEvents.expedition_ended.connect(_on_expedition_ended)
+	GameEvents.day_passed.connect(func(player, _day): tick(player))
 
 # ------------------------------------------------------------------ defeat
 
@@ -44,7 +43,7 @@ func apply_defeat(player: CharacterData, is_boss: bool = false) -> Dictionary:
 		player.unequip_item(slot)                  # back into the pack...
 		_remove_from_pack(player, item)            # ...and out of it: the Guild has it now
 		var entry = {"item": SaveManager.equipment_to_save(item), "price": buyback_price(item),
-			"expires_in": int(cfg.get("lost_found", {}).get("expires_after_expeditions", 5))}
+			"expires_in": int(cfg.get("lost_found", {}).get("expires_after_days", 10))}
 		_lost_found(player).append(entry)
 		summary.items.append({"name": item.display_name, "rarity": item.rarity, "price": entry.price})
 	# injury
@@ -126,16 +125,16 @@ func add_random_injury(player: CharacterData, is_boss: bool = false) -> Dictiona
 			pick = id
 			break
 	var ic: Dictionary = cfg.get("injury", {})
-	var exps = int(ic.get("expeditions", 2)) + (int(ic.get("extra_expeditions_boss", 1)) if is_boss else 0)
+	var exps = int(ic.get("days", 4)) + (int(ic.get("extra_days_boss", 2)) if is_boss else 0)
 	var list = _injuries(player)
 	for inj in list:
 		if inj.id == pick:          # same injury again: it lasts longer
 			inj.remaining = int(inj.remaining) + exps
 			player.calculate_secondary_attributes()
-			return {"id": pick, "name": table[pick].name, "description": table[pick].get("description", ""), "expeditions": inj.remaining}
+			return {"id": pick, "name": table[pick].name, "description": table[pick].get("description", ""), "days": inj.remaining}
 	list.append({"id": pick, "remaining": exps})
 	player.calculate_secondary_attributes()
-	return {"id": pick, "name": table[pick].name, "description": table[pick].get("description", ""), "expeditions": exps}
+	return {"id": pick, "name": table[pick].name, "description": table[pick].get("description", ""), "days": exps}
 
 ## Summed stat penalties of current injuries ({stat: amount}), read by
 ## CharacterData.get_all_flat_bonuses.
@@ -164,13 +163,7 @@ func treat(player: CharacterData) -> Dictionary:
 
 # ------------------------------------------------------------------ time
 
-## Each finished expedition: injuries heal a step, Lost & Found items age out.
-func _on_expedition_ended(_location_id: String, _cleared: bool) -> void:
-	var player = DungeonStateManager.active_player
-	if player == null:
-		return
-	tick(player)
-
+## Each day (WorldClock): injuries heal a step, Lost & Found items age out.
 func tick(player: CharacterData) -> void:
 	var inj = _injuries(player)
 	for i in range(inj.size() - 1, -1, -1):

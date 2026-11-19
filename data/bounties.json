@@ -3,11 +3,11 @@
 	"settings": {
 		"board_size": 3,
 		"max_active": 3,
-		"deadline_expeditions": 3,
 		"fail_point_penalty": 0.5,
 		"abandon_fee_fraction": 0.25,
 		"reroll_fee_per_floor": 50,
-		"classes": ["Minion", "Brute", "Shaman", "Mage", "Guard", "Hexer"]
+		"classes": ["Minion", "Brute", "Shaman", "Mage", "Guard", "Hexer"],
+		"deadline_days": 6
 	},
 	"templates": {
 		"hunt_class": {

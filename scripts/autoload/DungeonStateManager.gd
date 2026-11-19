@@ -23,6 +23,8 @@ var enemy_group: EnemyGroup
 
 # Persistent state
 var dungeon_active: bool = false
+## Floors entered this expedition (the world clock charges days for them)
+var floors_entered: int = 0
 
 func start_dungeon(player: CharacterData, start_floor: int = 1, location_id: String = "the_dungeon"):
 	"""Initialize a new expedition at a location"""
@@ -30,6 +32,7 @@ func start_dungeon(player: CharacterData, start_floor: int = 1, location_id: Str
 	current_location = location_id if LocationManager.has_location(location_id) else LocationManager.DEFAULT_LOCATION
 	player.last_location = current_location
 	current_floor = start_floor
+	floors_entered = 1
 	current_wave = 0  # Start at 0, first advance_wave() makes it 1
 	is_boss_fight = false
 	dungeon_active = true
@@ -77,6 +80,7 @@ func advance_floor() -> bool:
 		return false
 	
 	current_floor += 1
+	floors_entered += 1
 	current_wave = 0  # Reset to 0, next advance_wave() will make it 1
 	is_boss_fight = false
 	

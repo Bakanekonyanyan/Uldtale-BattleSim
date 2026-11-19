@@ -2,8 +2,8 @@
 # Guild bounty rules (no UI). Design: docs/design/TOWN_SERVICES.md section 6.
 #
 # - The board offers `board_size` bounties rolled from data/bounties.json and
-#   refreshes after every expedition (or for a fee).
-# - Up to `max_active` accepted bounties. Each has a deadline in expeditions.
+#   refreshes whenever days pass (WorldClock), or for a fee.
+# - Up to `max_active` accepted bounties. Each has a deadline in days.
 # - Progress comes from GameEvents (kills, floor clears, wins); DELIVER bounties
 #   are checked at turn-in. Completed bounties are turned in for rewards.
 # - Missing a deadline: lose part of the bounty's Guild Points + 1 demerit.
@@ -28,7 +28,8 @@ func _ready():
 	GameEvents.floor_cleared.connect(_on_floor_cleared)
 	GameEvents.battle_won.connect(_on_battle_won)
 	GameEvents.expedition_started.connect(func(_loc, _floor): _streak = 0)
-	GameEvents.expedition_ended.connect(_on_expedition_ended)
+	GameEvents.day_passed.connect(_on_day_passed)
+	GameEvents.days_advanced.connect(func(player, _from, _to): refresh_board(player))
 	MomentumSystem.momentum_changed.connect(_on_momentum_changed)
 
 ## A Breather resets momentum to 0, which ends the win streak.
@@ -61,6 +62,10 @@ func state(player: CharacterData) -> Dictionary:
 	if not s.has("rank"):
 		s["rank"] = "F"
 	return s
+
+## Days to finish an accepted bounty.
+func deadline_days() -> int:
+	return int(settings.get("deadline_days", 6))
 
 ## Board size and active-bounty slots come from the Adventurer rank.
 func board_size(player: CharacterData) -> int:
@@ -127,7 +132,7 @@ func accept(player: CharacterData, uid: int) -> Dictionary:
 	if b.is_empty():
 		return {"ok": false, "reason": "That bounty is no longer on the board."}
 	s.board.erase(b)
-	b.deadline = int(settings.get("deadline_expeditions", 3))
+	b.deadline = deadline_days()
 	s.active.append(b)
 	return {"ok": true, "reason": "Accepted: %s" % b.title}
 
@@ -235,9 +240,8 @@ func _on_battle_won(_location_id: String, _floor_num: int, _wave: int, _is_boss:
 		if b.type == "WIN_STREAK" and not is_complete(player, b) and _streak > int(b.progress):
 			_advance(player, b, _streak)
 
-## Deadlines tick down per expedition; the board refreshes.
-func _on_expedition_ended(_location_id: String, _cleared: bool) -> void:
-	var player = _player()
+## Deadlines tick down per day (WorldClock); the board refreshes when time passes.
+func _on_day_passed(player: CharacterData, _day: int) -> void:
 	if player == null:
 		return
 	var s = state(player)
@@ -247,10 +251,9 @@ func _on_expedition_ended(_location_id: String, _cleared: bool) -> void:
 		b.deadline = int(b.deadline) - 1
 		if int(b.deadline) <= 0:
 			s.active.erase(b)
-			progress_message.emit("Bounty failed: %s - %s" % [b.title, _apply_demerit(s, b)])
-	refresh_board(player)
-	# Persist even after a death (death skips the normal save) so deadlines can't be dodged
-	SaveManager.save_game(player)
+			var msg = "Bounty failed: %s - %s" % [b.title, _apply_demerit(s, b)]
+			progress_message.emit(msg)
+			WorldClock.add_news(player, msg, "guild")
 
 func _advance(player: CharacterData, b: Dictionary, value: int) -> void:
 	b.progress = min(int(b.count), value)
@@ -351,7 +354,7 @@ func _instantiate(tid: String, player: CharacterData) -> Dictionary:
 	return {
 		"uid": int(s.next_uid), "template": tid, "title": title, "type": obj.type,
 		"target": target, "count": count, "progress": 0, "floor": floor_num, "item": item,
-		"deadline": int(settings.get("deadline_expeditions", 3)), "rewards": rewards
+		"deadline": deadline_days(), "rewards": rewards
 	}
 
 func _resolve(value: String, ctx: Dictionary, player: CharacterData) -> String:

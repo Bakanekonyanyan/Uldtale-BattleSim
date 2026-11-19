@@ -134,7 +134,7 @@ func _refresh() -> void:
 		if b.get("trial", false):
 			text = "★ " + text
 		if tab == Tab.ACTIVE:
-			text += "  [%s]" % ("ready!" if GuildManager.is_complete(p, b) else ("trial" if b.get("trial", false) else "%d exp. left" % int(b.deadline)))
+			text += "  [%s]" % ("ready!" if GuildManager.is_complete(p, b) else ("trial" if b.get("trial", false) else "%d day%s left" % [int(b.deadline), "" if int(b.deadline) == 1 else "s"]))
 		var idx = bounty_list.add_item(text)
 		if tab != Tab.BOARD and GuildManager.is_complete(p, b):
 			bounty_list.set_item_custom_fg_color(idx, Color(0.6, 1.0, 0.6))
@@ -247,14 +247,14 @@ func _refresh_recovery() -> void:
 		var item = SaveManager.equipment_from_save(e.item)
 		var t = item.get_full_description() if item else String(e.item.get("name", ""))
 		t += "\n[b]Buy back:[/b] %s   [color=gray](price scales with rarity, item level and upgrades)[/color]\n" % Currency.format_copper(int(e.price))
-		t += "[color=orange]Sold off in %d expedition(s).[/color]" % int(e.expires_in)
+		t += "[color=orange]Sold off in %d day(s).[/color]" % int(e.expires_in)
 		details.text = t
 		primary_button.disabled = p.currency.copper < int(e.price)
 	else:
 		var inj = DefeatManager.get_injuries(p)
 		for x in inj:
 			var info = DefeatManager.injury_info(String(x.id))
-			bounty_list.add_item("%s  (%d exp. left)" % [info.get("name", x.id), int(x.remaining)])
+			bounty_list.add_item("%s  (%d day(s) left)" % [info.get("name", x.id), int(x.remaining)])
 		primary_button.text = "Treat all"
 		if inj.is_empty():
 			details.text = "[i]You're in good health.[/i]"
@@ -267,7 +267,7 @@ func _refresh_recovery() -> void:
 			for k in info.get("stats", {}):
 				var v = float(info.stats[k])
 				bits.append(("%d%% " % int(round(v * 100)) if abs(v) < 1.0 else "%d " % int(v)) + String(k).replace("_pct", "").replace("_", " "))
-			t += "[b]%s[/b]: %s  [color=gray](%s; heals in %d expedition(s))[/color]\n" % [info.get("name", x.id), info.get("description", ""), ", ".join(bits), int(x.remaining)]
+			t += "[b]%s[/b]: %s  [color=gray](%s; heals in %d day(s))[/color]\n" % [info.get("name", x.id), info.get("description", ""), ", ".join(bits), int(x.remaining)]
 		t += "\n[b]Treatment:[/b] %s" % Currency.format_copper(DefeatManager.treatment_cost(p))
 		details.text = t
 		primary_button.disabled = p.currency.copper < DefeatManager.treatment_cost(p)
@@ -288,7 +288,7 @@ func _update_details() -> void:
 		primary_button.text = "Set Aside"
 
 	if b.is_empty():
-		details.text = ["[i]The board is empty. Check back after your next expedition.[/i]",
+		details.text = ["[i]The board is empty. It refreshes whenever time passes (an expedition or a night at the Inn).[/i]",
 			"[i]No active bounties. Accept some from the Board (up to %d at your rank).[/i]" % GuildManager.max_active(p),
 			"[i]Nothing ready to turn in yet.[/i]"][tab]
 		primary_button.disabled = true
@@ -302,9 +302,9 @@ func _update_details() -> void:
 	if b.get("trial", false) and not done:
 		t += "[b]Deadline:[/b] none\n"
 	elif tab == Tab.BOARD:
-		t += "[b]Deadline:[/b] %d expeditions after accepting\n" % int(GuildManager.settings.get("deadline_expeditions", 3))
+		t += "[b]Deadline:[/b] %d days after accepting\n" % GuildManager.deadline_days()
 	elif not done:
-		t += "[b]Deadline:[/b] %d expedition%s left\n" % [int(b.deadline), "" if int(b.deadline) == 1 else "s"]
+		t += "[b]Deadline:[/b] %d day%s left\n" % [int(b.deadline), "" if int(b.deadline) == 1 else "s"]
 	else:
 		t += "[color=lime][b]Complete - turn it in for your reward![/b][/color]\n"
 	t += "\n[b]Reward:[/b] %s\n" % GuildManager.describe_rewards(b)

@@ -250,6 +250,8 @@ func load_game(character_name: String) -> CharacterData:
 	player.last_location = save_data.get("last_location", "the_dungeon")
 	player.carry_limit = int(save_data.get("carry_limit", 5))
 	player.town_state = save_data.get("town", {})
+	if not player.town_state.has("world"):
+		WorldClock.migrate_old_save(player)   # timers were in expeditions before the world clock
 	RankManager.apply_perks(player)   # rank perks (carry limit, recipes) for older saves
 	player.is_player = true
 	

@@ -143,8 +143,18 @@ func get_consumable_item(item_id: String) -> Item:
 	return ItemManager.get_item(item_id)
 
 func get_consumable_price(item_id: String) -> int:
-	"""Get price for consumable"""
-	return consumable_inventory.get(item_id, {}).get("price", 0)
+	"""Price for a consumable: base x weekly drift x event (WorldClock)"""
+	var base = int(consumable_inventory.get(item_id, {}).get("price", 0))
+	if base <= 0:
+		return 0
+	return max(1, int(round(base * WorldClock.price_drift(item_id) * WorldClock.current_modifier("consumable_price"))))
+
+## Weekly restock (WorldClock): the common gear sold out earlier is back.
+func restock() -> void:
+	equipment_inventory.clear()
+	_add_common_weapons()
+	_add_common_armor()
+	shop_initialized = true
 
 func get_equipment_list() -> Array:
 	"""Get list of available equipment"""

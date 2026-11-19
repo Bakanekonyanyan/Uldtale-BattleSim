@@ -152,6 +152,7 @@ func promote(player: CharacterData, rank_id: String) -> String:
 		return ""
 	GuildManager.state(player)["rank"] = rank_id
 	var lines = apply_perks(player)
+	WorldClock.add_news(player, "%s was promoted to %s." % [player.name, display(rank_id)], "rank")
 	rank_changed.emit(player, rank_id)
 	return "Promoted to %s! %s" % [display(rank_id), " ".join(lines)]
 

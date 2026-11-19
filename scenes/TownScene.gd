@@ -19,6 +19,9 @@ var current_character: CharacterData
 
 
 var chrome: ScreenChrome
+var news_text: RichTextLabel
+var inn_dialog: ConfirmationDialog
+var inn_message := ""
 
 func _ready():
 	# Town keeps its art undimmed; the header carries name and money.
@@ -57,6 +60,34 @@ func _ready():
 	talents_button.size = Vector2(180, 60)
 	talents_button.pressed.connect(func(): SceneManager.change_to_talents(current_character))
 	$UI.add_child(talents_button)
+	# Inn: rest to pass days (WorldClock)
+	var inn_button := Button.new()
+	inn_button.name = "InnButton"
+	inn_button.text = "Inn"
+	inn_button.position = Vector2(256, 352)
+	inn_button.size = Vector2(180, 60)
+	inn_button.pressed.connect(_on_inn_pressed)
+	$UI.add_child(inn_button)
+	# Town news: date, current event, the news ledger
+	var news_panel := Panel.new()
+	news_panel.position = Vector2(700, 72)
+	news_panel.size = Vector2(460, 352)
+	$UI.add_child(news_panel)
+	news_text = RichTextLabel.new()
+	news_text.bbcode_enabled = true
+	news_text.position = Vector2(14, 10)
+	news_text.size = Vector2(432, 332)
+	news_panel.add_child(news_text)
+	inn_dialog = ConfirmationDialog.new()
+	inn_dialog.title = "The Wayfarer's Rest"
+	inn_dialog.get_label().autowrap_mode = TextServer.AUTOWRAP_WORD
+	inn_dialog.confirmed.connect(func(): _rest(1))
+	inn_dialog.add_button("Rest 3 nights", true, "three")
+	inn_dialog.custom_action.connect(func(action):
+		if action == "three":
+			inn_dialog.hide()
+			_rest(3))
+	$UI.add_child(inn_dialog)
 		
 	update_ui()
 
@@ -66,7 +97,50 @@ func set_player(character: CharacterData):
 	print("TownScene: Inventory items - ", character.inventory.items)
 	update_ui()
 
+## Date, current world event and recent news (WorldClock).
+func _refresh_news() -> void:
+	if news_text == null or current_character == null:
+		return
+	var c = current_character
+	var t = "[b][font_size=18]%s[/font_size][/b]\n" % WorldClock.date_text(c)
+	var ev = WorldClock.current_event(c)
+	if not ev.is_empty():
+		var where = " in %s" % LocationManager.get_display_name(String(ev.location)) if String(ev.get("location", "")) != "" else ""
+		t += "[color=gold]%s%s[/color] [color=gray](until day %d)[/color]\n" % [ev.get("name", ev.id), where, int(ev.ends_day)]
+	if inn_message != "":
+		t += "[color=lime]%s[/color]\n" % inn_message
+	t += "\n[b]Town news[/b]\n"
+	var news = WorldClock.get_news(c, 12)
+	if news.is_empty():
+		t += "[i][color=gray]Nothing of note yet.[/color][/i]"
+	for n in news:
+		var col = {"event": "#e9c46a", "guild": "#e07a5f", "rank": "#90e0ef"}.get(String(n.get("kind", "")), "#d8d0c0")
+		t += "[color=gray]Day %d[/color]  [color=%s]%s[/color]\n" % [int(n.day), col, n.text]
+	news_text.text = t
+
+func _on_inn_pressed() -> void:
+	var c = current_character
+	if c == null:
+		return
+	var inj = DefeatManager.get_injuries(c)
+	var t = "A warm bed and a hot meal. Resting passes time: injuries heal, the bounty board changes and the shop restocks each week.\n\n"
+	t += "One night: %s   Three nights: %s\n" % [Currency.format_copper(WorldClock.inn_price(c, 1)), Currency.format_copper(WorldClock.inn_price(c, 3))]
+	if not inj.is_empty():
+		t += "Injuries: %s\n" % ", ".join(inj.map(func(x): return "%s (%d day(s))" % [DefeatManager.injury_info(String(x.id)).get("name", x.id), int(x.remaining)]))
+	var due = GuildManager.get_active(c).filter(func(b): return not b.get("trial", false) and not GuildManager.is_complete(c, b))
+	if not due.is_empty():
+		t += "[!] Unfinished bounties keep their deadlines while you rest (soonest: %d day(s))." % due.map(func(b): return int(b.deadline)).min()
+	inn_dialog.dialog_text = t
+	inn_dialog.ok_button_text = "Rest 1 night"
+	inn_dialog.popup_centered(Vector2i(620, 260))
+
+func _rest(nights: int) -> void:
+	var r = WorldClock.rest(current_character, nights)
+	inn_message = r.reason
+	update_ui()
+
 func update_ui():
+	_refresh_news()
 	if name_label:
 		if current_character:
 			name_label.text = "Character: " + current_character.name

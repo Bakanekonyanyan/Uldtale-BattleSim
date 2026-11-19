@@ -50,6 +50,10 @@ func roll_wave_rewards(battle_data: Dictionary) -> Dictionary:
 		add_random_item_to_rewards(rewards, "consumable", 0.7 * drop_chance_multiplier, current_floor)
 		add_random_item_to_rewards(rewards, "equipment", 0.1 * drop_chance_multiplier, current_floor, player_class)
 	
+	# Location reward multiplier x world event (e.g. a Monster Surge)
+	var loc = DungeonStateManager.current_location
+	rewards["currency"] = int(round(rewards["currency"] * LocationManager.get_reward_mult(loc) * WorldClock.current_modifier("reward_mult", loc)))
+	
 	# Materials: from the races of the enemies just defeated (data/loot/material_tables.json)
 	_merge_counts(rewards, roll_material_drops(battle_data))
 	return rewards

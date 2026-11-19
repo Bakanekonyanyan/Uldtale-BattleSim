@@ -39,7 +39,7 @@
      "type": "object",
      "fields": [
       {
-       "name": "expires_after_expeditions",
+       "name": "expires_after_days",
        "type": "int",
        "min": 1
       },
@@ -79,12 +79,13 @@
      "type": "object",
      "fields": [
       {
-       "name": "expeditions",
+       "name": "days",
        "type": "int",
-       "min": 1
+       "min": 1,
+       "help": "Days an injury lasts."
       },
       {
-       "name": "extra_expeditions_boss",
+       "name": "extra_days_boss",
        "type": "int",
        "min": 0
       },

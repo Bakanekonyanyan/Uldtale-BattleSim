@@ -8,7 +8,8 @@
 			"mode": "waves",
 			"reward_mult": 1.0,
 			"background": "",
-			"order": 0
+			"order": 0,
+			"travel_days": 0
 		},
 		"goblin_forest": {
 			"name": "Goblin Forest",
@@ -18,7 +19,8 @@
 			"mode": "waves",
 			"reward_mult": 1.0,
 			"background": "",
-			"order": 1
+			"order": 1,
+			"travel_days": 1
 		},
 		"troll_caves": {
 			"name": "Troll Caves",
@@ -28,7 +30,8 @@
 			"mode": "waves",
 			"reward_mult": 1.0,
 			"background": "",
-			"order": 2
+			"order": 2,
+			"travel_days": 1
 		},
 		"orc_plains": {
 			"name": "Orc Plains",
@@ -38,7 +41,8 @@
 			"mode": "waves",
 			"reward_mult": 1.0,
 			"background": "",
-			"order": 3
+			"order": 3,
+			"travel_days": 1
 		},
 		"fairy_circles": {
 			"name": "Fairy Circles",
@@ -48,7 +52,8 @@
 			"mode": "waves",
 			"reward_mult": 1.0,
 			"background": "",
-			"order": 4
+			"order": 4,
+			"travel_days": 1
 		}
 	}
 }
