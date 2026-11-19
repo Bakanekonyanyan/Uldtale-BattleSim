@@ -104,6 +104,7 @@ func _execute_attack(action: BattleAction) -> ActionResult:
 	
 	target.take_damage(damage, attacker)
 	Combos.consume(target, combo)
+	BattleFormulas.apply_lifesteal(attacker, target, damage, true)
 	
 	var status_msg = ""
 	if attacker.equipment["main_hand"] and attacker.equipment["main_hand"] is Equipment:
@@ -176,6 +177,9 @@ func _execute_skill(action: BattleAction) -> ActionResult:
 		caster.current_mp -= cost
 	else:
 		caster.current_sp -= cost
+	# Blood magic: some skills also cost a share of max HP (never lethal)
+	if skill.hp_cost > 0.0:
+		caster.current_hp = max(1, caster.current_hp - int(round(caster.max_hp * skill.hp_cost)))
 	
 	#  CRITICAL FIX: Resolve empty targets for ALL_ALLIES skills
 	if targets.is_empty() and skill.target == Skill.TargetType.ALL_ALLIES:
@@ -344,6 +348,8 @@ func process_status_effects(character: CharacterData) -> ActionResult:
 	
 	# Call update_status_effects ONCE
 	var message = character.update_status_effects()
+	if character.talents:
+		message += character.talents.on_turn_start()     # talent regeneration
 	
 	# Capture state AFTER processing
 	var hp_after = character.current_hp

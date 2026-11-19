@@ -36,11 +36,11 @@ static func hit_from_skill(user: CharacterData, skill: Skill) -> Dictionary:
 		if n != "NONE" and n != "PHYSICAL":
 			names.append(n)
 	var physical = skill.ability_type == Skill.AbilityType.PHYSICAL
-	return {"elements": names, "physical": physical, "skill": skill.name,
+	return {"elements": names, "physical": physical, "skill": skill.name, "user": user,
 		"damage_type": DamageTypes.attack_type(user, skill.damage_type) if physical else -1}
 
 static func hit_from_attack(attacker: CharacterData) -> Dictionary:
-	return {"elements": [], "physical": true, "skill": "", "damage_type": DamageTypes.attack_type(attacker)}
+	return {"elements": [], "physical": true, "skill": "", "user": attacker, "damage_type": DamageTypes.attack_type(attacker)}
 
 static func _matches(payoff: Dictionary, hit: Dictionary) -> bool:
 	for e in payoff.get("elements", []):
@@ -72,6 +72,9 @@ static func find(target: CharacterData, hit: Dictionary) -> Dictionary:
 		if not _matches(c.get("payoff", {}), hit):
 			continue
 		var mult = float(c.get("multiplier", 1.0))
+		var user = hit.get("user")
+		if user and user.talents:
+			mult += user.talents.combo_bonus(id)        # talent combo mastery
 		if best.is_empty() or mult > best.multiplier:
 			best = {"id": id, "name": String(c.get("name", id)), "multiplier": mult, "setup": setup,
 				"consume": bool(c.get("consume", true))}

@@ -32,7 +32,10 @@ enum StatusEffect {
 	ENRAGED,      # Buff effect
 	REFLECT,      # Buff effect
 	EVASIVE,      # Buff effect: flat dodge bonus (append new effects at the end - saves store the number)
-	SOAKED        # Water element: drenched (combos: Conduction, Flash Freeze)
+	SOAKED,       # Water element: drenched (combos: Conduction, Flash Freeze)
+	STAGGERED,    # off balance (shield bashes, heavy kicks): combo set-up
+	MARKED,       # hunted / studied (marks, pins): combo set-up
+	SEALED        # spirit bound by a seal (Kannagi): combo set-up
 }
 enum AbilityType { PHYSICAL, MAGICAL }
 enum DrainTarget { HP, MP, SP }
@@ -71,6 +74,12 @@ enum ElementType {
 ## {"two_handed": 1.25} (Berserker Cleave) or {"shield": 1.2} (Paladin Holy Strike).
 ## Matches the main hand's or off hand's id or type; the best match applies.
 @export var weapon_bonus: Dictionary = {}
+## BASIC / ADVANCED / LINK / ULTIMATE... (docs/lore/ABILITY_TYPES.md); talents can key off it
+@export var category: String = ""
+## Fraction of the user's max HP paid on use (Necromancer blood magic). Never kills.
+@export var hp_cost: float = 0.0
+## Talent upgrades {power, cooldown, duration, mp_cost, sp_cost} (set by SkillProgressionManager)
+var talent_mods: Dictionary = {}
 
 @export var power: int
 @export var duration: int
@@ -98,6 +107,8 @@ static func create_from_dict(data: Dictionary) -> Skill:
 	skill.target = TargetType[data.target.to_upper()]
 	skill.damage_type = DamageTypes.parse(String(data.get("damage_type", "")))
 	skill.weapon_bonus = data.get("weapon_bonus", {})
+	skill.category = String(data.get("category", "")).to_upper()
+	skill.hp_cost = float(data.get("hp_cost", 0.0))
 	
 	# Parse elements
 	skill.elements = []
@@ -238,6 +249,16 @@ func calculate_level_bonuses():
 	mp_cost = max(1, int(base_mp_cost * cost_multipliers[level_index])) if base_mp_cost > 0 else 0
 	sp_cost = max(1, int(base_sp_cost * cost_multipliers[level_index])) if base_sp_cost > 0 else 0
 	cooldown = max(0, base_cooldown - cooldown_reductions[level_index])
+	
+	# Talent upgrades on top (TalentManager "skill" effects)
+	if not talent_mods.is_empty():
+		power = max(0, power + int(talent_mods.get("power", 0)))
+		duration = max(0, duration + int(talent_mods.get("duration", 0)))
+		cooldown = max(0, cooldown + int(talent_mods.get("cooldown", 0)))
+		if mp_cost > 0:
+			mp_cost = max(1, mp_cost + int(talent_mods.get("mp_cost", 0)))
+		if sp_cost > 0:
+			sp_cost = max(1, sp_cost + int(talent_mods.get("sp_cost", 0)))
 
 func on_skill_used():
 	uses += 1
@@ -308,7 +329,7 @@ func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 			continue
 		
 		# Basic-attack math boosted by skill power (see BattleFormulas)
-		var damage = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, power, damage_type) * weapon_multiplier(user)
+		var damage = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, power, damage_type, self) * weapon_multiplier(user)
 		# Set-up / payoff combo (data/combos.json): checked before this hit's own statuses land
 		var combo = Combos.find(t, Combos.hit_from_skill(user, self))
 		if not combo.is_empty():
@@ -341,10 +362,11 @@ func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 		t.take_damage(damage, user)
 		total_damage += damage
 		Combos.consume(t, combo)
+		BattleFormulas.apply_lifesteal(user, t, damage, ability_type == AbilityType.PHYSICAL, self, damage_type)
 		
 		# Status riders on damage skills only proc some of the time
 		for effect in status_effects:
-			if effect != StatusEffect.NONE and t.is_alive() and BattleFormulas.status_procs(true):
+			if effect != StatusEffect.NONE and t.is_alive() and BattleFormulas.status_procs(true, user):
 				t.apply_status_effect(effect, duration)
 				applied_effects[StatusEffect.keys()[effect]] = true
 		
@@ -482,7 +504,7 @@ func apply_debuff(user: CharacterData, targets: Array) -> Dictionary:
 	var combo_lines: Array = []
 	for t in targets:
 		if t.is_alive() and BattleFormulas.DEBUFF_HIT_SCALE > 0.0:
-			var raw = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, 0.0, damage_type) * BattleFormulas.DEBUFF_HIT_SCALE * weapon_multiplier(user)
+			var raw = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, 0.0, damage_type, self) * BattleFormulas.DEBUFF_HIT_SCALE * weapon_multiplier(user)
 			var combo = Combos.find(t, Combos.hit_from_skill(user, self))
 			if not combo.is_empty():
 				raw *= combo.multiplier
@@ -491,6 +513,7 @@ func apply_debuff(user: CharacterData, targets: Array) -> Dictionary:
 			t.take_damage(hit, user)
 			total_damage += hit
 			Combos.consume(t, combo)
+			BattleFormulas.apply_lifesteal(user, t, hit, ability_type == AbilityType.PHYSICAL, self, damage_type)
 		
 		for effect in status_effects:
 			if effect != StatusEffect.NONE:
@@ -582,7 +605,7 @@ func drain(user: CharacterData, targets: Array) -> Dictionary:
 		
 		match drain_source:
 			DrainTarget.HP:
-				var raw_drain = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, power, damage_type) * weapon_multiplier(user)
+				var raw_drain = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, power, damage_type, self) * weapon_multiplier(user)
 				var combo = Combos.find(t, Combos.hit_from_skill(user, self))
 				if not combo.is_empty():
 					raw_drain *= combo.multiplier

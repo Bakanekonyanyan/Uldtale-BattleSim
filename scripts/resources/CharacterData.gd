@@ -127,6 +127,7 @@ func _init(p_name: String = "", p_race: String = "", p_class: String = ""):
 	skill_manager = SkillProgressionManager.new(self)
 	proficiency_manager = ProficiencyManager.new(self)
 	elemental_resistances = ElementalResistanceManager.new(self)
+	talents = TalentManager.new(self)
 
 func initialize_racial_elementals(load_from_race_data: bool = true):
 	if not load_from_race_data or race.is_empty():
@@ -141,6 +142,39 @@ func initialize_racial_elementals(load_from_race_data: bool = true):
 
 ## Flat bonuses from everything currently equipped (Equipment.get_flat_bonuses):
 ## primary attributes (intelligence...) and secondary stats (dodge, spell_ward...).
+## Talent trees (data/talents.json) and the battle loadout (max 6 equipped skills).
+var talents: TalentManager
+var equipped_skills: Array = []
+
+## Equipment + talent flat bonuses ({stat: amount}); attributes, secondary stats
+## (dodge, spell_power...) and "max_hp_pct" are all read by calculate_secondary_attributes.
+func get_all_flat_bonuses() -> Dictionary:
+	var total = get_equipment_flat_bonuses()
+	if talents:
+		var t = talents.stat_bonuses()
+		for stat in t:
+			total[stat] = total.get(stat, 0.0) + t[stat]
+	return total
+
+## Skills usable in battle: the equipped loadout (or the first N known if none chosen).
+func get_battle_skills() -> Array:
+	var known = skills
+	var picked = equipped_skills.filter(func(s): return s in known)
+	if picked.is_empty():
+		picked = known.slice(0, TalentManager.loadout_size())
+	return picked
+
+func set_equipped_skills(names: Array) -> void:
+	equipped_skills = names.filter(func(s): return s in skills).slice(0, TalentManager.loadout_size())
+
+func remove_skill(skill_name: String) -> void:
+	if skill_manager:
+		skill_manager.remove_skill(skill_name)
+
+func refresh_talent_skill_mods() -> void:
+	if skill_manager:
+		skill_manager.refresh_talent_mods()
+
 func get_equipment_flat_bonuses() -> Dictionary:
 	var total := {}
 	for slot in equipment:
@@ -152,8 +186,8 @@ func get_equipment_flat_bonuses() -> Dictionary:
 	return total
 
 func calculate_secondary_attributes():
-	# Calculate effective attributes: base + equipment + buffs/debuffs
-	var flat = get_equipment_flat_bonuses()
+	# Calculate effective attributes: base + equipment + talents + buffs/debuffs
+	var flat = get_all_flat_bonuses()
 	var eff = {}
 	for stat in ["vitality", "strength", "dexterity", "intelligence", "faith", "mind", "endurance", "arcane", "agility", "fortitude"]:
 		var base_value = get(stat)
@@ -173,7 +207,7 @@ func calculate_secondary_attributes():
 	var old_max_sp = max_sp
 	
 	# Resource pools - use BASE attributes only (no equipment/buffs)
-	max_hp = int((vitality * 8 + strength * 3) * hp_multiplier)
+	max_hp = int((vitality * 8 + strength * 3) * hp_multiplier * (1.0 + flat.get("max_hp_pct", 0.0)))
 	max_mp = mind * 5 + intelligence * 3
 	max_sp = endurance * 5 + agility * 3
 	
@@ -575,7 +609,7 @@ func get_attribute_breakdown(attribute_name: String) -> Dictionary:
 	Returns: {base: int, equipment: int, buffs: int, total: int}
 	"""
 	var base = get(attribute_name)
-	var equipment_bonus = equipment_bonuses.get(attribute_name, 0) + int(round(get_equipment_flat_bonuses().get(attribute_name, 0.0)))
+	var equipment_bonus = equipment_bonuses.get(attribute_name, 0) + int(round(get_all_flat_bonuses().get(attribute_name, 0.0)))
 	
 	var buff_modifier = 0
 	if buff_manager and attribute_name.to_upper() in Skill.AttributeTarget:

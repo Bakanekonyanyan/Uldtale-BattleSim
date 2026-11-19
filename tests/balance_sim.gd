@@ -370,7 +370,7 @@ func player_policy(p: CharacterData, ctx: BattleContext) -> BattleAction:
 	var best: Skill = null
 	var buff: Skill = null
 	var debuff: Skill = null
-	for sn in p.skills:
+	for sn in p.get_battle_skills():
 		var s: Skill = p.get_skill_instance(sn)
 		if p.get_skill_cooldown(sn) > 0: continue
 		var cost_ok = (p.current_sp >= s.sp_cost) if s.ability_type == Skill.AbilityType.PHYSICAL else (p.current_mp >= s.mp_cost)
@@ -394,7 +394,7 @@ func player_policy(p: CharacterData, ctx: BattleContext) -> BattleAction:
 	var combo_pick: Skill = null
 	var combo_target: CharacterData = null
 	var combo_mult := 1.0
-	for sn in p.skills:
+	for sn in p.get_battle_skills():
 		var s: Skill = p.get_skill_instance(sn)
 		if p.get_skill_cooldown(sn) > 0: continue
 		var cost_ok = (p.current_sp >= s.sp_cost) if s.ability_type == Skill.AbilityType.PHYSICAL else (p.current_mp >= s.mp_cost)

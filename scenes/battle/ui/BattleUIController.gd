@@ -290,7 +290,7 @@ func _show_skill_menu():
 		child.queue_free()
 	
 	var has_any_skills = false
-	for skill_name in player.skills:
+	for skill_name in player.get_battle_skills():   # the equipped loadout (max 6)
 		# CRITICAL: Get player's skill instance, not template
 		var skill = player.get_skill_instance(skill_name)
 		if not skill:

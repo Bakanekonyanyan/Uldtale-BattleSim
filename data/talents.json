@@ -1,0 +1,2322 @@
+{
+	"_doc": "Talent trees (TalentManager.gd, docs/design/TALENTS.md). 1 point per level from first_point_level; a tier-T node needs tier_points[T-1] points spent in its branch; nodes with 'skill' unlock that skill; effects are per rank.",
+	"settings": {
+		"points_per_level": 1,
+		"first_point_level": 2,
+		"tier_points": [0, 2, 4, 6, 8],
+		"respec_gold_per_level": 100,
+		"loadout_size": 6
+	},
+	"branches": {
+		"Paladin": {
+			"bulwark": {
+				"name": "Bulwark",
+				"description": "Sword and board: the shield of the party.",
+				"order": 0
+			},
+			"crusader": {
+				"name": "Crusader",
+				"description": "Holy offense; two-handers welcome.",
+				"order": 1
+			},
+			"devotion": {
+				"name": "Devotion",
+				"description": "Faith that mends and protects.",
+				"order": 2
+			}
+		},
+		"Samurai": {
+			"iai": {
+				"name": "Iai",
+				"description": "The art of the draw: one perfect cut.",
+				"order": 0
+			},
+			"bushido": {
+				"name": "Bushido",
+				"description": "Discipline and inner spirit.",
+				"order": 1
+			},
+			"kenjutsu": {
+				"name": "Kenjutsu",
+				"description": "Reading the opponent; the great katana.",
+				"order": 2
+			}
+		},
+		"Berserker": {
+			"carnage": {
+				"name": "Carnage",
+				"description": "Massive weapons, wide arcs.",
+				"order": 0
+			},
+			"bloodlust": {
+				"name": "Bloodlust",
+				"description": "Fenrisulfr's hunger: lifesteal and frenzy.",
+				"order": 1
+			},
+			"war_wolf": {
+				"name": "War Wolf",
+				"description": "The tank that will not fall.",
+				"order": 2
+			}
+		},
+		"Monk": {
+			"tiger": {
+				"name": "Tiger",
+				"description": "Power: the tiger's ferocity.",
+				"order": 0
+			},
+			"crane": {
+				"name": "Crane",
+				"description": "Grace: balance, evasion and counters.",
+				"order": 1
+			},
+			"verdant_heart": {
+				"name": "Verdant Heart",
+				"description": "Harmony with Elandria, Nimue and Fenrisulfr.",
+				"order": 2
+			}
+		},
+		"Myrmidon": {
+			"arms_master": {
+				"name": "Arms Master",
+				"description": "Every weapon, used well.",
+				"order": 0
+			},
+			"skirmisher": {
+				"name": "Skirmisher",
+				"description": "Two blades and quick feet.",
+				"order": 1
+			},
+			"mercenary": {
+				"name": "Mercenary",
+				"description": "Professional grit and dirty tricks.",
+				"order": 2
+			}
+		},
+		"Shinobi": {
+			"kage": {
+				"name": "Kage",
+				"description": "Shadow arts and assassination.",
+				"order": 0
+			},
+			"ninjutsu": {
+				"name": "Ninjutsu",
+				"description": "Fire, water and lightning techniques.",
+				"order": 1
+			},
+			"tools": {
+				"name": "Shinobi Tools",
+				"description": "Kunai, shuriken and smoke.",
+				"order": 2
+			}
+		},
+		"Druid": {
+			"bear": {
+				"name": "Bear Form",
+				"description": "Elandria's bear: raw strength and resilience.",
+				"order": 0
+			},
+			"alraune": {
+				"name": "Alraune",
+				"description": "The flower spirit: healing and control.",
+				"order": 1
+			},
+			"wildcaller": {
+				"name": "Wildcaller",
+				"description": "Storms, frost and thorns of the wild.",
+				"order": 2
+			}
+		},
+		"Cleric": {
+			"battle_priest": {
+				"name": "Battle Priest",
+				"description": "Mace, mail and divine wrath.",
+				"order": 0
+			},
+			"restoration": {
+				"name": "Restoration",
+				"description": "Healing that can mend the gravest wound.",
+				"order": 1
+			},
+			"inquisitor": {
+				"name": "Inquisitor",
+				"description": "Purging fire and judgement.",
+				"order": 2
+			}
+		},
+		"Kannagi": {
+			"barrier_arts": {
+				"name": "Barrier Arts",
+				"description": "Seals and wards of the Ancient Ones.",
+				"order": 0
+			},
+			"ancestral_spirits": {
+				"name": "Ancestral Spirits",
+				"description": "Healing, mana and stamina.",
+				"order": 1
+			},
+			"kotodama": {
+				"name": "Kotodama",
+				"description": "Words of power older than the gods.",
+				"order": 2
+			}
+		},
+		"Elementalist": {
+			"conflux": {
+				"name": "Conflux",
+				"description": "Fire and ice, the classic contradiction.",
+				"order": 0
+			},
+			"stormcalling": {
+				"name": "Stormcalling",
+				"description": "Water, wind and lightning.",
+				"order": 1
+			},
+			"fifth_element": {
+				"name": "The Fifth Element",
+				"description": "Conversion of the four, toward Aether.",
+				"order": 2
+			}
+		},
+		"Beastmaster": {
+			"predator": {
+				"name": "Predator",
+				"description": "Pacts with Fenrisulfr and the Manticore.",
+				"order": 0
+			},
+			"behemoth": {
+				"name": "Behemoth",
+				"description": "The Behemoth's endurance.",
+				"order": 1
+			},
+			"roc": {
+				"name": "Roc",
+				"description": "The Roc's speed and the open sky.",
+				"order": 2
+			}
+		},
+		"Necromancer": {
+			"curses": {
+				"name": "Curses",
+				"description": "Hel's maledictions.",
+				"order": 0
+			},
+			"life_drinker": {
+				"name": "Life Drinker",
+				"description": "Your own life, and others', as fuel.",
+				"order": 1
+			},
+			"gravecaller": {
+				"name": "Gravecaller",
+				"description": "Bone and the cold of the grave.",
+				"order": 2
+			}
+		}
+	},
+	"nodes": {
+		"Paladin": {
+			"bulwark": {
+				"shield_discipline": {
+					"name": "Shield Discipline",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Drilled behind the shield in the Grand Cathedral.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"toughness": 3
+							}
+						},
+						{
+							"type": "defense",
+							"reduce": 0.02,
+							"with": "shield"
+						}
+					]
+				},
+				"shield_bash": {
+					"name": "Shield Bash",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Slam your shield into the foe, knocking it off balance.",
+					"skill": "Shield Bash"
+				},
+				"bastion": {
+					"name": "Bastion",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Your guard becomes a wall.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.04,
+							"with": "shield"
+						},
+						{
+							"type": "stats",
+							"stats": {
+								"fortitude": 1
+							}
+						}
+					]
+				},
+				"unbreakable": {
+					"name": "Unbreakable",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "When the line is about to break, you hold.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.1,
+							"user_hp_below": 0.4
+						}
+					]
+				},
+				"aegis_of_dawn": {
+					"name": "Aegis of Dawn",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Solara's light hardens into a radiant aegis that heals and turns blows back.",
+					"skill": "Aegis of Dawn"
+				}
+			},
+			"crusader": {
+				"righteous_fury": {
+					"name": "Righteous Fury",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Your strikes carry the Radiant Dawn.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"element": "HOLY"
+						}
+					]
+				},
+				"radiant_cleave": {
+					"name": "Radiant Cleave",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A sweeping blow trailing holy light that dazzles every foe.",
+					"skill": "Radiant Cleave"
+				},
+				"zeal": {
+					"name": "Zeal",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Fervor behind a great blade.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"ability": "PHYSICAL",
+							"with": "two_handed"
+						}
+					]
+				},
+				"sanctified_blows": {
+					"name": "Sanctified Blows",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Strike the reeling and the blinded with judgement.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "sanctified_strike",
+							"bonus": 0.15
+						},
+						{
+							"type": "combo",
+							"combo": "judgement",
+							"bonus": 0.1
+						}
+					]
+				},
+				"solaras_verdict": {
+					"name": "Solara's Verdict",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Call down the full judgement of the Radiant Dawn on one foe.",
+					"skill": "Solara's Verdict"
+				}
+			},
+			"devotion": {
+				"faithful": {
+					"name": "Faithful",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Unwavering faith.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"faith": 2
+							}
+						}
+					]
+				},
+				"lay_on_hands": {
+					"name": "Lay on Hands",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Mend an ally's wounds with a touch of Solara's grace.",
+					"skill": "Lay on Hands"
+				},
+				"dawns_mercy": {
+					"name": "Dawn's Mercy",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Your healing burns brighter.",
+					"effects": [
+						{
+							"type": "heal_bonus",
+							"mult": 0.06
+						}
+					]
+				},
+				"radiant_aura": {
+					"name": "Radiant Aura",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Light lingers around you.",
+					"effects": [
+						{
+							"type": "regen",
+							"hp": 0.02
+						}
+					]
+				},
+				"dawns_embrace": {
+					"name": "Dawn's Embrace",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Wrap an ally in the dawn itself: a great heal that keeps on mending.",
+					"skill": "Dawn's Embrace"
+				}
+			}
+		},
+		"Samurai": {
+			"iai": {
+				"swift_draw": {
+					"name": "Swift Draw",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "The blade is out before the eye can follow.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"critical_hit_rate": 0.03
+							}
+						}
+					]
+				},
+				"flash_draw": {
+					"name": "Flash Draw",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A lightning-quick draw cut that opens a bleeding wound.",
+					"skill": "Flash Draw"
+				},
+				"iai_mastery": {
+					"name": "Iai Mastery",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Years of drawing the same cut.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Iaido",
+							"power": 10
+						}
+					]
+				},
+				"killing_intent": {
+					"name": "Killing Intent",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "A wounded foe is a finished foe.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.08,
+							"damage_type": "SLASH",
+							"target_status": "BLEED"
+						}
+					]
+				},
+				"thousand_cuts": {
+					"name": "Thousand Cuts",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "A storm of draws too fast to see, cutting every foe.",
+					"skill": "Thousand Cuts"
+				}
+			},
+			"bushido": {
+				"discipline": {
+					"name": "Discipline",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Body and mind tempered alike.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"endurance": 2,
+								"mind": 2
+							}
+						}
+					]
+				},
+				"kiai": {
+					"name": "Kiai",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A spirit shout that shakes the enemy's footing.",
+					"skill": "Kiai"
+				},
+				"unshaken": {
+					"name": "Unshaken",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Composure in any storm.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"toughness": 2,
+								"spell_ward": 2
+							}
+						}
+					]
+				},
+				"code_of_honor": {
+					"name": "Code of Honor",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "The creed burns longer.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Bushido",
+							"power": 10,
+							"duration": 1
+						}
+					]
+				},
+				"spirit_of_amakiri": {
+					"name": "Spirit of Amakiri",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Channel the founder's spirit: speed, strength and a blade no one can touch.",
+					"skill": "Spirit of Amakiri"
+				}
+			},
+			"kenjutsu": {
+				"blade_form": {
+					"name": "Blade Form",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Clean, precise forms.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"damage_type": "SLASH"
+						}
+					]
+				},
+				"read_the_opponent": {
+					"name": "Read the Opponent",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Study the foe and find the opening for a decisive cut.",
+					"skill": "Read the Opponent"
+				},
+				"parry": {
+					"name": "Parry",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Turn the blade aside.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"dodge": 0.03
+							}
+						}
+					]
+				},
+				"decisive_strike": {
+					"name": "Decisive Strike",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "When the opening comes, end it.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "decisive_cut",
+							"bonus": 0.15
+						}
+					]
+				},
+				"heaven_splitter": {
+					"name": "Heaven Splitter",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "One overhead cut said to split the sky.",
+					"skill": "Heaven Splitter"
+				}
+			}
+		},
+		"Berserker": {
+			"carnage": {
+				"heavy_hands": {
+					"name": "Heavy Hands",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "The heavier the weapon, the better.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"with": "two_handed"
+						}
+					]
+				},
+				"whirlwind": {
+					"name": "Whirlwind",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Spin with your weapon, battering everything around you.",
+					"skill": "Whirlwind"
+				},
+				"sundering": {
+					"name": "Sundering",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Armor means little to you.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"armor_penetration": 0.05
+							}
+						}
+					]
+				},
+				"cleave_mastery": {
+					"name": "Cleave Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Wider, deeper cleaves.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Cleave",
+							"power": 10
+						}
+					]
+				},
+				"berserker_rage": {
+					"name": "Berserker Rage",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Give yourself fully to Arathorn's fury: huge Strength and Endurance and an Enraged frenzy.",
+					"skill": "Berserker Rage"
+				}
+			},
+			"bloodlust": {
+				"thirst": {
+					"name": "Thirst",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Every wound you deal feeds you.",
+					"effects": [
+						{
+							"type": "lifesteal",
+							"fraction": 0.03
+						}
+					]
+				},
+				"rampage": {
+					"name": "Rampage",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A savage flurry against one foe; devastating on a bleeding target.",
+					"skill": "Rampage"
+				},
+				"frenzy": {
+					"name": "Frenzy",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Pain makes you stronger.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"user_hp_below": 0.5
+						}
+					]
+				},
+				"feast_of_wolves": {
+					"name": "Feast of Wolves",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Blood Feast tears deeper.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Blood Feast",
+							"power": 10
+						}
+					]
+				},
+				"fenrisulfrs_maw": {
+					"name": "Fenrisulfr's Maw",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "The Wild Father's jaws close on every foe and drink deep.",
+					"skill": "Fenrisulfr's Maw"
+				}
+			},
+			"war_wolf": {
+				"thick_hide": {
+					"name": "Thick Hide",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Scarred and hardened.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"max_hp_pct": 0.04,
+								"toughness": 2
+							}
+						}
+					]
+				},
+				"war_howl": {
+					"name": "War Howl",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Howl like the war wolf; foes lose their nerve and footing.",
+					"skill": "War Howl"
+				},
+				"iron_will": {
+					"name": "Iron Will",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Shrug off blows.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.04
+						}
+					]
+				},
+				"last_stand": {
+					"name": "Last Stand",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Hardest to kill when nearly dead.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.12,
+							"user_hp_below": 0.3
+						}
+					]
+				},
+				"second_wind": {
+					"name": "Second Wind",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Rise again from the brink with a roar.",
+					"skill": "Second Wind"
+				}
+			}
+		},
+		"Monk": {
+			"tiger": {
+				"tigers_strength": {
+					"name": "Tiger's Strength",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Muscle like coiled springs.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"strength": 2
+							}
+						},
+						{
+							"type": "damage",
+							"mult": 0.03,
+							"ability": "PHYSICAL"
+						}
+					]
+				},
+				"ox_kick": {
+					"name": "Ox Kick",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A low, heavy kick that takes the legs out from under the foe.",
+					"skill": "Ox Kick"
+				},
+				"ferocity": {
+					"name": "Ferocity",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Strike where it hurts.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"critical_hit_rate": 0.03
+							}
+						}
+					]
+				},
+				"rending_claws": {
+					"name": "Rending Claws",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Tiger Claw tears deeper.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Tiger Claw",
+							"power": 10
+						}
+					]
+				},
+				"five_animal_fury": {
+					"name": "Five Animal Fury",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Tiger, crane, mantis, ox and serpent in one devastating sequence.",
+					"skill": "Five Animal Fury"
+				}
+			},
+			"crane": {
+				"cranes_grace": {
+					"name": "Crane's Grace",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Light as a feather.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"agility": 2,
+								"dodge": 0.02
+							}
+						}
+					]
+				},
+				"crane_wing_sweep": {
+					"name": "Crane Wing Sweep",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Sweeping wing strikes that spin every foe around.",
+					"skill": "Crane Wing Sweep"
+				},
+				"flowing_water": {
+					"name": "Flowing Water",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Move like water around the blow.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"dodge": 0.02,
+								"accuracy": 0.02
+							}
+						}
+					]
+				},
+				"counterflow": {
+					"name": "Counterflow",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Punish the off-balance.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.1,
+							"target_status": "CONFUSED"
+						}
+					]
+				},
+				"heavenly_crane": {
+					"name": "Heavenly Crane",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Become untouchable: soaring agility and a body that mends itself.",
+					"skill": "Heavenly Crane"
+				}
+			},
+			"verdant_heart": {
+				"inner_harmony": {
+					"name": "Inner Harmony",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Breath and body in balance.",
+					"effects": [
+						{
+							"type": "regen",
+							"hp": 0.01,
+							"sp": 0.02
+						}
+					]
+				},
+				"earth_mothers_palm": {
+					"name": "Earth Mother's Palm",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A palm strike carrying Elandria's weight; it can shatter what is frozen.",
+					"skill": "Earth Mother's Palm"
+				},
+				"spirit_weave": {
+					"name": "Spirit Weave",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Nimue's flow guards the mind.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"mind": 2,
+								"spell_ward": 2
+							}
+						}
+					]
+				},
+				"balance": {
+					"name": "Balance",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Mantis Strike lands truer.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Mantis Strike",
+							"power": 10
+						}
+					]
+				},
+				"nimues_tide": {
+					"name": "Nimue's Tide",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Let the Spirit Weaver's tide wash through you, healing deep wounds.",
+					"skill": "Nimue's Tide"
+				}
+			}
+		},
+		"Myrmidon": {
+			"arms_master": {
+				"weapon_training": {
+					"name": "Weapon Training",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Iron Gauntlet drills.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"ability": "PHYSICAL"
+						}
+					]
+				},
+				"disarming_strike": {
+					"name": "Disarming Strike",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Knock the foe's weapon aside and leave it reeling.",
+					"skill": "Disarming Strike"
+				},
+				"exploit_weakness": {
+					"name": "Exploit Weakness",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Switch to whatever hurts most.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.06,
+							"weak_spot": true
+						}
+					]
+				},
+				"opportunist": {
+					"name": "Opportunist",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Never waste an opening.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "exploit_opening",
+							"bonus": 0.15
+						}
+					]
+				},
+				"blade_storm": {
+					"name": "Blade Storm",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "A whirlwind of steel that cuts through every foe.",
+					"skill": "Blade Storm"
+				}
+			},
+			"skirmisher": {
+				"light_feet": {
+					"name": "Light Feet",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Never where they swing.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"agility": 1,
+								"dodge": 0.02
+							}
+						}
+					]
+				},
+				"twin_fangs": {
+					"name": "Twin Fangs",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Two quick thrusts that link into your next move.",
+					"skill": "Twin Fangs"
+				},
+				"ambidextrous": {
+					"name": "Ambidextrous",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Light weapons, fast hands.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"with": "one_handed"
+						}
+					]
+				},
+				"backstab_mastery": {
+					"name": "Backstab Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "From the shadows, deeper.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Backstab",
+							"power": 12
+						}
+					]
+				},
+				"hundred_blades": {
+					"name": "Hundred Blades",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "An unbroken torrent of strikes on one foe.",
+					"skill": "Hundred Blades"
+				}
+			},
+			"mercenary": {
+				"battle_hardened": {
+					"name": "Battle Hardened",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Countless contracts survived.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"vitality": 2,
+								"endurance": 2,
+								"max_hp_pct": 0.02
+							}
+						}
+					]
+				},
+				"pinning_thrust": {
+					"name": "Pinning Thrust",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Pin the target in place and mark it for the kill.",
+					"skill": "Pinning Thrust"
+				},
+				"toxic_expertise": {
+					"name": "Toxic Expertise",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Your poisons, your rules.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"target_status": "POISON"
+						}
+					]
+				},
+				"contract_killer": {
+					"name": "Contract Killer",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "The mark never escapes.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.1,
+							"target_status": "MARKED"
+						}
+					]
+				},
+				"iron_gauntlet": {
+					"name": "Iron Gauntlet",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "The guild's creed made flesh: strength, precision and resolve.",
+					"skill": "Iron Gauntlet"
+				}
+			}
+		},
+		"Shinobi": {
+			"kage": {
+				"silent_steps": {
+					"name": "Silent Steps",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Unheard, unseen.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"dodge": 0.02,
+								"critical_hit_rate": 0.02
+							}
+						}
+					]
+				},
+				"shadow_mark": {
+					"name": "Shadow Mark",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Brand the target with Tsukuyomi's shadow; it cannot hide from you.",
+					"skill": "Shadow Mark"
+				},
+				"lethality": {
+					"name": "Lethality",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Every thrust finds a vital point.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"damage_type": "PIERCE"
+						}
+					]
+				},
+				"assassin": {
+					"name": "Assassin",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "The marked die quickly.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "assassinate",
+							"bonus": 0.15
+						}
+					]
+				},
+				"moonless_night": {
+					"name": "Moonless Night",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Vanish into darkness and strike once, perfectly.",
+					"skill": "Moonless Night"
+				}
+			},
+			"ninjutsu": {
+				"chakra_flow": {
+					"name": "Chakra Flow",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Energy guided through the seals.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"intelligence": 2,
+								"spell_power": 2
+							}
+						}
+					]
+				},
+				"phoenix_flower": {
+					"name": "Phoenix Flower",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Fire release: a spray of burning flowers.",
+					"skill": "Phoenix Flower"
+				},
+				"elemental_affinity": {
+					"name": "Elemental Affinity",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Your elements answer faster.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"elements": ["FIRE", "WATER", "LIGHTNING"]
+						}
+					]
+				},
+				"conductor": {
+					"name": "Conductor",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Water and lightning, perfected.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "conduction",
+							"bonus": 0.15
+						}
+					]
+				},
+				"raijins_descent": {
+					"name": "Raijin's Descent",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Lightning release: the storm god's strike falls on every foe.",
+					"skill": "Raijin's Descent"
+				}
+			},
+			"tools": {
+				"quick_hands": {
+					"name": "Quick Hands",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Throw faster, tire less.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Lightning Kunai",
+							"power": 5,
+							"sp_cost": -2
+						}
+					]
+				},
+				"shuriken_storm": {
+					"name": "Shuriken Storm",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A fan of shuriken across every foe.",
+					"skill": "Shuriken Storm"
+				},
+				"vanishing": {
+					"name": "Vanishing",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Gone before the blow lands.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"dodge": 0.03
+							}
+						}
+					]
+				},
+				"poisoned_tools": {
+					"name": "Poisoned Tools",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Everything you throw carries something nasty.",
+					"effects": [
+						{
+							"type": "status_chance",
+							"chance": 0.1
+						}
+					]
+				},
+				"shadow_clone": {
+					"name": "Shadow Clone",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Split into shadow clones; foes strike the wrong you.",
+					"skill": "Shadow Clone"
+				}
+			}
+		},
+		"Druid": {
+			"bear": {
+				"ursine_hide": {
+					"name": "Ursine Hide",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Thick fur and thicker skin.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"max_hp_pct": 0.03,
+								"toughness": 3
+							}
+						}
+					]
+				},
+				"bear_form": {
+					"name": "Bear Form",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Take the shape of a great bear: stronger, tougher, harder to kill.",
+					"skill": "Bear Form"
+				},
+				"maul": {
+					"name": "Maul",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Claws and crushing paws.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"ability": "PHYSICAL"
+						}
+					]
+				},
+				"thick_fur": {
+					"name": "Thick Fur",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Blows sink into fur.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.06
+						}
+					]
+				},
+				"elder_bear": {
+					"name": "Elder Bear",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Become the elder bear and crash into every foe.",
+					"skill": "Elder Bear"
+				}
+			},
+			"alraune": {
+				"verdant_bloom": {
+					"name": "Verdant Bloom",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Growth answers your call.",
+					"effects": [
+						{
+							"type": "heal_bonus",
+							"mult": 0.06
+						}
+					]
+				},
+				"alraunes_kiss": {
+					"name": "Alraune's Kiss",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A blossom's kiss that heals and keeps healing.",
+					"skill": "Alraune's Kiss"
+				},
+				"thorned_vines": {
+					"name": "Thorned Vines",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "The earth bites back.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"element": "EARTH"
+						}
+					]
+				},
+				"strangling_roots": {
+					"name": "Strangling Roots",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Poisoned prey wither faster.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.1,
+							"target_status": "POISON"
+						}
+					]
+				},
+				"garden_of_elandria": {
+					"name": "Garden of Elandria",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Raise a living garden that heals and shields.",
+					"skill": "Garden of Elandria"
+				}
+			},
+			"wildcaller": {
+				"storm_kin": {
+					"name": "Storm Kin",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Wind and frost obey you.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"elements": ["ICE", "WIND"]
+						}
+					]
+				},
+				"bramble_lash": {
+					"name": "Bramble Lash",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Whip the foe with thorned brambles that leave it bleeding.",
+					"skill": "Bramble Lash"
+				},
+				"natures_grasp": {
+					"name": "Nature's Grasp",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Your effects take hold more often.",
+					"effects": [
+						{
+							"type": "status_chance",
+							"chance": 0.05
+						}
+					]
+				},
+				"arctic_mastery": {
+					"name": "Arctic Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Arctic Blast bites harder.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Arctic Blast",
+							"power": 10
+						}
+					]
+				},
+				"wrath_of_the_wild": {
+					"name": "Wrath of the Wild",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "A howling blizzard sweeps the battlefield.",
+					"skill": "Wrath of the Wild"
+				}
+			}
+		},
+		"Cleric": {
+			"battle_priest": {
+				"holy_might": {
+					"name": "Holy Might",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Faith in your arm.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"strength": 2
+							}
+						},
+						{
+							"type": "damage",
+							"mult": 0.03,
+							"ability": "PHYSICAL"
+						}
+					]
+				},
+				"hammer_of_dawn": {
+					"name": "Hammer of Dawn",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A blessed blow that rocks the foe on its feet.",
+					"skill": "Hammer of Dawn"
+				},
+				"crushing_faith": {
+					"name": "Crushing Faith",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "The mace is a prayer.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"damage_type": "BLUNT"
+						}
+					]
+				},
+				"smite_mastery": {
+					"name": "Smite Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Smite strikes harder.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Smite",
+							"power": 10
+						}
+					]
+				},
+				"solaras_hammer": {
+					"name": "Solara's Hammer",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Bring down the Radiant Dawn's hammer on one foe.",
+					"skill": "Solara's Hammer"
+				}
+			},
+			"restoration": {
+				"healing_hands": {
+					"name": "Healing Hands",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Your prayers mend more.",
+					"effects": [
+						{
+							"type": "heal_bonus",
+							"mult": 0.06
+						}
+					]
+				},
+				"divine_blessing": {
+					"name": "Divine Blessing",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Bless an ally: Fortitude and Endurance up and steady regeneration.",
+					"skill": "Divine Blessing"
+				},
+				"devout": {
+					"name": "Devout",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Deep, constant prayer.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"faith": 2,
+								"mind": 2
+							}
+						}
+					]
+				},
+				"blessed_light": {
+					"name": "Blessed Light",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Healing Light shines brighter.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Healing Light",
+							"power": 10
+						}
+					]
+				},
+				"miracle": {
+					"name": "Miracle",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "A true miracle of the Dawn: an enormous heal.",
+					"skill": "Miracle"
+				}
+			},
+			"inquisitor": {
+				"zeal_of_dawn": {
+					"name": "Zeal of the Dawn",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Holy wrath burns hotter.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"element": "HOLY"
+						}
+					]
+				},
+				"purifying_flame": {
+					"name": "Purifying Flame",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Holy fire that sears the unclean.",
+					"skill": "Purifying Flame"
+				},
+				"judgement_mastery": {
+					"name": "Judgement Mastery",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "The blinded and burning are judged harder.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "judgement",
+							"bonus": 0.1
+						},
+						{
+							"type": "combo",
+							"combo": "purge",
+							"bonus": 0.1
+						}
+					]
+				},
+				"heretic_bane": {
+					"name": "Heretic Bane",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "The burning heretic falls.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.1,
+							"target_status": "BURN"
+						}
+					]
+				},
+				"dawnfire": {
+					"name": "Dawnfire",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "The sky ignites with the first light: holy fire on every foe.",
+					"skill": "Dawnfire"
+				}
+			}
+		},
+		"Kannagi": {
+			"barrier_arts": {
+				"warding": {
+					"name": "Warding",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Symbols of protection.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"spell_ward": 3,
+								"toughness": 2
+							}
+						}
+					]
+				},
+				"sacred_seal": {
+					"name": "Sacred Seal",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Press an ofuda seal onto the foe, binding its spirit.",
+					"skill": "Sacred Seal"
+				},
+				"barrier_mastery": {
+					"name": "Barrier Mastery",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Spirit Barrier grows stronger.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Spirit Barrier",
+							"power": 10
+						}
+					]
+				},
+				"sanctuary": {
+					"name": "Sanctuary",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Sacred ground beneath you.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.05
+						}
+					]
+				},
+				"torii_of_the_ancients": {
+					"name": "Torii of the Ancients",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Raise a gate of the Ancient Ones over an ally: warded, healing, reflecting.",
+					"skill": "Torii of the Ancients"
+				}
+			},
+			"ancestral_spirits": {
+				"spirit_well": {
+					"name": "Spirit Well",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "The spirits refill you.",
+					"effects": [
+						{
+							"type": "regen",
+							"mp": 0.03,
+							"sp": 0.02
+						}
+					]
+				},
+				"spirit_exchange": {
+					"name": "Stamina Conversion",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Draw the foe's stamina and turn it into your mana.",
+					"skill": "Stamina Conversion"
+				},
+				"ancestral_blessing": {
+					"name": "Ancestral Blessing",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "The ancestors mend through you.",
+					"effects": [
+						{
+							"type": "heal_bonus",
+							"mult": 0.06
+						}
+					]
+				},
+				"mending_mastery": {
+					"name": "Mending Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Ancestral Mending heals more.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Ancestral Mending",
+							"power": 10
+						}
+					]
+				},
+				"communion": {
+					"name": "Communion",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Commune with the Ancient Ones; their power floods an ally with life.",
+					"skill": "Communion"
+				}
+			},
+			"kotodama": {
+				"primal_voice": {
+					"name": "Primal Voice",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Your words carry weight.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"arcane": 2
+							}
+						},
+						{
+							"type": "damage",
+							"mult": 0.03,
+							"ability": "MAGICAL"
+						}
+					]
+				},
+				"spirit_lance": {
+					"name": "Spirit Lance",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A spear of pure spirit, unbound by element.",
+					"skill": "Spirit Lance"
+				},
+				"exorcist": {
+					"name": "Exorcist",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Sealed spirits break apart.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "exorcism",
+							"bonus": 0.1
+						}
+					]
+				},
+				"wrath_mastery": {
+					"name": "Wrath Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Wrath of the Ancients grows.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Wrath of the Ancients",
+							"power": 10
+						}
+					]
+				},
+				"voice_of_nyxara": {
+					"name": "Voice of Nyxara",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Speak a word from before creation; every foe reels.",
+					"skill": "Voice of Nyxara"
+				}
+			}
+		},
+		"Elementalist": {
+			"conflux": {
+				"searing_mind": {
+					"name": "Searing Mind",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Heat and cold both answer.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"elements": ["FIRE", "ICE"]
+						}
+					]
+				},
+				"glacial_prison": {
+					"name": "Glacial Prison",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Encase the foe in ice.",
+					"skill": "Glacial Prison"
+				},
+				"thermodynamics": {
+					"name": "Thermodynamics",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Exploit every temperature shock.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "thermal_shock",
+							"bonus": 0.1
+						},
+						{
+							"type": "combo",
+							"combo": "steam_burst",
+							"bonus": 0.1
+						}
+					]
+				},
+				"spear_mastery": {
+					"name": "Spear Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Blazing Ice Spear grows.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Blazing Ice Spear",
+							"power": 10
+						}
+					]
+				},
+				"meteor": {
+					"name": "Meteor",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Pull a burning star down on every foe.",
+					"skill": "Meteor"
+				}
+			},
+			"stormcalling": {
+				"static_mind": {
+					"name": "Static Mind",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "The storm hums in you.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"elements": ["LIGHTNING", "WATER", "WIND"]
+						}
+					]
+				},
+				"tidal_wave": {
+					"name": "Tidal Wave",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A wave crashes over every foe and leaves them drenched.",
+					"skill": "Tidal Wave"
+				},
+				"conduction_mastery": {
+					"name": "Conduction Mastery",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Lightning through water.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "conduction",
+							"bonus": 0.1
+						},
+						{
+							"type": "combo",
+							"combo": "overload",
+							"bonus": 0.1
+						}
+					]
+				},
+				"storm_mastery": {
+					"name": "Storm Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Volcanic Thunder Storm grows.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Volcanic Thunder Storm",
+							"power": 10
+						}
+					]
+				},
+				"tempest": {
+					"name": "Tempest",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "A living storm of wind and lightning.",
+					"skill": "Tempest"
+				}
+			},
+			"fifth_element": {
+				"arcane_study": {
+					"name": "Arcane Study",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Endless study in the tower.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"intelligence": 2,
+								"arcane": 2
+							}
+						}
+					]
+				},
+				"elemental_convergence": {
+					"name": "Elemental Convergence",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Fire, ice, lightning and earth fused in one bolt; it answers any combo.",
+					"skill": "Elemental Convergence"
+				},
+				"overflowing_mana": {
+					"name": "Overflowing Mana",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Mana wells up unbidden.",
+					"effects": [
+						{
+							"type": "regen",
+							"mp": 0.03
+						}
+					]
+				},
+				"eccentric_genius": {
+					"name": "Eccentric Genius",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Brilliant, chaotic, effective.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"critical_hit_rate": 0.05
+							}
+						}
+					]
+				},
+				"aether_nova": {
+					"name": "Aether Nova",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "A glimpse of the fifth element: pure Aether, beyond any resistance.",
+					"skill": "Aether Nova"
+				}
+			}
+		},
+		"Beastmaster": {
+			"predator": {
+				"feral_strength": {
+					"name": "Feral Strength",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Borrowed claws, borrowed fury.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"ability": "PHYSICAL"
+						},
+						{
+							"type": "stats",
+							"stats": {
+								"arcane": 1
+							}
+						}
+					]
+				},
+				"hunters_mark": {
+					"name": "Hunter's Mark",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Mark your prey; the pack will not lose it.",
+					"skill": "Hunter's Mark"
+				},
+				"venom_glands": {
+					"name": "Venom Glands",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Poisoned prey weakens fast.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"target_status": "POISON"
+						}
+					]
+				},
+				"manticore_fury": {
+					"name": "Manticore Fury",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Manticore Sting, deeper.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Manticore Sting",
+							"power": 10
+						},
+						{
+							"type": "combo",
+							"combo": "manticores_venom",
+							"bonus": 0.1
+						}
+					]
+				},
+				"call_of_fenrisulfr": {
+					"name": "Call of Fenrisulfr",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "The Wild Father answers: spectral wolves tear through every foe.",
+					"skill": "Call of Fenrisulfr"
+				}
+			},
+			"behemoth": {
+				"behemoth_blood": {
+					"name": "Behemoth Blood",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Its blood in your veins.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"vitality": 2,
+								"fortitude": 2,
+								"max_hp_pct": 0.02
+							}
+						}
+					]
+				},
+				"behemoth_charge": {
+					"name": "Behemoth Charge",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Charge with the Behemoth's weight and bowl the foe over.",
+					"skill": "Behemoth Charge"
+				},
+				"stone_skin": {
+					"name": "Stone Skin",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Hide like rock.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.04
+						}
+					]
+				},
+				"hide_mastery": {
+					"name": "Hide Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Behemoth Hide grows thicker.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Behemoth Hide",
+							"power": 10
+						}
+					]
+				},
+				"earthshaker": {
+					"name": "Earthshaker",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "The Behemoth stamps; the ground breaks under every foe.",
+					"skill": "Earthshaker"
+				}
+			},
+			"roc": {
+				"rocs_wings": {
+					"name": "Roc's Wings",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Lighter than air.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"agility": 2,
+								"dodge": 0.02
+							}
+						}
+					]
+				},
+				"roc_dive": {
+					"name": "Roc Dive",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Plunge from above with talons first.",
+					"skill": "Roc Dive"
+				},
+				"tailwind": {
+					"name": "Tailwind",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Strike first, strike true.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"critical_hit_rate": 0.03
+							}
+						}
+					]
+				},
+				"sky_hunter": {
+					"name": "Sky Hunter",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Marked prey can't escape the sky.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.1,
+							"target_status": "MARKED"
+						}
+					]
+				},
+				"storm_of_feathers": {
+					"name": "Storm of Feathers",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "The Roc's wings whip up a storm of razor feathers.",
+					"skill": "Storm of Feathers"
+				}
+			}
+		},
+		"Necromancer": {
+			"curses": {
+				"malediction": {
+					"name": "Malediction",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Darkness answers you.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"element": "DARK"
+						}
+					]
+				},
+				"crippling_hex": {
+					"name": "Crippling Hex",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Wither Strength, Agility and Fortitude and blind the foe.",
+					"skill": "Crippling Hex"
+				},
+				"lingering_curse": {
+					"name": "Lingering Curse",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Curse of Weakness bites deeper.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Curse of Weakness",
+							"power": 8
+						}
+					]
+				},
+				"blight_mastery": {
+					"name": "Blight Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Poison and shadow, perfected.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "blight",
+							"bonus": 0.15
+						},
+						{
+							"type": "combo",
+							"combo": "dread",
+							"bonus": 0.1
+						}
+					]
+				},
+				"hels_decree": {
+					"name": "Hel's Decree",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "The Shadow Keeper's decree: every foe weakens and rots.",
+					"skill": "Hel's Decree"
+				}
+			},
+			"life_drinker": {
+				"dark_pact": {
+					"name": "Dark Pact",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Stolen life sustains you.",
+					"effects": [
+						{
+							"type": "lifesteal",
+							"fraction": 0.03
+						}
+					]
+				},
+				"blood_rite": {
+					"name": "Blood Rite",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Pay with your own blood for a devastating bolt of shadow.",
+					"skill": "Blood Rite"
+				},
+				"sanguine": {
+					"name": "Sanguine",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Life Tap drinks deeper.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Life Tap",
+							"power": 8
+						}
+					]
+				},
+				"undying": {
+					"name": "Undying",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Death keeps letting you go.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.1,
+							"user_hp_below": 0.3
+						}
+					]
+				},
+				"perfect_drain": {
+					"name": "Perfect Drain",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Tear the life from a foe and take all of it for yourself.",
+					"skill": "Perfect Drain"
+				}
+			},
+			"gravecaller": {
+				"deaths_embrace": {
+					"name": "Death's Embrace",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "The grave's patience.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"intelligence": 2,
+								"mind": 2
+							}
+						}
+					]
+				},
+				"bone_spear": {
+					"name": "Bone Spear",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A lance of bone that tears and bleeds.",
+					"skill": "Bone Spear"
+				},
+				"grave_chill": {
+					"name": "Grave Chill",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "The cold of the grave.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"elements": ["ICE", "DARK"]
+						}
+					]
+				},
+				"reaper": {
+					"name": "Reaper",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Finish the dying.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.12,
+							"target_hp_below": 0.3
+						}
+					]
+				},
+				"danse_macabre": {
+					"name": "Danse Macabre",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "The dead rise and dance through the enemy ranks.",
+					"skill": "Danse Macabre"
+				}
+			}
+		}
+	}
+}

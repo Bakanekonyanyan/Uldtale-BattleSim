@@ -27,8 +27,25 @@ func add_skills(skill_names: Array):
 			var instance = skill_data.duplicate()
 			instance.level = skill_levels[skill_name]["level"]
 			instance.uses = skill_levels[skill_name]["uses"]
+			_set_mods(instance)
 			instance.calculate_level_bonuses()
 			skill_instances[skill_name] = instance
+
+## Talent upgrades for a skill (power/cooldown/costs/duration), applied on top of
+## its level bonuses every time those are recalculated.
+func _set_mods(instance: Skill) -> void:
+	instance.talent_mods = character.talents.skill_mods(instance.name) if character and character.talents else {}
+
+func refresh_talent_mods() -> void:
+	for skill_name in skill_instances:
+		var inst: Skill = skill_instances[skill_name]
+		_set_mods(inst)
+		inst.calculate_level_bonuses()
+
+func remove_skill(skill_name: String) -> void:
+	skill_levels.erase(skill_name)
+	skill_instances.erase(skill_name)
+	skill_cooldowns.erase(skill_name)
 
 func get_skill_instance(skill_name: String) -> Skill:
 	"""Get the skill instance"""
@@ -39,10 +56,11 @@ func get_skill_instance(skill_name: String) -> Skill:
 	var skill_data = SkillManager.get_skill(skill_name)
 	if skill_data:
 		var instance = skill_data.duplicate()
+		_set_mods(instance)
 		if skill_levels.has(skill_name):
 			instance.level = skill_levels[skill_name]["level"]
 			instance.uses = skill_levels[skill_name]["uses"]
-			instance.calculate_level_bonuses()
+		instance.calculate_level_bonuses()
 		skill_instances[skill_name] = instance
 		return instance
 	
@@ -142,5 +160,6 @@ func load_save_data(data: Dictionary):
 			var instance = skill_data.duplicate()
 			instance.level = skill_levels[skill_name]["level"]
 			instance.uses = skill_levels[skill_name]["uses"]
+			_set_mods(instance)
 			instance.calculate_level_bonuses()
 			skill_instances[skill_name] = instance

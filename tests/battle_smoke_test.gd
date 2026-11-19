@@ -141,6 +141,78 @@ func _unit_checks() -> void:
 
 # ------------------------------------------------------------------ phase 0 (locations, drops, carry limit, saves)
 
+## Talent trees (data/talents.json, TalentManager.gd)
+func _talent_checks() -> void:
+	var p = CharacterFactory.create_character("T", "Hume", "Paladin", true)
+	p.currency.copper = 100000
+	var t: TalentManager = p.talents
+	check(t.total_points() == 0 and not t.can_learn("bulwark/shield_discipline"), "level 1: no talent points")
+	p.level = 6
+	check(t.total_points() == 5, "1 point per level from level 2 (L6 = 5)")
+	check(not t.can_learn("bulwark/shield_bash"), "tier 2 locked until 2 points are in the branch")
+	var tough_before = p.toughness
+	check(t.learn("bulwark/shield_discipline") and t.learn("bulwark/shield_discipline"), "learn a passive twice")
+	check(is_equal_approx(p.toughness, tough_before + 6.0), "Shield Discipline: +3 toughness per rank (%.1f -> %.1f)" % [tough_before, p.toughness])
+	check(t.learn("bulwark/shield_bash") and "Shield Bash" in p.skills and "Shield Bash" in p.get_battle_skills(), "tier-2 node unlocks Shield Bash and equips it")
+	check(not t.can_learn("bulwark/aegis_of_dawn"), "ultimate needs 8 points in the branch")
+	
+	# defense with a shield
+	var dummy = make_player()
+	var plain = BattleFormulas.hit_damage(dummy, p, true)
+	p.equipment["off_hand"] = Equipment.new(ItemManager.get_equipment_template("buckler").duplicate(true))
+	check(BattleFormulas.hit_damage(dummy, p, true) < plain, "Shield Discipline reduces damage taken with a shield")
+	
+	# skill upgrade: Samurai Iai Mastery adds Iaido power
+	var sam = CharacterFactory.create_character("S", "Hume", "Samurai", true)
+	sam.level = 10
+	var iaido_before = sam.get_skill_instance("Iaido").power
+	for k in ["iai/swift_draw", "iai/swift_draw", "iai/swift_draw", "iai/flash_draw", "iai/iai_mastery"]:
+		sam.talents.learn(k)
+	check(sam.get_skill_instance("Iaido").power == iaido_before + 10, "Iai Mastery: Iaido +10 power (%d -> %d)" % [iaido_before, sam.get_skill_instance("Iaido").power])
+	
+	# loadout cap and respec
+	sam.set_equipped_skills(sam.skills + ["Nonexistent"])
+	check(sam.get_battle_skills().size() <= TalentManager.loadout_size(), "loadout capped at %d skills" % TalentManager.loadout_size())
+	var gold = sam.currency.copper
+	sam.currency.copper = 5000
+	check(sam.talents.respec() and sam.talents.spent_points() == 0 and not "Flash Draw" in sam.skills and sam.get_skill_instance("Iaido").power == iaido_before,
+		"respec refunds points, removes talent skills and upgrades")
+	check(sam.currency.copper == 5000 - sam.talents.respec_cost(), "respec costs %d copper at level 10" % sam.talents.respec_cost())
+	
+	# lifesteal + combo bonus + hp cost
+	var zerk = CharacterFactory.create_character("B", "Hume", "Berserker", true)
+	zerk.level = 5
+	for i in 3: zerk.talents.learn("bloodlust/thirst")
+	zerk.current_hp = int(zerk.max_hp * 0.5)
+	var hp0 = zerk.current_hp
+	var foe = make_player(); foe.vitality += 200; foe.calculate_secondary_attributes(); foe.current_hp = foe.max_hp
+	zerk.accuracy = 10.0; zerk.critical_hit_rate = 0.0; foe.dodge = 0.0
+	CombatEngine.new()._execute_attack(BattleAction.attack(zerk, foe))
+	check(zerk.current_hp > hp0, "Thirst: basic attacks heal the Berserker (%d -> %d)" % [hp0, zerk.current_hp])
+	var nec = CharacterFactory.create_character("N", "Hume", "Necromancer", true)
+	nec.level = 8
+	for k in ["curses/malediction", "curses/malediction", "curses/crippling_hex", "curses/malediction", "curses/lingering_curse", "curses/lingering_curse", "curses/blight_mastery"]:
+		nec.talents.learn(k)
+	foe.apply_status_effect(Skill.StatusEffect.POISON, 3)
+	var c = Combos.preview(nec, nec.get_skill_instance("Dark Bolt"), foe)
+	check(c.get("name", "") == "Blight" and c.multiplier > 1.5, "Blight Mastery raises Blight above x1.5 (%.2f)" % c.get("multiplier", 0))
+	for k in ["life_drinker/dark_pact", "life_drinker/dark_pact"]:
+		nec.talents.learn(k)
+	check("Crippling Hex" in nec.skills, "reused skill unlocked by a talent (Crippling Hex)")
+	
+	# every class: 3 branches x 5 tiers, every skill node's skill exists
+	var ok := true
+	for cls in TalentManager.data().get("nodes", {}):
+		var branches = TalentManager.branches_for(cls)
+		if branches.size() != 3:
+			ok = false
+		for b in branches:
+			for n in TalentManager.nodes_for(cls, b.id):
+				if n.has("skill") and SkillManager.get_skill(n.skill) == null:
+					ok = false
+					print("  missing skill ", n.skill)
+	check(ok, "12 classes x 3 branches, every talent skill exists")
+
 ## Classes follow their philosophies (docs/lore/CLASS_PHILOSOPHIES.md)
 func _philosophy_checks() -> void:
 	var monk = CharacterFactory.create_character("M", "Hume", "Monk", true)
@@ -313,6 +385,7 @@ func _phase0_checks() -> void:
 	_combo_checks()
 	_element_and_class_checks()
 	_philosophy_checks()
+	_talent_checks()
 	
 	# Class-biased loot rolls (Breather drops pass the player's class)
 	var biased_ok := true

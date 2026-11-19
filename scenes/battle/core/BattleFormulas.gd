@@ -81,7 +81,7 @@ static func mitigation(defense: float) -> float:
 ## Raw (pre-crit, pre-element) damage for a hit.
 ## skill_power = 0 for basic attacks. damage_type: DamageTypes.Type, or
 ## FROM_WEAPON (-1) to use the attacker's main-hand weapon (physical hits only).
-static func hit_damage(attacker: CharacterData, target: CharacterData, is_physical: bool, skill_power: float = 0.0, damage_type: int = -1) -> float:
+static func hit_damage(attacker: CharacterData, target: CharacterData, is_physical: bool, skill_power: float = 0.0, damage_type: int = -1, skill = null) -> float:
 	var offense = physical_offense(attacker) if is_physical else magical_offense(attacker)
 	var defense = physical_defense(target) if is_physical else magical_defense(target)
 	if is_physical:
@@ -91,7 +91,23 @@ static func hit_damage(attacker: CharacterData, target: CharacterData, is_physic
 	raw *= MomentumSystem.get_damage_multiplier() if attacker.is_player else 1.0
 	if is_physical:
 		raw *= DamageTypes.multiplier(target, DamageTypes.attack_type(attacker, damage_type))
+	# Talents (data/talents.json): attacker's damage bonuses, target's damage reduction
+	if attacker.talents or target.talents:
+		var ctx = TalentManager.hit_context(attacker, target, is_physical, skill, damage_type)
+		if attacker.talents:
+			raw *= attacker.talents.damage_mult(ctx)
+		if target.talents:
+			raw *= target.talents.defense_mult(ctx)
 	return raw * mitigation(defense)
+
+## Talent lifesteal after a hit landed: heals the attacker. Returns HP healed.
+static func apply_lifesteal(attacker: CharacterData, target: CharacterData, dealt: float, is_physical: bool, skill = null, damage_type: int = -1) -> int:
+	if attacker == null or attacker.talents == null or dealt <= 0 or not attacker.is_alive():
+		return 0
+	var f = attacker.talents.lifesteal(TalentManager.hit_context(attacker, target, is_physical, skill, damage_type))
+	if f <= 0.0:
+		return 0
+	return attacker.heal(int(round(dealt * f)))
 
 static func roll_crit(attacker: CharacterData) -> float:
 	"""Returns the damage multiplier: 1.0, or 1.5-2.0 on a crit."""
@@ -103,7 +119,8 @@ static func finalize(damage: float) -> int:
 	return max(MIN_DAMAGE, int(round(damage)))
 
 static func heal_amount(caster: CharacterData, skill_power: float) -> int:
-	return int(skill_power + caster.spell_power * HEAL_SPELL_POWER_SCALE)
+	var bonus = caster.talents.heal_bonus() if caster.talents else 0.0
+	return int((skill_power + caster.spell_power * HEAL_SPELL_POWER_SCALE) * (1.0 + bonus))
 
 static func buff_amount(target: CharacterData, attribute: Skill.AttributeTarget, skill_power: float) -> int:
 	var attr_name = Skill.AttributeTarget.keys()[attribute].to_lower()
@@ -114,8 +131,9 @@ static func buff_amount(target: CharacterData, attribute: Skill.AttributeTarget,
 static func effect_duration(skill_duration: int) -> int:
 	return skill_duration + BUFF_DURATION_BONUS
 
-static func status_procs(is_damage_skill: bool) -> bool:
-	return (not is_damage_skill) or RandomManager.randf() < DAMAGE_SKILL_STATUS_CHANCE
+static func status_procs(is_damage_skill: bool, user: CharacterData = null) -> bool:
+	var chance = DAMAGE_SKILL_STATUS_CHANCE + (user.talents.status_chance_bonus() if user and user.talents else 0.0)
+	return (not is_damage_skill) or RandomManager.randf() < chance
 
 # --- Equipment helpers ---
 

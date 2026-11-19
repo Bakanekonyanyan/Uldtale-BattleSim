@@ -72,6 +72,126 @@
 			"payoff": { "ability_types": ["PHYSICAL"] },
 			"multiplier": 1.25,
 			"consume": true
+		},
+		"dread": {
+			"name": "Dread",
+			"description": "Shadow takes the blinded.",
+			"setup": "BLIND",
+			"payoff": {
+				"elements": ["DARK"]
+			},
+			"multiplier": 1.3,
+			"consume": true
+		},
+		"manticores_venom": {
+			"name": "Manticore's Venom",
+			"description": "Claws rake through venom-weakened flesh.",
+			"setup": "POISON",
+			"payoff": {
+				"damage_types": ["SLASH"]
+			},
+			"multiplier": 1.35,
+			"consume": true
+		},
+		"steam_burst": {
+			"name": "Steam Burst",
+			"description": "Fire flashes the water on a soaked foe into scalding steam.",
+			"setup": "SOAKED",
+			"payoff": {
+				"elements": ["FIRE"]
+			},
+			"multiplier": 1.35,
+			"consume": true
+		},
+		"exorcism": {
+			"name": "Exorcism",
+			"description": "Magic tears a sealed spirit apart.",
+			"setup": "SEALED",
+			"payoff": {
+				"ability_types": ["MAGICAL"]
+			},
+			"multiplier": 1.35,
+			"consume": true
+		},
+		"purge": {
+			"name": "Purge",
+			"description": "Holy light purifies the burning.",
+			"setup": "BURN",
+			"payoff": {
+				"elements": ["HOLY"]
+			},
+			"multiplier": 1.3,
+			"consume": true
+		},
+		"bramble_burst": {
+			"name": "Bramble Burst",
+			"description": "Thorns burst through open wounds.",
+			"setup": "BLEED",
+			"payoff": {
+				"elements": ["EARTH"]
+			},
+			"multiplier": 1.3,
+			"consume": true
+		},
+		"bloodbath": {
+			"name": "Bloodbath",
+			"description": "Rampage tears a bleeding foe apart.",
+			"setup": "BLEED",
+			"payoff": {
+				"skills": ["Rampage", "Fenrisulfr's Maw"]
+			},
+			"multiplier": 1.5,
+			"consume": true
+		},
+		"assassinate": {
+			"name": "Assassinate",
+			"description": "A blade to the vital point of a marked target.",
+			"setup": "MARKED",
+			"payoff": {
+				"damage_types": ["PIERCE"]
+			},
+			"multiplier": 1.45,
+			"consume": true
+		},
+		"decisive_cut": {
+			"name": "Decisive Cut",
+			"description": "The cut you have been waiting for.",
+			"setup": "MARKED",
+			"payoff": {
+				"damage_types": ["SLASH"]
+			},
+			"multiplier": 1.4,
+			"consume": true
+		},
+		"exploit_opening": {
+			"name": "Exploit Opening",
+			"description": "A blade through the opening a staggered foe leaves.",
+			"setup": "STAGGERED",
+			"payoff": {
+				"damage_types": ["SLASH", "PIERCE"]
+			},
+			"multiplier": 1.3,
+			"consume": true
+		},
+		"pressure_break": {
+			"name": "Pressure Break",
+			"description": "A heavy blow on a staggered foe breaks its stance.",
+			"setup": "STAGGERED",
+			"payoff": {
+				"damage_types": ["BLUNT"]
+			},
+			"multiplier": 1.35,
+			"consume": true
+		},
+		"sanctified_strike": {
+			"name": "Sanctified Strike",
+			"description": "Holy light strikes a staggered foe.",
+			"setup": "STAGGERED",
+			"payoff": {
+				"elements": ["HOLY"]
+			},
+			"multiplier": 1.35,
+			"consume": true
 		}
 	}
 }
