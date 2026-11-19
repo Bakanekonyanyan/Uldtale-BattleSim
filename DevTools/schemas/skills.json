@@ -1,0 +1,169 @@
+{
+ "tab": "Skills",
+ "file": "data/skills.json",
+ "order": 12,
+ "description": "Every skill, for heroes and enemies alike (players = enemies). Math: scenes/battle/BATTLE_MATH.md.",
+ "sections": [
+  {
+   "kind": "collection",
+   "label": "Skills",
+   "path": [
+    "skills"
+   ],
+   "key_style": "title",
+   "key_label": "Skill name",
+   "key_help": "Classes list skills by this name, so keep it the same as the Name field.",
+   "summary": "{type} - {target} - power {power}",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str",
+     "help": "Display name. Must match the id."
+    },
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "ability_type",
+     "type": "enum",
+     "source": "gd:AbilityType",
+     "default": "PHYSICAL",
+     "help": "PHYSICAL uses attack power vs physical defense (and damage types); MAGICAL uses spell power vs magic defense."
+    },
+    {
+     "name": "type",
+     "type": "enum",
+     "source": "gd:SkillType",
+     "default": "DAMAGE"
+    },
+    {
+     "name": "target",
+     "type": "enum",
+     "source": "gd:SkillTarget",
+     "default": "ENEMY"
+    },
+    {
+     "name": "category",
+     "type": "enum",
+     "options": [
+      "BASIC",
+      "ADVANCED"
+     ],
+     "optional": true
+    },
+    {
+     "name": "power",
+     "type": "int",
+     "min": 0,
+     "max": 300,
+     "default": 20,
+     "help": "Damage: +1% per point over a basic attack. Heal: flat + 50% spell power. Buff/debuff: 1.5% of the target's base stat per point."
+    },
+    {
+     "name": "duration",
+     "type": "int",
+     "min": 0,
+     "max": 20,
+     "default": 0,
+     "help": "Turns for buffs/debuffs/statuses (buff/debuff skills get +1 so the listed turns are fully felt)."
+    },
+    {
+     "name": "mp_cost",
+     "type": "int",
+     "min": 0,
+     "default": 0
+    },
+    {
+     "name": "sp_cost",
+     "type": "int",
+     "min": 0,
+     "default": 0
+    },
+    {
+     "name": "cooldown",
+     "type": "int",
+     "min": 0,
+     "max": 20,
+     "default": 2
+    },
+    {
+     "name": "damage_type",
+     "type": "enum",
+     "source": "gd:DamageType",
+     "optional": true,
+     "help": "PHYSICAL skills only: fixed Slash/Pierce/Blunt. Leave unset to use the attacker's weapon."
+    },
+    {
+     "name": "element",
+     "type": "enum_multi",
+     "source": "gd:SkillElement",
+     "optional": true,
+     "help": "Legacy single element. Prefer 'elements'."
+    },
+    {
+     "name": "elements",
+     "type": "enum_list",
+     "source": "gd:SkillElement",
+     "exclude": [
+      "NONE",
+      "PHYSICAL"
+     ],
+     "optional": true
+    },
+    {
+     "name": "attribute_target",
+     "type": "enum_multi",
+     "source": "gd:AttributeTarget",
+     "optional": true,
+     "help": "Buff/debuff: attribute(s) changed."
+    },
+    {
+     "name": "attribute_targets",
+     "type": "enum_multi",
+     "source": "gd:AttributeTarget",
+     "optional": true,
+     "help": "Same as attribute_target (either key works)."
+    },
+    {
+     "name": "status_effect",
+     "type": "enum_multi",
+     "source": "gd:StatusEffect",
+     "optional": true,
+     "help": "Status applied (35% chance per effect on damage skills; always on status/debuff skills)."
+    },
+    {
+     "name": "status_effects",
+     "type": "enum_list",
+     "source": "gd:StatusEffect",
+     "exclude": [
+      "NONE"
+     ],
+     "optional": true
+    },
+    {
+     "name": "drain_source",
+     "type": "enum",
+     "source": "gd:DrainTarget",
+     "optional": true,
+     "help": "DRAIN skills: what is taken from the target."
+    },
+    {
+     "name": "drain_restore",
+     "type": "enum",
+     "source": "gd:DrainTarget",
+     "optional": true,
+     "help": "DRAIN skills: what the user gets back."
+    },
+    {
+     "name": "drain_efficiency",
+     "type": "float",
+     "min": 0,
+     "max": 3,
+     "optional": true,
+     "help": "DRAIN skills: fraction of the drained amount restored."
+    }
+   ]
+  }
+ ]
+}

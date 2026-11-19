@@ -1,0 +1,131 @@
+{
+ "tab": "Consumables",
+ "file": "data/items/consumables.json",
+ "order": 22,
+ "sections": [
+  {
+   "kind": "collection",
+   "label": "Consumables",
+   "key_style": "snake",
+   "name_field": "name",
+   "summary": "{consumable_type} - {target_type}",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "item_type",
+     "type": "enum",
+     "source": "gd:ItemType",
+     "default": "CONSUMABLE"
+    },
+    {
+     "name": "consumable_type",
+     "type": "enum",
+     "source": "gd:ConsumableType",
+     "default": "HEAL"
+    },
+    {
+     "name": "target_type",
+     "type": "enum",
+     "source": "gd:ItemTarget",
+     "default": "SELF"
+    },
+    {
+     "name": "value",
+     "type": "int",
+     "min": 0,
+     "default": 50
+    },
+    {
+     "name": "stackable",
+     "type": "bool",
+     "default": true
+    },
+    {
+     "name": "max_stack",
+     "type": "int",
+     "min": 1,
+     "default": 99
+    },
+    {
+     "name": "is_percentage_based",
+     "type": "bool",
+     "default": true,
+     "help": "Use effect_percent (of max HP/MP/SP) instead of effect_power."
+    },
+    {
+     "name": "effect_power",
+     "type": "int",
+     "min": 0,
+     "default": 0
+    },
+    {
+     "name": "effect_percent",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "default": 0.0
+    },
+    {
+     "name": "effect_duration",
+     "type": "int",
+     "min": 0,
+     "default": 0
+    },
+    {
+     "name": "combat_usable",
+     "type": "bool",
+     "default": true
+    },
+    {
+     "name": "restore_resource",
+     "type": "enum",
+     "options": [
+      "MP",
+      "SP",
+      "BOTH"
+     ],
+     "optional": true,
+     "help": "RESTORE items: which pool to refill."
+    },
+    {
+     "name": "status_effect",
+     "type": "enum",
+     "source": "gd:StatusEffect",
+     "exclude": [
+      "NONE"
+     ],
+     "optional": true
+    },
+    {
+     "name": "poison_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "optional": true
+    },
+    {
+     "name": "buff_type",
+     "type": "enum",
+     "options": [
+      "ATTACK",
+      "DODGE"
+     ],
+     "optional": true
+    },
+    {
+     "name": "craft_only",
+     "type": "bool",
+     "optional": true,
+     "help": "Never drops as random loot; only made by the Alchemist."
+    }
+   ]
+  }
+ ]
+}

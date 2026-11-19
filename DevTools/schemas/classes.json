@@ -1,0 +1,137 @@
+{
+ "tab": "Classes",
+ "file": "data/classes.json",
+ "order": 10,
+ "description": "Hero classes (playable) and enemy classes (non_playable, boss). Enemies are race x class.",
+ "sections": [
+  {
+   "kind": "collection",
+   "label": "Classes",
+   "key_style": "title",
+   "key_label": "Class name",
+   "key_help": "Shown in game, e.g. Paladin. Other files refer to classes by this name.",
+   "levels": [
+    {
+     "name": "group",
+     "options": [
+      "playable",
+      "non_playable",
+      "boss"
+     ],
+     "help": "playable = hero class; non_playable = regular enemy class; boss = boss class"
+    }
+   ],
+   "fields": [
+    {
+     "name": "base_vit",
+     "type": "int",
+     "label": "Base Vitality",
+     "min": 1,
+     "max": 40,
+     "default": 8
+    },
+    {
+     "name": "base_str",
+     "type": "int",
+     "label": "Base Strength",
+     "min": 1,
+     "max": 40,
+     "default": 8
+    },
+    {
+     "name": "base_dex",
+     "type": "int",
+     "label": "Base Dexterity",
+     "min": 1,
+     "max": 40,
+     "default": 8
+    },
+    {
+     "name": "base_int",
+     "type": "int",
+     "label": "Base Intelligence",
+     "min": 1,
+     "max": 40,
+     "default": 8
+    },
+    {
+     "name": "base_fai",
+     "type": "int",
+     "label": "Base Faith",
+     "min": 1,
+     "max": 40,
+     "default": 8
+    },
+    {
+     "name": "base_mnd",
+     "type": "int",
+     "label": "Base Mind",
+     "min": 1,
+     "max": 40,
+     "default": 8
+    },
+    {
+     "name": "base_end",
+     "type": "int",
+     "label": "Base Endurance",
+     "min": 1,
+     "max": 40,
+     "default": 8
+    },
+    {
+     "name": "base_arc",
+     "type": "int",
+     "label": "Base Arcane",
+     "min": 1,
+     "max": 40,
+     "default": 8
+    },
+    {
+     "name": "base_agi",
+     "type": "int",
+     "label": "Base Agility",
+     "min": 1,
+     "max": 40,
+     "default": 8
+    },
+    {
+     "name": "base_for",
+     "type": "int",
+     "label": "Base Fortitude",
+     "min": 1,
+     "max": 40,
+     "default": 8
+    },
+    {
+     "name": "attack_power_type",
+     "type": "enum",
+     "options": [
+      "strength",
+      "dexterity",
+      "arcane"
+     ],
+     "default": "strength",
+     "help": "Main attribute for attack power (x2, plus two secondary stats x0.5)."
+    },
+    {
+     "name": "spell_power_type",
+     "type": "enum",
+     "options": [
+      "intelligence",
+      "faith",
+      "arcane",
+      "balanced"
+     ],
+     "default": "intelligence",
+     "help": "Main attribute for spell power. balanced = INT + FAI + ARC."
+    },
+    {
+     "name": "skills",
+     "type": "ref_list",
+     "source": "skills",
+     "help": "Skills the class starts with (by skill name)."
+    }
+   ]
+  }
+ ]
+}

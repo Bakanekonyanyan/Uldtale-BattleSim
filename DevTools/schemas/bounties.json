@@ -1,0 +1,93 @@
+{
+ "tab": "Bounties",
+ "file": "data/bounties.json",
+ "order": 44,
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Board settings",
+   "path": [
+    "settings"
+   ],
+   "fields": [
+    {
+     "name": "board_size",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "max_active",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "deadline_expeditions",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "fail_point_penalty",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Fraction of the bounty's points lost on failure."
+    },
+    {
+     "name": "abandon_fee_fraction",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "reroll_fee_per_floor",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "classes",
+     "type": "ref_list",
+     "source": "enemy_classes",
+     "help": "Enemy classes bounties can target."
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Templates",
+   "path": [
+    "templates"
+   ],
+   "key_style": "snake",
+   "fields": [
+    {
+     "name": "title",
+     "type": "str",
+     "help": "Placeholders: {location_name} {class_plural} {race_plural} {count} {floor} {item_name}"
+    },
+    {
+     "name": "objective",
+     "type": "json",
+     "help": "{type: KILL|KILL_BOSS|CLEAR_FLOOR|WIN_STREAK|DELIVER, target: {location, race, class}, count: n or [min, max], floor, item}. Values may be placeholders like {any_location}."
+    },
+    {
+     "name": "min_floor",
+     "type": "int",
+     "min": 1,
+     "default": 1
+    },
+    {
+     "name": "weight",
+     "type": "int",
+     "min": 0,
+     "default": 5,
+     "help": "Relative chance to appear on the board."
+    },
+    {
+     "name": "rewards",
+     "type": "json",
+     "help": "{gold_flat, gold_per_count, points, materials: {id: [min,max]}, chance: {id: p}, recipe}"
+    }
+   ]
+  }
+ ]
+}

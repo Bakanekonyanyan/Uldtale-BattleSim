@@ -1,0 +1,127 @@
+{
+ "tab": "Damage Types",
+ "file": "data/damage_types.json",
+ "order": 45,
+ "description": "Physical damage types (scripts/resources/DamageTypes.gd). Positive affinity = weak (takes more), negative = resists.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Damage type settings",
+   "fields": [
+    {
+     "name": "unarmed",
+     "type": "enum",
+     "source": "gd:DamageType",
+     "options": [
+      ""
+     ],
+     "help": "Type of hits with no weapon (empty = untyped)."
+    },
+    {
+     "name": "min_multiplier",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "max_multiplier",
+     "type": "float",
+     "min": 1,
+     "max": 5
+    },
+    {
+     "name": "weapons",
+     "type": "map",
+     "key": {
+      "type": "ref",
+      "source": "weapons"
+     },
+     "value": {
+      "type": "enum",
+      "source": "gd:DamageType"
+     },
+     "help": "Weapon id -> damage type."
+    },
+    {
+     "name": "types",
+     "type": "enum_list",
+     "source": "gd:DamageType",
+     "help": "Informational; the game reads DamageTypes.Type."
+    }
+   ],
+   "ignore": [
+    "armor",
+    "races"
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Armor affinities",
+   "path": [
+    "armor"
+   ],
+   "key_style": "snake",
+   "fields": [
+    {
+     "name": "SLASH",
+     "type": "float",
+     "min": -1,
+     "max": 1,
+     "optional": true,
+     "label": "Slash"
+    },
+    {
+     "name": "PIERCE",
+     "type": "float",
+     "min": -1,
+     "max": 1,
+     "optional": true,
+     "label": "Pierce"
+    },
+    {
+     "name": "BLUNT",
+     "type": "float",
+     "min": -1,
+     "max": 1,
+     "optional": true,
+     "label": "Blunt"
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Race affinities",
+   "path": [
+    "races"
+   ],
+   "key_style": "title",
+   "key_label": "Race",
+   "fields": [
+    {
+     "name": "SLASH",
+     "type": "float",
+     "min": -1,
+     "max": 1,
+     "optional": true,
+     "label": "Slash"
+    },
+    {
+     "name": "PIERCE",
+     "type": "float",
+     "min": -1,
+     "max": 1,
+     "optional": true,
+     "label": "Pierce"
+    },
+    {
+     "name": "BLUNT",
+     "type": "float",
+     "min": -1,
+     "max": 1,
+     "optional": true,
+     "label": "Blunt"
+    }
+   ]
+  }
+ ]
+}
