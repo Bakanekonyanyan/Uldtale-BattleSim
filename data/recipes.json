@@ -1,5 +1,5 @@
 {
-	"_comment": "Alchemist recipes. unlock.type: default | purchase (price in copper) | floor_reached (highest floor unlocked in any location) | bounty_reward | adventurer_rank. Ingredients come from pack then stash; output over the carry limit goes to the stash.",
+	"_comment": "Alchemist recipes. unlock.type: default | purchase (price in copper) | floor_reached (highest floor unlocked in any location) | bounty_reward | adventurer_rank (rank: F-S, known from that Adventurer rank on). Ingredients come from pack then stash; output over the carry limit goes to the stash.",
 	"recipes": {
 		"health_potion": {
 			"output": "health_potion",
@@ -221,6 +221,49 @@
 				"floor": 5
 			},
 			"category": "Elixirs"
+		},
+		"holy_water": {
+			"output": "holy_water",
+			"quantity": 1,
+			"ingredients": {
+				"glowcap_mushroom": 2,
+				"bogblossom_petal": 2,
+				"mindglass_shard": 1
+			},
+			"fee": 40,
+			"unlock": {
+				"type": "adventurer_rank",
+				"rank": "C"
+			},
+			"category": "Cures"
+		},
+		"berserker_brew": {
+			"output": "berserker_brew",
+			"quantity": 1,
+			"ingredients": {
+				"rousepepper_seeds": 2,
+				"bloodvine_fiber": 1
+			},
+			"fee": 25,
+			"unlock": {
+				"type": "adventurer_rank",
+				"rank": "D"
+			},
+			"category": "Elixirs"
+		},
+		"smoke_bomb": {
+			"output": "smoke_bomb",
+			"quantity": 2,
+			"ingredients": {
+				"wood": 2,
+				"glowcap_mushroom": 1
+			},
+			"fee": 15,
+			"unlock": {
+				"type": "adventurer_rank",
+				"rank": "E"
+			},
+			"category": "Flasks"
 		}
 	}
 }

@@ -8,6 +8,10 @@
 #   are checked at turn-in. Completed bounties are turned in for rewards.
 # - Missing a deadline: lose part of the bounty's Guild Points + 1 demerit.
 #   Abandoning: same demerit, or pay a fee instead.
+# - Adventurer rank (RankManager, data/ranks.json) sets board size, active slots,
+#   bounty gold and which templates appear (template "min_rank"). Promotion
+#   trials are active bounties with trial = true: no deadline, no slot, no penalty.
+# - Each completed bounty works off demerits_cleared_per_bounty demerits.
 # Per-character state lives in CharacterData.town_state["guild"].
 extends Node
 
@@ -54,7 +58,20 @@ func state(player: CharacterData) -> Dictionary:
 	for key in ["points", "demerits", "completed_count", "next_uid"]:
 		if not s.has(key):
 			s[key] = 0
+	if not s.has("rank"):
+		s["rank"] = "F"
 	return s
+
+## Board size and active-bounty slots come from the Adventurer rank.
+func board_size(player: CharacterData) -> int:
+	return int(RankManager.perk(player, "board_size", settings.get("board_size", 3)))
+
+func max_active(player: CharacterData) -> int:
+	return int(RankManager.perk(player, "max_active", settings.get("max_active", 3)))
+
+## Active bounties that use a slot (promotion trials don't).
+func active_count(player: CharacterData) -> int:
+	return state(player).active.filter(func(b): return not b.get("trial", false)).size()
 
 func get_points(player: CharacterData) -> int:
 	return int(state(player).points)
@@ -81,7 +98,7 @@ func refresh_board(player: CharacterData) -> void:
 	var board: Array = []
 	var used := {}
 	var tries := 0
-	while board.size() < int(settings.get("board_size", 3)) and tries < 50:
+	while board.size() < board_size(player) and tries < 50:
 		tries += 1
 		var tid = _pick_template(player, used)
 		if tid == "":
@@ -104,8 +121,8 @@ func reroll_board(player: CharacterData) -> Dictionary:
 
 func accept(player: CharacterData, uid: int) -> Dictionary:
 	var s = state(player)
-	if s.active.size() >= int(settings.get("max_active", 3)):
-		return {"ok": false, "reason": "You already have %d active bounties." % s.active.size()}
+	if active_count(player) >= max_active(player):
+		return {"ok": false, "reason": "You already have %d active bounties (your rank allows %d)." % [active_count(player), max_active(player)]}
 	var b = _find(s.board, uid)
 	if b.is_empty():
 		return {"ok": false, "reason": "That bounty is no longer on the board."}
@@ -141,10 +158,17 @@ func turn_in(player: CharacterData, uid: int) -> Dictionary:
 	if String(r.get("recipe", "")) != "":
 		AlchemyManager.learn_recipe(player, r.recipe)
 		got.append("Recipe: %s" % AlchemyManager.get_output_name(r.recipe))
+	s.active.erase(b)
+	if b.get("trial", false):
+		var promo = RankManager.promote(player, String(b.get("rank", "")))
+		return {"ok": true, "reason": "Trial complete! Received " + ", ".join(got) + ". " + promo}
 	s.points = int(s.points) + int(r.get("points", 0))
 	got.append("%d Guild Points" % int(r.get("points", 0)))
+	var worked_off = min(int(s.demerits), int(RankManager.cfg.get("settings", {}).get("demerits_cleared_per_bounty", 1)))
+	if worked_off > 0:
+		s.demerits = int(s.demerits) - worked_off
+		got.append("%d demerit%s worked off" % [worked_off, "" if worked_off == 1 else "s"])
 
-	s.active.erase(b)
 	s.completed_ids.append(b.template)
 	s.completed_count = int(s.completed_count) + 1
 	return {"ok": true, "reason": "Bounty complete! Received " + ", ".join(got) + "."}
@@ -161,6 +185,9 @@ func abandon(player: CharacterData, uid: int, pay_fee: bool) -> Dictionary:
 	var b = _find(s.active, uid)
 	if b.is_empty():
 		return {"ok": false, "reason": "No such active bounty."}
+	if b.get("trial", false):
+		s.active.erase(b)
+		return {"ok": true, "reason": "You set the trial aside. You can take it again at any time."}
 	if pay_fee:
 		var fee = get_abandon_fee(b)
 		if not player.currency.subtract(fee):
@@ -215,8 +242,8 @@ func _on_expedition_ended(_location_id: String, _cleared: bool) -> void:
 		return
 	var s = state(player)
 	for b in s.active.duplicate():
-		if is_complete(player, b):
-			continue  # finished bounties wait for turn-in
+		if is_complete(player, b) or b.get("trial", false):
+			continue  # finished bounties wait for turn-in; trials have no deadline
 		b.deadline = int(b.deadline) - 1
 		if int(b.deadline) <= 0:
 			s.active.erase(b)
@@ -262,6 +289,8 @@ func _pick_template(player: CharacterData, used: Dictionary) -> String:
 	for tid in templates:
 		if used.has(tid) or max(1, player.max_floor_cleared) < int(templates[tid].get("min_floor", 1)):
 			continue
+		if RankManager.get_rank_index(player) < RankManager.rank_index(String(templates[tid].get("min_rank", "F"))):
+			continue
 		pool.append(tid)
 		total += int(templates[tid].get("weight", 1))
 	if pool.is_empty():
@@ -295,7 +324,7 @@ func _instantiate(tid: String, player: CharacterData) -> Dictionary:
 	# Rewards (concrete now; "chance" items roll at turn-in)
 	var r: Dictionary = t.get("rewards", {})
 	var rewards := {
-		"gold": (int(r.get("gold_flat", 0)) + int(r.get("gold_per_count", 0)) * count) * ref,
+		"gold": int(round((int(r.get("gold_flat", 0)) + int(r.get("gold_per_count", 0)) * count) * ref * RankManager.reward_mult(player))),
 		"points": int(r.get("points", 0)),
 		"materials": {},
 		"chance": r.get("chance", {}).duplicate(),
@@ -391,7 +420,8 @@ func describe_objective(player: CharacterData, b: Dictionary) -> String:
 				who = plural(b.target.race)
 			return "Defeat %d %s in %s (%d/%d)" % [int(b.count), who, where, int(b.progress), int(b.count)]
 		"KILL_BOSS":
-			return "Defeat the boss of any floor in %s (%d/%d)" % [where, int(b.progress), int(b.count)]
+			var depth = "floor %d or deeper" % int(b.target.min_floor) if int(b.target.get("min_floor", 1)) > 1 else "any floor"
+			return "Defeat the boss of %s in %s (%d/%d)" % [depth, where, int(b.progress), int(b.count)]
 		"DELIVER":
 			return "Deliver %d %s (have %d)" % [int(b.count), _item_name(b.item), player.count_owned(b.item)]
 		"CLEAR_FLOOR":
@@ -411,5 +441,8 @@ func describe_rewards(b: Dictionary) -> String:
 		parts.append("Recipe: " + AlchemyManager.get_output_name(r.recipe))
 	for id in r.get("chance", {}):
 		parts.append("%d%% chance: %s" % [int(round(float(r.chance[id]) * 100)), _item_name(id)])
-	parts.append("%d GP" % int(r.get("points", 0)))
+	if b.get("trial", false):
+		parts.append("promotion to " + RankManager.display(String(b.get("rank", ""))))
+	else:
+		parts.append("%d GP" % int(r.get("points", 0)))
 	return ", ".join(parts)

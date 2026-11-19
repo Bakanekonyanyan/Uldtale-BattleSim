@@ -287,17 +287,22 @@ func _try_heal_ally() -> BattleAction:
 	var hurt: CharacterData = allies[0] if not allies.is_empty() else null
 	if hurt == null or float(hurt.current_hp) / hurt.max_hp >= float(role.heal_ally_below):
 		return null
-	var heal_skill = _find_healing_skill()
-	if heal_skill == null or not _can_afford_skill(heal_skill):
-		return null
-	match heal_skill.target:
-		Skill.TargetType.ALL_ALLIES:
-			return BattleAction.skill(enemy, heal_skill, [])
-		Skill.TargetType.SELF:
-			return BattleAction.skill(enemy, heal_skill, [enemy]) if hurt == enemy else null
-		_:
-			print("EnemyAI: Healing %s with %s" % [hurt.name, heal_skill.name])
-			return BattleAction.skill(enemy, heal_skill, [hurt])
+	# Any ready, affordable heal that can reach the wounded ally
+	for skill_name in enemy.skills:
+		var heal_skill = enemy.get_skill_instance(skill_name)
+		if heal_skill == null or heal_skill.type != Skill.SkillType.HEAL \
+				or enemy.get_skill_cooldown(skill_name) > 0 or not _can_afford_skill(heal_skill):
+			continue
+		match heal_skill.target:
+			Skill.TargetType.ALL_ALLIES:
+				return BattleAction.skill(enemy, heal_skill, [])
+			Skill.TargetType.SELF:
+				if hurt == enemy:
+					return BattleAction.skill(enemy, heal_skill, [enemy])
+			_:
+				print("EnemyAI: Healing %s with %s" % [hurt.name, heal_skill.name])
+				return BattleAction.skill(enemy, heal_skill, [hurt])
+	return null
 
 # =============================================
 # OFFENSIVE SKILLS

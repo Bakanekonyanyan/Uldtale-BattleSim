@@ -221,7 +221,9 @@ func _archetype_checks() -> void:
 	var t2 = bai._try_hp_trigger(0.3)
 	check(t2 != null and t2.skill_data.name == ult, "boss uses its ultimate below 35%% HP (%s)" % ult)
 	# AI role: healers mend a hurt ally
+	EnemyFactory.force_archetype = "Shaman"
 	var healer = EnemyFactory.create_enemy(1, 1, 1, 0)
+	EnemyFactory.force_archetype = ""
 	healer.set_meta("ai_role", "healer")
 	healer.add_skills(["Ancestral Mending"])
 	var ally = EnemyFactory.create_enemy(1, 1, 1, 0)
@@ -233,6 +235,55 @@ func _archetype_checks() -> void:
 	ai.target = hero
 	var act = ai._try_heal_ally()
 	check(act != null and act.skill_data.type == Skill.SkillType.HEAL and (act.targets.is_empty() or act.targets[0] == ally or act.skill_data.target == Skill.TargetType.ALL_ALLIES), "a healer-role enemy heals its wounded ally")
+	EnemyFactory.set_location(LocationManager.DEFAULT_LOCATION)
+
+## Adventurer ranks (data/ranks.json, RankManager.gd)
+func _rank_checks() -> void:
+	var p = make_player()
+	p.name = "ZZ_SmokeTest_Rank"
+	var prev_active = DungeonStateManager.active_player
+	DungeonStateManager.active_player = p
+	check(RankManager.get_rank(p) == "F" and RankManager.floor_cap(p) == 5, "new adventurers are F-Rank, floors capped at 5")
+	p.location_progress["goblin_forest"] = 9
+	check(RankManager.start_floor_limit(p, "goblin_forest") == 5, "the rank cap limits the starting floor (unlocked 9, start <= 5)")
+	check(not AlchemyManager.is_known(p, "smoke_bomb"), "rank-gated recipe unknown at F")
+	check(not RankManager.start_trial(p).ok, "no promotion trial without the Guild Points")
+	var gs = GuildManager.state(p)
+	gs.points = 40
+	gs.demerits = 3
+	check(RankManager.promotion_status(p).trial_state == "demerits" and not RankManager.start_trial(p).ok, "3 demerits block promotion")
+	var work = _bounty(p, "hunt_class", "KILL", {}, 1)
+	work.progress = 1
+	check(GuildManager.turn_in(p, int(work.uid)).ok and GuildManager.get_demerits(p) == 2, "completing a bounty works off a demerit")
+	gs.demerits = 0
+	gs.points = 40
+	check(RankManager.start_trial(p).ok and not RankManager.get_trial(p).is_empty(), "with 40 GP the E-Rank trial can be taken")
+	check(GuildManager.active_count(p) == 0, "the trial doesn't use an active-bounty slot")
+	var trial = RankManager.get_trial(p)
+	for b in GuildManager.get_active(p):   # trials skip the deadline tick
+		if b.get("trial", false):
+			check(int(b.deadline) == 0, "trials have no deadline")
+	EnemyFactory.set_location("goblin_forest")
+	var boss = EnemyFactory.create_boss(2, 6, 0)
+	GameEvents.enemy_killed.emit(boss, "goblin_forest", 2, true)
+	check(not GuildManager.is_complete(p, trial), "a floor-2 boss doesn't satisfy a floor-3+ trial")
+	GameEvents.enemy_killed.emit(boss, "orc_plains", 4, true)
+	check(not GuildManager.is_complete(p, trial), "a boss elsewhere doesn't count")
+	GameEvents.enemy_killed.emit(boss, "goblin_forest", 3, true)
+	check(GuildManager.is_complete(p, trial), "the Goblin Forest floor-3 boss completes the trial")
+	var money = p.currency.copper
+	var r = GuildManager.turn_in(p, int(trial.uid))
+	check(r.ok and RankManager.get_rank(p) == "E" and p.currency.copper > money, "turning in the trial promotes to E (%s)" % r.reason)
+	check(RankManager.floor_cap(p) == 8 and AlchemyManager.is_known(p, "smoke_bomb"), "E-Rank: floors to 8 and the Smoke Bomb recipe")
+	RankManager.promote(p, "D")
+	check(p.carry_limit == 10 and GuildManager.board_size(p) == 4, "D-Rank: carry limit 10, 4 bounties on the board")
+	GuildManager.refresh_board(p)
+	check(GuildManager.get_board(p).size() == 4, "the board posts 4 bounties at D")
+	check(not GuildManager.get_board(p).any(func(b): return b.template == "royal_writ"), "C-Rank bounties don't show at D")
+	RankManager.promote(p, "A")
+	check(RankManager.floor_cap(p) == 0 and not RankManager.is_floor_capped(p, 25), "A-Rank: no floor cap")
+	check(not RankManager.promote(p, "C").begins_with("Promoted"), "promotion never lowers your rank")
+	DungeonStateManager.active_player = prev_active
 	EnemyFactory.set_location(LocationManager.DEFAULT_LOCATION)
 
 ## Talent trees (data/talents.json, TalentManager.gd)
@@ -494,6 +545,7 @@ func _phase0_checks() -> void:
 	_talent_checks()
 	_defeat_checks()
 	_archetype_checks()
+	_rank_checks()
 	
 	# Class-biased loot rolls (Breather drops pass the player's class)
 	var biased_ok := true

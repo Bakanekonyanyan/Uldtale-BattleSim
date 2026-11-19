@@ -123,6 +123,33 @@ The bounty board, Guild Points and demerits exist. Ranks turn them into progress
   - access to deeper floors and new locations
 - **The Guild Hall screen:** rank and progress, the adventurer roster (§4), the news ledger (§5), and the recruit/party tab.
 
+### What was built (ranks)
+
+Data: `data/ranks.json` (Content Manager tab **Ranks**). Code: `scripts/autoload/RankManager.gd`, hooked into `GuildManager`, `AlchemyManager`, `DungeonStateManager`, the town floor picker and the Reward screen. UI: Guild **Rank** tab; rank shown in the Guild, Town and Status headers.
+
+| Rank | Title | GP | Trial (boss, no deadline) | Floors | Carry | Board / active | Bounty gold | Party | Recipe |
+|---|---|---|---|---|---|---|---|---|---|
+| F | Fledgling | 0 | - | to 5 | 5 | 3 / 3 | ×1.0 | 1 | |
+| E | Wayfarer | 40 | Goblin Forest, floor 3+ | to 8 | 5 | 3 / 3 | ×1.1 | 1 | Smoke Bomb |
+| D | Pathfinder | 120 | Troll Caves, floor 6+ | to 12 | 10 | 4 / 3 | ×1.2 | 2 | Berserker Brew |
+| C | Vanguard | 260 | Orc Plains, floor 10+ | to 16 | 10 | 4 / 4 | ×1.35 | 2 | Holy Water |
+| B | Veteran | 480 | Fairy Circles, floor 14+ | to 20 | 15 | 5 / 4 | ×1.5 | 3 | |
+| A | Champion | 800 | The Dungeon, floor 18+ | no cap | 15 | 5 / 5 | ×1.75 | 3 | |
+| S | Legend | 1250 | The Dungeon, floor 23+ | no cap | 20 | 5 / 5 | ×2.0 | 3 | |
+
+**Rules:**
+- **Promotion** needs the next rank's Guild Points, fewer than 3 demerits, and its **trial**.
+- Trials sit in the Active list but don't use a slot, have no deadline, and can be set aside for free.
+- Each completed bounty works off one demerit.
+- **Floor cap:**
+  - Clearing floors past the cap still records progress, but you can't start or advance beyond the cap. A promotion opens those floors immediately.
+  - The Reward screen shows "Rank X: floor N max" instead of Next Floor.
+- **Bounty templates** can set `min_rank`. Two new templates:
+  - Veteran's Cull, from D
+  - Royal Writ: two kings, from C
+- **Party size** is stored per rank for B2 (party of 3); nothing reads it yet.
+- **Rivals out-ranking you** (§7) hook in through `RankManager.rank_changed` once NPC adventurers exist.
+
 ## 4. NPC adventurers
 
 - **Who they are:** generated people with a name, race and class (any of the 12), level, rank, gear tier, 2–3 personality traits (honorable, greedy, reckless, cowardly, loyal, ambitious...) and an alignment.
@@ -159,7 +186,7 @@ Each day, the world simulates a little:
 ## 6. Build order (vertical slice)
 
 1. ~~**Finish the battle core:** enemy/boss archetypes (B1), defeat consequences (B3).~~ Done.
-2. **Adventurer ranks** in the Guild (small; the data is there).
+2. ~~**Adventurer ranks** in the Guild.~~ Done.
 3. **World clock** (days, inn rest, deadlines in days, news ledger).
 4. **NPC adventurers:** generator, roster, rapport, simulated quests on the clock.
 5. **Party of 3 in battle** (B2), then **recruitment** from the roster.

@@ -48,8 +48,15 @@ func is_known(player: CharacterData, recipe_id: String) -> bool:
 			return true
 		"floor_reached":
 			return player.max_floor_cleared >= int(unlock.get("floor", 1)) or recipe_id in _state(player).known_recipes
-		_:  # purchase, bounty_reward, adventurer_rank: learned explicitly
+		"adventurer_rank":
+			return RankManager.get_rank_index(player) >= RankManager.rank_index(String(unlock.get("rank", "S"))) \
+				or recipe_id in _state(player).known_recipes
+		_:  # purchase, bounty_reward: learned explicitly
 			return recipe_id in _state(player).known_recipes
+
+## Learned by purchase/reward/rank (not just unlocked by a rule).
+func is_known_explicitly(player: CharacterData, recipe_id: String) -> bool:
+	return recipe_id in _state(player).known_recipes
 
 ## How to unlock a recipe the player doesn't know yet (for the UI).
 func get_unlock_text(recipe_id: String) -> String:

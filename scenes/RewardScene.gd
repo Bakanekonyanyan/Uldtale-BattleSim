@@ -235,6 +235,11 @@ func update_button_visibility():
 		continue_button.visible = not is_boss_fight
 	if next_floor_button:
 		next_floor_button.visible = is_boss_fight and current_floor < max_floor
+		# Adventurer rank caps how deep you may go (RankManager)
+		if next_floor_button.visible and player_character and RankManager.is_floor_capped(player_character, current_floor + 1):
+			next_floor_button.disabled = true
+			next_floor_button.text = "Rank %s: floor %d max" % [RankManager.get_rank(player_character), RankManager.floor_cap(player_character)]
+			next_floor_button.tooltip_text = "Get promoted at the Adventurers' Guild to go deeper."
 
 # === ITEM SELECTION ===
 func _on_item_selected(index: int):

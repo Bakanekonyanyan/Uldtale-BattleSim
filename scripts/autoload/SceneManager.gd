@@ -226,7 +226,7 @@ func return_to_previous_scene() -> void:
 
 func start_dungeon_from_floor(player: CharacterData, floor: int, location_id: String = "the_dungeon") -> void:
 	"""Start an expedition at a location/floor and transition to the dungeon scene"""
-	floor = clamp(floor, 1, player.get_max_floor(location_id))
+	floor = clamp(floor, 1, RankManager.start_floor_limit(player, location_id))
 	# Reset player state
 	player.current_hp = player.max_hp
 	player.current_mp = player.max_mp

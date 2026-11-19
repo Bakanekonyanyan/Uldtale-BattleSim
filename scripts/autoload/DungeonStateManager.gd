@@ -72,6 +72,9 @@ func advance_floor() -> bool:
 	if current_floor >= max_floor:
 		print("DungeonState: Max floor reached!")
 		return false
+	if active_player and active_player.is_player and RankManager.is_floor_capped(active_player, current_floor + 1):
+		print("DungeonState: floor %d needs a higher Adventurer rank" % (current_floor + 1))
+		return false
 	
 	current_floor += 1
 	current_wave = 0  # Reset to 0, next advance_wave() will make it 1

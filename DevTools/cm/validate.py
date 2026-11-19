@@ -237,6 +237,8 @@ class Validator:
                     add("error", "Recipes", ref, "unlock", "purchase unlock needs a price")
                 if u.get("type") == "floor_reached" and not u.get("floor"):
                     add("error", "Recipes", ref, "unlock", "floor_reached unlock needs a floor")
+                if u.get("type") == "adventurer_rank" and u.get("rank") not in p.source("ranks"):
+                    add("error", "Recipes", ref, "unlock", f"adventurer_rank unlock needs a rank (got '{u.get('rank')}')")
             if not e.get("ingredients"):
                 add("warning", "Recipes", ref, "ingredients", "no ingredients")
         self._combos()
@@ -246,6 +248,7 @@ class Validator:
         self._damage_types()
         self._bounties()
         self._archetypes()
+        self._ranks()
         self._orphans()
 
     def _combos(self):
@@ -447,6 +450,28 @@ class Validator:
         for i, ph in enumerate((d.get("boss") or {}).get("phases", []) or []):
             if not isinstance(ph, dict) or ph.get("use") not in ("signature", "ultimate"):
                 add("error", tab, None, "phases", f"phase {i + 1}: 'use' must be 'signature' or 'ultimate'")
+
+    def _ranks(self):
+        p, add = self.p, self.r.add
+        if "Ranks" not in p.data:
+            return
+        ranks = sorted(self.refs("Ranks", 1), key=lambda r: int(p.get(r).get("order", 0)))
+        prev_points, prev_cap = -1, -1
+        for i, ref in enumerate(ranks):
+            r = p.get(ref)
+            if int(r.get("points", 0)) <= prev_points:
+                add("warning", "Ranks", ref, "points", "needs no more Guild Points than the rank below")
+            cap = int(r.get("floor_cap", 0))
+            if prev_cap == 0 and cap > 0:
+                add("warning", "Ranks", ref, "floor_cap", "caps floors although a lower rank has no cap")
+            elif cap and prev_cap > 0 and cap < prev_cap:
+                add("warning", "Ranks", ref, "floor_cap", "lower than the rank below")
+            t = r.get("trial")
+            if i > 0 and not t:
+                add("error", "Ranks", ref, "trial", "every rank above the first needs a promotion trial")
+            if t and prev_cap > 0 and int(t.get("min_floor", 1)) > prev_cap:
+                add("error", "Ranks", ref, "trial", f"trial needs floor {t.get('min_floor')} but the rank below is capped at {prev_cap}")
+            prev_points, prev_cap = int(r.get("points", 0)), cap
 
     def _orphans(self):
         p, add = self.p, self.r.add

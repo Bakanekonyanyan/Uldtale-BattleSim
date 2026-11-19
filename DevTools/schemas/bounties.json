@@ -76,6 +76,13 @@
      "default": 1
     },
     {
+     "name": "min_rank",
+     "type": "ref",
+     "source": "ranks",
+     "optional": true,
+     "help": "Only posted from this Adventurer rank on."
+    },
+    {
      "name": "weight",
      "type": "int",
      "min": 0,

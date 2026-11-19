@@ -71,7 +71,7 @@ func update_ui():
 		if current_character:
 			name_label.text = "Character: " + current_character.name
 			if chrome:
-				chrome.set_info("%s  -  Level %d %s %s    %s" % [current_character.name, current_character.level, current_character.race, current_character.character_class, ScreenChrome.money_text(current_character)])
+				chrome.set_info("%s  -  Level %d %s %s  -  %s-Rank    %s" % [current_character.name, current_character.level, current_character.race, current_character.character_class, RankManager.get_rank(current_character), ScreenChrome.money_text(current_character)])
 		else:
 			name_label.text = "No character loaded"
 	else:
@@ -115,12 +115,12 @@ func show_location_selection_dialog():
 			loc.get("name", selected[0]),
 			loc.get("description", ""),
 			"Mixed (" + ", ".join(races) + ")" if LocationManager.is_mixed(selected[0]) else ", ".join(races),
-			current_character.get_max_floor(selected[0])
+			RankManager.start_floor_limit(current_character, selected[0])
 		]
 	
 	for location_id in LocationManager.get_ids():
 		var btn = Button.new()
-		btn.text = "%s  (Floor %d)" % [LocationManager.get_display_name(location_id), current_character.get_max_floor(location_id)]
+		btn.text = "%s  (Floor %d)" % [LocationManager.get_display_name(location_id), RankManager.start_floor_limit(current_character, location_id)]
 		btn.toggle_mode = true
 		btn.custom_minimum_size = Vector2(440, 36)
 		btn.button_pressed = location_id == selected[0]
@@ -149,7 +149,7 @@ func show_location_selection_dialog():
 
 func show_floor_selection_dialog(location_id: String = "the_dungeon"):
 	"""Step 2: choose a starting floor. Progress is tracked per location."""
-	var max_selectable = current_character.get_max_floor(location_id)
+	var max_selectable = RankManager.start_floor_limit(current_character, location_id)
 	print("TownScene: Floor selection for %s - max unlocked floor %d" % [location_id, max_selectable])
 	
 	var dialog = ConfirmationDialog.new()
@@ -196,6 +196,9 @@ func show_floor_selection_dialog(location_id: String = "the_dungeon"):
 	
 	var progress_label = Label.new()
 	progress_label.text = "\nYou can start from floors 1-%d here." % max_selectable
+	if RankManager.floor_cap(current_character) > 0:
+		progress_label.text += "\n%s: floors up to %d. Get promoted at the Guild to go deeper." % [
+			RankManager.display(RankManager.get_rank(current_character)), RankManager.floor_cap(current_character)]
 	progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(progress_label)
 	

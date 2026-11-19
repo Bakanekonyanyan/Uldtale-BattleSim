@@ -55,7 +55,9 @@
        "options": [
         "default",
         "purchase",
-        "floor_reached"
+        "floor_reached",
+        "bounty_reward",
+        "adventurer_rank"
        ]
       },
       {
@@ -71,6 +73,13 @@
        "min": 1,
        "optional": true,
        "help": "floor_reached: unlock floor"
+      },
+      {
+       "name": "rank",
+       "type": "ref",
+       "source": "ranks",
+       "optional": true,
+       "help": "adventurer_rank: known from this rank on"
       }
      ],
      "default": {

@@ -4,9 +4,10 @@
 # Uses the shop background until dedicated art exists.
 extends Control
 
-enum Tab { BOARD, ACTIVE, TURN_IN, LOST_FOUND, INFIRMARY }
-const TAB_NAMES := ["Board", "Active", "Turn In", "Lost Gear", "Infirmary"]
+enum Tab { BOARD, ACTIVE, TURN_IN, LOST_FOUND, INFIRMARY, RANK }
+const TAB_NAMES := ["Board", "Active", "Turn In", "Lost Gear", "Infirmary", "Rank"]
 var lost_index := -1
+var rank_index := -1
 
 var player_character: CharacterData
 var tab: Tab = Tab.BOARD
@@ -42,8 +43,9 @@ func _build_ui() -> void:
 	header_label = ScreenChrome.attach(self, "Adventurers' Guild", _on_back_pressed).info_label
 
 	for i in range(TAB_NAMES.size()):
-		var b = _button(ui, TAB_NAMES[i], Vector2(32 + i * 89, 72), func(): _set_tab(i), Vector2(85, 36))
+		var b = _button(ui, TAB_NAMES[i], Vector2(32 + i * 75, 72), func(): _set_tab(i), Vector2(72, 36))
 		b.toggle_mode = true
+		b.add_theme_font_size_override("font_size", 13)   # six tabs share the list's width
 		tab_buttons.append(b)
 
 	bounty_list = ItemList.new()
@@ -107,13 +109,16 @@ func _refresh() -> void:
 	if player_character == null or bounty_list == null:
 		return
 	var p = player_character
-	header_label.text = "Guild Points: %d   Demerits: %d   Money: %s" % [
-		GuildManager.get_points(p), GuildManager.get_demerits(p), p.currency.get_formatted()]
+	header_label.text = "%s   Guild Points: %d   Demerits: %d   Money: %s" % [
+		RankManager.display(RankManager.get_rank(p)), GuildManager.get_points(p), GuildManager.get_demerits(p), p.currency.get_formatted()]
 	for i in range(tab_buttons.size()):
 		tab_buttons[i].button_pressed = i == tab
 
 	if tab == Tab.LOST_FOUND or tab == Tab.INFIRMARY:
 		_refresh_recovery()
+		return
+	if tab == Tab.RANK:
+		_refresh_rank()
 		return
 	match tab:
 		Tab.BOARD:
@@ -126,8 +131,10 @@ func _refresh() -> void:
 	bounty_list.clear()
 	for b in shown:
 		var text = b.title
+		if b.get("trial", false):
+			text = "★ " + text
 		if tab == Tab.ACTIVE:
-			text += "  [%s]" % ("ready!" if GuildManager.is_complete(p, b) else "%d exp. left" % int(b.deadline))
+			text += "  [%s]" % ("ready!" if GuildManager.is_complete(p, b) else ("trial" if b.get("trial", false) else "%d exp. left" % int(b.deadline)))
 		var idx = bounty_list.add_item(text)
 		if tab != Tab.BOARD and GuildManager.is_complete(p, b):
 			bounty_list.set_item_custom_fg_color(idx, Color(0.6, 1.0, 0.6))
@@ -144,6 +151,77 @@ func _refresh() -> void:
 	else:
 		selected_uid = -1
 	_update_details()
+
+# === RANK (RankManager) ===
+
+func _refresh_rank() -> void:
+	var p = player_character
+	var ids = RankManager.rank_ids()
+	var current = RankManager.get_rank_index(p)
+	bounty_list.clear()
+	reroll_button.visible = false
+	for i in range(ids.size()):
+		var label = RankManager.display(ids[i])
+		if i == current:
+			label += "  (you)"
+		elif i == current + 1:
+			label += "  (next)"
+		var idx = bounty_list.add_item(label)
+		if i < current:
+			bounty_list.set_item_custom_fg_color(idx, Color(0.6, 0.6, 0.6))
+		elif i == current:
+			bounty_list.set_item_custom_fg_color(idx, Color(0.6, 1.0, 0.6))
+	if rank_index < 0 or rank_index >= ids.size():
+		rank_index = min(current + 1, ids.size() - 1)
+	bounty_list.select(rank_index)
+	var rid: String = ids[rank_index]
+	var r = RankManager.info(rid)
+	var st = RankManager.promotion_status(p)
+	var t = "[b][font_size=22]%s[/font_size][/b]\n[i]%s[/i]\n\n" % [RankManager.display(rid), r.get("description", "")]
+	t += "[b]Perks[/b]\n"
+	for line in RankManager.describe_perks(rid):
+		t += "  • %s\n" % line
+	primary_button.text = "Take Trial"
+	primary_button.disabled = true
+	if rank_index <= current:
+		t += "\n[color=lime]%s[/color]" % ("Your current rank." if rank_index == current else "Already achieved.")
+		if st.trial_state == "top" and rank_index == current:
+			t += "\n[color=gold]You stand at the top of the Guild.[/color]"
+	elif rank_index == current + 1:
+		var trial: Dictionary = r.get("trial", {})
+		t += "\n[b]Promotion requirements[/b]\n"
+		t += "  %s Guild Points: %d / %d\n" % ["[color=lime]✔[/color]" if int(st.points) >= int(st.points_needed) else "[color=orange]✘[/color]", int(st.points), int(st.points_needed)]
+		t += "  %s Demerits: %d (must be below %d)\n" % ["[color=orange]✘[/color]" if st.blocked_by_demerits else "[color=lime]✔[/color]", int(st.demerits), RankManager.demerit_block()]
+		t += "  Trial: [b]%s[/b] - %s\n" % [trial.get("title", "?"), trial.get("description", "")]
+		if int(trial.get("gold", 0)) > 0:
+			t += "  [color=gray]Trial reward: %s[/color]\n" % Currency.format_copper(int(trial.gold))
+		match st.trial_state:
+			"available":
+				t += "\n[color=lime]The Guild Master will see you. Take the trial when you're ready (no deadline, no penalty).[/color]"
+				primary_button.disabled = false
+			"active":
+				t += "\n[color=yellow]Trial in progress. It's in your Active bounties.[/color]"
+			"ready":
+				t += "\n[color=lime][b]Trial complete! Report to the Guild Master.[/b][/color]"
+				primary_button.text = "Get Promoted"
+				primary_button.disabled = false
+			"demerits":
+				t += "\n[color=orange]Too many demerits. Each completed bounty works one off.[/color]"
+			"need_points":
+				t += "\n[color=gray]Earn Guild Points from bounties to qualify.[/color]"
+	else:
+		t += "\n[color=gray]Requires %d Guild Points and the %s.[/color]" % [int(r.get("points", 0)), r.get("trial", {}).get("title", "trial")]
+	details.text = t
+
+func _on_rank_primary() -> void:
+	var p = player_character
+	var st = RankManager.promotion_status(p)
+	if st.trial_state == "ready":
+		status_label.text = GuildManager.turn_in(p, int(RankManager.get_trial(p).uid)).reason
+		rank_index = -1
+	else:
+		status_label.text = RankManager.start_trial(p).reason
+	_refresh()
 
 # === LOST & FOUND / INFIRMARY (DefeatManager) ===
 
@@ -206,32 +284,38 @@ func _update_details() -> void:
 	reroll_button.visible = tab == Tab.BOARD
 	reroll_button.text = "Reroll Board (%s)" % Currency.format_copper(GuildManager.get_reroll_fee(p))
 	primary_button.text = ["Accept", "Abandon", "Turn In"][tab]
+	if tab == Tab.ACTIVE and b.get("trial", false):
+		primary_button.text = "Set Aside"
 
 	if b.is_empty():
 		details.text = ["[i]The board is empty. Check back after your next expedition.[/i]",
-			"[i]No active bounties. Accept some from the Board (up to %d).[/i]" % int(GuildManager.settings.get("max_active", 3)),
+			"[i]No active bounties. Accept some from the Board (up to %d at your rank).[/i]" % GuildManager.max_active(p),
 			"[i]Nothing ready to turn in yet.[/i]"][tab]
 		primary_button.disabled = true
 		return
 
 	var done = GuildManager.is_complete(p, b)
 	var t = "[b][font_size=22]%s[/font_size][/b]\n\n" % b.title
+	if b.get("trial", false):
+		t += "[color=gold]Promotion trial[/color] - %s\n\n" % b.get("description", "")
 	t += "[b]Objective:[/b] %s\n" % GuildManager.describe_objective(p, b)
-	if tab == Tab.BOARD:
+	if b.get("trial", false) and not done:
+		t += "[b]Deadline:[/b] none\n"
+	elif tab == Tab.BOARD:
 		t += "[b]Deadline:[/b] %d expeditions after accepting\n" % int(GuildManager.settings.get("deadline_expeditions", 3))
 	elif not done:
 		t += "[b]Deadline:[/b] %d expedition%s left\n" % [int(b.deadline), "" if int(b.deadline) == 1 else "s"]
 	else:
 		t += "[color=lime][b]Complete - turn it in for your reward![/b][/color]\n"
 	t += "\n[b]Reward:[/b] %s\n" % GuildManager.describe_rewards(b)
-	if tab != Tab.TURN_IN:
+	if tab != Tab.TURN_IN and not b.get("trial", false):
 		t += "\n[color=gray]Missing the deadline or abandoning costs %d Guild Points and a demerit (or pay %s to abandon without one).[/color]" % [
 			GuildManager.get_point_penalty(b), Currency.format_copper(GuildManager.get_abandon_fee(b))]
 	details.text = t
 
 	match tab:
 		Tab.BOARD:
-			primary_button.disabled = GuildManager.get_active(p).size() >= int(GuildManager.settings.get("max_active", 3))
+			primary_button.disabled = GuildManager.active_count(p) >= GuildManager.max_active(p)
 		Tab.ACTIVE:
 			primary_button.disabled = false
 		Tab.TURN_IN:
@@ -243,6 +327,10 @@ func _on_bounty_selected(index: int) -> void:
 	if tab == Tab.LOST_FOUND:
 		lost_index = index
 		_refresh_recovery()
+		return
+	if tab == Tab.RANK:
+		rank_index = index
+		_refresh_rank()
 		return
 	if index >= 0 and index < shown.size():
 		selected_uid = int(shown[index].uid)
@@ -257,6 +345,9 @@ func _on_primary_pressed() -> void:
 		status_label.text = DefeatManager.treat(player_character).reason
 		_refresh()
 		return
+	if tab == Tab.RANK:
+		_on_rank_primary()
+		return
 	var b = _selected()
 	if b.is_empty():
 		return
@@ -264,6 +355,11 @@ func _on_primary_pressed() -> void:
 		Tab.BOARD:
 			status_label.text = GuildManager.accept(player_character, selected_uid).reason
 		Tab.ACTIVE:
+			if b.get("trial", false):
+				status_label.text = GuildManager.abandon(player_character, selected_uid, false).reason
+				selected_uid = -1
+				_refresh()
+				return
 			abandon_dialog.dialog_text = "Abandon \"%s\"?\n\nPay %s to leave cleanly, or take a demerit (-%d Guild Points)." % [
 				b.title, Currency.format_copper(GuildManager.get_abandon_fee(b)), GuildManager.get_point_penalty(b)]
 			abandon_dialog.ok_button_text = "Pay %s" % Currency.format_copper(GuildManager.get_abandon_fee(b))

@@ -42,6 +42,7 @@ StatusEffects="*res://scripts/autoload/StatusEffects.gd"
 ClassEquipmentBias="*res://scripts/autoload/ClassEquipmentBias.gd"
 GuildManager="*res://scripts/autoload/GuildManager.gd"
 DefeatManager="*res://scripts/autoload/DefeatManager.gd"
+RankManager="*res://scripts/autoload/RankManager.gd"
 
 [display]
 

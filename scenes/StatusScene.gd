@@ -155,7 +155,7 @@ func update_status():
 		return
 	var c = current_character
 	chrome.set_title(str(c.name))
-	chrome.set_info("Level %d  %s %s" % [c.level, c.race, c.character_class])
+	chrome.set_info("Level %d  %s %s  -  %s" % [c.level, c.race, c.character_class, RankManager.display(RankManager.get_rank(c))])
 
 	_set_bar("HP", c.current_hp, c.max_hp)
 	_set_bar("MP", c.current_mp, c.max_mp)

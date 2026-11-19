@@ -1,5 +1,5 @@
 {
-	"_comment": "Guild bounty templates. The board rolls concrete bounties from these. Title fields: {location_name} {class} {class_plural} {race} {race_plural} {count} {floor} {item_name}. Placeholders: {any_location} (all 5), {themed_location} (single-race locations), {race} (the themed location's race), {any_class} (an enemy archetype from settings.classes), {any_material}, {location_material} (common drop at the chosen location), {unknown_flask_recipe}. Gold rewards scale with the player's best floor. Objective types: KILL, KILL_BOSS, CLEAR_FLOOR, WIN_STREAK, DELIVER.",
+	"_comment": "Guild bounty templates. The board rolls concrete bounties from these. Title fields: {location_name} {class} {class_plural} {race} {race_plural} {count} {floor} {item_name}. Placeholders: {any_location} (all 5), {themed_location} (single-race locations), {race} (the themed location's race), {any_class} (an enemy archetype from settings.classes), {any_material}, {location_material} (common drop at the chosen location), {unknown_flask_recipe}. Gold rewards scale with the player's best floor. Objective types: KILL, KILL_BOSS, CLEAR_FLOOR, WIN_STREAK, DELIVER. Templates with min_rank only appear from that Adventurer rank (data/ranks.json).",
 	"settings": {
 		"board_size": 3,
 		"max_active": 3,
@@ -51,6 +51,47 @@
 			"min_floor": 1,
 			"weight": 6,
 			"rewards": { "gold_per_count": 18, "points": 8 }
+		},
+		"veteran_cull": {
+			"title": "Veteran's Cull: {class_plural} of {location_name}",
+			"objective": {
+				"type": "KILL",
+				"target": {
+					"location": "{any_location}",
+					"class": "{any_class}"
+				},
+				"count": [14, 20]
+			},
+			"min_floor": 1,
+			"min_rank": "D",
+			"weight": 5,
+			"rewards": {
+				"gold_per_count": 25,
+				"points": 30
+			}
+		},
+		"royal_writ": {
+			"title": "Royal Writ: Two Kings of {location_name}",
+			"objective": {
+				"type": "KILL_BOSS",
+				"target": {
+					"location": "{themed_location}"
+				},
+				"count": 2
+			},
+			"min_floor": 1,
+			"min_rank": "C",
+			"weight": 4,
+			"rewards": {
+				"gold_flat": 400,
+				"points": 45,
+				"materials": {
+					"{location_material}": [4, 6]
+				},
+				"chance": {
+					"monster_core": 0.75
+				}
+			}
 		}
 	}
 }
