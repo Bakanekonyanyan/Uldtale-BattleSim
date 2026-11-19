@@ -11,6 +11,10 @@ var enemies: Array[CharacterData] = []
 var current_floor: int = 1
 var current_wave: int = 1
 var is_boss_wave: bool = false
+## Companions fighting with the player (-1 = ask PartyManager). Set before
+## initialize() for headless battles.
+var ally_count: int = -1
+var _base_count: int = 1
 
 func initialize(floor: int, wave: int, boss_wave: bool = false):
 	"""Initialize enemy group for a wave"""
@@ -27,11 +31,22 @@ func initialize(floor: int, wave: int, boss_wave: bool = false):
 func _generate_enemies():
 	"""Generate appropriate number of enemies for this wave"""
 	var enemy_count = _calculate_enemy_count()
+	_base_count = enemy_count
 	var momentum = MomentumSystem.get_momentum()
+	var allies = ally_count if ally_count >= 0 else PartyManager.allies.size()
+	var pc: Dictionary = AdventurerManager.cfg.get("party", {})
+	if allies > 0 and not is_boss_wave:
+		enemy_count = min(6, enemy_count + int(pc.get("enemy_extra_per_ally", 1)) * allies)
 	
 	if is_boss_wave:
 		# Boss wave: 1 boss + possible minions
 		var boss = EnemyFactory.create_boss(current_floor, current_wave, momentum)
+		if allies > 0:
+			# a party faces a tougher boss
+			boss.hp_multiplier *= 1.0 + float(pc.get("boss_hp_per_ally", 0.75)) * allies
+			boss.damage_multiplier *= 1.0 + float(pc.get("boss_damage_per_ally", 0.1)) * allies
+			boss.calculate_secondary_attributes()
+			boss.current_hp = boss.max_hp
 		enemies.append(boss)
 		
 		# 30% chance for 1-2 minions with boss (floor 5+)
@@ -57,6 +72,12 @@ func _generate_enemies():
 	# Scale stats if multiple enemies
 	if enemies.size() > 1 and not is_boss_wave:
 		_scale_enemy_group()
+	# A party faces sturdier waves
+	if allies > 0 and not is_boss_wave:
+		for e in enemies:
+			e.hp_multiplier *= 1.0 + float(pc.get("enemy_hp_per_ally", 0.35)) * allies
+			e.calculate_secondary_attributes()
+			e.current_hp = e.max_hp
 
 func _calculate_enemy_count() -> int:
 	"""Determine how many enemies based on floor/wave"""
@@ -88,7 +109,7 @@ func _calculate_enemy_count() -> int:
 
 func _scale_enemy_group():
 	"""Scale enemy stats when fighting multiple (prevent overwhelming player)"""
-	var count = enemies.size()
+	var count = _base_count   # party extras don't make each enemy weaker
 	if count <= 1:
 		return
 	

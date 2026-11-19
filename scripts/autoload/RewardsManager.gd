@@ -65,6 +65,8 @@ func bank_wave_rewards(battle_data: Dictionary) -> void:
 
 ## Momentum bonus applied to the last Breather payout (for the reward screen).
 var last_momentum_bonus: float = 0.0
+## Copper your party took from the last Breather payout (PartyManager).
+var last_party_share: int = 0
 
 ## Breather: this wave + everything banked during the Press-On streak, with gold
 ## and item quantities boosted by the momentum reached (+10%/level, max +50%).
@@ -89,6 +91,10 @@ func calculate_battle_rewards(battle_data: Dictionary) -> Dictionary:
 				rewards[key] = _boost_count(rewards[key], bonus)
 		print("RewardsManager: Breather payout with +%d%% momentum bonus" % int(bonus * 100))
 	
+	# Your companions take their share of the gold
+	last_party_share = 0
+	if DungeonStateManager.active_player:
+		last_party_share = PartyManager.take_share(DungeonStateManager.active_player, rewards)
 	emit_signal("rewards_calculated", rewards)
 	return rewards
 

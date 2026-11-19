@@ -218,10 +218,14 @@ func status_text(player: CharacterData, npc: Dictionary) -> String:
 			return "Fell in battle"
 		"retired":
 			return "Retired"
+		"party":
+			if int(npc.get("injured_until", 0)) > WorldClock.day(player):
+				return "In your party - recovering until day %d" % int(npc.injured_until)
+			return "In your party (takes %d%% of the gold)" % int(round(PartyManager.share(npc) * 100))
 	return "In town"
 
 func in_town(npc: Dictionary) -> bool:
-	return String(npc.status) in ["idle", "injured"]
+	return String(npc.status) in ["idle", "injured", "party"]
 
 func _history(npc: Dictionary, day: int, text: String) -> void:
 	npc.history.append({"day": day, "text": text})

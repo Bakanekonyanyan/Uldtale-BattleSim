@@ -18,6 +18,7 @@ var details: RichTextLabel
 var chat_button: Button
 var drink_button: Button
 var gift_button: Button
+var party_button: Button
 var gift_menu: PopupMenu
 var status_label: Label
 
@@ -58,6 +59,8 @@ func _build_ui() -> void:
 	chat_button = _button(ui, "Chat", Vector2(496, 526), _on_chat)
 	drink_button = _button(ui, "Buy a Drink", Vector2(656, 526), _on_drink, Vector2(190, 40))
 	gift_button = _button(ui, "Give a Gift...", Vector2(856, 526), _on_gift_pressed, Vector2(170, 40))
+	party_button = _button(ui, "Invite to Party", Vector2(1036, 526), _on_party_pressed, Vector2(132, 40))
+	party_button.add_theme_font_size_override("font_size", 13)
 	gift_menu = PopupMenu.new()
 	gift_menu.id_pressed.connect(_on_gift_chosen)
 	ui.add_child(gift_menu)
@@ -87,7 +90,7 @@ func _refresh() -> void:
 	if player_character == null or npc_list == null:
 		return
 	var p = player_character
-	header_label.text = "%s   Money: %s" % [WorldClock.short_date(p), p.currency.get_formatted()]
+	header_label.text = "%s   Party: %d/%d   Money: %s" % [WorldClock.short_date(p), PartyManager.party_ids(p).size(), PartyManager.slots(p), p.currency.get_formatted()]
 	for i in range(tab_buttons.size()):
 		tab_buttons[i].button_pressed = i == tab
 	var all = AdventurerManager.all_adventurers(p)
@@ -95,6 +98,10 @@ func _refresh() -> void:
 		shown = all.filter(func(n): return AdventurerManager.is_active(n))
 		# in town first, then by rank (highest first), then name
 		shown.sort_custom(func(a, b):
+			var pa = String(a.status) == "party"
+			var pb = String(b.status) == "party"
+			if pa != pb:
+				return pa   # your party first
 			var ta = AdventurerManager.in_town(a)
 			var tb = AdventurerManager.in_town(b)
 			if ta != tb:
@@ -110,7 +117,9 @@ func _refresh() -> void:
 	for n in shown:
 		var mark = ""
 		var tg = AdventurerManager.tags(n)
-		if "Rival" in tg:
+		if String(n.status) == "party":
+			mark = "◆ "
+		elif "Rival" in tg:
 			mark = "⚔ "
 		elif "Close friend" in tg or "Friend" in tg:
 			mark = "♥ "
@@ -151,7 +160,7 @@ func _update_details() -> void:
 	var day = WorldClock.day(p)
 	if n.is_empty():
 		details.text = "[i]Nobody here.[/i]" if tab == Tab.ROSTER else "[i]No one has fallen or retired yet.[/i]"
-		for b in [chat_button, drink_button, gift_button]:
+		for b in [chat_button, drink_button, gift_button, party_button]:
 			b.disabled = true
 		return
 	var t = "[b][font_size=22]%s[/font_size][/b]\n%s\n" % [n.name, AdventurerManager.title_line(n)]
@@ -179,10 +188,22 @@ func _update_details() -> void:
 	drink_button.disabled = not here or int(n.drank_day) == day or p.currency.copper < AdventurerManager.drink_price(p)
 	drink_button.text = "Buy a Drink (%s)" % Currency.format_copper(AdventurerManager.drink_price(p))
 	gift_button.disabled = not here or int(n.gift_day) == day
+	var member = PartyManager.is_member(p, int(n.id))
+	party_button.text = "Dismiss" if member else "Invite to Party"
+	var why = PartyManager.why_not_recruit(p, int(n.id))
+	party_button.disabled = tab != Tab.ROSTER or (not member and why != "")
+	party_button.tooltip_text = "" if member else why
 
 func _after(r: Dictionary) -> void:
 	status_label.text = r.reason
 	_refresh()
+
+func _on_party_pressed() -> void:
+	var p = player_character
+	if PartyManager.is_member(p, selected_id):
+		_after(PartyManager.dismiss(p, selected_id))
+	else:
+		_after(PartyManager.recruit(p, selected_id))
 
 func _on_chat() -> void:
 	_after(AdventurerManager.chat(player_character, selected_id))

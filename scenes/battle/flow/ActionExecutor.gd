@@ -107,13 +107,13 @@ func _play_feedback(action: BattleAction, result: ActionResult) -> void:
 	else:
 		hurt.append_array(action.targets)
 
-	if context.player in hurt:
+	if hurt.any(func(h): return context.is_hero(h)):
 		visual_manager.shake_and_flash_screen(0.15)
 	else:
 		visual_manager.shake_on_hit(result.damage, result.is_critical)
 
 	for c in hurt:
-		if c and c != context.player and c.is_alive():
+		if c and not context.is_hero(c) and c.is_alive():
 			visual_manager.flash_sprite_hit(c, result.is_critical)
 
 # === HELPERS ===

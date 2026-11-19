@@ -10,6 +10,8 @@ extends RefCounted
 
 # --- Combatants ---
 var player: CharacterData
+## Recruited party members fighting beside the player (0-2, PartyManager)
+var allies: Array[CharacterData] = []
 var enemies: Array[CharacterData] = []
 
 # --- Dungeon info (PvE only) ---
@@ -41,13 +43,16 @@ func reset_turn_state() -> void:
 	item_action_used = false
 	main_action_taken = false
 
-## The player's side. A single hero today; this is the one place a 1-3 hero
-## party would plug in (AI targeting already reads from here).
+## The player's side: the player first, then their party (1-3 heroes).
 func get_heroes() -> Array[CharacterData]:
 	var heroes: Array[CharacterData] = []
 	if player:
 		heroes.append(player)
+	heroes.append_array(allies)
 	return heroes
+
+func is_hero(c: CharacterData) -> bool:
+	return c == player or c in allies
 
 func get_living_heroes() -> Array[CharacterData]:
 	var living: Array[CharacterData] = []

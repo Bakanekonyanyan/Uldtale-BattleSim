@@ -19,6 +19,8 @@ var out := []
 var sim_location := "the_dungeon"  # expedition location used by make_enemies()
 var start_potions := 0             # health + mana potions each hero starts a run with
 var use_setup := true              # auto-pilot casts buffs/debuffs (false = damage only)
+var sim_party := 0                 # companions (0-2) fighting beside the hero (tool --party=N)
+const PARTY_CLASSES := ["Cleric", "Berserker", "Elementalist", "Samurai", "Druid", "Shinobi"]
 var t := {}  # tallies
 
 func log_line(s: String) -> void:
@@ -177,6 +179,7 @@ func tool_report(args: Array) -> void:
 	var potions = int(opts.potions)
 	var floor_num = max(1, int(opts.floor))
 	EnemyFactory.force_archetype = String(opts.get("archetype", ""))
+	sim_party = clamp(int(opts.get("party", "0")), 0, 2)
 	var styles: Array = [false, true] if opts.setup == "both" else ([true] if opts.setup == "on" else [false])
 	var total = classes.size() * styles.size()
 	var done := 0
@@ -263,8 +266,19 @@ func make_player(cls: String) -> CharacterData:
 func make_enemies(floor_num: int, wave: int) -> Array[CharacterData]:
 	EnemyFactory.set_location(sim_location)
 	var g = EnemyGroup.new()
+	g.ally_count = sim_party
 	g.initialize(floor_num, wave, wave == 6)
 	return g.enemies
+
+## Companions for a run: random classes, the hero's level, matching gear.
+func make_allies(p: CharacterData, floor_num: int) -> Array[CharacterData]:
+	var out: Array[CharacterData] = []
+	for i in range(sim_party):
+		var cls = PARTY_CLASSES[RandomManager.randi() % PARTY_CLASSES.size()]
+		var a = AutoBattler.build_hero({"name": "Ally %d" % (i + 1), "race": "Hume", "cls": cls, "level": p.level, "gear_floor": max(1, floor_num - 1), "branch": 0})
+		a.inventory = p.inventory
+		out.append(a)
+	return out
 
 func sim_run(cls: String, floor_num: int, p: CharacterData = null) -> Dictionary:
 	# Mirrors the real loop: XP + level-ups after each win, Breather (full heal,
@@ -272,11 +286,15 @@ func sim_run(cls: String, floor_num: int, p: CharacterData = null) -> Dictionary
 	if p == null:
 		p = make_player(cls)
 		MomentumSystem.reset_momentum()
+	var allies = make_allies(p, floor_num)
 	for wave in range(1, 7):
 		var enemies = make_enemies(floor_num, wave)
 		var xp := 0
 		for e in enemies: xp += e.level * 50 * floor_num
-		var r = fight(p, enemies, floor_num, wave == 6)
+		var r = fight(p, enemies, floor_num, wave == 6) if allies.is_empty() else AutoBattler.fight(p, enemies, floor_num, wave == 6, allies)
+		for a in ([p] + allies if not allies.is_empty() else []):   # knocked-out heroes get back up after a win
+			if r.won and not a.is_alive():
+				a.current_hp = max(1, int(a.max_hp * 0.1))
 		if not r.won:
 			return {"cleared": false, "wave": wave, "player": p}
 		p.gain_xp(xp)
@@ -289,6 +307,9 @@ func sim_run(cls: String, floor_num: int, p: CharacterData = null) -> Dictionary
 			MomentumSystem.reset_momentum()
 			p.current_hp = p.max_hp; p.current_mp = p.max_mp; p.current_sp = p.max_sp
 			p.status_manager.clear_all_effects()
+			for a in allies:
+				a.current_hp = a.max_hp; a.current_mp = a.max_mp; a.current_sp = a.max_sp
+				a.status_manager.clear_all_effects()
 		else:
 			MomentumSystem.gain_momentum()
 	# floor cleared -> next floor starts fresh

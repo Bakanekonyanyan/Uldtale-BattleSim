@@ -113,7 +113,8 @@
       "compete": 2.0,
       "rival": true,
       "honor": -5,
-      "heart": -5
+      "heart": -5,
+      "leave": 1.3
     },
     "greedy": {
       "name": "Greedy",
@@ -124,14 +125,17 @@
         "material": 1.2
       },
       "honor": -15,
-      "heart": -15
+      "heart": -15,
+      "share": 1.5
     },
     "loyal": {
       "name": "Loyal",
       "description": "Never forgets a friend.",
       "friend_bonus": 1.3,
       "honor": 20,
-      "heart": 10
+      "heart": 10,
+      "share": 0.9,
+      "leave": 0.2
     },
     "honorable": {
       "name": "Honorable",
@@ -141,7 +145,8 @@
       ],
       "compete": 0.5,
       "honor": 35,
-      "heart": 5
+      "heart": 5,
+      "share": 0.8
     },
     "cowardly": {
       "name": "Cowardly",
@@ -168,7 +173,8 @@
         "consumable": 1.4
       },
       "honor": 5,
-      "heart": 35
+      "heart": 35,
+      "share": 0.9
     },
     "cruel": {
       "name": "Cruel",
@@ -208,7 +214,8 @@
       ],
       "drink": 0.5,
       "chat": 0.5,
-      "heart": -5
+      "heart": -5,
+      "leave": 1.5
     },
     "devout": {
       "name": "Devout",
@@ -582,5 +589,33 @@
         "Thornheart"
       ]
     }
+  },
+  "party": {
+    "_doc": "Recruiting (PartyManager.gd): Friend rapport and a free slot (rank party_size - 1). Recruits level with you (never below your level), pick their own gear and talents, share your pack, and take a share of Breather gold. Rapport moves with each expedition; below leave_below they may walk away.",
+    "recruit_rapport": 40,
+    "share_by_rank": {
+      "F": 0.1,
+      "E": 0.12,
+      "D": 0.14,
+      "C": 0.16,
+      "B": 0.18,
+      "A": 0.2,
+      "S": 0.2
+    },
+    "rapport_good_expedition": 3,
+    "rapport_bad_expedition": -2,
+    "rapport_per_ko": -3,
+    "leave_below": 20,
+    "leave_chance": 0.35,
+    "ko_injury_days": [
+      2,
+      4
+    ],
+    "wipe_death_chance": 0.04,
+    "enemy_extra_per_ally": 1,
+    "boss_hp_per_ally": 1.2,
+    "boss_damage_per_ally": 0.2,
+    "_scaling_doc": "Battles scale with your party: regular waves get enemy_extra_per_ally more enemies and +enemy_hp_per_ally HP per companion (group stat reduction uses the base count); bosses get +boss_hp_per_ally HP and +boss_damage_per_ally damage per companion.",
+    "enemy_hp_per_ally": 0.35
   }
 }

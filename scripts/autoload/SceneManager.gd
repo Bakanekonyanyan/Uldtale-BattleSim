@@ -285,6 +285,10 @@ func _setup_battle_scene(battle_data: Dictionary) -> void:
 		push_error("SceneManager: No enemies in battle_data!")
 		return
 	
+	# Your party fights beside you
+	if current_scene.has_method("set_allies"):
+		current_scene.set_allies(PartyManager.battle_allies())
+	
 	# Set dungeon info
 	current_scene.set_dungeon_info(
 		battle_data["is_boss_fight"],

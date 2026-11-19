@@ -10,8 +10,12 @@ extends RefCounted
 var player: CharacterData
 var enemies: Array[CharacterData] = []
 
-func initialize_multi(p_player: CharacterData, p_enemies: Array[CharacterData]):
+## Party members fighting beside `player`
+var allies: Array[CharacterData] = []
+
+func initialize_multi(p_player: CharacterData, p_enemies: Array[CharacterData], p_allies: Array[CharacterData] = []):
 	player = p_player
+	allies = p_allies
 	enemies = p_enemies
 	print("CombatEngine: Initialized - Player: %s vs %d enemies" % [player.name, enemies.size()])
 
@@ -382,7 +386,7 @@ func check_battle_end() -> String:
 			any_enemy_alive = true
 			break
 	
-	var player_alive = is_alive(player)
+	var player_alive = is_alive(player) or allies.any(func(a): return is_alive(a))
 	
 	# ✅ CRITICAL: Player death takes priority over victory
 	# This handles simultaneous death (reflection, etc.)
@@ -409,10 +413,11 @@ func get_allies_for_character(character: CharacterData) -> Array[CharacterData]:
 	"""Get all living allies for a character (including self)"""
 	var allies: Array[CharacterData] = []
 	
-	if character == player:
-		# Player only has self as ally (single character for now)
-		# FUTURE: When party system added, return all living party members here
-		allies.append(player)
+	if character == player or character in self.allies:
+		# The player's side: player + living party members
+		for h in [player] + self.allies:
+			if is_alive(h):
+				allies.append(h)
 	else:
 		# Enemy: all living enemies are allies to each other
 		for e in enemies:

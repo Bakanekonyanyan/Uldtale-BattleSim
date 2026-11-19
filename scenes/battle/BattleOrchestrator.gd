@@ -73,6 +73,14 @@ func set_player(character: CharacterData) -> void:
 	_ensure_context()
 	context.player = character
 
+## Party members fighting beside the player (PartyManager).
+func set_allies(ally_list: Array) -> void:
+	_ensure_context()
+	context.allies.clear()
+	for a in ally_list:
+		if a is CharacterData and a.is_alive():
+			context.allies.append(a)
+
 func set_enemies(enemy_list: Array[CharacterData]) -> void:
 	_ensure_context()
 	context.enemies = enemy_list
@@ -171,10 +179,10 @@ func _validate_setup() -> bool:
 
 func _build_components() -> void:
 	combat_engine = CombatEngine.new()
-	combat_engine.initialize_multi(context.player, context.enemies)
+	combat_engine.initialize_multi(context.player, context.enemies, context.allies)
 
 	turn_queue = TurnQueue.new()
-	turn_queue.initialize(context.player, context.enemies)
+	turn_queue.initialize(context.player, context.enemies, context.allies)
 
 	if context.is_pvp_mode:
 		network_sync = BattleNetworkSync.new()
@@ -194,12 +202,14 @@ func _build_components() -> void:
 	outcome.battle_ended.connect(func(won, xp): battle_completed.emit(won, xp))
 
 func _initialize_resources() -> void:
-	for c in [context.player] + context.enemies:
+	for c in context.get_heroes() + context.enemies:
 		if c.current_sp == 0:
 			c.current_sp = c.max_sp
 
 func _initialize_ui() -> void:
-	ui_controller.initialize_multi(context.player, context.enemies)
+	ui_controller.initialize_multi(context.player, context.enemies, context.allies)
+	if not ui_controller.ally_auto_toggled.is_connected(_on_ally_auto_toggled):
+		ui_controller.ally_auto_toggled.connect(_on_ally_auto_toggled)
 	ui_controller.update_xp_display()
 	ui_controller.update_debug_display()
 	if context.is_pvp_mode:
@@ -232,7 +242,7 @@ func _run_battle_loop() -> void:
 
 func _run_turn(actor: CharacterData) -> void:
 	var turn_no = turn_queue.begin_turn()
-	var is_player_turn = turn_queue.is_player(actor)
+	var is_player_turn = turn_queue.is_hero(actor) if not context.is_pvp_mode else turn_queue.is_player(actor)
 	print("BattleOrchestrator: Turn %d - %s" % [turn_no, actor.name])
 
 	if network_sync:
@@ -249,8 +259,10 @@ func _run_turn(actor: CharacterData) -> void:
 	if context.battle_over:
 		return
 
-	if is_player_turn:
-		await _run_player_turn()
+	if is_player_turn and actor != context.player and actor.get_meta("auto", false):
+		await _run_auto_hero_turn(actor)
+	elif is_player_turn:
+		await _run_player_turn(actor)
 	elif context.is_pvp_mode:
 		await _run_remote_turn()
 	else:
@@ -260,7 +272,10 @@ func _run_turn(actor: CharacterData) -> void:
 
 # --- Player ---
 
-func _run_player_turn() -> void:
+func _run_player_turn(actor: CharacterData = null) -> void:
+	ui_controller.set_active_hero(actor if actor else context.player)
+	if actor and actor != context.player:
+		ui_controller.add_combat_log("%s's turn" % actor.name, "cyan")
 	context.reset_turn_state()
 	_awaiting_player_action = true
 	_present_player_actions()
@@ -337,6 +352,30 @@ func _handle_player_main_action(action: BattleAction) -> void:
 	_action_in_progress = false
 	_player_turn_finished.emit()
 
+# --- Party member on Auto ---
+
+func _on_ally_auto_toggled(ally: CharacterData, auto: bool) -> void:
+	ally.set_meta("auto", auto)
+	PartyManager.set_auto(ally, auto)
+	# flipping it during their own turn hands the turn over right away
+	if auto and _awaiting_player_action and ui_controller.player == ally and not _action_in_progress:
+		var action = AutoBattler.hero_policy(ally, context)
+		if action:
+			ui_controller.lock_ui()
+			ui_controller.emit_signal("action_selected", action)
+
+func _run_auto_hero_turn(ally: CharacterData) -> void:
+	ui_controller.set_active_hero(ally)
+	ui_controller.update_turn_display("%s is acting..." % ally.name)
+	await get_tree().create_timer(0.7).timeout
+	if not ally.is_alive() or context.is_battle_decided():
+		return
+	var action = AutoBattler.hero_policy(ally, context)
+	if not action:
+		return
+	var result: ActionExecutor.Outcome = await action_executor.execute(action, true)
+	await outcome.handle_deaths(result.dead)
+
 # --- Enemy (PvE) ---
 
 func _run_enemy_turn(enemy_character: CharacterData) -> void:
@@ -345,7 +384,7 @@ func _run_enemy_turn(enemy_character: CharacterData) -> void:
 
 	await get_tree().create_timer(1.0).timeout
 
-	if not enemy_character.is_alive() or not context.player.is_alive():
+	if not enemy_character.is_alive() or context.get_living_heroes().is_empty():
 		return
 
 	var action = enemy_planner.plan_action(enemy_character)

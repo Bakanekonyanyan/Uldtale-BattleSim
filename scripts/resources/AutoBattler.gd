@@ -16,9 +16,12 @@ static func build_hero(npc: Dictionary) -> CharacterData:
 		_spend_point(p)
 	_spend_talents(p, int(npc.get("branch", 0)))
 	var floor_num = max(1, int(npc.get("gear_floor", 1)))
-	var main = ClassEquipmentBias.get_biased_equipment_id(p.character_class, "main_hand")
-	if main != "":
-		_equip(p, main, floor_num)
+	for attempt in range(6):   # a rolled weapon may not suit the class: reroll
+		var main = ClassEquipmentBias.get_biased_equipment_id(p.character_class, "main_hand")
+		if main != "":
+			_equip(p, main, floor_num)
+		if p.equipment["main_hand"] != null:
+			break
 	for i in range(4):
 		var armor = ClassEquipmentBias.get_biased_equipment_id(p.character_class, "armors")
 		if armor != "":
@@ -53,7 +56,7 @@ static func _spend_talents(p: CharacterData, start_branch: int) -> void:
 
 ## Fight a floor's boss (or a wave) at `location_id`. Returns
 ## {won, turns, hp_frac} where hp_frac is the hero's HP left (0..1).
-static func fight_floor(hero: CharacterData, location_id: String, floor_num: int, boss := true) -> Dictionary:
+static func fight_floor(hero: CharacterData, location_id: String, floor_num: int, boss := true, allies: Array[CharacterData] = []) -> Dictionary:
 	# EnemyFactory and MomentumSystem are global: leave them as we found them
 	var saved_loc = EnemyFactory.current_location
 	var saved_race = EnemyFactory.current_dungeon_race
@@ -61,22 +64,25 @@ static func fight_floor(hero: CharacterData, location_id: String, floor_num: int
 	MomentumSystem.current_momentum = 0
 	EnemyFactory.set_location(location_id)
 	var g = EnemyGroup.new()
+	g.ally_count = allies.size()
 	g.initialize(floor_num, 6 if boss else 3, boss)
-	var r = fight(hero, g.enemies, floor_num, boss)
+	var r = fight(hero, g.enemies, floor_num, boss, allies)
 	EnemyFactory.current_location = saved_loc
 	EnemyFactory.current_dungeon_race = saved_race
 	MomentumSystem.current_momentum = saved_momentum
 	return r
 
-static func fight(p: CharacterData, enemies: Array[CharacterData], floor_num: int, boss: bool) -> Dictionary:
+## `allies` fight beside `p` on the same hero policy.
+static func fight(p: CharacterData, enemies: Array[CharacterData], floor_num: int, boss: bool, allies: Array[CharacterData] = []) -> Dictionary:
 	var ctx = BattleContext.new()
 	ctx.player = p
+	ctx.allies = allies
 	ctx.enemies = enemies
 	ctx.set_dungeon_info(boss, 1, floor_num, 5, "")
 	var engine = CombatEngine.new()
-	engine.initialize_multi(p, enemies)
+	engine.initialize_multi(p, enemies, allies)
 	var q = TurnQueue.new()
-	q.initialize(p, enemies)
+	q.initialize(p, enemies, allies)
 	var planner = EnemyTurnPlanner.new()
 	planner.initialize(ctx)
 	var turns := 0
@@ -95,10 +101,10 @@ static func fight(p: CharacterData, enemies: Array[CharacterData], floor_num: in
 			actor.is_stunned = false
 			q.advance()
 			continue
-		var action: BattleAction = hero_policy(p, ctx) if actor == p else planner.plan_action(actor)
+		var action: BattleAction = hero_policy(actor, ctx) if ctx.is_hero(actor) else planner.plan_action(actor)
 		if action:
 			engine.execute_action(action)
-		for c in [p] + enemies:
+		for c in ctx.get_heroes() + enemies:
 			if not c.is_alive():
 				q.remove(c)
 		q.advance()

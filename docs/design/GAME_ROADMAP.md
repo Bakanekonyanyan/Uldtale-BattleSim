@@ -31,7 +31,7 @@ Earlier notes: `docs/design/TOWN_SERVICES.md` §9 (the parked Adventurer system)
 | # | System | Why it matters now | Size |
 |---|---|---|---|
 | ~~B1~~ | ~~**Enemy and boss classes** (§2)~~ | **Done** | M |
-| B2 | **Party of up to 3 heroes in battle** | Recruiting adventurers is the core fantasy. The engine is prepared (enemies target from a hero list); the battle UI and ally AI are not | M-L |
+| ~~B2~~ | ~~**Party of up to 3 heroes in battle**~~ | **Done** (§4, "Party and recruiting") | M-L |
 | ~~B3~~ | ~~**Defeat consequences**~~ | **Done:** gold fee, injury, gear to the Guild's Lost & Found (buy-back), Infirmary. Rescue by a rival can come with NPC adventurers | S |
 | B4 | **Battle HUD with your art** | Status icons, combo/weak-spot callouts, ultimates presented as big moments | M (art-driven) |
 | B5 | Forms / stealth / summons | Druid shapeshift, Shinobi stealth, Necromancer undead are in the philosophies. Can wait: talents already give a taste | M |
@@ -220,6 +220,45 @@ State: `town_state["adventurers"]`.
 
 **Next (later steps):** recruiting from rapport and rank (B2, party of 3); expedition encounters with these same adventurers (§6); "owes you" and "betrayed you" tags.
 
+### What was built (party and recruiting, B2)
+
+**Choices made:**
+- **You control** every hero, with a per-companion **Auto** toggle.
+- **Friend rapport and a share of the loot** to recruit and keep companions.
+- **Fully automatic** recruit gear and talents.
+- **Knock-out with an injury afterwards.** A full party wipe carries a small death chance.
+
+Code:
+- `scripts/autoload/PartyManager.gd`
+- Party-aware `BattleContext`, `TurnQueue`, `CombatEngine` and `BattleOutcomeHandler`
+- `BattleOrchestrator`: manual or Auto turns for companions
+- `BattleUIController`: party rows, Auto toggles, ally targeting
+
+Data: `data/adventurers.json` `party` (Content Manager tab **Adventurers**, section Party).
+
+**Recruiting** (Tavern → Invite to Party):
+- Needs Friend rapport (40) and a free slot: rank party size − 1 (D and C: 1 companion; B and up: 2).
+- Recruits stop taking Guild jobs, level with you (never below your level), and build their own gear and talents.
+- They share your pack.
+
+**Battle:**
+- Companions take turns in the initiative order. On your turn for them, the info panel, skills and items switch to that hero.
+- ALLY skills and items let you choose which hero; ALL_ALLIES reaches the whole party.
+- **Auto** hands a companion to the hero AI (the same policy NPC real battles use). It is remembered per companion.
+- A knocked-out hero is out for the fight and gets back up at 10% HP after a win. Only a full wipe is a defeat.
+
+**After an expedition:**
+- A good one gives +3 rapport, a defeat −2, and each knock-out −3 and a 2–4 day injury.
+- You get an injury if you were knocked out but the party won.
+- A full defeat has a 4% death chance per companion (× trait).
+- Below 20 rapport a companion may leave (35% × trait; Loyal ×0.2).
+
+**Gold:** each companion takes 10–20% of Breather gold by rank (Greedy ×1.5, Honorable ×0.8, Kind and Loyal ×0.9). The Reward screen shows the party's share.
+
+**Scaling** (tuned with `balance_sim.tscn -- tool --party=N`): each companion adds one enemy to regular waves, +35% enemy HP, and bosses get +120% HP and +20% damage.
+- Floor-1 clear: about 20% solo, 42% with one companion, 50% with two.
+- Class gaps also narrow in a party.
+
 ## 5. World clock (recommended, light version)
 
 Not real time. A **day counter** advances on actions:
@@ -271,7 +310,7 @@ Data: `data/world.json` (Content Manager tab **World**), plus `travel_days` per 
 2. ~~**Adventurer ranks** in the Guild.~~ Done.
 3. ~~**World clock** (days, inn rest, deadlines in days, news ledger).~~ Done.
 4. ~~**NPC adventurers:** generator, roster, rapport, simulated quests on the clock.~~ Done.
-5. **Party of 3 in battle** (B2), then **recruitment** from the roster.
+5. ~~**Party of 3 in battle** (B2), then **recruitment** from the roster.~~ Done.
 6. **Expedition encounters:** helpers, rivals, saboteurs between waves.
 7. **Exploration mode** for the themed locations (decided earlier: waves now, exploration later).
 8. **Battle HUD with art** (B4) whenever the art is ready; forms, stealth and summons (B5); advanced combos (B6).

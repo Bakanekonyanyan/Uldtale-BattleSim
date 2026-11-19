@@ -12,6 +12,7 @@ class_name TurnQueue
 extends RefCounted
 
 var player: CharacterData
+var heroes: Array[CharacterData] = []   # player + party
 var all_combatants: Array[CharacterData] = []
 var queue: Array[CharacterData] = []
 var turn_number: int = 0
@@ -22,10 +23,13 @@ var round_number: int = 1
 # metadata leaked into the next fight.
 var _acted_this_round: Dictionary = {}  # CharacterData -> true
 
-func initialize(p_player: CharacterData, enemies: Array[CharacterData]) -> void:
+func initialize(p_player: CharacterData, enemies: Array[CharacterData], allies: Array[CharacterData] = []) -> void:
 	player = p_player
+	heroes.clear()
+	heroes.append(player)
+	heroes.append_array(allies)
 	all_combatants.clear()
-	all_combatants.append(player)
+	all_combatants.append_array(heroes)
 	all_combatants.append_array(enemies)
 	turn_number = 0
 	round_number = 1
@@ -39,6 +43,10 @@ func current_actor() -> CharacterData:
 
 func is_player(character: CharacterData) -> bool:
 	return character == player
+
+## The player or one of their party members.
+func is_hero(character: CharacterData) -> bool:
+	return character in heroes
 
 ## Called once at the start of each turn; used for logging/turn counters.
 func begin_turn() -> int:

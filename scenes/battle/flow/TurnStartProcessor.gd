@@ -73,7 +73,7 @@ func _process_status_effects(character: CharacterData) -> void:
 	if status_result.damage > 0:
 		ui_controller.add_combat_log("%s took %d damage from status effects" % [character.name, status_result.damage], "red")
 		if visual_manager:
-			if character == context.player:
+			if context.is_hero(character):
 				visual_manager.shake_and_flash_screen(0.1)
 			else:
 				visual_manager.shake_on_hit(status_result.damage, false)

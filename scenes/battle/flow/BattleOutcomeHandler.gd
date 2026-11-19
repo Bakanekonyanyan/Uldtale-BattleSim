@@ -39,12 +39,17 @@ func handle_deaths(dead_characters: Array[CharacterData]) -> void:
 
 	for dead in dead_characters:
 		combat_engine.check_death_after_action(dead)  # clamps HP to 0
-		ui_controller.add_combat_log("%s has been defeated!" % dead.name, "red")
+		if context.is_hero(dead):
+			ui_controller.add_combat_log("%s is knocked out!" % dead.name, "orange")
+			if not context.is_pvp_mode:
+				PartyManager.on_hero_knocked_out(dead)
+		else:
+			ui_controller.add_combat_log("%s has been defeated!" % dead.name, "red")
 		if visual_manager:
 			visual_manager.play_death_animation(dead)
 		turn_queue.remove(dead)
 		# Tell town systems (Guild bounties, later quests). PvE only.
-		if dead != context.player and not context.is_pvp_mode:
+		if dead in context.enemies and not context.is_pvp_mode:
 			GameEvents.enemy_killed.emit(dead, DungeonStateManager.current_location,
 				context.current_floor, dead.character_class.begins_with("King"))
 
@@ -81,6 +86,11 @@ func _handle_victory() -> void:
 		return
 
 	var total_xp = _calculate_xp_reward()
+	# Knocked-out heroes get back up after a won fight (injured: PartyManager)
+	for h in context.get_heroes():
+		if not h.is_alive():
+			h.current_hp = max(1, int(h.max_hp * 0.1))
+			ui_controller.add_combat_log("%s gets back on their feet." % h.name, "orange")
 	await _wait(1.0)
 	_show_battle_complete_dialog(total_xp)
 

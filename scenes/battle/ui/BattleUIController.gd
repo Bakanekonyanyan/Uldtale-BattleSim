@@ -10,8 +10,14 @@ extends Node
 
 signal action_selected(action: BattleAction)
 
+## The hero whose turn it is (the player, or a party member you control)
 var player: CharacterData
+## Everyone on your side: the player first, then the party
+var heroes: Array[CharacterData] = []
 var enemies: Array[CharacterData] = []
+## Emitted when you flip a party member's Auto toggle
+signal ally_auto_toggled(ally: CharacterData, auto: bool)
+var party_strip: VBoxContainer
 
 # UI Components
 @onready var player_info: RichTextLabel = $PlayerInfo
@@ -60,10 +66,61 @@ func _ready():
 	
 # === INITIALIZATION ===
 
-func initialize_multi(p_player: CharacterData, p_enemies: Array[CharacterData]):
+func initialize_multi(p_player: CharacterData, p_enemies: Array[CharacterData], p_allies: Array[CharacterData] = []):
 	player = p_player
+	heroes.clear()
+	heroes.append(p_player)
+	heroes.append_array(p_allies)
 	enemies = p_enemies
 	_create_enemy_panels()
+	_create_party_strip()
+	update_all_character_info()
+
+## Party members under your info panel: HP/MP/SP and an Auto toggle each.
+func _create_party_strip() -> void:
+	if party_strip:
+		party_strip.queue_free()
+		party_strip = null
+	if heroes.size() <= 1:
+		return
+	party_strip = VBoxContainer.new()
+	party_strip.position = Vector2(64, 294)
+	party_strip.size = Vector2(300, 100)
+	party_strip.add_theme_constant_override("separation", 0)
+	add_child(party_strip)
+	if action_buttons:
+		action_buttons.position.y = 400   # make room for the party rows
+	for h in heroes:
+		var row = HBoxContainer.new()
+		var lbl = Label.new()
+		lbl.name = "Info"
+		lbl.custom_minimum_size = Vector2(230, 30)
+		lbl.add_theme_font_size_override("font_size", 13)
+		row.add_child(lbl)
+		if h != heroes[0]:   # companions only: you always play yourself
+			var auto = CheckBox.new()
+			auto.text = "Auto"
+			auto.add_theme_font_size_override("font_size", 13)
+			auto.tooltip_text = "Let %s act on their own." % h.name
+			auto.button_pressed = bool(h.get_meta("auto", false))
+			auto.toggled.connect(func(on): ally_auto_toggled.emit(h, on))
+			row.add_child(auto)
+		row.set_meta("hero", h)
+		party_strip.add_child(row)
+
+func _update_party_strip() -> void:
+	if not party_strip:
+		return
+	for row in party_strip.get_children():
+		var h: CharacterData = row.get_meta("hero")
+		var lbl: Label = row.get_node("Info")
+		var ko = not h.is_alive()
+		lbl.text = "%s%s   HP %d/%d  MP %d  SP %d" % ["> " if h == player else "", h.name.get_slice(" ", 0), h.current_hp, h.max_hp, h.current_mp, h.current_sp] if not ko else "%s   Knocked out" % h.name.get_slice(" ", 0)
+		lbl.modulate = Color(0.55, 0.55, 0.55) if ko else (Color(1, 0.9, 0.5) if h == player else Color.WHITE)
+
+## Point the action buttons and the info panel at the hero whose turn it is.
+func set_active_hero(h: CharacterData) -> void:
+	player = h
 	update_all_character_info()
 
 func _create_enemy_panels():
@@ -107,14 +164,15 @@ func _create_enemy_panels():
 func update_all_character_info():
 	update_player_info()
 	update_enemies_info()
+	_update_party_strip()
 
 func update_player_info():
 	if not player or not player_info:
 		return
 	
 	var status_text = player.get_status_effects_string()
-	player_info.text = "[b]%s[/b]\nHP: %d/%d\nMP: %d/%d\nSP: %d/%d\nStatus: %s" % [
-		player.name,
+	player_info.text = "[b]%s[/b]%s\nHP: %d/%d\nMP: %d/%d\nSP: %d/%d\nStatus: %s" % [
+		player.name, ("  [color=gray](%s)[/color]" % player.character_class) if heroes.size() > 1 else "",
 		player.current_hp, player.max_hp,
 		player.current_mp, player.max_mp,
 		player.current_sp, player.max_sp,
@@ -161,9 +219,10 @@ func update_turn_display(text: String):
 		turn_label.text = text
 
 func update_xp_display():
-	if xp_label and player:
-		var xp_required = LevelSystem.calculate_xp_for_level(player.level)
-		xp_label.text = "XP: %d/%d (Level %d)" % [player.xp, xp_required, player.level]
+	var you: CharacterData = heroes[0] if not heroes.is_empty() else player   # companions don't earn XP
+	if xp_label and you:
+		var xp_required = LevelSystem.calculate_xp_for_level(you.level)
+		xp_label.text = "XP: %d/%d (Level %d)" % [you.xp, xp_required, you.level]
 
 func update_debug_display():
 	if not debug_log:
@@ -446,6 +505,14 @@ func _on_skill_selected(skill: Skill):
 	
 	var needs_target = (skill.target == Skill.TargetType.ENEMY)
 	
+	# Ally skills: choose which party member (alone, it's yourself)
+	if skill.target == Skill.TargetType.ALLY and _living_heroes().size() > 1:
+		show_target_selection(_living_heroes(),
+			func(target): emit_signal("action_selected", BattleAction.skill(player, skill, [target])),
+			func(): unlock_ui(); enable_actions()
+		)
+		return
+	
 	if needs_target:
 		var living_enemies = _get_living_enemies()
 		if living_enemies.is_empty():
@@ -466,8 +533,10 @@ func _get_skill_targets(skill: Skill) -> Array[CharacterData]:
 	var targets: Array[CharacterData] = []
 	
 	match skill.target:
-		Skill.TargetType.SELF, Skill.TargetType.ALLY, Skill.TargetType.ALL_ALLIES:
+		Skill.TargetType.SELF, Skill.TargetType.ALLY:
 			targets.append(player)
+		Skill.TargetType.ALL_ALLIES:
+			targets = _living_heroes()
 		Skill.TargetType.ENEMY:
 			var living = _get_living_enemies()
 			if not living.is_empty():
@@ -482,14 +551,22 @@ func _get_skill_targets(skill: Skill) -> Array[CharacterData]:
 func _on_inventory_item_selected(item: Item, target: CharacterData):
 	var targets: Array[CharacterData] = []
 	
+	if item.target_type == Item.TargetType.ALLY and _living_heroes().size() > 1:
+		show_target_selection(_living_heroes(),
+			func(t): emit_signal("action_selected", BattleAction.item(player, item, [t])),
+			func(): unlock_ui(); enable_actions()
+		)
+		return
 	if not target:
 		match item.target_type:
 			Item.TargetType.ALL_ENEMIES:
 				targets = _get_living_enemies()
 			Item.TargetType.ALL_ALLIES:
-				targets.append(player)
+				targets = _living_heroes()
 			_:
 				targets.append(player)
+	elif item.target_type == Item.TargetType.ALL_ALLIES:
+		targets = _living_heroes()
 	else:
 		targets.append(target)
 	
@@ -557,6 +634,13 @@ func hide_battle_ui():
 	if dungeon_description_label: dungeon_description_label.hide()
 
 # === HELPERS ===
+
+func _living_heroes() -> Array[CharacterData]:
+	var out: Array[CharacterData] = []
+	for h in heroes:
+		if h.is_alive():
+			out.append(h)
+	return out
 
 func _get_living_enemies() -> Array[CharacterData]:
 	var living: Array[CharacterData] = []

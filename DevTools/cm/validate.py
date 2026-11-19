@@ -479,8 +479,10 @@ class Validator:
         tab = "Adventurers"
         if tab not in p.data:
             return
+        sec = {x.label: i for i, x in enumerate(p.by_tab[tab].sections)}
+        traits_i, names_i = sec.get("Traits", 5), sec.get("Names", 6)
         traits = p.data[tab].get("traits", {})
-        for ref in self.refs(tab, 4):
+        for ref in self.refs(tab, traits_i):
             for x in p.get(ref).get("exclusive", []) or []:
                 if x not in traits:
                     add("error", tab, ref, "exclusive", f"unknown trait '{x}'")
@@ -489,7 +491,7 @@ class Validator:
         for r in races:
             if r not in names:
                 add("warning", tab, None, "names", f"no name table for playable race '{r}' (it won't appear in the guild)")
-        for ref in self.refs(tab, 5):
+        for ref in self.refs(tab, names_i):
             if ref.key not in races:
                 add("error", tab, ref, "", f"'{ref.key}' is not a playable race")
             n = p.get(ref)

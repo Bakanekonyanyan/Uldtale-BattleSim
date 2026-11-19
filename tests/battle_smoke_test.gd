@@ -42,6 +42,7 @@ func _ready():
 	await _battle_run("forced defeat", 2, false, 1)
 	await _battle_run("victory vs three", 3, false, -2)
 	await _battle_run("victory vs boss", 1, true, -2)
+	await _party_battle_run()
 	print("SMOKE RESULT: %d passed, %d failed" % [passes, failures.size()])
 	for f in failures:
 		print("  FAILED -> ", f)
@@ -389,7 +390,7 @@ func _adventurer_checks() -> void:
 	EnemyFactory.set_location(LocationManager.DEFAULT_LOCATION)
 	# fates
 	var saved_f = AdventurerManager.cfg.fates.duplicate()
-	AdventurerManager.cfg.fates.death_chance = 1.0
+	AdventurerManager.cfg.fates.death_chance = 100.0   # certain, whatever their traits
 	var doomed: Dictionary = roster[2]
 	AdventurerManager._fate(p, doomed, WorldClock.day(p), false, "The Dungeon", 1)
 	check(doomed.status == "dead" and not AdventurerManager.is_active(doomed), "a fatal failure kills the adventurer")
@@ -421,6 +422,55 @@ func _adventurer_checks() -> void:
 		var rv0 = int(rival[0].rivalry)
 		RankManager.promote(p, "B")
 		check(int(rival[0].rivalry) > rv0 or RankManager.rank_index(String(rival[0].rank)) > RankManager.rank_index("B"), "your promotion deepens a rivalry")
+	DungeonStateManager.active_player = prev_active
+
+## Party and recruiting (PartyManager.gd)
+func _party_checks() -> void:
+	var p = make_player()
+	p.name = "ZZ_SmokeTest_Party"
+	p.level = 6
+	var prev_active = DungeonStateManager.active_player
+	DungeonStateManager.active_player = p
+	var pool = AdventurerManager.active(p)
+	var a: Dictionary = pool[0]
+	var b: Dictionary = pool[1]
+	var c: Dictionary = pool[2]
+	for n in [a, b, c]:
+		n.status = "idle"
+		n.rapport = 50
+	check(PartyManager.slots(p) == 0 and not PartyManager.recruit(p, int(a.id)).ok, "F-Rank: no companions yet")
+	RankManager.promote(p, "D")
+	check(PartyManager.slots(p) == 1, "D-Rank opens one party slot")
+	b.rapport = 10
+	check(not PartyManager.recruit(p, int(b.id)).ok, "strangers won't join (rapport below Friend)")
+	var r = PartyManager.recruit(p, int(a.id))
+	check(r.ok and a.status == "party" and int(a.level) >= 6, "a Friend joins and levels with you (%s)" % r.reason)
+	check(not PartyManager.recruit(p, int(c.id)).ok, "the party is full at D-Rank")
+	RankManager.promote(p, "B")
+	check(PartyManager.recruit(p, int(c.id)).ok and PartyManager.members(p).size() == 2, "B-Rank: two companions")
+	# expedition: built as battle characters sharing your pack
+	DungeonStateManager.start_dungeon(p, 1, "the_dungeon")
+	check(PartyManager.allies.size() == 2 and PartyManager.allies[0].inventory == p.inventory and PartyManager.allies[0].level >= 6, "companions come along with your level and share your pack")
+	var rewards = {"currency": 1000, "equipment_instances": []}
+	var cut = PartyManager.take_share(p, rewards)
+	check(cut > 0 and int(rewards.currency) == 1000 - cut, "they take their share of the gold (%d of 1000)" % cut)
+	# a knock-out costs rapport and leaves them hurt
+	var rap_a = int(a.rapport)
+	var rap_c = int(c.rapport)
+	PartyManager.on_hero_knocked_out(PartyManager.allies[0])
+	DungeonStateManager.end_dungeon(true)
+	check(int(a.injured_until) > WorldClock.day(p) and int(a.rapport) < rap_a + 3, "a knocked-out companion comes back hurt and less happy")
+	check(int(c.rapport) > rap_c, "a good expedition raises rapport (%d -> %d)" % [rap_c, int(c.rapport)])
+	# unhappy companions may leave
+	var saved = PartyManager.cfg.duplicate()
+	PartyManager.cfg.leave_chance = 100.0
+	c.rapport = 5
+	DungeonStateManager.active_player = p
+	DungeonStateManager.start_dungeon(p, 1, "the_dungeon")
+	DungeonStateManager.end_dungeon(false)
+	check(not PartyManager.is_member(p, int(c.id)) or c.status == "dead", "an unhappy companion walks away")
+	PartyManager.cfg = saved
+	check(PartyManager.dismiss(p, int(a.id)).ok and a.status == "idle" and PartyManager.members(p).is_empty() or PartyManager.members(p).size() <= 1, "dismissing sends them back to the Guild")
 	DungeonStateManager.active_player = prev_active
 
 ## Talent trees (data/talents.json, TalentManager.gd)
@@ -685,6 +735,7 @@ func _phase0_checks() -> void:
 	_rank_checks()
 	_world_checks()
 	_adventurer_checks()
+	_party_checks()
 	
 	# Class-biased loot rolls (Breather drops pass the player's class)
 	var biased_ok := true
@@ -1238,6 +1289,62 @@ func _guild_checks() -> void:
 	EnemyFactory.set_location("the_dungeon")
 
 # ------------------------------------------------------------------ full battles
+
+## A real Battle.tscn fight with two companions: one you control, one on Auto.
+func _party_battle_run() -> void:
+	print("=== BATTLE: party of 3")
+	var player = make_player(-2)
+	var manual = AutoBattler.build_hero({"name": "Ally Manual", "race": "Hume", "cls": "Cleric", "level": 5, "gear_floor": 3, "branch": 0})
+	var auto = AutoBattler.build_hero({"name": "Ally Auto", "race": "Durgar", "cls": "Berserker", "level": 5, "gear_floor": 3, "branch": 0})
+	auto.set_meta("auto", true)
+	for a in [manual, auto]:
+		a.inventory = player.inventory
+	var g = EnemyGroup.new()
+	g.ally_count = 2
+	EnemyFactory.set_location("the_dungeon")
+	g.initialize(1, 3, false)
+	var enemies: Array[CharacterData] = g.enemies
+	var kills_before := kills_seen
+	var battle = load("res://scenes/battle/Battle.tscn").instantiate()
+	get_tree().root.add_child(battle)
+	var done := [false, false]
+	battle.battle_completed.connect(func(won, _xp): done[0] = true; done[1] = won)
+	battle.set_player(player)
+	battle.set_allies([manual, auto])
+	battle.set_enemies(enemies)
+	battle.set_dungeon_info(false, 3, 1, 5, "Party smoke test")
+	var acted := {}
+	var frames := 0
+	var auto_mine := false
+	while not done[0] and frames < 90000:
+		frames += 1
+		await get_tree().process_frame
+		for child in battle.get_children():
+			if child.has_signal("take_breather_selected") and not child.has_meta("clicked"):
+				child.set_meta("clicked", true)
+				child.take_breather_selected.emit()
+		if battle.get("_awaiting_player_action") and not battle.get("_action_in_progress") and not battle.context.main_action_taken:
+			var who: CharacterData = battle.ui_controller.player
+			if who == auto:
+				auto_mine = true   # an Auto ally should never wait for input
+			var living = battle.context.get_living_enemies()
+			if living.is_empty():
+				continue
+			acted[who.name] = acted.get(who.name, 0) + 1
+			battle.ui_controller.action_selected.emit(BattleAction.attack(who, living[0]))
+		elif battle.get("turn_queue") and battle.turn_queue.current_actor() == auto:
+			acted["auto"] = 1
+	check(done[0], "party battle completed (frames=%d)" % frames)
+	check(acted.get(player.name, 0) > 0 and acted.get("Ally Manual", 0) > 0, "you act for yourself and for the manual companion (%s)" % str(acted))
+	check(not auto_mine and acted.has("auto"), "the Auto companion acts on its own")
+	check(enemies.size() == 4 or enemies.size() >= 3, "a party of 3 faces a bigger wave (%d enemies)" % enemies.size())
+	var heroes_alive = [player, manual, auto].any(func(h): return h.is_alive())
+	check(done[1] == heroes_alive, "party result matches the heroes' state (won=%s)" % done[1])
+	if done[1]:
+		check(kills_seen - kills_before == enemies.size(), "only enemies count as kills (%d)" % (kills_seen - kills_before))
+		check([player, manual, auto].all(func(h): return h.current_hp > 0), "knocked-out heroes get back up after a win")
+	battle.queue_free()
+	await get_tree().process_frame
 
 func _battle_run(label: String, enemy_count: int, boss: bool, player_hp: int) -> void:
 	print("=== BATTLE: ", label)

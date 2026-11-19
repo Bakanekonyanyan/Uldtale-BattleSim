@@ -234,6 +234,88 @@
    ]
   },
   {
+   "kind": "settings",
+   "label": "Party",
+   "path": [
+    "party"
+   ],
+   "fields": [
+    {
+     "name": "recruit_rapport",
+     "type": "int",
+     "help": "Rapport needed to recruit (Friend)."
+    },
+    {
+     "name": "share_by_rank",
+     "type": "map",
+     "key": {
+      "type": "ref",
+      "source": "ranks"
+     },
+     "value": {
+      "type": "float",
+      "min": 0,
+      "max": 0.5
+     },
+     "help": "Share of Breather gold a companion of this rank takes (x trait 'share')."
+    },
+    {
+     "name": "rapport_good_expedition",
+     "type": "int"
+    },
+    {
+     "name": "rapport_bad_expedition",
+     "type": "int"
+    },
+    {
+     "name": "rapport_per_ko",
+     "type": "int"
+    },
+    {
+     "name": "leave_below",
+     "type": "int",
+     "help": "Companions below this rapport may leave after an expedition."
+    },
+    {
+     "name": "leave_chance",
+     "type": "float",
+     "min": 0,
+     "help": "x trait 'leave'."
+    },
+    {
+     "name": "ko_injury_days",
+     "type": "json"
+    },
+    {
+     "name": "wipe_death_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Chance a companion dies when the whole party falls (x trait 'death')."
+    },
+    {
+     "name": "enemy_extra_per_ally",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "enemy_hp_per_ally",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "boss_hp_per_ally",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "boss_damage_per_ally",
+     "type": "float",
+     "min": 0
+    }
+   ]
+  },
+  {
    "kind": "collection",
    "label": "Traits",
    "path": [
@@ -356,6 +438,20 @@
      "optional": true,
      "min": -100,
      "max": 100
+    },
+    {
+     "name": "share",
+     "type": "float",
+     "optional": true,
+     "min": 0,
+     "help": "x gold share as a companion."
+    },
+    {
+     "name": "leave",
+     "type": "float",
+     "optional": true,
+     "min": 0,
+     "help": "x chance to leave an unhappy party."
     }
    ]
   },
