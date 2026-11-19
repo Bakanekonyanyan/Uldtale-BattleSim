@@ -154,38 +154,6 @@ func get_living_enemies() -> Array[CharacterData]:
 	"""Get all alive enemies"""
 	return enemies.filter(func(e): return e.is_alive())
 
-func get_random_living_enemy() -> CharacterData:
-	"""Get random alive enemy (for AI targeting)"""
-	var living = get_living_enemies()
-	if living.is_empty():
-		return null
-	return living[RandomManager.randi() % living.size()]
-
-func get_weakest_enemy() -> CharacterData:
-	"""Get enemy with lowest current HP (for smart AI)"""
-	var living = get_living_enemies()
-	if living.is_empty():
-		return null
-	
-	living.sort_custom(func(a, b): return a.current_hp < b.current_hp)
-	return living[0]
-
-func get_strongest_enemy() -> CharacterData:
-	"""Get enemy with highest attack power (for threat assessment)"""
-	var living = get_living_enemies()
-	if living.is_empty():
-		return null
-	
-	living.sort_custom(func(a, b): return a.get_attack_power() > b.get_attack_power())
-	return living[0]
-
 func is_group_alive() -> bool:
 	"""Check if any enemies still alive"""
 	return get_living_enemies().size() > 0
-
-func get_total_xp() -> int:
-	"""Calculate total XP reward for defeating all enemies"""
-	var total = 0
-	for enemy in enemies:
-		total += enemy.level * 50 * current_floor
-	return total

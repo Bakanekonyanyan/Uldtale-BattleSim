@@ -52,7 +52,7 @@ func _ready():
 	player_character = CharacterManager.get_current_character()
 	if player_character == null:
 		print("Error: No character selected")
-		SceneManager.change_scene("res://scenes/ui/CharacterSelection.tscn")
+		SceneManager.change_to_character_selection()
 		return
 	
 	# Update buyback based on current floor

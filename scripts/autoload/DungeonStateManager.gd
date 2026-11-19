@@ -140,14 +140,3 @@ func end_dungeon(cleared: bool = false):
 	active_enemies.clear()
 	enemy_group = null
 	print("DungeonState: Dungeon ended")
-
-func get_state_summary() -> String:
-	"""Debug: Print current state"""
-	return "Floor %d, Wave %d/%d, Boss: %s, Active: %s, Enemies: %d" % [
-		current_floor,
-		current_wave,
-		waves_per_floor,
-		is_boss_fight,
-		dungeon_active,
-		active_enemies.size()
-	]

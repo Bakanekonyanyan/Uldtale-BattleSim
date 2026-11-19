@@ -50,6 +50,12 @@
      "name": "history_max",
      "type": "int",
      "min": 1
+    },
+    {
+     "name": "departed_keep",
+     "type": "int",
+     "min": 0,
+     "help": "Fallen/retired adventurers kept in the save (oldest dropped)."
     }
    ]
   },

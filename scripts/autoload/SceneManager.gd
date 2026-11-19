@@ -28,7 +28,8 @@ enum ScenePath {
 	GUILD,
 	TALENTS,
 	DEFEAT,
-	TAVERN
+	TAVERN,
+	CHARACTER_CREATION
 }
 
 # Scene path lookup
@@ -50,7 +51,8 @@ const SCENE_PATHS = {
 	ScenePath.GUILD: "res://scenes/town/GuildScene.tscn",
 	ScenePath.TALENTS: "res://scenes/town/TalentScene.tscn",
 	ScenePath.DEFEAT: "res://scenes/town/DefeatScene.tscn",
-	ScenePath.TAVERN: "res://scenes/town/TavernScene.tscn"
+	ScenePath.TAVERN: "res://scenes/town/TavernScene.tscn",
+	ScenePath.CHARACTER_CREATION: "res://scenes/ui/CharacterCreation.tscn"
 }
 
 # ===== STATE =====
@@ -90,7 +92,9 @@ func navigate(scene: ScenePath, transition: TransitionType = TransitionType.REPL
 # ===== INTERNAL TRANSITION LOGIC =====
 
 func _navigate_replace(path: String, character: CharacterData, data: Dictionary) -> void:
-	"""Replace current scene"""
+	"""Replace current scene. The back-stack only tracks PUSH/POP pairs, so a
+	REPLACE starts it over (screens left via change_to_town used to pile up)."""
+	scene_stack.clear()
 	if character:
 		SaveManager.save_game(character)
 	
@@ -223,6 +227,9 @@ func change_to_main_menu() -> void:
 
 func change_to_character_selection() -> void:
 	navigate(ScenePath.CHARACTER_SELECT, TransitionType.REPLACE)
+
+func change_to_character_creation() -> void:
+	navigate(ScenePath.CHARACTER_CREATION, TransitionType.REPLACE)
 
 func return_to_previous_scene() -> void:
 	navigate(ScenePath.MAIN_MENU, TransitionType.POP)  # Enum ignored for POP
@@ -433,16 +440,3 @@ func _show_rewards(xp_gained: int) -> void:
 	else:
 		push_warning("SceneManager: Reward scene missing initialize_display() - display may not work")
 
-# ===== LEGACY METHODS (DEPRECATED) =====
-
-func change_scene(path: String) -> void:
-	push_warning("SceneManager.change_scene() is deprecated - use navigate()")
-	call_deferred("_deferred_load", path, null, {})
-
-func push_scene(path: String, character: CharacterData = null) -> void:
-	push_warning("SceneManager.push_scene() is deprecated - use navigate()")
-	_navigate_push(path, character, {})
-
-func pop_scene() -> void:
-	push_warning("SceneManager.pop_scene() is deprecated - use navigate()")
-	_navigate_pop()

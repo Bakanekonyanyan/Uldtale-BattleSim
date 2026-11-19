@@ -392,11 +392,11 @@ func _on_quit_pressed():
 
 func _on_equip_pressed():
 	_save_state()
-	SceneManager.push_scene("res://scenes/EquipmentScene.tscn", player_character)
+	SceneManager.change_to_equipment(player_character)
 
 func _on_use_consumable_pressed():
 	_save_state()
-	SceneManager.push_scene("res://scenes/InventoryScene.tscn", player_character)
+	SceneManager.change_to_inventory(player_character)
 
 # === HELPERS ===
 func _all_items_collected() -> bool:

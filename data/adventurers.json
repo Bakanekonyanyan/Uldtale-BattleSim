@@ -17,7 +17,8 @@
       1,
       3
     ],
-    "history_max": 10
+    "history_max": 10,
+    "departed_keep": 30
   },
   "jobs": {
     "take_chance": 0.45,

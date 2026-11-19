@@ -330,7 +330,7 @@ func _on_quit_pressed():
 	get_tree().quit()
 
 func _on_charselect_pressed():
-	SceneManager.change_scene("res://scenes/ui/CharacterSelection.tscn")
+	SceneManager.change_to_character_selection()
 
 func _on_arena_pressed():
 	SceneManager.change_to_arena(current_character)

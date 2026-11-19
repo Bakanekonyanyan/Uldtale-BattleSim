@@ -37,7 +37,7 @@ func setup_ui():
 	update_info_display()
 
 func _on_cancel_pressed():
-	SceneManager.change_scene("res://scenes/ui/CharacterSelection.tscn")
+	SceneManager.change_to_character_selection()
 
 func _on_race_selected(_index):
 	update_info_display()
@@ -191,4 +191,4 @@ func _on_create_pressed():
 	])
 	
 	# Transition to character selection
-	SceneManager.change_scene("res://scenes/ui/CharacterSelection.tscn")
+	SceneManager.change_to_character_selection()

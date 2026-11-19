@@ -255,6 +255,7 @@ func simulate_day(player: CharacterData, day: int) -> void:
 					_history(npc, day, "Recovered and back in town.")
 			"idle":
 				_maybe_start(player, npc, day)
+	_prune_departed(player)
 	# newcomers keep the guild alive
 	var st: Dictionary = _s("settings")
 	var n_active = active(player).size()
@@ -263,6 +264,15 @@ func simulate_day(player: CharacterData, day: int) -> void:
 		npc.joined_day = day
 		_history(npc, day, "Signed up with the Guild.")
 		_news(player, "A new adventurer joined the Guild: %s, a %s %s." % [npc.name, npc.race, npc.cls])
+
+## Keep only the most recent fallen/retired adventurers in the save.
+func _prune_departed(player: CharacterData) -> void:
+	var keep = int(_s("settings").get("departed_keep", 30))
+	var list: Array = state(player).list
+	var gone = list.filter(func(n): return not is_active(n))
+	var extra = gone.size() - keep
+	for i in range(max(0, extra)):
+		list.erase(gone[i])   # oldest first (roster order is join order)
 
 func _maybe_start(player: CharacterData, npc: Dictionary, day: int) -> void:
 	var jobs: Dictionary = _s("jobs")

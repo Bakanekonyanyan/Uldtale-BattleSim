@@ -242,7 +242,7 @@ func _on_load_saved_game_pressed():
 
 func _on_create_new_pressed():
 	print("Creating new character")
-	SceneManager.change_scene("res://scenes/ui/CharacterCreation.tscn")
+	SceneManager.change_to_character_creation()
 
 func load_characters():
 	character_list = SaveManager.get_all_characters()

@@ -59,27 +59,3 @@ static func create_character(char_name: String, race: String, char_class: String
 	char.calculate_secondary_attributes()
 	
 	return char
-
-static func create_boss(floor: int) -> CharacterData:
-	var boss = create_character("Floor %d King" % floor, "Orc", "King", false)
-	boss.level = floor
-	
-	# Scale stats with floor
-	var scale = 1.0 + (floor - 1) * 0.15
-	boss.vitality = int(boss.vitality * scale)
-	boss.strength = int(boss.strength * scale)
-	boss.calculate_secondary_attributes()
-	
-	return boss
-
-static func create_enemy(floor: int, enemy_class: String, race: String) -> CharacterData:
-	var enemy = create_character("Enemy", race, enemy_class, false)
-	enemy.level = floor
-	
-	# Scale with floor
-	var scale = 1.0 + (floor - 1) * 0.1
-	enemy.vitality = int(enemy.vitality * scale)
-	enemy.strength = int(enemy.strength * scale)
-	enemy.calculate_secondary_attributes()
-	
-	return enemy

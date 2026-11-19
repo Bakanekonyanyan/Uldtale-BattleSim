@@ -111,36 +111,6 @@ static func get_status_proc_chance(element: Element, base_chance: float = 0.3) -
 	
 	return base_chance
 
-# Try to apply status effect from elemental attack
-static func try_apply_status(
-	element: Element,
-	target: CharacterData,
-	duration: int = 3,
-	chance_override: float = -1.0
-) -> bool:
-	"""Attempt to apply elemental status effect to target"""
-	if element == Element.NONE:
-		return false
-	
-	if not ELEMENT_TO_STATUS.has(element):
-		return false
-	
-	var proc_chance = chance_override if chance_override >= 0 else get_status_proc_chance(element)
-	
-	if randf() < proc_chance:
-		var status = ELEMENT_TO_STATUS[element]
-		target.apply_status_effect(status, duration)
-		
-		# Some elements have chance for secondary effect
-		if ELEMENT_SECONDARY_STATUS.has(element) and randf() < 0.15:
-			var secondary = ELEMENT_SECONDARY_STATUS[element]
-			target.apply_status_effect(secondary, duration - 1)
-		
-		return true
-	
-	return false
-
-# Get descriptive name for element
 static func get_element_name(element: Element) -> String:
 	return Element.keys()[element].capitalize()
 
