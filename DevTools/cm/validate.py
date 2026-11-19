@@ -239,11 +239,36 @@ class Validator:
                     add("error", "Recipes", ref, "unlock", "floor_reached unlock needs a floor")
             if not e.get("ingredients"):
                 add("warning", "Recipes", ref, "ingredients", "no ingredients")
+        self._combos()
         self._blacksmith()
         self._material_drops()
         self._damage_types()
         self._bounties()
         self._orphans()
+
+    def _combos(self):
+        p, add = self.p, self.r.add
+        # which set-up statuses can anything actually inflict? (skill or consumable)
+        inflicted = set()
+        for ref in self.refs("Skills"):
+            e = p.get(ref)
+            for k in ("status_effect", "status_effects"):
+                v = e.get(k)
+                inflicted.update(v if isinstance(v, list) else [v])
+        for ref in self.refs("Consumables"):
+            inflicted.add(p.get(ref).get("status_effect"))
+        seen = {}
+        for ref in self.refs("Combos"):
+            e = p.get(ref)
+            payoff = e.get("payoff") or {}
+            if not any(payoff.get(k) for k in ("damage_types", "elements", "ability_types", "skills")):
+                add("error", "Combos", ref, "payoff", "no payoff - nothing can trigger this combo")
+            if e.get("setup") and e.get("setup") not in inflicted:
+                add("warning", "Combos", ref, "setup", f"no skill or item inflicts {e.get('setup')}, so this combo can't happen")
+            key = (e.get("setup"), json.dumps(payoff, sort_keys=True))
+            if key in seen:
+                add("warning", "Combos", ref, "payoff", f"same set-up and payoff as '{seen[key]}' - only the stronger one ever applies")
+            seen.setdefault(key, ref.key)
 
     def _blacksmith(self):
         p, add = self.p, self.r.add

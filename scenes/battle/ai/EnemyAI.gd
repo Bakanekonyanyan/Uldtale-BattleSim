@@ -75,6 +75,13 @@ func _decide() -> BattleAction:
 		if desperate_action:
 			return desperate_action
 	
+	# === COMBO OPPORTUNITY (target has a set-up status we can pay off) ===
+	# Smarter enemies spot it more often (players = enemies: same combos as heroes).
+	if RandomManager.randf() < 0.3 + intelligence * 0.6:
+		var combo_action = _try_combo()
+		if combo_action:
+			return combo_action
+	
 	# === ITEM USAGE (Proactive) ===
 	var item_chance = 0.1 + (current_floor * 0.02) + (momentum_level * 0.05)
 	if RandomManager.randf() < item_chance:
@@ -255,8 +262,8 @@ func _try_use_damage_skill() -> BattleAction:
 	if available_skills.is_empty():
 		return null
 	
-	# Sort by power (descending)
-	available_skills.sort_custom(func(a, b): return a.power > b.power)
+	# Sort by power (descending), counting a combo's bonus against the target
+	available_skills.sort_custom(func(a, b): return _effective_power(a) > _effective_power(b))
 	
 	# Pick best affordable skill
 	for skill in available_skills:
@@ -265,6 +272,31 @@ func _try_use_damage_skill() -> BattleAction:
 			return BattleAction.skill(enemy, skill, [target])
 	
 	return null
+
+## Use a skill (or a basic attack) that triggers a combo on the target, if any.
+func _try_combo() -> BattleAction:
+	var best: Skill = null
+	var best_mult := 1.0
+	for skill_name in enemy.skills:
+		var skill = enemy.get_skill_instance(skill_name)
+		if not skill or enemy.get_skill_cooldown(skill_name) > 0 or not _can_afford_skill(skill):
+			continue
+		if skill.type == Skill.SkillType.DRAIN and skill.drain_source != Skill.DrainTarget.HP:
+			continue
+		var combo = Combos.preview(enemy, skill, target)
+		if not combo.is_empty() and combo.multiplier > best_mult:
+			best = skill
+			best_mult = combo.multiplier
+	if best:
+		print("EnemyAI: Combo with %s" % best.name)
+		return BattleAction.skill(enemy, best, [target])   # same as other damage skills; the engine expands AoE
+	if not Combos.find(target, Combos.hit_from_attack(enemy)).is_empty():
+		return BattleAction.attack(enemy, target)
+	return null
+
+func _effective_power(skill: Skill) -> float:
+	var combo = Combos.preview(enemy, skill, target)
+	return skill.power * (combo.multiplier if not combo.is_empty() else 1.0)
 
 # =============================================
 # HELPER FUNCTIONS

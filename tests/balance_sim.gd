@@ -389,6 +389,26 @@ func player_policy(p: CharacterData, ctx: BattleContext) -> BattleAction:
 				if best == null or s.power > best.power:
 					best = s
 	
+	# Pay off a combo when one is ready (any style: it's just a better hit)
+	var combo_pick: Skill = null
+	var combo_target: CharacterData = null
+	var combo_mult := 1.0
+	for sn in p.skills:
+		var s: Skill = p.get_skill_instance(sn)
+		if p.get_skill_cooldown(sn) > 0: continue
+		var cost_ok = (p.current_sp >= s.sp_cost) if s.ability_type == Skill.AbilityType.PHYSICAL else (p.current_mp >= s.mp_cost)
+		if not cost_ok or (s.type == Skill.SkillType.DRAIN and s.drain_source != Skill.DrainTarget.HP): continue
+		for e in living:
+			var c = Combos.preview(p, s, e)
+			if not c.is_empty() and c.multiplier > combo_mult:
+				combo_pick = s; combo_target = e; combo_mult = c.multiplier
+	if combo_pick:
+		var ctg: Array = living if combo_pick.target == Skill.TargetType.ALL_ENEMIES else [combo_target]
+		return BattleAction.skill(p, combo_pick, ctg)
+	for e in living:
+		if not Combos.find(e, Combos.hit_from_attack(p)).is_empty() and (best == null or best.power < 40):
+			return BattleAction.attack(p, e)
+	
 	if use_setup and buff and fight_young and not p.buff_manager.has_buffs():
 		return BattleAction.skill(p, buff, [p])
 	if use_setup and debuff and fight_young:

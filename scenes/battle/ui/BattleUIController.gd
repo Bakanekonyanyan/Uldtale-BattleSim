@@ -346,6 +346,13 @@ func _create_skill_button(skill: Skill, cooldown: int, can_use: bool) -> HBoxCon
 		var cost_str = " | ".join(cost_parts) if not cost_parts.is_empty() else "Free"
 		btn.text = "%s [Lv %s] (%s)" % [skill.name, level_str, cost_str]
 	
+	# Combo hint: this skill would pay off a set-up status on a current enemy
+	var combo_hint = _combo_hint(skill)
+	if combo_hint != "":
+		btn.text += "  - COMBO: " + combo_hint
+		btn.add_theme_color_override("font_color", Color("e5c34a"))
+		btn.tooltip_text = "Hits a target with a set-up status for bonus damage (see data/combos.json)."
+	
 	btn.disabled = not can_use
 	btn.pressed.connect(func(): _on_skill_selected(skill))
 	
@@ -360,6 +367,14 @@ func _create_skill_button(skill: Skill, cooldown: int, can_use: bool) -> HBoxCon
 	hbox.add_child(info_btn)
 	
 	return hbox
+
+## "Shatter on Goblin" if `skill` triggers a combo on a living enemy now, else "".
+func _combo_hint(skill: Skill) -> String:
+	for e in _get_living_enemies():
+		var c = Combos.preview(player, skill, e)
+		if not c.is_empty():
+			return "%s on %s" % [c.name, e.name]
+	return ""
 
 func _on_skill_menu_cancelled():
 	if skill_menu_panel:

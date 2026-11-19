@@ -30,6 +30,7 @@ func _ready():
 	_locations()
 	_bounties()
 	_damage_types()
+	_combos()
 	print("VALIDATE RESULT: %d errors, %d checks" % [errors, checks])
 	get_tree().quit(1 if errors > 0 else 0)
 
@@ -129,3 +130,16 @@ func _damage_types() -> void:
 	ok(not cfg.is_empty(), "Damage Types", "", "data/damage_types.json didn't load")
 	for wid in cfg.get("weapons", {}):
 		ok(DamageTypes.parse(String(cfg.weapons[wid])) >= 0, "Damage Types", wid, "unknown damage type '%s'" % cfg.weapons[wid])
+
+func _combos() -> void:
+	var combos = Combos.all()
+	ok(not combos.is_empty(), "Combos", "", "data/combos.json didn't load")
+	for id in combos:
+		var c = combos[id]
+		ok(Skill.StatusEffect.has(String(c.get("setup", ""))), "Combos", id, "set-up '%s' is not a StatusEffect" % c.get("setup", ""))
+		var p = c.get("payoff", {})
+		for e in p.get("elements", []):
+			ok(Skill.ElementType.has(String(e)), "Combos", id, "unknown element '%s'" % e)
+		for t in p.get("damage_types", []):
+			ok(DamageTypes.parse(String(t)) >= 0, "Combos", id, "unknown damage type '%s'" % t)
+		ok(float(c.get("multiplier", 0)) >= 1.0, "Combos", id, "multiplier below 1")

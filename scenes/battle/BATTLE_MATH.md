@@ -25,6 +25,7 @@ godot --headless res://tests/balance_sim.tscn -- mylabel
 | Magical defense | `spell_ward + armor × 0.25` |
 | Armor penetration | physical hits use `defense × (1 − armor_penetration)`; from gear (e.g. Greatsword 20%), capped at 75% |
 | Damage type (physical) | Slash / Pierce / Blunt from the skill, else the weapon; unarmed hits are untyped. Hit × `1 + race + armor`, clamped 0.5–1.75. See below |
+| Combo | target has the set-up status and the hit matches the payoff: hit × combo multiplier, status consumed. See below |
 | Crit | `crit_rate` chance for ×1.5–2.0 |
 | Heal | `skill_power + spell_power × 0.5` |
 | Buff / debuff | `skill_power` × 1.5% of the target's **base** attribute (Roar 40 = −60% Agility), lasting the full listed number of the target's turns |
@@ -227,7 +228,7 @@ changes), so treat these as a band: **16–31% without potions, 47–70% with**.
 
 Tuning: `data/damage_types.json`. Code: `scripts/resources/DamageTypes.gd`. Magic uses elements instead.
 
-- **What a hit deals:** the skill's `damage_type` (e.g. Backstab = Pierce), else the main-hand weapon's type. Unarmed hits are untyped (neutral), so a fresh hero with no weapon is unaffected.
+- **What a hit deals:** the skill's `damage_type` (e.g. Backstab = Pierce), else the main-hand weapon's type. Unarmed hits are untyped (neutral), so a fresh hero with no weapon is unaffected - except classes listed in `unarmed_by_class` (Monk fists are Blunt).
 - **What a defender takes:** `1 + race affinity + armor affinity`, clamped to 0.5-1.75. Positive = weak, negative = resists.
 - **Armor:** each equipped armor piece adds its type's value / 5, so a full set gives the full value.
 
@@ -245,3 +246,33 @@ Tuning: `data/damage_types.json`. Code: `scripts/resources/DamageTypes.gd`. Magi
 | Mace, Great Hammer | Blunt |
 
 Enemy races: Troll resists Blunt (-20%) and is weak to Slash (+20%); Fairy resists Pierce (-20%) and is weak to Blunt (+25%); Goblin and Orc are weak to Pierce (+15%), Orc also resists Slash (-10%). Heroes and enemies use the same tables.
+
+## Combos (set-up / payoff)
+
+Tuning: `data/combos.json` (also the Combos tab in the content manager). Code: `scripts/resources/Combos.gd`.
+
+- **Set-up:** the target has a status (applied by an earlier skill, item or ally).
+- **Payoff:** a hit matching the combo: an element, a physical damage type (from the skill or the weapon), any physical/magical hit, or a named skill. Basic attacks count.
+- **Effect:** the hit is multiplied, and the set-up status is removed. Only the best combo applies per hit, and a hit's own new statuses don't count for itself.
+- **Who uses them:** heroes and enemies alike. Enemy AI looks for combos (smarter enemies more often), and the battle UI marks skills that would trigger one.
+
+| Combo | Set-up | Payoff | x |
+|---|---|---|---|
+| Shatter | Freeze | Blunt or Earth | 1.5 |
+| Thermal Shock | Freeze | Fire | 1.4 |
+| Overload | Shock | Lightning | 1.3 |
+| Open Wound | Bleed | Slash or Pierce | 1.35 |
+| Blight | Poison | Dark | 1.4 |
+| Judgement | Blind | Holy | 1.35 |
+| Sucker Punch | Confused | any physical hit | 1.25 |
+
+Every class can trigger at least one with its own skills, e.g.:
+- Monk: Ice Splitter, then Fists of Thunder (Shatter).
+- Necromancer: Curse of Weakness, then Dark Bolt (Blight).
+- Myrmidon: Poison Blade, then Backstab (Open Wound).
+
+Enemies use them too, e.g.:
+- Mage: Frost Nova, then Fireball (Thermal Shock).
+- Brute: Stomp confuses, then Smash (Sucker Punch).
+
+The advanced form (sequence chains) comes after more skills and talents exist.

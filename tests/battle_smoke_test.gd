@@ -141,6 +141,67 @@ func _unit_checks() -> void:
 
 # ------------------------------------------------------------------ phase 0 (locations, drops, carry limit, saves)
 
+## Set-up / payoff combos (data/combos.json, scripts/resources/Combos.gd)
+func _combo_checks() -> void:
+	check(Combos.all().size() >= 7, "combos load (%d)" % Combos.all().size())
+	var spear_data = {"name": "T", "description": "", "ability_type": "MAGICAL", "type": "DAMAGE", "target": "ENEMY",
+		"element": ["FIRE", "ICE"], "power": 10, "cooldown": 0, "duration": 0}
+	var spear = Skill.create_from_dict(spear_data)
+	check(spear.elements.size() == 2, "a skill's element list is read (was ignored)")
+	
+	# deterministic attacker/target: always hit, never crit, never dodge
+	var make_pair = func():
+		var a = make_player(); var d = make_player()
+		a.name = "Striker"; d.name = "Target"
+		for c in [a, d]:
+			c.equipment["main_hand"] = null
+			c.calculate_secondary_attributes()
+		a.accuracy = 10.0; a.critical_hit_rate = 0.0; d.dodge = 0.0
+		d.vitality += 300; d.calculate_secondary_attributes(); d.current_hp = d.max_hp; d.dodge = 0.0
+		return [a, d]
+	var smash = Skill.create_from_dict({"name": "Smash Test", "description": "", "ability_type": "PHYSICAL", "type": "DAMAGE",
+		"target": "ENEMY", "damage_type": "BLUNT", "power": 30, "cooldown": 0, "duration": 0})
+	var pair = make_pair.call()
+	var plain = smash.use(pair[0], [pair[1]]).damage
+	pair = make_pair.call()
+	pair[1].apply_status_effect(Skill.StatusEffect.FREEZE, 3)
+	pair[0].accuracy = 10.0; pair[0].critical_hit_rate = 0.0; pair[1].dodge = 0.0
+	var res = smash.use(pair[0], [pair[1]])
+	check(abs(float(res.damage) / plain - 1.5) < 0.05, "Shatter: Blunt hit on a frozen target x1.5 (%d vs %d)" % [res.damage, plain])
+	check("Shatter" in res.message, "combo shows in the combat log")
+	check(not pair[1].status_manager.has_effect(Skill.StatusEffect.FREEZE), "the combo consumes Freeze")
+	
+	pair = make_pair.call()
+	pair[1].apply_status_effect(Skill.StatusEffect.BLEED, 3)
+	var fireball = Skill.create_from_dict({"name": "Fire Test", "description": "", "ability_type": "MAGICAL", "type": "DAMAGE",
+		"target": "ENEMY", "elements": ["FIRE"], "power": 30, "cooldown": 0, "duration": 0})
+	check(Combos.preview(pair[0], fireball, pair[1]).is_empty(), "no combo when the payoff doesn't match (Fire on Bleed)")
+	check(Combos.preview(pair[0], smash, pair[1]).is_empty(), "Blunt is not an Open Wound payoff")
+	var dagger = Equipment.new(ItemManager.get_equipment_template("dagger").duplicate(true))
+	pair[0].equipment["main_hand"] = dagger
+	check(Combos.find(pair[1], Combos.hit_from_attack(pair[0])).get("name", "") == "Open Wound", "basic attack with a dagger pays off Bleed")
+	
+	# basic attack through the combat engine: Sucker Punch on a confused target
+	pair = make_pair.call()
+	pair[1].apply_status_effect(Skill.StatusEffect.CONFUSED, 3)
+	pair[0].accuracy = 10.0; pair[0].critical_hit_rate = 0.0; pair[1].dodge = 0.0
+	var engine = CombatEngine.new()
+	var r = engine._execute_attack(BattleAction.attack(pair[0], pair[1]))
+	check("Sucker Punch" in r.message and not pair[1].status_manager.has_effect(Skill.StatusEffect.CONFUSED), "basic attack triggers and consumes Sucker Punch")
+	
+	# enemy AI spots the combo (players = enemies)
+	var shaman = CharacterData.new()
+	shaman.name = "Shaman"
+	shaman.add_skills(["Lightning Bolt"])
+	shaman.current_mp = 999; shaman.current_sp = 999
+	var hero = make_player()
+	hero.apply_status_effect(Skill.StatusEffect.SHOCK, 3)
+	var ai = EnemyAI.new()
+	ai.initialize(shaman, [hero], 1)
+	ai.target = hero
+	var act = ai._try_combo()
+	check(act != null and act.skill_data != null and act.skill_data.name == "Lightning Bolt", "enemy AI uses Lightning Bolt on a shocked hero (Overload)")
+
 func _phase0_checks() -> void:
 	# Gear "spell_power" bonuses (cloth armor) actually raise spell power
 	var caster = make_player()
@@ -157,6 +218,8 @@ func _phase0_checks() -> void:
 	caster.calculate_secondary_attributes()
 	check(is_equal_approx(caster.spell_power, sp_before), "gear spell_power bonus removed on unequip")
 
+	_combo_checks()
+	
 	# Class-biased loot rolls (Breather drops pass the player's class)
 	var biased_ok := true
 	for i in 40:
@@ -186,6 +249,8 @@ func _phase0_checks() -> void:
 	for slot in DamageTypes.ARMOR_SLOTS: troll.equipment[slot] = null
 	check(is_equal_approx(DamageTypes.multiplier(troll, DamageTypes.Type.SLASH), 1.2), "Troll takes +20% Slash")
 	check(is_equal_approx(DamageTypes.multiplier(troll, DamageTypes.Type.BLUNT), 0.8), "Troll resists Blunt")
+	var monk = CharacterFactory.create_character("M", "Hume", "Monk", true); monk.equipment["main_hand"] = null
+	check(DamageTypes.attack_type(monk) == DamageTypes.Type.BLUNT, "Monk fists are Blunt (unarmed_by_class)")
 	var brawler = make_player(); brawler.equipment["main_hand"] = null
 	check(DamageTypes.attack_type(brawler) == DamageTypes.FROM_WEAPON and DamageTypes.multiplier(troll, DamageTypes.attack_type(brawler)) == 1.0, "unarmed hits are untyped (neutral)")
 	check(DamageTypes.attack_type(brawler, DamageTypes.Type.PIERCE) == DamageTypes.Type.PIERCE, "skill damage_type overrides the weapon")

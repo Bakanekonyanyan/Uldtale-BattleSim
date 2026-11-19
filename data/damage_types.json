@@ -2,6 +2,7 @@
 	"_doc": "Physical damage types. Positive = takes MORE damage (weak), negative = takes LESS (resists). A hit's multiplier = 1 + race + armor, clamped to [min_multiplier, max_multiplier]. Armor counts each equipped armor piece's type, averaged over the 5 armor slots (so a full plate set gives the full plate value). Magic uses elements instead. unarmed: type for hits with no weapon (\"\" = untyped/neutral; skills can still set their own, e.g. Monk fists are Blunt).",
 	"types": ["SLASH", "PIERCE", "BLUNT"],
 	"unarmed": "",
+	"unarmed_by_class": { "Monk": "BLUNT" },
 	"min_multiplier": 0.5,
 	"max_multiplier": 1.75,
 	"weapons": {

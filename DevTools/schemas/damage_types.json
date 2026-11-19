@@ -18,6 +18,20 @@
      "help": "Type of hits with no weapon (empty = untyped)."
     },
     {
+     "name": "unarmed_by_class",
+     "type": "map",
+     "key": {
+      "type": "ref",
+      "source": "classes"
+     },
+     "value": {
+      "type": "enum",
+      "source": "gd:DamageType"
+     },
+     "optional": true,
+     "help": "Classes whose bare-handed hits have a type (Monk = Blunt)."
+    },
+    {
      "name": "min_multiplier",
      "type": "float",
      "min": 0,

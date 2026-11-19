@@ -90,7 +90,9 @@ func _execute_attack(action: BattleAction) -> ActionResult:
 	# All damage math lives in BattleFormulas
 	var crit_mult = BattleFormulas.roll_crit(attacker)
 	var is_crit = crit_mult > 1.0
-	var damage = BattleFormulas.finalize(BattleFormulas.hit_damage(attacker, target, true) * crit_mult)
+	var combo = Combos.find(target, Combos.hit_from_attack(attacker))
+	var combo_mult = combo.multiplier if not combo.is_empty() else 1.0
+	var damage = BattleFormulas.finalize(BattleFormulas.hit_damage(attacker, target, true) * crit_mult * combo_mult)
 	
 	print("[COMBAT] Attack: %s -> %s  offense=%.1f def=%.1f final=%d%s" % [
 		attacker.name, target.name, BattleFormulas.physical_offense(attacker),
@@ -101,6 +103,7 @@ func _execute_attack(action: BattleAction) -> ActionResult:
 	var reflection_info = _track_reflection_damage(attacker, target, damage)
 	
 	target.take_damage(damage, attacker)
+	Combos.consume(target, combo)
 	
 	var status_msg = ""
 	if attacker.equipment["main_hand"] and attacker.equipment["main_hand"] is Equipment:
@@ -120,6 +123,8 @@ func _execute_attack(action: BattleAction) -> ActionResult:
 	var dt = DamageTypes.attack_type(attacker)
 	result.message += DamageTypes.log_tag(DamageTypes.multiplier(target, dt), dt)
 	result.message += " and restores %d MP, %d SP%s" % [mp_restore, sp_restore, status_msg]
+	if not combo.is_empty():
+		result.message += "\n  " + Combos.log_line(target, combo)
 	
 	# Add reflection info to result
 	if reflection_info.reflected:

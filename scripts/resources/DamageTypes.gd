@@ -43,6 +43,10 @@ static func attack_type(attacker: CharacterData, override: int = FROM_WEAPON) ->
 	var weapon = attacker.equipment.get("main_hand") if attacker else null
 	if weapon is Equipment:
 		return weapon_type(weapon)
+	# Unarmed: untyped unless the class fights bare-handed on purpose (Monk = Blunt)
+	var by_class: Dictionary = cfg().get("unarmed_by_class", {})
+	if attacker and by_class.has(attacker.character_class):
+		return parse(String(by_class[attacker.character_class]))
 	return parse(String(cfg().get("unarmed", "")))
 
 static func weapon_type(weapon: Equipment) -> int:

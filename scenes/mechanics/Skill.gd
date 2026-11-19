@@ -99,10 +99,13 @@ static func create_from_dict(data: Dictionary) -> Skill:
 			if elem_str != "" and elem_str != "NONE" and ElementType.has(elem_str.to_upper()):
 				skill.elements.append(ElementType[elem_str.to_upper()])
 	elif data.has("element"):
-		var elem_data = data.element
-		if elem_data is String and elem_data != "" and elem_data != "NONE":
-			if ElementType.has(elem_data.to_upper()):
-				skill.elements.append(ElementType[elem_data.to_upper()])
+		# "element" may be one string or (e.g. Blazing Ice Spear) a list - both
+		# count. Lists were silently ignored before, leaving such skills elementless.
+		var elem_list = data.element if data.element is Array else [data.element]
+		for elem_data in elem_list:
+			if elem_data is String and elem_data != "" and elem_data != "NONE":
+				if ElementType.has(elem_data.to_upper()):
+					skill.elements.append(ElementType[elem_data.to_upper()])
 	
 	# Parse attribute_targets
 	skill.attribute_targets = []
@@ -278,6 +281,10 @@ func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 		
 		# Basic-attack math boosted by skill power (see BattleFormulas)
 		var damage = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, power, damage_type)
+		# Set-up / payoff combo (data/combos.json): checked before this hit's own statuses land
+		var combo = Combos.find(t, Combos.hit_from_skill(user, self))
+		if not combo.is_empty():
+			damage *= combo.multiplier
 		var type_tag = ""
 		if ability_type == AbilityType.PHYSICAL:
 			var dt = DamageTypes.attack_type(user, damage_type)
@@ -305,6 +312,7 @@ func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 		# Apply damage
 		t.take_damage(damage, user)
 		total_damage += damage
+		Combos.consume(t, combo)
 		
 		# Status riders on damage skills only proc some of the time
 		for effect in status_effects:
@@ -318,6 +326,7 @@ func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 			"damage": int(damage),
 			"crit": crit_check,
 			"type_tag": type_tag,
+			"combo_msg": Combos.log_line(t, combo) if not combo.is_empty() else "",
 			"reflected": reflection_info.reflected,
 			"reflection_msg": ("[color=cyan]%s's barrier reflects %d damage back![/color]" % [t.name, reflection_info.amount]) if reflection_info.reflected else ""
 		})
@@ -339,6 +348,11 @@ func deal_damage(user: CharacterData, targets: Array) -> Dictionary:
 	# Show hits first
 	if hit_count > 0:
 		result_msg = "%s dealt %d damage to %d target(s)" % [name, total_damage, hit_count]
+		
+		# Combos
+		for res in target_results:
+			if res.get("combo_msg", "") != "":
+				result_msg += "\n  " + res.combo_msg
 		
 		# Weak spots / resisted damage types
 		for res in target_results:
@@ -437,11 +451,18 @@ func apply_buff(_user: CharacterData, targets: Array) -> Dictionary:
 func apply_debuff(user: CharacterData, targets: Array) -> Dictionary:
 	# Debuffs also land a weaker hit so casting one is never a wasted turn
 	var total_damage := 0
+	var combo_lines: Array = []
 	for t in targets:
 		if t.is_alive() and BattleFormulas.DEBUFF_HIT_SCALE > 0.0:
-			var hit = BattleFormulas.finalize(BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, 0.0, damage_type) * BattleFormulas.DEBUFF_HIT_SCALE)
+			var raw = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, 0.0, damage_type) * BattleFormulas.DEBUFF_HIT_SCALE
+			var combo = Combos.find(t, Combos.hit_from_skill(user, self))
+			if not combo.is_empty():
+				raw *= combo.multiplier
+				combo_lines.append(Combos.log_line(t, combo))
+			var hit = BattleFormulas.finalize(raw)
 			t.take_damage(hit, user)
 			total_damage += hit
+			Combos.consume(t, combo)
 		
 		for effect in status_effects:
 			if effect != StatusEffect.NONE:
@@ -480,6 +501,8 @@ func apply_debuff(user: CharacterData, targets: Array) -> Dictionary:
 	]
 	if total_damage > 0:
 		msg = "%s dealt %d damage and %s" % [name, total_damage, msg.trim_prefix(name + " ")]
+	for line in combo_lines:
+		msg += "\n  " + line
 	return {"message": msg, "damage": total_damage, "healing": 0}
 
 func restore(user: CharacterData, targets: Array) -> Dictionary:
@@ -524,15 +547,22 @@ func inflict_status(_user: CharacterData, targets: Array) -> Dictionary:
 func drain(user: CharacterData, targets: Array) -> Dictionary:
 	var total_drained = 0
 	var total_restored = 0
+	var drain_combo_lines: Array = []
 	
 	for t in targets:
 		var drain_amount = 0
 		
 		match drain_source:
 			DrainTarget.HP:
-				drain_amount = BattleFormulas.finalize(BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, power, damage_type))
+				var raw_drain = BattleFormulas.hit_damage(user, t, ability_type == AbilityType.PHYSICAL, power, damage_type)
+				var combo = Combos.find(t, Combos.hit_from_skill(user, self))
+				if not combo.is_empty():
+					raw_drain *= combo.multiplier
+					drain_combo_lines.append(Combos.log_line(t, combo))
+				drain_amount = BattleFormulas.finalize(raw_drain)
 				drain_amount = min(drain_amount, t.current_hp)
 				t.take_damage(drain_amount, user)
+				Combos.consume(t, combo)
 			
 			DrainTarget.MP:
 				drain_amount = min(power, t.current_mp)
@@ -587,6 +617,8 @@ func drain(user: CharacterData, targets: Array) -> Dictionary:
 			user.name
 		]
 	
+	for line in drain_combo_lines:
+		result += "\n  " + line
 	return {
 		"message": result,
 		"damage": total_drained if drain_source == DrainTarget.HP else 0,

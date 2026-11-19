@@ -16,7 +16,7 @@ SOURCES = (
     "items", "materials", "consumables", "weapons", "armors", "equipment",
     "skills", "classes", "playable_classes", "enemy_classes", "races", "playable_races",
     "enemy_races", "locations", "status_effects", "rarities", "recipes", "armor_types",
-    "item_stats",
+    "item_stats", "combos",
 )
 
 # Lower-case stat keys equipment may put in attribute_target / effects
@@ -314,6 +314,8 @@ class Project:
             return list(_entries(d.get("Recipes", {}).get("recipes", {})))
         if name == "armor_types":
             return list(_entries(d.get("Armors", {})))
+        if name == "combos":
+            return list(_entries(d.get("Combos", {}).get("combos", {})))
         if name == "item_stats":
             return list(ITEM_STATS)
         raise KeyError(f"unknown source '{name}'")
