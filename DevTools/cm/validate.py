@@ -249,6 +249,7 @@ class Validator:
         self._bounties()
         self._archetypes()
         self._ranks()
+        self._adventurers()
         self._orphans()
 
     def _combos(self):
@@ -472,6 +473,31 @@ class Validator:
             if t and prev_cap > 0 and int(t.get("min_floor", 1)) > prev_cap:
                 add("error", "Ranks", ref, "trial", f"trial needs floor {t.get('min_floor')} but the rank below is capped at {prev_cap}")
             prev_points, prev_cap = int(r.get("points", 0)), cap
+
+    def _adventurers(self):
+        p, add = self.p, self.r.add
+        tab = "Adventurers"
+        if tab not in p.data:
+            return
+        traits = p.data[tab].get("traits", {})
+        for ref in self.refs(tab, 4):
+            for x in p.get(ref).get("exclusive", []) or []:
+                if x not in traits:
+                    add("error", tab, ref, "exclusive", f"unknown trait '{x}'")
+        races = set(p.source("playable_races"))
+        names = p.data[tab].get("names", {})
+        for r in races:
+            if r not in names:
+                add("warning", tab, None, "names", f"no name table for playable race '{r}' (it won't appear in the guild)")
+        for ref in self.refs(tab, 5):
+            if ref.key not in races:
+                add("error", tab, ref, "", f"'{ref.key}' is not a playable race")
+            n = p.get(ref)
+            if not n.get("start") or not n.get("end"):
+                add("error", tab, ref, "", "needs start and end syllables")
+        st = p.data[tab].get("settings", {})
+        if int(st.get("roster_min", 0)) > int(st.get("roster_max", 0)):
+            add("error", tab, None, "roster_min", "roster_min is above roster_max")
 
     def _orphans(self):
         p, add = self.p, self.r.add

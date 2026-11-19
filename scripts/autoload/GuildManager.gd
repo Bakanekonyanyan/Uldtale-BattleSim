@@ -29,7 +29,7 @@ func _ready():
 	GameEvents.battle_won.connect(_on_battle_won)
 	GameEvents.expedition_started.connect(func(_loc, _floor): _streak = 0)
 	GameEvents.day_passed.connect(_on_day_passed)
-	GameEvents.days_advanced.connect(func(player, _from, _to): refresh_board(player))
+	GameEvents.days_advanced.connect(_on_days_advanced)
 	MomentumSystem.momentum_changed.connect(_on_momentum_changed)
 
 ## A Breather resets momentum to 0, which ends the win streak.
@@ -113,6 +113,7 @@ func refresh_board(player: CharacterData) -> void:
 			board.append(b)
 			used[tid] = true
 	state(player).board = board
+	state(player)["board_day"] = WorldClock.day(player)
 
 func get_reroll_fee(player: CharacterData) -> int:
 	return int(settings.get("reroll_fee_per_floor", 50)) * max(1, player.max_floor_cleared)
@@ -240,7 +241,14 @@ func _on_battle_won(_location_id: String, _floor_num: int, _wave: int, _is_boss:
 		if b.type == "WIN_STREAK" and not is_complete(player, b) and _streak > int(b.progress):
 			_advance(player, b, _streak)
 
-## Deadlines tick down per day (WorldClock); the board refreshes when time passes.
+## The board refreshes every board_refresh_days (or when empty). In between,
+## NPC adventurers may take bounties off it (AdventurerManager).
+func _on_days_advanced(player: CharacterData, _from: int, to_day: int) -> void:
+	var s = state(player)
+	if s.board.is_empty() or to_day - int(s.get("board_day", 0)) >= int(settings.get("board_refresh_days", 3)):
+		refresh_board(player)
+
+## Deadlines tick down per day (WorldClock).
 func _on_day_passed(player: CharacterData, _day: int) -> void:
 	if player == null:
 		return

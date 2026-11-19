@@ -60,6 +60,14 @@ func _ready():
 	talents_button.size = Vector2(180, 60)
 	talents_button.pressed.connect(func(): SceneManager.change_to_talents(current_character))
 	$UI.add_child(talents_button)
+	# Tavern: the Guild's adventurers (AdventurerManager)
+	var tavern_button := Button.new()
+	tavern_button.name = "TavernButton"
+	tavern_button.text = "Tavern"
+	tavern_button.position = Vector2(40, 352)
+	tavern_button.size = Vector2(180, 60)
+	tavern_button.pressed.connect(func(): SceneManager.change_to_tavern(current_character))
+	$UI.add_child(tavern_button)
 	# Inn: rest to pass days (WorldClock)
 	var inn_button := Button.new()
 	inn_button.name = "InnButton"
@@ -114,7 +122,7 @@ func _refresh_news() -> void:
 	if news.is_empty():
 		t += "[i][color=gray]Nothing of note yet.[/color][/i]"
 	for n in news:
-		var col = {"event": "#e9c46a", "guild": "#e07a5f", "rank": "#90e0ef"}.get(String(n.get("kind", "")), "#d8d0c0")
+		var col = {"event": "#e9c46a", "guild": "#e07a5f", "rank": "#90e0ef", "rival": "#f4a261", "death": "#c77dff", "adventurer": "#b8c0ff"}.get(String(n.get("kind", "")), "#d8d0c0")
 		t += "[color=gray]Day %d[/color]  [color=%s]%s[/color]\n" % [int(n.day), col, n.text]
 	news_text.text = t
 
@@ -145,7 +153,7 @@ func update_ui():
 		if current_character:
 			name_label.text = "Character: " + current_character.name
 			if chrome:
-				chrome.set_info("%s  -  Level %d %s %s  -  %s-Rank    %s" % [current_character.name, current_character.level, current_character.race, current_character.character_class, RankManager.get_rank(current_character), ScreenChrome.money_text(current_character)])
+				chrome.set_info("%s  -  Lv %d %s %s  -  %s-Rank    %s" % [current_character.name, current_character.level, current_character.race, current_character.character_class, RankManager.get_rank(current_character), ScreenChrome.money_text(current_character)])
 		else:
 			name_label.text = "No character loaded"
 	else:

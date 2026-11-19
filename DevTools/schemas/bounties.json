@@ -49,6 +49,12 @@
      "type": "ref_list",
      "source": "enemy_classes",
      "help": "Enemy classes bounties can target."
+    },
+    {
+     "name": "board_refresh_days",
+     "type": "int",
+     "min": 1,
+     "help": "The board refreshes every this many days (adventurers may take bounties in between)."
     }
    ]
   },

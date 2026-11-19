@@ -339,6 +339,90 @@ func _world_checks() -> void:
 	check(int(old.town_state.guild.active[0].deadline) == 6 and int(old.town_state.injuries[0].remaining) == 4, "old saves: expedition timers become days (x2)")
 	DungeonStateManager.active_player = prev_active
 
+## NPC adventurers (data/adventurers.json, AdventurerManager.gd, AutoBattler.gd)
+func _adventurer_checks() -> void:
+	var p = make_player()
+	p.name = "ZZ_SmokeTest_Npc"
+	var prev_active = DungeonStateManager.active_player
+	DungeonStateManager.active_player = p
+	var roster = AdventurerManager.active(p)
+	var names := {}
+	var traits_ok := true
+	for n in roster:
+		names[n.name] = true
+		for a in n.traits:
+			for b in n.traits:
+				if a != b and b in AdventurerManager.trait_data(a).get("exclusive", []):
+					traits_ok = false
+		if n.traits.size() < 2 or abs(int(n.honor)) > 100 or abs(int(n.heart)) > 100:
+			traits_ok = false
+	check(roster.size() >= 15 and roster.size() <= 17 and names.size() == roster.size(), "a fresh guild of %d uniquely named adventurers" % roster.size())
+	check(traits_ok, "every adventurer has 2-3 compatible traits and Honor/Heart in range")
+	check(roster.filter(func(n): return "Rival" in AdventurerManager.tags(n)).size() == 2, "two rivals at the start")
+	# social
+	var npc: Dictionary = roster[0]
+	npc.status = "idle"
+	var r0 = int(npc.rapport)
+	var c = AdventurerManager.chat(p, int(npc.id))
+	check(c.ok and int(npc.rapport) > r0 and npc.known_traits.size() == 1, "chatting raises rapport and reveals a trait (%s)" % c.reason)
+	check(not AdventurerManager.chat(p, int(npc.id)).ok, "one chat per adventurer per day")
+	p.currency.copper = 1000
+	var r1 = int(npc.rapport)
+	check(AdventurerManager.drink(p, int(npc.id)).ok and p.currency.copper == 1000 - AdventurerManager.drink_price(p) and int(npc.rapport) > r1, "buying a drink costs money and raises rapport")
+	p.add_to_pack(ItemManager.get_item("health_potion"), 2)
+	var key = ""
+	for k in p.inventory.items:
+		if p.inventory.items[k].item.id == "health_potion":
+			key = k
+	var r2 = int(npc.rapport)
+	check(AdventurerManager.gift(p, int(npc.id), key).ok and p.inventory.get_quantity("health_potion") == 1 and int(npc.rapport) > r2, "a gift leaves your pack and raises rapport")
+	var away: Dictionary = roster[1]
+	away.status = "job"
+	away.job = {"kind": "job", "location": "the_dungeon", "floor": 1, "ends": 99}
+	check(not AdventurerManager.chat(p, int(away.id)).ok, "you can't chat with someone out on a job")
+	# a real battle (big moment) leaves the global state as it was
+	EnemyFactory.set_location("orc_plains")
+	var hero = AutoBattler.build_hero({"name": "Test", "race": "Hume", "cls": "Paladin", "level": 8, "gear_floor": 4, "branch": 0})
+	check(hero.level == 8 and hero.equipment["main_hand"] != null and hero.talents.spent_points() > 0, "NPC heroes are built with level, gear and talents")
+	var fr = AutoBattler.fight_floor(hero, "troll_caves", 2, true)
+	check(fr.has("won") and int(fr.turns) > 0 and EnemyFactory.current_location == "orc_plains", "a real boss battle runs headless (won=%s, %d turns) and restores the location" % [fr.won, int(fr.turns)])
+	EnemyFactory.set_location(LocationManager.DEFAULT_LOCATION)
+	# fates
+	var saved_f = AdventurerManager.cfg.fates.duplicate()
+	AdventurerManager.cfg.fates.death_chance = 1.0
+	var doomed: Dictionary = roster[2]
+	AdventurerManager._fate(p, doomed, WorldClock.day(p), false, "The Dungeon", 1)
+	check(doomed.status == "dead" and not AdventurerManager.is_active(doomed), "a fatal failure kills the adventurer")
+	AdventurerManager.cfg.fates.death_chance = 0.0
+	AdventurerManager.cfg.fates.retire_chance = 0.0
+	var hurt: Dictionary = roster[3]
+	AdventurerManager._fate(p, hurt, WorldClock.day(p), false, "The Dungeon", 1)
+	check(hurt.status == "injured" and int(hurt.injured_until) > WorldClock.day(p), "otherwise they come back injured")
+	AdventurerManager.cfg.fates = saved_f
+	# competition: never takes the last bounty
+	GuildManager.refresh_board(p)
+	var saved_j = AdventurerManager.cfg.jobs.duplicate()
+	AdventurerManager.cfg.jobs.take_chance = 1.0
+	AdventurerManager.cfg.jobs.compete_chance = 100.0
+	AdventurerManager.cfg.jobs.trial_chance = 0.0
+	for n in AdventurerManager.active(p):
+		if n.status == "idle":
+			AdventurerManager._maybe_start(p, n, WorldClock.day(p))
+	check(GuildManager.state(p).board.size() == 1, "adventurers take bounties off your board but leave the last one")
+	AdventurerManager.cfg.jobs = saved_j
+	# days pass: jobs resolve, the roster stays in range
+	WorldClock.advance(p, 20, "test")
+	var n_active = AdventurerManager.active(p).size()
+	var did = AdventurerManager.all_adventurers(p).reduce(func(acc, n): return acc + int(n.record.jobs), 0)
+	check(did > 0 and n_active >= 14 and n_active <= 20, "20 days later: %d jobs done, %d adventurers active" % [did, n_active])
+	# your promotion makes rivals jealous
+	var rival = AdventurerManager.active(p).filter(func(n): return n.get("rival", false) and AdventurerManager.has_trait_flag(n, "rival"))
+	if not rival.is_empty():
+		var rv0 = int(rival[0].rivalry)
+		RankManager.promote(p, "B")
+		check(int(rival[0].rivalry) > rv0 or RankManager.rank_index(String(rival[0].rank)) > RankManager.rank_index("B"), "your promotion deepens a rivalry")
+	DungeonStateManager.active_player = prev_active
+
 ## Talent trees (data/talents.json, TalentManager.gd)
 func _talent_checks() -> void:
 	# skills charge every cost they list
@@ -600,6 +684,7 @@ func _phase0_checks() -> void:
 	_archetype_checks()
 	_rank_checks()
 	_world_checks()
+	_adventurer_checks()
 	
 	# Class-biased loot rolls (Breather drops pass the player's class)
 	var biased_ok := true
@@ -1130,7 +1215,7 @@ func _guild_checks() -> void:
 		GameEvents.expedition_ended.emit("the_dungeon", true)
 	check(not GuildManager.get_active(p).has(late) and GuildManager.get_demerits(p) == dem1 + 1, "missing the deadline (3 one-day expeditions) fails the bounty with a demerit")
 	check(GuildManager.get_active(p).has(boss) and GuildManager.get_active(p).has(depth), "finished bounties don't expire before turn-in")
-	check(GuildManager.state(p).board.size() == 3, "the board refreshes after an expedition")
+	check(GuildManager.state(p).board.size() == 3, "the board refreshes after 3 days")
 	
 	var fee_r = GuildManager.get_reroll_fee(p)
 	var c0 = p.currency.copper

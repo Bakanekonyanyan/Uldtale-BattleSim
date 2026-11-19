@@ -44,6 +44,7 @@ GuildManager="*res://scripts/autoload/GuildManager.gd"
 DefeatManager="*res://scripts/autoload/DefeatManager.gd"
 RankManager="*res://scripts/autoload/RankManager.gd"
 WorldClock="*res://scripts/autoload/WorldClock.gd"
+AdventurerManager="*res://scripts/autoload/AdventurerManager.gd"
 
 [display]
 

@@ -7,7 +7,8 @@
 		"abandon_fee_fraction": 0.25,
 		"reroll_fee_per_floor": 50,
 		"classes": ["Minion", "Brute", "Shaman", "Mage", "Guard", "Hexer"],
-		"deadline_days": 6
+		"deadline_days": 6,
+		"board_refresh_days": 3
 	},
 	"templates": {
 		"hunt_class": {

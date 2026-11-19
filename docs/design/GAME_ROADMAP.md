@@ -166,6 +166,60 @@ Data: `data/ranks.json` (Content Manager tab **Ranks**). Code: `scripts/autoload
 - **Recruiting:** possible once rapport and rank are high enough. Recruits become party members (needs B2), with their own talents and loadout, and the AI plays them.
 - **Saboteurs:** low-rapport adventurers with *greedy* or *ambitious* traits get sabotage events. Some can become rivals, then (after a story beat) friends.
 
+### What was built (NPC adventurers)
+
+**Choices made:**
+- The roster is **fully generated** per new game.
+- Personality is **traits + two hidden axes** (Honor, Heart).
+- Interaction is **social plus competition**.
+- **Real battles for the big moments.**
+
+Data: `data/adventurers.json` (Content Manager tab **Adventurers**). Code:
+- `scripts/autoload/AdventurerManager.gd`
+- `scripts/resources/AutoBattler.gd` (headless battles with the real engine)
+- `scenes/town/TavernScene.gd`
+
+State: `town_state["adventurers"]`.
+
+**Roster:**
+- 15–17 adventurers at the start: any playable race (names built from per-race syllables and family names or epithets), any of the 12 classes, levels 1–8, and a rank to match.
+- **Two rivals** start near your level with Ambitious or Boastful.
+- Newcomers join to keep 14–20 active. The fallen and retired stay in the Tavern's "Fallen & retired" tab.
+
+**Personality:**
+- 2–3 of 15 traits: Reckless, Cautious, Ambitious, Greedy, Loyal, Honorable, Cowardly, Kind, Cruel, Lazy, Cheerful, Aloof, Devout, Scholarly, Boastful. Some exclude each other.
+- Traits shift the hidden **Honor** and **Heart** axes. Once known, these show as e.g. "Honorable and kind" or "Unscrupulous and ruthless".
+- You discover traits by chatting; their nature shows after 3 chats or once they're a friend.
+
+**Daily simulation** (on `GameEvents.day_passed`):
+- Idle adventurers take jobs about 45% of days, adjusted by traits.
+- **Everyday jobs:** an abstract roll on level, gear and job floor vs traits (about 85% success).
+- **Boss hunts** (12%) and **promotion trials** are **real battles**: `AutoBattler.build_hero` builds the NPC (class, level, attributes, talents, class gear), then fights the floor boss through CombatEngine and EnemyAI.
+- Trials are only attempted at level ≥ 1.6 × the trial floor. They succeed about 40–60% of the time.
+- **Fates on failure** (trait-weighted):
+  - Death: 3%, or 6% after a real battle; Reckless ×2, Cautious ×0.4.
+  - Retirement: 3%, or 5% after a real battle; Cowardly ×2.5.
+  - Otherwise injured for 3–8 days.
+- Over 90 simulated days: about 2–3 deaths, 0–6 retirements, and the guild climbs mostly to E and D.
+
+**Competition:**
+- Ambitious, Greedy and Boastful adventurers may take a bounty off your board when they leave on a job, but never the last one.
+- The board now refreshes every 3 days, so what they take is really gone.
+
+**Rivals:**
+- Rivalry grows when they take your bounties or you get promoted.
+- News when a rival is promoted, especially when they move ahead of you.
+
+**Tavern:** roster sorted in town first, then by rank, then name, with ⚔ for rivals and ♥ for friends. Each adventurer shows rank, status, a rapport bar and tags, known traits, nature, record and recent history. Actions, each once per day per adventurer and only while they're in town:
+- **Chat:** free; raises rapport and reveals a trait.
+- **Buy a Drink:** 8 copper × your level; raises rapport more, with a 30% chance to reveal a trait.
+- **Give a Gift:** a pack item; value × their tastes (Greedy likes gear, Kind likes potions, Scholarly likes materials).
+- Rapport runs from −100 to +100. Tags: Friend at 40, Close friend at 70, Enemy at −40, Rival.
+
+**News:** joins, deaths (it notes when you lost a friend), retirements, promotions, rival moves, bounties taken off the board, and notable boss kills.
+
+**Next (later steps):** recruiting from rapport and rank (B2, party of 3); expedition encounters with these same adventurers (§6); "owes you" and "betrayed you" tags.
+
 ## 5. World clock (recommended, light version)
 
 Not real time. A **day counter** advances on actions:
@@ -216,7 +270,7 @@ Data: `data/world.json` (Content Manager tab **World**), plus `travel_days` per 
 1. ~~**Finish the battle core:** enemy/boss archetypes (B1), defeat consequences (B3).~~ Done.
 2. ~~**Adventurer ranks** in the Guild.~~ Done.
 3. ~~**World clock** (days, inn rest, deadlines in days, news ledger).~~ Done.
-4. **NPC adventurers:** generator, roster, rapport, simulated quests on the clock.
+4. ~~**NPC adventurers:** generator, roster, rapport, simulated quests on the clock.~~ Done.
 5. **Party of 3 in battle** (B2), then **recruitment** from the roster.
 6. **Expedition encounters:** helpers, rivals, saboteurs between waves.
 7. **Exploration mode** for the themed locations (decided earlier: waves now, exploration later).
