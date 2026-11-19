@@ -266,22 +266,11 @@ func _on_item_clicked(index: int, at_position: Vector2, mouse_button_index: int)
 	var info_text = ""
 	var item = metadata["item"]
 	
-	if metadata["type"] == "consumable":
-		info_text = "[b]%s[/b]\n%s\n\nQuantity: %d" % [
-			item.display_name,
-			item.description if item.has("description") else "",
-			metadata["quantity"]
-		]
-	elif metadata["type"] == "equipment":
-		info_text = "[b]%s[/b]\nRarity: %s\nItem Level: %d\n" % [
-			item.display_name,
-			item.rarity,
-			item.item_level
-		]
-		if item.damage > 0:
-			info_text += "Damage: %d\n" % item.damage
-		if item.armor_value > 0:
-			info_text += "Armor: %d\n" % item.armor_value
+	# `item` is an Item / Equipment resource (not a Dictionary: .has() doesn't exist on it)
+	if item is Equipment:
+		info_text = item.get_full_description()
+	elif item is Item:
+		info_text = "[b]%s[/b]\n%s\n\nQuantity: %d" % [item.display_name, item.description, int(metadata.get("quantity", 1))]
 	
 	if metadata.get("collected", false):
 		info_text += "\n[color=green]COLLECTED[/color]"
