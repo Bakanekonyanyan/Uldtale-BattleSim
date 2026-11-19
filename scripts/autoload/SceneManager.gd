@@ -26,7 +26,8 @@ enum ScenePath {
 	ALCHEMIST,
 	BLACKSMITH,
 	GUILD,
-	TALENTS
+	TALENTS,
+	DEFEAT
 }
 
 # Scene path lookup
@@ -46,7 +47,8 @@ const SCENE_PATHS = {
 	ScenePath.ALCHEMIST: "res://scenes/town/AlchemistScene.tscn",
 	ScenePath.BLACKSMITH: "res://scenes/town/BlacksmithScene.tscn",
 	ScenePath.GUILD: "res://scenes/town/GuildScene.tscn",
-	ScenePath.TALENTS: "res://scenes/town/TalentScene.tscn"
+	ScenePath.TALENTS: "res://scenes/town/TalentScene.tscn",
+	ScenePath.DEFEAT: "res://scenes/town/DefeatScene.tscn"
 }
 
 # ===== STATE =====
@@ -300,8 +302,17 @@ func _on_battle_completed(player_won: bool, xp_gained: int) -> void:
 	if not player_won:
 		MomentumSystem.reset_momentum()
 		MomentumSystem.clear_accumulated_loot()  # banked Press-On rewards are lost
+		var fallen = DungeonStateManager.active_player
+		var boss = DungeonStateManager.is_boss_fight
 		DungeonStateManager.end_dungeon(false)
-		change_to_character_selection()
+		if fallen == null:
+			change_to_character_selection()
+			return
+		# The Guild recovers you: fee, injury, gear to Lost & Found (DefeatManager)
+		var summary = DefeatManager.apply_defeat(fallen, boss)
+		fallen.set_meta("last_defeat", summary)
+		SaveManager.save_game(fallen)
+		navigate(ScenePath.DEFEAT, TransitionType.REPLACE, fallen)
 		return
 	
 	var location_id = DungeonStateManager.current_location

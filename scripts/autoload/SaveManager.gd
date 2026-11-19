@@ -487,3 +487,40 @@ func delete_character(character_name: String):
 			print("Character deleted: ", character_name)
 	else:
 		print("Character file not found: ", character_name)
+
+# === EQUIPMENT <-> SAVE DICT (shared helpers; used by the Guild's Lost & Found) ===
+
+func equipment_to_save(item: Equipment) -> Dictionary:
+	var d = {
+		"base_id": item.id, "name": item.display_name, "rarity": item.rarity, "rarity_applied": item.rarity_applied,
+		"damage": item.damage, "armor_value": item.armor_value,
+		"status_effect_chance": item.status_effect_chance, "status_effect_type": item.status_effect_type,
+		"bonus_damage": item.bonus_damage, "item_prefix": item.item_prefix, "item_suffix": item.item_suffix,
+		"flavor_text": item.flavor_text,
+	}
+	d.merge(item.get_upgrade_save_data())
+	var mods = {}
+	for stat_enum in item.stat_modifiers:
+		mods[Skill.AttributeTarget.keys()[stat_enum]] = item.stat_modifiers[stat_enum]
+	d["stat_modifiers"] = mods
+	return d
+
+func equipment_from_save(d: Dictionary) -> Equipment:
+	var item = ItemManager.get_item(String(d.get("base_id", "")))
+	if not (item is Equipment):
+		return null
+	item.rarity = d.get("rarity", item.rarity)
+	item.rarity_applied = d.get("rarity_applied", false)
+	item.damage = d.get("damage", item.damage)
+	item.armor_value = d.get("armor_value", item.armor_value)
+	item.apply_upgrade_save_data(d)
+	item.stat_modifiers = {}
+	for stat_name in d.get("stat_modifiers", {}):
+		if Skill.AttributeTarget.has(stat_name):
+			item.stat_modifiers[Skill.AttributeTarget[stat_name]] = d["stat_modifiers"][stat_name]
+	for k in ["status_effect_chance", "status_effect_type", "bonus_damage", "item_prefix", "item_suffix", "flavor_text"]:
+		if d.has(k):
+			item.set(k, d[k])
+	if d.has("name"):
+		item.display_name = d["name"]
+	return item

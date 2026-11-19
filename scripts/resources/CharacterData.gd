@@ -154,6 +154,11 @@ func get_all_flat_bonuses() -> Dictionary:
 		var t = talents.stat_bonuses()
 		for stat in t:
 			total[stat] = total.get(stat, 0.0) + t[stat]
+	# Injuries from defeats (DefeatManager, data/defeat.json) are negative bonuses
+	if is_player and town_state.has("injuries"):
+		var inj = DefeatManager.injury_stats(self)
+		for stat in inj:
+			total[stat] = total.get(stat, 0.0) + inj[stat]
 	return total
 
 ## Skills usable in battle: the equipped loadout (or the first N known if none chosen).

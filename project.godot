@@ -41,6 +41,7 @@ ArenaNetworkManager="*res://scripts/network/ArenaNetworkManager.gd"
 StatusEffects="*res://scripts/autoload/StatusEffects.gd"
 ClassEquipmentBias="*res://scripts/autoload/ClassEquipmentBias.gd"
 GuildManager="*res://scripts/autoload/GuildManager.gd"
+DefeatManager="*res://scripts/autoload/DefeatManager.gd"
 
 [display]
 

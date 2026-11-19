@@ -4,8 +4,9 @@
 # Uses the shop background until dedicated art exists.
 extends Control
 
-enum Tab { BOARD, ACTIVE, TURN_IN }
-const TAB_NAMES := ["Board", "Active", "Turn In"]
+enum Tab { BOARD, ACTIVE, TURN_IN, LOST_FOUND, INFIRMARY }
+const TAB_NAMES := ["Board", "Active", "Turn In", "Lost Gear", "Infirmary"]
+var lost_index := -1
 
 var player_character: CharacterData
 var tab: Tab = Tab.BOARD
@@ -41,7 +42,7 @@ func _build_ui() -> void:
 	header_label = ScreenChrome.attach(self, "Adventurers' Guild", _on_back_pressed).info_label
 
 	for i in range(TAB_NAMES.size()):
-		var b = _button(ui, TAB_NAMES[i], Vector2(32 + i * 145, 72), func(): _set_tab(i), Vector2(135, 36))
+		var b = _button(ui, TAB_NAMES[i], Vector2(32 + i * 89, 72), func(): _set_tab(i), Vector2(85, 36))
 		b.toggle_mode = true
 		tab_buttons.append(b)
 
@@ -111,6 +112,9 @@ func _refresh() -> void:
 	for i in range(tab_buttons.size()):
 		tab_buttons[i].button_pressed = i == tab
 
+	if tab == Tab.LOST_FOUND or tab == Tab.INFIRMARY:
+		_refresh_recovery()
+		return
 	match tab:
 		Tab.BOARD:
 			shown = GuildManager.get_board(p)
@@ -140,6 +144,55 @@ func _refresh() -> void:
 	else:
 		selected_uid = -1
 	_update_details()
+
+# === LOST & FOUND / INFIRMARY (DefeatManager) ===
+
+func _refresh_recovery() -> void:
+	var p = player_character
+	bounty_list.clear()
+	reroll_button.visible = false
+	if tab == Tab.LOST_FOUND:
+		var lf = DefeatManager.get_lost_found(p)
+		for e in lf:
+			var name = String(e.item.get("name", "?"))
+			var idx = bounty_list.add_item("%s  -  %s" % [name, Currency.format_copper(int(e.price))])
+			bounty_list.set_item_custom_fg_color(idx, ScreenChrome.rarity_color(SaveManager.equipment_from_save(e.item)))
+		lost_index = clamp(lost_index, 0, lf.size() - 1) if not lf.is_empty() else -1
+		if lost_index >= 0:
+			bounty_list.select(lost_index)
+		primary_button.text = "Buy back"
+		if lf.is_empty():
+			details.text = "[i]Nothing in Lost & Found. Gear you lose in a defeat ends up here.[/i]"
+			primary_button.disabled = true
+			return
+		var e = lf[lost_index]
+		var item = SaveManager.equipment_from_save(e.item)
+		var t = item.get_full_description() if item else String(e.item.get("name", ""))
+		t += "\n[b]Buy back:[/b] %s   [color=gray](price scales with rarity, item level and upgrades)[/color]\n" % Currency.format_copper(int(e.price))
+		t += "[color=orange]Sold off in %d expedition(s).[/color]" % int(e.expires_in)
+		details.text = t
+		primary_button.disabled = p.currency.copper < int(e.price)
+	else:
+		var inj = DefeatManager.get_injuries(p)
+		for x in inj:
+			var info = DefeatManager.injury_info(String(x.id))
+			bounty_list.add_item("%s  (%d exp. left)" % [info.get("name", x.id), int(x.remaining)])
+		primary_button.text = "Treat all"
+		if inj.is_empty():
+			details.text = "[i]You're in good health.[/i]"
+			primary_button.disabled = true
+			return
+		var t = "[b][font_size=22]Infirmary[/font_size][/b]\n\n"
+		for x in inj:
+			var info = DefeatManager.injury_info(String(x.id))
+			var bits: Array = []
+			for k in info.get("stats", {}):
+				var v = float(info.stats[k])
+				bits.append(("%d%% " % int(round(v * 100)) if abs(v) < 1.0 else "%d " % int(v)) + String(k).replace("_pct", "").replace("_", " "))
+			t += "[b]%s[/b]: %s  [color=gray](%s; heals in %d expedition(s))[/color]\n" % [info.get("name", x.id), info.get("description", ""), ", ".join(bits), int(x.remaining)]
+		t += "\n[b]Treatment:[/b] %s" % Currency.format_copper(DefeatManager.treatment_cost(p))
+		details.text = t
+		primary_button.disabled = p.currency.copper < DefeatManager.treatment_cost(p)
 
 func _selected() -> Dictionary:
 	for b in shown:
@@ -187,11 +240,23 @@ func _update_details() -> void:
 # === ACTIONS ===
 
 func _on_bounty_selected(index: int) -> void:
+	if tab == Tab.LOST_FOUND:
+		lost_index = index
+		_refresh_recovery()
+		return
 	if index >= 0 and index < shown.size():
 		selected_uid = int(shown[index].uid)
 		_update_details()
 
 func _on_primary_pressed() -> void:
+	if tab == Tab.LOST_FOUND:
+		status_label.text = DefeatManager.buy_back(player_character, lost_index).reason
+		_refresh()
+		return
+	if tab == Tab.INFIRMARY:
+		status_label.text = DefeatManager.treat(player_character).reason
+		_refresh()
+		return
 	var b = _selected()
 	if b.is_empty():
 		return

@@ -1,0 +1,146 @@
+{
+ "tab": "Defeat",
+ "file": "data/defeat.json",
+ "order": 46,
+ "description": "What losing a battle costs: fee, injury, gear to the Guild's Lost & Found (DefeatManager.gd).",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Defeat settings",
+   "fields": [
+    {
+     "name": "gold_fee_fraction",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Share of carried money taken as the recovery fee."
+    },
+    {
+     "name": "wake_hp_fraction",
+     "type": "float",
+     "min": 0.05,
+     "max": 1,
+     "help": "HP you wake up with in town."
+    },
+    {
+     "name": "items_lost",
+     "type": "int",
+     "min": 0,
+     "max": 7
+    },
+    {
+     "name": "items_lost_boss",
+     "type": "int",
+     "min": 0,
+     "max": 7
+    },
+    {
+     "name": "lost_found",
+     "type": "object",
+     "fields": [
+      {
+       "name": "expires_after_expeditions",
+       "type": "int",
+       "min": 1
+      },
+      {
+       "name": "price_fraction",
+       "type": "float",
+       "min": 0
+      },
+      {
+       "name": "level_step",
+       "type": "float",
+       "min": 0,
+       "help": "+price per item level"
+      },
+      {
+       "name": "upgrade_step",
+       "type": "float",
+       "min": 0,
+       "help": "+price per upgrade level"
+      },
+      {
+       "name": "rarity_mult",
+       "type": "map",
+       "key": {
+        "type": "ref",
+        "source": "rarities"
+       },
+       "value": {
+        "type": "float",
+        "min": 0
+       }
+      }
+     ]
+    },
+    {
+     "name": "injury",
+     "type": "object",
+     "fields": [
+      {
+       "name": "expeditions",
+       "type": "int",
+       "min": 1
+      },
+      {
+       "name": "extra_expeditions_boss",
+       "type": "int",
+       "min": 0
+      },
+      {
+       "name": "treatment_copper_per_level",
+       "type": "int",
+       "min": 0,
+       "help": "Infirmary cost per injury = this x level."
+      }
+     ]
+    }
+   ],
+   "ignore": [
+    "injuries"
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Injuries",
+   "path": [
+    "injuries"
+   ],
+   "key_style": "snake",
+   "name_field": "name",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "weight",
+     "type": "float",
+     "min": 0,
+     "default": 1
+    },
+    {
+     "name": "stats",
+     "type": "map",
+     "key": {
+      "type": "enum",
+      "source": "item_stats",
+      "options": [
+       "max_hp_pct"
+      ],
+      "allow_custom": true
+     },
+     "value": {
+      "type": "float"
+     },
+     "help": "Negative bonuses while injured, e.g. max_hp_pct -0.15."
+    }
+   ]
+  }
+ ]
+}

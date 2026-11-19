@@ -127,10 +127,13 @@ Each day, the world simulates a little:
 
 Deep alignment, branching dialogue and story quests can wait: for a later milestone, or the next game.
 
-## 7. Decisions needed
+## 7. Decisions (answered)
 
-- **Defeat:** injury days, a gold fee, lost gear, rescue-with-strings, or a mix?
-- **NPC death:** permanent (stakes) or "retired/injured" only?
-- **Roster size:** about 12–20 named NPCs per town to start?
-- **Time pressure:** only deadlines and recovery, or should the world move on without you (rivals out-rank you if you idle)?
-- **Recruits:** do they level with you, or keep their own progression from the world sim?
+| Topic | Decision |
+|---|---|
+| Defeat | **A mix:** injury, a gold fee and lost gear. Lost gear goes to the Guild, which sells it back for a price that scales with item level and rarity |
+| NPC death | **Injury, retirement and permadeath.** Which one depends on the NPC's personality and alignment (the reckless die more, the cowardly retire) |
+| Roster | Start with **12–20 named adventurers**. Later, adventurers are **generated dynamically**, so every fresh playthrough has a different guild |
+| Time pressure | **Rivals out-rank you** if you idle too long, or if they avoid injury and get lucky |
+| Recruits | **Level with you** while in your party; when off on their own, their progress comes from the **world simulation** |
+| Exploration | **Etrian Odyssey style:** first-person dungeon crawling with floor mapping. Details to be discussed when we build it |

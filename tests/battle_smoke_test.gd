@@ -141,6 +141,41 @@ func _unit_checks() -> void:
 
 # ------------------------------------------------------------------ phase 0 (locations, drops, carry limit, saves)
 
+## Defeat: fee, injury, Lost & Found buy-back, Infirmary (DefeatManager, data/defeat.json)
+func _defeat_checks() -> void:
+	var p = CharacterFactory.create_character("D", "Hume", "Paladin", true)
+	p.level = 5
+	p.currency.copper = 10000
+	var sword = ItemManager.create_equipment_for_floor("short_sword", 3)
+	p.inventory.add_item(sword, 1)
+	p.equip_item(sword)
+	var hp_full = p.max_hp
+	var gear_in_pack = func(id): return p.inventory.items.values().filter(func(e): return e.item is Equipment and e.item.id == id).size()
+	var s = DefeatManager.apply_defeat(p, false)
+	check(s.gold_lost == 1500 and p.currency.copper == 8500, "defeat costs 15%% of carried money (%d)" % s.gold_lost)
+	check(s.items.size() == 1 and p.equipment["main_hand"] == null and gear_in_pack.call("short_sword") == 0, "the equipped item goes to Lost & Found (not the pack)")
+	check(not s.injury.is_empty() and DefeatManager.get_injuries(p).size() == 1, "defeat inflicts an injury (%s)" % s.injury.get("name", ""))
+	check(p.current_hp > 0 and p.current_hp <= p.max_hp, "you wake in town with HP")
+	var price = int(DefeatManager.get_lost_found(p)[0].price)
+	check(price > 0 and price == DefeatManager.buyback_price(sword), "buy-back price scales with the item (%d)" % price)
+	var r = DefeatManager.buy_back(p, 0)
+	check(r.ok and gear_in_pack.call("short_sword") == 1 and DefeatManager.get_lost_found(p).is_empty(), "buy back returns the item to the pack")
+	var cost = DefeatManager.treatment_cost(p)
+	check(DefeatManager.treat(p).ok and DefeatManager.get_injuries(p).is_empty() and p.currency.copper == 8500 - price - cost, "the Infirmary treats injuries for gold")
+	# injuries apply stats and heal over expeditions; unbought gear expires
+	DefeatManager.get_injuries(p).append({"id": "cracked_ribs", "remaining": 2})
+	p.calculate_secondary_attributes()
+	check(p.max_hp < hp_full, "Cracked Ribs lowers max HP (%d -> %d)" % [hp_full, p.max_hp])
+	DefeatManager.get_lost_found(p).append({"item": SaveManager.equipment_to_save(sword), "price": 10, "expires_in": 1})
+	DefeatManager.tick(p)
+	check(DefeatManager.get_injuries(p)[0].remaining == 1 and DefeatManager.get_lost_found(p).is_empty(), "expeditions heal injuries and expire Lost & Found items")
+	DefeatManager.tick(p)
+	check(DefeatManager.get_injuries(p).is_empty() and p.max_hp == hp_full, "healed: max HP back to normal")
+	var boss = CharacterFactory.create_character("D2", "Hume", "Paladin", true)
+	for id in ["short_sword", "buckler"]:
+		var it = ItemManager.create_equipment_for_floor(id, 1); boss.inventory.add_item(it, 1); boss.equip_item(it)
+	check(DefeatManager.apply_defeat(boss, true).items.size() == 2, "boss defeats cost two items")
+
 ## Talent trees (data/talents.json, TalentManager.gd)
 func _talent_checks() -> void:
 	# skills charge every cost they list
@@ -398,6 +433,7 @@ func _phase0_checks() -> void:
 	_element_and_class_checks()
 	_philosophy_checks()
 	_talent_checks()
+	_defeat_checks()
 	
 	# Class-biased loot rolls (Breather drops pass the player's class)
 	var biased_ok := true
