@@ -693,7 +693,7 @@
 	  "elements": ["DARK", "EARTH"],
 	  "attribute_target": "NONE",
 	  "status_effects": ["POISON", "BLEED"],
-	  "power": 55,
+	  "power": 65,
 	  "duration": 4,
 	  "mp_cost": 25,
 	  "sp_cost": 15,
@@ -712,7 +712,7 @@
 	  "duration": 2,
 	  "mp_cost": 35,
 	  "sp_cost": 10,
-	  "cooldown": 5
+	  "cooldown": 4
 	},
 	"Arcane Clarity": {
 	  "name": "Arcane Clarity",
