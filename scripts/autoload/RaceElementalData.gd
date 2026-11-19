@@ -21,9 +21,9 @@ func load_data():
 		var result = JSON.parse_string(file.get_as_text())
 		if typeof(result) == TYPE_DICTIONARY:
 			race_data = result
-			print(" Loaded race elemental data from races.json")
-			print("   Playable races: ", race_data.get("playable", {}).keys())
-			print("   NPC races: ", race_data.get("non_playable", {}).keys())
+			Log.debug("elements", " Loaded race elemental data from races.json")
+			Log.debug("elements", "   Playable races: ", race_data.get("playable", {}).keys())
+			Log.debug("elements", "   NPC races: ", race_data.get("non_playable", {}).keys())
 		else:
 			push_error("RaceElementalData: Invalid JSON format in races.json")
 		file.close()

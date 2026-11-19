@@ -38,7 +38,7 @@ func roll_wave_rewards(battle_data: Dictionary) -> Dictionary:
 		for item in enemy.get_meta("equipped_items"):
 			if item is Equipment and RandomManager.randf() < min(1.0, get_equipment_drop_chance(item.rarity, is_boss) * momentum_mult):
 				rewards["equipment_instances"].append(item)
-				print("RewardsManager: %s dropped %s (%s, ilvl %d)" % [enemy.name, item.display_name, item.rarity, item.item_level])
+				Log.debug("rewards", "RewardsManager: %s dropped %s (%s, ilvl %d)" % [enemy.name, item.display_name, item.rarity, item.item_level])
 	
 	# Regular loot drops
 	if is_boss:
@@ -89,7 +89,7 @@ func calculate_battle_rewards(battle_data: Dictionary) -> Dictionary:
 		for key in rewards.keys():
 			if key not in ["currency", "xp", "equipment_instances"]:
 				rewards[key] = _boost_count(rewards[key], bonus)
-		print("RewardsManager: Breather payout with +%d%% momentum bonus" % int(bonus * 100))
+		Log.debug("rewards", "RewardsManager: Breather payout with +%d%% momentum bonus" % int(bonus * 100))
 	
 	# Your companions take their share of the gold
 	last_party_share = 0
@@ -123,7 +123,7 @@ func save_state(rewards: Dictionary, xp_gained: int, rewards_collected: bool, co
 	is_reward_session_active = true
 	emit_signal("rewards_state_changed")
 	
-	print("RewardsManager: Saved state - Wave %d, Boss: %s, Items: %d" % [
+	Log.debug("rewards", "RewardsManager: Saved state - Wave %d, Boss: %s, Items: %d" % [
 		DungeonStateManager.current_wave,
 		DungeonStateManager.is_boss_fight,
 		collected_items.size()
@@ -138,7 +138,7 @@ func clear_saved_state() -> void:
 	saved_reward_state.clear()
 	is_reward_session_active = false
 	emit_signal("rewards_state_changed")
-	print("RewardsManager: Cleared saved state")
+	Log.debug("rewards", "RewardsManager: Cleared saved state")
 
 func has_saved_state() -> bool:
 	"""Check if there's a saved reward session"""

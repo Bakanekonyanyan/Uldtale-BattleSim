@@ -94,23 +94,23 @@ static func find_key_by_name(equipment_name: String, slot_hint: String = "") -> 
 	# Clean the name first (strip affixes)
 	var clean_name = strip_affixes(equipment_name)
 	
-	print("EquipmentKeyHelper: Searching for '%s' (cleaned from '%s')" % [clean_name, equipment_name])
+	Log.debug("items", "EquipmentKeyHelper: Searching for '%s' (cleaned from '%s')" % [clean_name, equipment_name])
 	
 	# Search weapons first (main_hand and off_hand slots)
 	if slot_hint in ["main_hand", "off_hand", ""]:
 		var weapon_key = _search_weapons(clean_name)
 		if weapon_key != "":
-			print("EquipmentKeyHelper: Found weapon key '%s' for '%s'" % [weapon_key, equipment_name])
+			Log.debug("items", "EquipmentKeyHelper: Found weapon key '%s' for '%s'" % [weapon_key, equipment_name])
 			return weapon_key
 	
 	# Search armors (head, chest, hands, legs, feet slots)
 	if slot_hint in ["head", "chest", "hands", "legs", "feet", ""]:
 		var armor_key = _search_armors(clean_name)
 		if armor_key != "":
-			print("EquipmentKeyHelper: Found armor key '%s' for '%s'" % [armor_key, equipment_name])
+			Log.debug("items", "EquipmentKeyHelper: Found armor key '%s' for '%s'" % [armor_key, equipment_name])
 			return armor_key
 	
-	print("EquipmentKeyHelper: WARNING - Could not find key for equipment: '%s' (cleaned: '%s', slot: %s)" % [equipment_name, clean_name, slot_hint])
+	Log.debug("items", "EquipmentKeyHelper: WARNING - Could not find key for equipment: '%s' (cleaned: '%s', slot: %s)" % [equipment_name, clean_name, slot_hint])
 	return ""
 
 ## Search weapons.json for equipment key
@@ -190,7 +190,7 @@ static func _load_caches():
 		if FileAccess.file_exists(path):
 			_weapons_cache = _load_json_file(path)
 			if not _weapons_cache.is_empty():
-				print("EquipmentKeyHelper: Loaded weapons from: ", path)
+				Log.debug("items", "EquipmentKeyHelper: Loaded weapons from: ", path)
 				break
 	
 	# Load armors
@@ -198,15 +198,15 @@ static func _load_caches():
 		if FileAccess.file_exists(path):
 			_armors_cache = _load_json_file(path)
 			if not _armors_cache.is_empty():
-				print("EquipmentKeyHelper: Loaded armors from: ", path)
+				Log.debug("items", "EquipmentKeyHelper: Loaded armors from: ", path)
 				break
 	
 	_cache_loaded = true
 	
 	if _weapons_cache.is_empty():
-		print("EquipmentKeyHelper: ERROR - Failed to load weapons.json from any path!")
+		Log.debug("items", "EquipmentKeyHelper: ERROR - Failed to load weapons.json from any path!")
 	if _armors_cache.is_empty():
-		print("EquipmentKeyHelper: ERROR - Failed to load armors.json from any path!")
+		Log.debug("items", "EquipmentKeyHelper: ERROR - Failed to load armors.json from any path!")
 
 ## Load and parse a JSON file
 static func _load_json_file(file_path: String) -> Dictionary:
@@ -216,7 +216,7 @@ static func _load_json_file(file_path: String) -> Dictionary:
 	
 	var file = FileAccess.open(file_path, FileAccess.READ)
 	if not file:
-		print("EquipmentKeyHelper: Could not open file: ", file_path)
+		Log.debug("items", "EquipmentKeyHelper: Could not open file: ", file_path)
 		return {}
 	
 	var json_text = file.get_as_text()
@@ -226,8 +226,8 @@ static func _load_json_file(file_path: String) -> Dictionary:
 	var error = json.parse(json_text)
 	
 	if error != OK:
-		print("EquipmentKeyHelper: Error parsing JSON file: ", file_path)
-		print("EquipmentKeyHelper: Parse error: ", json.get_error_message())
+		Log.debug("items", "EquipmentKeyHelper: Error parsing JSON file: ", file_path)
+		Log.debug("items", "EquipmentKeyHelper: Parse error: ", json.get_error_message())
 		return {}
 	
 	return json.data

@@ -169,7 +169,7 @@ func update_info_display():
 
 func _on_create_pressed():
 	if name_input.text.strip_edges().is_empty():
-		print("Please enter a character name")
+		Log.debug("character_creation", "Please enter a character name")
 		return
 	
 	var char_name = name_input.text.strip_edges()
@@ -182,11 +182,11 @@ func _on_create_pressed():
 	
 	# Starting gold
 	new_character.currency.copper = STARTING_GOLD
-	print("New character starting with %d copper (%s)" % [STARTING_GOLD, new_character.currency.get_formatted()])
+	Log.debug("character_creation", "New character starting with %d copper (%s)" % [STARTING_GOLD, new_character.currency.get_formatted()])
 	
 	# Save the character
 	SaveManager.save_game(new_character)
-	print("Character created: %s (Level %d %s %s)" % [
+	Log.debug("character_creation", "Character created: %s (Level %d %s %s)" % [
 		new_character.name, new_character.level, race_name, p_class_name
 	])
 	

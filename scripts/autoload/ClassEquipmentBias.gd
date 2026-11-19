@@ -17,7 +17,7 @@ func _build_class_caches():
 	if _cache_built:
 		return
 	
-	print("[ClassEquipmentBias] Building dynamic class caches from equipment data...")
+	Log.debug("items", "[ClassEquipmentBias] Building dynamic class caches from equipment data...")
 	
 	# Get all equipment templates
 	var all_weapons = ItemManager.weapons
@@ -95,7 +95,7 @@ func _get_all_class_names() -> Array:
 	var file_path = "res://data/classes.json"
 	
 	if not FileAccess.file_exists(file_path):
-		print("[ClassEquipmentBias] ERROR: classes.json not found!")
+		Log.debug("items", "[ClassEquipmentBias] ERROR: classes.json not found!")
 		return classes
 	
 	var file = FileAccess.open(file_path, FileAccess.READ)
@@ -105,7 +105,7 @@ func _get_all_class_names() -> Array:
 	var json = JSON.new()
 	var error = json.parse(json_text)
 	if error != OK:
-		print("[ClassEquipmentBias] ERROR: Failed to parse classes.json")
+		Log.debug("items", "[ClassEquipmentBias] ERROR: Failed to parse classes.json")
 		return classes
 	
 	var data = json.data
@@ -120,14 +120,14 @@ func _get_all_class_names() -> Array:
 
 func _print_cache_summary():
 	# Debug output
-	print("[ClassEquipmentBias] Cache built successfully!")
-	print("  Classes with weapon data: %d" % _class_weapon_cache.size())
-	print("  Classes with armor data: %d" % _class_armor_cache.size())
+	Log.debug("items", "[ClassEquipmentBias] Cache built successfully!")
+	Log.debug("items", "  Classes with weapon data: %d" % _class_weapon_cache.size())
+	Log.debug("items", "  Classes with armor data: %d" % _class_armor_cache.size())
 	
 	# Sample output for first class
 	if not _class_weapon_cache.is_empty():
 		var sample_class = _class_weapon_cache.keys()[0]
-		print("  Sample: %s can use %d main_hand, %d off_hand weapons" % [
+		Log.debug("items", "  Sample: %s can use %d main_hand, %d off_hand weapons" % [
 			sample_class,
 			_class_weapon_cache[sample_class]["main_hand"].size(),
 			_class_weapon_cache[sample_class]["off_hand"].size()

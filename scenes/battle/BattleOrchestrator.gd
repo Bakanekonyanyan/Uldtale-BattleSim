@@ -155,7 +155,7 @@ func start_battle() -> void:
 		return
 	context.battle_started = true
 
-	print("BattleOrchestrator: Starting battle - %s vs %d enemies%s" % [
+	Log.debug("battle", "BattleOrchestrator: Starting battle - %s vs %d enemies%s" % [
 		context.player.name, context.enemies.size(), " (PvP)" if context.is_pvp_mode else ""
 	])
 
@@ -259,12 +259,12 @@ func _run_battle_loop() -> void:
 			break
 		turn_queue.advance()
 
-	print("BattleOrchestrator: Battle loop finished")
+	Log.debug("battle", "BattleOrchestrator: Battle loop finished")
 
 func _run_turn(actor: CharacterData) -> void:
 	var turn_no = turn_queue.begin_turn()
 	var is_player_turn = turn_queue.is_hero(actor) if not context.is_pvp_mode else turn_queue.is_player(actor)
-	print("BattleOrchestrator: Turn %d - %s" % [turn_no, actor.name])
+	Log.debug("battle", "BattleOrchestrator: Turn %d - %s" % [turn_no, actor.name])
 
 	if network_sync:
 		network_sync.on_turn_started(actor, is_player_turn)

@@ -15,27 +15,27 @@ func load_current_character():
 		current_character_resource = ResourceLoader.load(CURRENT_CHARACTER_SAVE)
 	else:
 		current_character_resource = Resource.new()
-	print("CharacterManager: Loaded current_character_resource with meta: ", current_character_resource.get_meta_list())
+	Log.debug("character", "CharacterManager: Loaded current_character_resource with meta: ", current_character_resource.get_meta_list())
 
 func save_current_character():
 	var error = ResourceSaver.save(current_character_resource, CURRENT_CHARACTER_SAVE)
 	if error != OK:
-		print("CharacterManager: Error saving current character: ", error)
+		Log.debug("character", "CharacterManager: Error saving current character: ", error)
 	else:
-		print("CharacterManager: Saved current character successfully")
+		Log.debug("character", "CharacterManager: Saved current character successfully")
 
 func set_current_character(character: CharacterData):
 	current_character_resource.set_meta("current_character", character)
-	print("CharacterManager: Current character set to ", character.name if character else "null")
+	Log.debug("character", "CharacterManager: Current character set to ", character.name if character else "null")
 	save_current_character()
 
 func get_current_character() -> CharacterData:
-	print("CharacterManager: get_current_character called")
+	Log.debug("character", "CharacterManager: get_current_character called")
 	var character = current_character_resource.get_meta("current_character", null)
 	if character == null:
-		print("CharacterManager: Warning - current_character is null")
+		Log.debug("character", "CharacterManager: Warning - current_character is null")
 	else:
-		print("CharacterManager: Returning current character: ", character.name)
+		Log.debug("character", "CharacterManager: Returning current character: ", character.name)
 	return character
 
 func load_character(character_name: String) -> CharacterData:
@@ -43,18 +43,18 @@ func load_character(character_name: String) -> CharacterData:
 	if FileAccess.file_exists(file_name):
 		var loaded_character = ResourceLoader.load(file_name)
 		if loaded_character is CharacterData:
-			print("Character loaded successfully.")
+			Log.debug("character", "Character loaded successfully.")
 			return loaded_character
-	print("Failed to load character.")
+	Log.debug("character", "Failed to load character.")
 	return null
 
 func save_character(character: CharacterData):
 	var file_name = SAVE_DIR + character.name + SAVE_FILE_EXTENSION
 	var error = ResourceSaver.save(character, file_name)
 	if error != OK:
-		print("An error occurred while saving the character.")
+		Log.debug("character", "An error occurred while saving the character.")
 	else:
-		print("Character saved successfully.")
+		Log.debug("character", "Character saved successfully.")
 
 func delete_character(character_name: String):
 	var file_name = SAVE_DIR + character_name + SAVE_FILE_EXTENSION
@@ -62,9 +62,9 @@ func delete_character(character_name: String):
 		var dir = DirAccess.open(SAVE_DIR)
 		if dir:
 			dir.remove(file_name)
-			print("Character deleted: ", character_name)
+			Log.debug("character", "Character deleted: ", character_name)
 	else:
-		print("Character file not found: ", character_name)
+		Log.debug("character", "Character file not found: ", character_name)
 
 func get_all_characters() -> Array:
 	var characters = []

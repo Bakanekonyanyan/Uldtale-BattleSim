@@ -30,12 +30,12 @@ var auto_rewards_given: bool = false
 @onready var collection_container: Control = $UI/CollectionContainer
 
 func _ready():
-	print("RewardScene: _ready called")
+	Log.debug("reward", "RewardScene: _ready called")
 	
 	# Restore saved state from RewardsManager
 	var saved_state = RewardsManager.get_saved_state()
 	if not saved_state.is_empty():
-		print("RewardScene: Restoring saved state from RewardsManager")
+		Log.debug("reward", "RewardScene: Restoring saved state from RewardsManager")
 		rewards = saved_state.get("rewards", {})
 		xp_gained = saved_state.get("xp_gained", 0)
 		collected_items = saved_state.get("collected_items", {})
@@ -116,7 +116,7 @@ func set_player_character(character: CharacterData):
 	player_character = character
 
 func initialize_display():
-	print("RewardScene: initialize_display called")
+	Log.debug("reward", "RewardScene: initialize_display called")
 	display_rewards()
 	update_button_visibility()
 	_check_and_auto_collect()

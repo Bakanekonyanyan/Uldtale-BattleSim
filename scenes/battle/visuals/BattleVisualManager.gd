@@ -40,12 +40,12 @@ func initialize(p_camera: Camera2D, p_player_container: Node2D, p_enemy_containe
 	camera = p_camera
 	player_sprite_container = p_player_container
 	enemy_sprite_container = p_enemy_container
-	print("BattleVisualManager: Initialized")
+	Log.debug("battle", "BattleVisualManager: Initialized")
 
 func setup_player_sprite(player: CharacterData):
 	"""Setup player sprite (future: load based on player race/class)"""
 	# For now, placeholder - you can add player sprite later
-	print("BattleVisualManager: Player sprite setup (placeholder)")
+	Log.debug("battle", "BattleVisualManager: Player sprite setup (placeholder)")
 
 func setup_enemy_sprites(enemies: Array[CharacterData]):
 	"""Create and position enemy sprites"""
@@ -68,7 +68,7 @@ func setup_enemy_sprites(enemies: Array[CharacterData]):
 			sprite.scale = Vector2(2.0, 2.0)  # Scale up 16x16 sprites
 			enemy_sprites[enemy] = sprite
 			tracked_enemies.append(enemy)  # Track this as an enemy
-			print("BattleVisualManager: Created sprite for %s at %v" % [enemy.name, positions[i]])
+			Log.debug("battle", "BattleVisualManager: Created sprite for %s at %v" % [enemy.name, positions[i]])
 
 func _create_enemy_sprite(enemy: CharacterData) -> Node2D:
 	"""Instantiate sprite based on enemy race"""
@@ -85,7 +85,7 @@ func _create_enemy_sprite(enemy: CharacterData) -> Node2D:
 			return FAIRY_SPRITE.instantiate()
 		_:
 			# Default to goblin if unknown
-			print("BattleVisualManager: Unknown race '%s', using goblin sprite" % race)
+			Log.debug("battle", "BattleVisualManager: Unknown race '%s', using goblin sprite" % race)
 			return GOBLIN_SPRITE.instantiate()
 
 func _calculate_enemy_positions(count: int) -> Array:
@@ -129,7 +129,7 @@ func play_attack_animation(attacker: CharacterData, target: CharacterData, is_ma
 	
 	# If target has no sprite (player currently), just do attacker lunge
 	if not target_sprite:
-		print("BattleVisualManager: No sprite for target %s, skipping attack animation" % target.name)
+		Log.debug("battle", "BattleVisualManager: No sprite for target %s, skipping attack animation" % target.name)
 		
 		# But if attacker has sprite, make them lunge forward
 		var attacker_sprite = enemy_sprites.get(attacker)
@@ -174,7 +174,7 @@ func play_aoe_attack_animation(attacker: CharacterData, targets: Array[Character
 	
 	# If no sprites, just return
 	if anim_instances.is_empty():
-		print("BattleVisualManager: No sprites for AOE targets, skipping animations")
+		Log.debug("battle", "BattleVisualManager: No sprites for AOE targets, skipping animations")
 		return
 	
 	# Play all animations simultaneously
@@ -219,7 +219,7 @@ func play_dodge_animation(character: CharacterData):
 	var sprite = enemy_sprites.get(character)
 	
 	if not sprite:
-		print("BattleVisualManager: No sprite for %s, skipping dodge animation" % character.name)
+		Log.debug("battle", "BattleVisualManager: No sprite for %s, skipping dodge animation" % character.name)
 		return
 	
 	var original_pos = sprite.position
@@ -244,7 +244,7 @@ func flash_sprite_hit(character: CharacterData, is_critical: bool = false):
 	
 	# If no sprite (player currently), just do screen shake
 	if not sprite:
-		print("BattleVisualManager: No sprite for %s, skipping hit flash" % character.name)
+		Log.debug("battle", "BattleVisualManager: No sprite for %s, skipping hit flash" % character.name)
 		return
 	
 	var sprite_node = sprite.get_node_or_null("Sprite2D")

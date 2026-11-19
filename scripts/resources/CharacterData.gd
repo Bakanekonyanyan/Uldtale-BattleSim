@@ -142,7 +142,7 @@ func initialize_racial_elementals(load_from_race_data: bool = true):
 		return
 	
 	RaceElementalData.apply_to_character(self, race, is_player)
-	print("[ELEMENTAL] Initialized racial elementals for %s (%s)" % [name, race])
+	Log.debug("character", "[ELEMENTAL] Initialized racial elementals for %s (%s)" % [name, race])
 
 ## Flat bonuses from everything currently equipped (Equipment.get_flat_bonuses):
 ## primary attributes (intelligence...) and secondary stats (dodge, spell_ward...).
@@ -305,7 +305,7 @@ func heal(amount: int) -> int:
 	current_hp += actual_heal
 	current_hp = min(current_hp, max_hp)
 	
-	print("[HEAL] %s: %d → %d (+%d)" % [name, hp_before, current_hp, actual_heal])
+	Log.debug("character", "[HEAL] %s: %d → %d (+%d)" % [name, hp_before, current_hp, actual_heal])
 	return actual_heal
 
 func restore_mp(amount: int) -> int:
@@ -313,7 +313,7 @@ func restore_mp(amount: int) -> int:
 	var actual = min(amount, max_mp - current_mp)
 	current_mp += actual
 	current_mp = min(current_mp, max_mp)
-	print("[MP] %s: %d → %d (+%d)" % [name, mp_before, current_mp, actual])
+	Log.debug("character", "[MP] %s: %d → %d (+%d)" % [name, mp_before, current_mp, actual])
 	return actual
 
 func restore_sp(amount: int) -> int:
@@ -321,7 +321,7 @@ func restore_sp(amount: int) -> int:
 	var actual = min(amount, max_sp - current_sp)
 	current_sp += actual
 	current_sp = min(current_sp, max_sp)
-	print("[SP] %s: %d → %d (+%d)" % [name, sp_before, current_sp, actual])
+	Log.debug("character", "[SP] %s: %d → %d (+%d)" % [name, sp_before, current_sp, actual])
 	return actual
 
 # === COMBAT ===
@@ -367,17 +367,17 @@ func take_damage(amount: float, attacker: CharacterData = null):
 		if reflection > 0.0:
 			var reflected = int(amount * reflection)
 			if reflected > 0:
-				print("%s reflected %d damage back to %s!" % [name, reflected, attacker.name])
+				Log.debug("character", "%s reflected %d damage back to %s!" % [name, reflected, attacker.name])
 				attacker.take_damage(reflected, null)
 	
 	current_hp -= int(amount)
 	current_hp = clamp(current_hp, 0, max_hp)
-	print("[DAMAGE] %s took %d damage. HP: %d/%d" % [name, int(amount), current_hp, max_hp])
+	Log.debug("character", "[DAMAGE] %s took %d damage. HP: %d/%d" % [name, int(amount), current_hp, max_hp])
 
 # === EQUIPMENT ===
 func equip_item(item: Equipment) -> Equipment:
 	if not item.can_equip(self):
-		print("Cannot equip %s - class restriction" % item.display_name)
+		Log.debug("character", "Cannot equip %s - class restriction" % item.display_name)
 		return null
 	
 	var target_slot = item.slot
@@ -414,7 +414,7 @@ func equip_item(item: Equipment) -> Equipment:
 		var main_hand = equipment["main_hand"]
 		if main_hand.blocks_offhand:
 			if not main_hand.allows_offhand(self, item):
-				print("Cannot equip %s: blocked by %s" % [item.display_name, main_hand.display_name])
+				Log.debug("character", "Cannot equip %s: blocked by %s" % [item.display_name, main_hand.display_name])
 				return null
 	
 	var old_item = equipment[target_slot]
@@ -636,7 +636,7 @@ func get_attribute_breakdown(attribute_name: String) -> Dictionary:
 # === PROGRESSION (keep existing implementation) ===
 func gain_xp(amount: int):
 	xp += amount
-	print("[XP] %s gained %d XP. Total: %d/%d" % [name, amount, xp, LevelSystem.calculate_xp_for_level(level)])
+	Log.debug("character", "[XP] %s gained %d XP. Total: %d/%d" % [name, amount, xp, LevelSystem.calculate_xp_for_level(level)])
 	check_level_up()
 
 func check_level_up():
@@ -692,7 +692,7 @@ func spend_attribute_point(attribute: String) -> bool:
 func update_max_floor_cleared(floor: int):
 	if floor > max_floor_cleared:
 		max_floor_cleared = floor
-		print("New max floor: %d" % max_floor_cleared)
+		Log.debug("character", "New max floor: %d" % max_floor_cleared)
 
 # === CARRY LIMIT (pack vs stash) ===
 ## Consumables are limited to `carry_limit` copies of each in the pack.
@@ -715,7 +715,7 @@ func add_to_pack(item: Item, quantity: int = 1) -> Dictionary:
 		to_pack = 0
 	if to_stash > 0:
 		stash.add_item(item, to_stash)
-		print("%d x %s sent to stash (carry limit %d)" % [to_stash, item.display_name, carry_limit])
+		Log.debug("character", "%d x %s sent to stash (carry limit %d)" % [to_stash, item.display_name, carry_limit])
 	return {"pack": to_pack, "stash": to_stash}
 
 ## Move up to `quantity` of a stash entry into the pack, respecting the carry
@@ -768,7 +768,7 @@ func get_max_floor(location_id: String) -> int:
 func unlock_floor(location_id: String, floor_num: int) -> void:
 	if floor_num > get_max_floor(location_id):
 		location_progress[location_id] = floor_num
-		print("%s: unlocked floor %d" % [location_id, floor_num])
+		Log.debug("character", "%s: unlocked floor %d" % [location_id, floor_num])
 	update_max_floor_cleared(floor_num)
 
 # === PROFICIENCY ===
@@ -793,18 +793,18 @@ func track_armor_proficiency():
 
 func debug_proficiency_status():
 	if not proficiency_manager:
-		print("[PROFICIENCY] ERROR: No proficiency manager!")
+		Log.debug("character", "[PROFICIENCY] ERROR: No proficiency manager!")
 		return
-	print("=== PROFICIENCY DEBUG ===")
+	Log.debug("character", "=== PROFICIENCY DEBUG ===")
 	if equipment["main_hand"]:
 		var weapon = equipment["main_hand"]
-		print("Main Hand: %s" % weapon.name)
+		Log.debug("character", "Main Hand: %s" % weapon.name)
 		if weapon is Equipment and weapon.key != "":
 			var uses = proficiency_manager.get_weapon_proficiency_uses(weapon.key)
 			var level = proficiency_manager.get_weapon_proficiency_level(weapon.key)
 			var next = proficiency_manager.get_uses_for_next_level(level)
-			print("  Proficiency: Level %d (%d/%d uses)" % [level, uses, next])
-	print("========================")
+			Log.debug("character", "  Proficiency: Level %d (%d/%d uses)" % [level, uses, next])
+	Log.debug("character", "========================")
 
 # === ELEMENTAL DELEGATES ===
 func get_elemental_resistance(element: ElementalDamage.Element) -> float:

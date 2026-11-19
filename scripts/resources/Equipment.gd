@@ -89,7 +89,7 @@ func _is_already_generated(data: Dictionary) -> bool:
 
 func _load_generated(data: Dictionary):
 	"""Load already-generated equipment"""
-	print("Equipment: Already generated - %s" % display_name)
+	Log.debug("items", "Equipment: Already generated - %s" % display_name)
 	rarity = data.get("rarity", "common")
 	rarity_applied = true
 	damage = data.get("damage", damage)
@@ -133,11 +133,11 @@ func generate_for_floor(floor: int, min_rarity_tier: int = 0):
 	flavor_text = names.flavor_text
 	
 	rarity_applied = true
-	print("Equipment: Generated ilvl %d %s (%s)" % [item_level, display_name, rarity])
+	Log.debug("items", "Equipment: Generated ilvl %d %s (%s)" % [item_level, display_name, rarity])
 
 func _generate_new(data: Dictionary):
 	"""Generate fresh equipment"""
-	print("Equipment: Generating new - %s" % display_name)
+	Log.debug("items", "Equipment: Generating new - %s" % display_name)
 	
 	var floor = data.get("floor_number", item_level)
 	var min_rarity = data.get("min_rarity_tier", 0)
@@ -221,7 +221,7 @@ func apply_stat_modifiers(character: CharacterData):
 			if not character.equipment_bonuses.has(stat_name):
 				character.equipment_bonuses[stat_name] = 0
 			character.equipment_bonuses[stat_name] += stat_modifiers[stat]
-			print("[EQUIPMENT] Added +%d to %s (total equipment bonus: %d)" % [
+			Log.debug("items", "[EQUIPMENT] Added +%d to %s (total equipment bonus: %d)" % [
 				stat_modifiers[stat],
 				stat_name,
 				character.equipment_bonuses[stat_name]
@@ -234,7 +234,7 @@ func remove_stat_modifiers(character: CharacterData):
 		if stat_name in character:
 			if character.equipment_bonuses.has(stat_name):
 				character.equipment_bonuses[stat_name] -= stat_modifiers[stat]
-				print("[EQUIPMENT] Removed +%d from %s (total equipment bonus: %d)" % [
+				Log.debug("items", "[EQUIPMENT] Removed +%d from %s (total equipment bonus: %d)" % [
 					stat_modifiers[stat],
 					stat_name,
 					character.equipment_bonuses[stat_name]
@@ -433,14 +433,14 @@ func _load_base_data(data: Dictionary):
 			clean_name = clean_name.replace("the_", "").replace("a_", "").replace("an_", "")
 			key = clean_name
 	
-	print("Equipment: Set proficiency key '%s' for '%s' (id: %s, inv_key: %s)" % [key, display_name, id, inventory_key])
+	Log.debug("items", "Equipment: Set proficiency key '%s' for '%s' (id: %s, inv_key: %s)" % [key, display_name, id, inventory_key])
 	
 	item_type = Item.ItemType.WEAPON if type == "weapon" else Item.ItemType.ARMOR
 
 # Also update _load_from_save to preserve the key
 func _load_from_save(data: Dictionary):
 	"""Restore from save data"""
-	print("Equipment: Loading from save - %s (ilvl %d)" % [display_name, item_level])
+	Log.debug("items", "Equipment: Loading from save - %s (ilvl %d)" % [display_name, item_level])
 	rarity = data.get("rarity", "common")
 	rarity_applied = true
 	damage = data.get("damage", damage)

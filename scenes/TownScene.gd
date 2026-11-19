@@ -113,8 +113,8 @@ func _ready():
 
 func set_player(character: CharacterData):
 	current_character = character
-	print("TownScene: Character set - ", character.name)
-	print("TownScene: Inventory items - ", character.inventory.items)
+	Log.debug("town", "TownScene: Character set - ", character.name)
+	Log.debug("town", "TownScene: Inventory items - ", character.inventory.items)
 	update_ui()
 
 ## Date, current world event and recent news (WorldClock).
@@ -169,8 +169,8 @@ func update_ui():
 		else:
 			name_label.text = "No character loaded"
 	else:
-		print(current_character.name)
-		print("Warning: CharacterNameLabel not found in TownScene")
+		Log.debug("town", current_character.name)
+		Log.debug("town", "Warning: CharacterNameLabel not found in TownScene")
 
 func _on_shop_pressed():
 	SceneManager.change_to_shop(current_character)
@@ -244,7 +244,7 @@ func show_location_selection_dialog():
 func show_floor_selection_dialog(location_id: String = "the_dungeon"):
 	"""Step 2: choose a starting floor. Progress is tracked per location."""
 	var max_selectable = RankManager.start_floor_limit(current_character, location_id)
-	print("TownScene: Floor selection for %s - max unlocked floor %d" % [location_id, max_selectable])
+	Log.debug("town", "TownScene: Floor selection for %s - max unlocked floor %d" % [location_id, max_selectable])
 	
 	var dialog = ConfirmationDialog.new()
 	dialog.title = "%s - Select Starting Floor" % LocationManager.get_display_name(location_id)
@@ -302,7 +302,7 @@ func show_floor_selection_dialog(location_id: String = "the_dungeon"):
 	
 	dialog.confirmed.connect(func():
 		var final_floor = current_character.current_floor
-		print("TownScene: Starting %s at floor %d" % [location_id, final_floor])
+		Log.debug("town", "TownScene: Starting %s at floor %d" % [location_id, final_floor])
 		SceneManager.start_dungeon_from_floor(current_character, final_floor, location_id)
 		dialog.queue_free()
 	)

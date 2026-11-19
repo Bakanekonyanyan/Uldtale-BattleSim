@@ -66,7 +66,7 @@ func advance() -> void:
 	if _everyone_has_acted() and queue.size() > 1:
 		round_number += 1
 		_acted_this_round.clear()
-		print("TurnQueue: Round %d - re-rolling turn order" % round_number)
+		Log.debug("battle", "TurnQueue: Round %d - re-rolling turn order" % round_number)
 		_roll_turn_order()
 
 ## Someone joining mid-battle (encounter reinforcements) acts from next round.
@@ -105,7 +105,7 @@ func remove_dead() -> void:
 	var before = queue.size()
 	queue = queue.filter(func(c): return c.is_alive())
 	if queue.size() != before:
-		print("TurnQueue: Removed %d dead combatant(s)" % (before - queue.size()))
+		Log.debug("battle", "TurnQueue: Removed %d dead combatant(s)" % (before - queue.size()))
 
 ## Human-readable order, e.g. "Hero (AGI 12) → Goblin (AGI 8)"
 func describe_order() -> String:
@@ -142,4 +142,4 @@ func _roll_turn_order() -> void:
 	for entry in rolls:
 		queue.append(entry.character)
 
-	print("TurnQueue: Turn order - %s" % describe_order())
+	Log.debug("battle", "TurnQueue: Turn order - %s" % describe_order())

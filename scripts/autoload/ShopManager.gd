@@ -34,10 +34,10 @@ func _ready():
 func initialize_shop():
 	"""Initialize shop with starting equipment - call once per game"""
 	if shop_initialized:
-		print("ShopManager: Already initialized")
+		Log.debug("shop", "ShopManager: Already initialized")
 		return
 	
-	print("ShopManager: Initializing shop with starting equipment...")
+	Log.debug("shop", "ShopManager: Initializing shop with starting equipment...")
 	
 	equipment_inventory.clear()
 	
@@ -48,7 +48,7 @@ func initialize_shop():
 	_add_common_armor()
 	
 	shop_initialized = true
-	print("ShopManager: Shop initialized with %d equipment items" % equipment_inventory.size())
+	Log.debug("shop", "ShopManager: Shop initialized with %d equipment items" % equipment_inventory.size())
 
 func _add_common_weapons():
 	"""Add one of each common weapon type"""
@@ -63,7 +63,7 @@ func _add_common_weapons():
 		# Get the template data
 		var template = ItemManager.get_equipment_template(weapon_id)
 		if template.is_empty():
-			print("ShopManager: Template not found for %s" % weapon_id)
+			Log.debug("shop", "ShopManager: Template not found for %s" % weapon_id)
 			continue
 		
 		# Create a modified copy for common shop items
@@ -92,7 +92,7 @@ func _add_common_weapons():
 				"quantity": 1
 			}
 			
-			print("ShopManager: Added %s (common) for %d copper" % [equipment.display_name, price])
+			Log.debug("shop", "ShopManager: Added %s (common) for %d copper" % [equipment.display_name, price])
 
 func _add_common_armor():
 	"""Add one of each common armor piece"""
@@ -107,7 +107,7 @@ func _add_common_armor():
 		# Get the template data
 		var template = ItemManager.get_equipment_template(armor_id)
 		if template.is_empty():
-			print("ShopManager: Template not found for %s" % armor_id)
+			Log.debug("shop", "ShopManager: Template not found for %s" % armor_id)
 			continue
 		
 		# Create a modified copy for common shop items
@@ -136,7 +136,7 @@ func _add_common_armor():
 				"quantity": 1
 			}
 			
-			print("ShopManager: Added %s (common) for %d copper" % [equipment.display_name, price])
+			Log.debug("shop", "ShopManager: Added %s (common) for %d copper" % [equipment.display_name, price])
 
 func get_consumable_item(item_id: String) -> Item:
 	"""Get consumable item (unlimited stock)"""
@@ -171,16 +171,16 @@ func get_equipment_list() -> Array:
 func purchase_equipment(item_key: String) -> bool:
 	"""Purchase equipment (removes from shop inventory)"""
 	if not equipment_inventory.has(item_key):
-		print("ShopManager: Equipment not found: %s" % item_key)
+		Log.debug("shop", "ShopManager: Equipment not found: %s" % item_key)
 		return false
 	
 	var item_data = equipment_inventory[item_key]
 	if item_data["quantity"] <= 0:
-		print("ShopManager: Equipment out of stock: %s" % item_key)
+		Log.debug("shop", "ShopManager: Equipment out of stock: %s" % item_key)
 		return false
 	
 	equipment_inventory.erase(item_key)
-	print("ShopManager: Sold equipment: %s" % item_data["equipment"].display_name)
+	Log.debug("shop", "ShopManager: Sold equipment: %s" % item_data["equipment"].display_name)
 	return true
 
 # === NEW: BUYBACK SYSTEM ===
@@ -210,7 +210,7 @@ func add_to_buyback(item: Variant, sell_price: int, quantity: int = 1):
 			"quantity": quantity
 		}
 	
-	print("ShopManager: Added to buyback - %s (x%d) for %d copper" % [item.display_name, quantity, buyback_price])
+	Log.debug("shop", "ShopManager: Added to buyback - %s (x%d) for %d copper" % [item.display_name, quantity, buyback_price])
 
 func get_buyback_list() -> Array:
 	"""Get list of items available for buyback"""
@@ -254,7 +254,7 @@ func buyback_item(item_key: String, quantity: int = 1) -> Dictionary:
 func clear_buyback_on_floor_change(new_floor: int):
 	"""Clear buyback inventory when floor changes"""
 	if new_floor != last_floor:
-		print("ShopManager: Floor changed from %d to %d - clearing buyback" % [last_floor, new_floor])
+		Log.debug("shop", "ShopManager: Floor changed from %d to %d - clearing buyback" % [last_floor, new_floor])
 		buyback_inventory.clear()
 		last_floor = new_floor
 
@@ -263,4 +263,4 @@ func reset_shop():
 	equipment_inventory.clear()
 	buyback_inventory.clear()
 	shop_initialized = false
-	print("ShopManager: Shop inventory reset")
+	Log.debug("shop", "ShopManager: Shop inventory reset")

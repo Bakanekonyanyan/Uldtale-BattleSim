@@ -120,14 +120,14 @@ static func _extract_skill_effects(result: ActionResult, skill: Skill, message: 
 	var damage_match = damage_regex.search(message)
 	if damage_match:
 		result.damage = int(damage_match.get_string(1))
-		print("[ACTIONRESULT] Extracted damage: %d from message: %s" % [result.damage, message])
+		Log.debug("battle", "[ACTIONRESULT] Extracted damage: %d from message: %s" % [result.damage, message])
 	else:
 		# Fallback: Try simpler pattern
 		damage_regex.compile("(\\d+) damage")
 		damage_match = damage_regex.search(message)
 		if damage_match:
 			result.damage = int(damage_match.get_string(1))
-			print("[ACTIONRESULT] Extracted damage (fallback): %d" % result.damage)
+			Log.debug("battle", "[ACTIONRESULT] Extracted damage (fallback): %d" % result.damage)
 	
 	# Extract healing from message
 	var heal_regex = RegEx.new()
@@ -150,7 +150,7 @@ static func _extract_skill_effects(result: ActionResult, skill: Skill, message: 
 					"name": Skill.StatusEffect.keys()[effect_enum],
 					"duration": skill.duration
 				})
-				print("[ACTIONRESULT] Added status effect: %s for %d turns" % [
+				Log.debug("battle", "[ACTIONRESULT] Added status effect: %s for %d turns" % [
 					Skill.StatusEffect.keys()[effect_enum], skill.duration
 				])
 	

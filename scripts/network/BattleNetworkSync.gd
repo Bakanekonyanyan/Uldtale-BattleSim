@@ -30,7 +30,7 @@ func initialize(orch, is_pvp: bool = false):
 	is_pvp_mode = is_pvp
 	
 	if not is_pvp_mode:
-		print("[BATTLE SYNC] Running in PvE mode, no network sync")
+		Log.debug("pvp", "[BATTLE SYNC] Running in PvE mode, no network sync")
 		return
 	
 	if not orch.has_node("/root/ArenaNetworkManager"):
@@ -48,11 +48,11 @@ func initialize(orch, is_pvp: bool = false):
 	my_character = orchestrator.player
 	opponent_character = orchestrator.enemy
 	
-	print("[BATTLE SYNC] Character mapping:")
-	print("  - My peer ID: %d, My character: %s (instance: %s)" % [
+	Log.debug("pvp", "[BATTLE SYNC] Character mapping:")
+	Log.debug("pvp", "  - My peer ID: %d, My character: %s (instance: %s)" % [
 		local_player_id, my_character.name, my_character.get_instance_id()
 	])
-	print("  - Opponent peer ID: %d, Opponent character: %s (instance: %s)" % [
+	Log.debug("pvp", "  - Opponent peer ID: %d, Opponent character: %s (instance: %s)" % [
 		opponent_player_id, opponent_character.name, opponent_character.get_instance_id()
 	])
 	
@@ -65,7 +65,7 @@ func initialize(orch, is_pvp: bool = false):
 		network.match_ended.disconnect(_on_match_ended)
 	network.match_ended.connect(_on_match_ended)
 	
-	print("[BATTLE SYNC] Initialized in PvP mode")
+	Log.debug("pvp", "[BATTLE SYNC] Initialized in PvP mode")
 
 # === TURN MANAGEMENT ===
 
@@ -74,13 +74,13 @@ func on_turn_started(character: CharacterData, is_player: bool):
 	# Determine if it's my turn based on character instance
 	is_my_turn = (character.get_instance_id() == my_character.get_instance_id())
 	
-	print("[BATTLE SYNC] Turn started - %s (instance: %s, my turn: %s)" % [
+	Log.debug("pvp", "[BATTLE SYNC] Turn started - %s (instance: %s, my turn: %s)" % [
 		character.name, character.get_instance_id(), is_my_turn
 	])
 	
 	if not is_my_turn:
 		waiting_for_opponent = true
-		print("[BATTLE SYNC] Now waiting for opponent action")
+		Log.debug("pvp", "[BATTLE SYNC] Now waiting for opponent action")
 	else:
 		waiting_for_opponent = false
 
@@ -97,13 +97,13 @@ func _on_network_action_received(peer_id: int, action_data: Dictionary):
 		
 		if is_status_damage and timestamp == last_status_damage_timestamp:
 			is_duplicate = true
-			print("[BATTLE SYNC] ❌ DUPLICATE status damage detected - Ignoring (timestamp: %d)" % timestamp)
+			Log.debug("pvp", "[BATTLE SYNC] ❌ DUPLICATE status damage detected - Ignoring (timestamp: %d)" % timestamp)
 		elif is_item and timestamp == last_item_timestamp:
 			is_duplicate = true
-			print("[BATTLE SYNC] ❌ DUPLICATE item detected - Ignoring (timestamp: %d)" % timestamp)
+			Log.debug("pvp", "[BATTLE SYNC] ❌ DUPLICATE item detected - Ignoring (timestamp: %d)" % timestamp)
 		elif not is_item and not is_status_damage and timestamp == last_action_timestamp:
 			is_duplicate = true
-			print("[BATTLE SYNC] ❌ DUPLICATE action detected - Ignoring (timestamp: %d)" % timestamp)
+			Log.debug("pvp", "[BATTLE SYNC] ❌ DUPLICATE action detected - Ignoring (timestamp: %d)" % timestamp)
 		
 		if is_duplicate:
 			return
@@ -118,18 +118,18 @@ func _on_network_action_received(peer_id: int, action_data: Dictionary):
 	
 	#  Status damage handling
 	if is_status_damage:
-		print("[BATTLE SYNC] Received status damage sync from peer %d (timestamp: %d)" % [peer_id, timestamp])
+		Log.debug("pvp", "[BATTLE SYNC] Received status damage sync from peer %d (timestamp: %d)" % [peer_id, timestamp])
 		_apply_status_damage(action_data)
 		return
 	
 	if not is_item and not waiting_for_opponent:
-		print("[BATTLE SYNC] Ignoring non-item action - not waiting")
+		Log.debug("pvp", "[BATTLE SYNC] Ignoring non-item action - not waiting")
 		return
 	
 	if not is_item:
 		waiting_for_opponent = false
 	
-	print("[BATTLE SYNC] Received opponent action: type=%d, is_item=%s, from peer=%d, timestamp=%d" % [
+	Log.debug("pvp", "[BATTLE SYNC] Received opponent action: type=%d, is_item=%s, from peer=%d, timestamp=%d" % [
 		action_type, is_item, peer_id, timestamp
 	])
 	
@@ -144,7 +144,7 @@ func _apply_status_damage(data: Dictionary):
 	var healing = data.get("healing", 0)
 	var message = data.get("message", "")
 	
-	print("[BATTLE SYNC] Applying status damage to %s: dmg=%d, heal=%d" % [
+	Log.debug("pvp", "[BATTLE SYNC] Applying status damage to %s: dmg=%d, heal=%d" % [
 		target.name, damage, healing
 	])
 	
@@ -152,7 +152,7 @@ func _apply_status_damage(data: Dictionary):
 	if damage > 0:
 		var old_hp = target.current_hp
 		target.current_hp = max(0, target.current_hp - damage)
-		print("[BATTLE SYNC] Status damage: %s HP %d -> %d" % [
+		Log.debug("pvp", "[BATTLE SYNC] Status damage: %s HP %d -> %d" % [
 			target.name, old_hp, target.current_hp
 		])
 	
@@ -160,7 +160,7 @@ func _apply_status_damage(data: Dictionary):
 	if healing > 0:
 		var old_hp = target.current_hp
 		target.current_hp = min(target.max_hp, target.current_hp + healing)
-		print("[BATTLE SYNC] Status healing: %s HP %d -> %d" % [
+		Log.debug("pvp", "[BATTLE SYNC] Status healing: %s HP %d -> %d" % [
 			target.name, old_hp, target.current_hp
 		])
 	
@@ -187,12 +187,12 @@ func _apply_opponent_action_result(data: Dictionary):
 	# If opponent says "target_is_opponent=false", they're targeting themselves
 	var target = my_character if target_is_opponent else opponent_character
 	
-	print("[BATTLE SYNC] Applying action:")
-	print("  - Actor: %s (instance: %s)" % [actor.name, actor.get_instance_id()])
-	print("  - Target: %s (instance: %s)" % [target.name, target.get_instance_id()])
-	print("  - target_is_opponent: %s" % target_is_opponent)
+	Log.debug("pvp", "[BATTLE SYNC] Applying action:")
+	Log.debug("pvp", "  - Actor: %s (instance: %s)" % [actor.name, actor.get_instance_id()])
+	Log.debug("pvp", "  - Target: %s (instance: %s)" % [target.name, target.get_instance_id()])
+	Log.debug("pvp", "  - target_is_opponent: %s" % target_is_opponent)
 	
-	print("[BATTLE SYNC] Before - My HP: %d/%d, Opponent HP: %d/%d" % [
+	Log.debug("pvp", "[BATTLE SYNC] Before - My HP: %d/%d, Opponent HP: %d/%d" % [
 		my_character.current_hp, my_character.max_hp,
 		opponent_character.current_hp, opponent_character.max_hp
 	])
@@ -212,26 +212,26 @@ func _apply_opponent_action_result(data: Dictionary):
 	# Apply costs to actor
 	if sp_cost > 0:
 		actor.current_sp = max(0, actor.current_sp - sp_cost)
-		print("[BATTLE SYNC] Applied SP cost: %d to %s (now: %d/%d)" % [
+		Log.debug("pvp", "[BATTLE SYNC] Applied SP cost: %d to %s (now: %d/%d)" % [
 			sp_cost, actor.name, actor.current_sp, actor.max_sp
 		])
 	
 	if mp_cost > 0:
 		actor.current_mp = max(0, actor.current_mp - mp_cost)
-		print("[BATTLE SYNC] Applied MP cost: %d to %s (now: %d/%d)" % [
+		Log.debug("pvp", "[BATTLE SYNC] Applied MP cost: %d to %s (now: %d/%d)" % [
 			mp_cost, actor.name, actor.current_mp, actor.max_mp
 		])
 	
 	# Apply resource gains to actor
 	if sp_gain > 0:
 		actor.current_sp = min(actor.max_sp, actor.current_sp + sp_gain)
-		print("[BATTLE SYNC] Applied SP gain: %d to %s (now: %d/%d)" % [
+		Log.debug("pvp", "[BATTLE SYNC] Applied SP gain: %d to %s (now: %d/%d)" % [
 			sp_gain, actor.name, actor.current_sp, actor.max_sp
 		])
 	
 	if mp_gain > 0:
 		actor.current_mp = min(actor.max_mp, actor.current_mp + mp_gain)
-		print("[BATTLE SYNC] Applied MP gain: %d to %s (now: %d/%d)" % [
+		Log.debug("pvp", "[BATTLE SYNC] Applied MP gain: %d to %s (now: %d/%d)" % [
 			mp_gain, actor.name, actor.current_mp, actor.max_mp
 		])
 	
@@ -239,7 +239,7 @@ func _apply_opponent_action_result(data: Dictionary):
 	if damage > 0:
 		var old_hp = target.current_hp
 		target.current_hp = max(0, target.current_hp - damage)
-		print("[BATTLE SYNC] Applied %d damage to %s: %d -> %d (max: %d)" % [
+		Log.debug("pvp", "[BATTLE SYNC] Applied %d damage to %s: %d -> %d (max: %d)" % [
 			damage, target.name, old_hp, target.current_hp, target.max_hp
 		])
 	
@@ -251,14 +251,14 @@ func _apply_opponent_action_result(data: Dictionary):
 			# Drain: healing goes to actor
 			var old_hp = actor.current_hp
 			actor.current_hp = min(actor.max_hp, actor.current_hp + healing)
-			print("[BATTLE SYNC] Applied %d healing to %s (drain): %d -> %d" % [
+			Log.debug("pvp", "[BATTLE SYNC] Applied %d healing to %s (drain): %d -> %d" % [
 				healing, actor.name, old_hp, actor.current_hp
 			])
 		else:
 			# Normal: healing goes to target
 			var old_hp = target.current_hp
 			target.current_hp = min(target.max_hp, target.current_hp + healing)
-			print("[BATTLE SYNC] Applied %d healing to %s: %d -> %d" % [
+			Log.debug("pvp", "[BATTLE SYNC] Applied %d healing to %s: %d -> %d" % [
 				healing, target.name, old_hp, target.current_hp
 			])
 	
@@ -271,32 +271,32 @@ func _apply_opponent_action_result(data: Dictionary):
 			if status_name != "" and Skill.StatusEffect.has(status_name):
 				var status_enum = Skill.StatusEffect[status_name]
 				target.status_manager.apply_effect(status_enum, duration)
-				print("[BATTLE SYNC] Applied %s to %s for %d turns" % [
+				Log.debug("pvp", "[BATTLE SYNC] Applied %s to %s for %d turns" % [
 					status_name, target.name, duration
 				])
 	
 	#  NEW: Remove status effects from target (cure items)
 	if not status_effects_removed.is_empty() and target.status_manager:
-		print("[BATTLE SYNC] Processing %d status effect removals on %s" % [
+		Log.debug("pvp", "[BATTLE SYNC] Processing %d status effect removals on %s" % [
 			status_effects_removed.size(), target.name
 		])
 		for removal_data in status_effects_removed:
 			var status_name = removal_data.get("name", "")
-			print("[BATTLE SYNC] Attempting to remove: %s" % status_name)
+			Log.debug("pvp", "[BATTLE SYNC] Attempting to remove: %s" % status_name)
 			
 			if status_name == "ALL":
 				# Cure all effects (holy water)
 				target.status_manager.clear_all_effects()
-				print("[BATTLE SYNC] Removed ALL status effects from %s" % target.name)
+				Log.debug("pvp", "[BATTLE SYNC] Removed ALL status effects from %s" % target.name)
 			elif status_name != "" and Skill.StatusEffect.has(status_name):
 				# Cure specific effect
 				var status_enum = Skill.StatusEffect[status_name]
-				print("[BATTLE SYNC] Checking if %s has %s..." % [target.name, status_name])
+				Log.debug("pvp", "[BATTLE SYNC] Checking if %s has %s..." % [target.name, status_name])
 				if target.status_manager.active_effects.has(status_enum):
 					var removal_msg = target.status_manager.remove_effect(status_enum)
-					print("[BATTLE SYNC] Removed %s from %s: %s" % [status_name, target.name, removal_msg])
+					Log.debug("pvp", "[BATTLE SYNC] Removed %s from %s: %s" % [status_name, target.name, removal_msg])
 				else:
-					print("[BATTLE SYNC] WARNING: %s does NOT have %s active!" % [target.name, status_name])
+					Log.debug("pvp", "[BATTLE SYNC] WARNING: %s does NOT have %s active!" % [target.name, status_name])
 	
 	# Apply buffs/debuffs to target
 	if not buffs_debuffs.is_empty() and target.buff_manager:
@@ -310,12 +310,12 @@ func _apply_opponent_action_result(data: Dictionary):
 				var attr = Skill.AttributeTarget[stat_name]
 				if is_debuff:
 					target.buff_manager.apply_debuff(attr, abs(amount), duration)
-					print("[BATTLE SYNC] Applied DEBUFF to %s: %s -%d for %d turns" % [
+					Log.debug("pvp", "[BATTLE SYNC] Applied DEBUFF to %s: %s -%d for %d turns" % [
 						target.name, stat_name, abs(amount), duration
 					])
 				else:
 					target.buff_manager.apply_buff(attr, amount, duration)
-					print("[BATTLE SYNC] Applied BUFF to %s: %s +%d for %d turns" % [
+					Log.debug("pvp", "[BATTLE SYNC] Applied BUFF to %s: %s +%d for %d turns" % [
 						target.name, stat_name, amount, duration
 					])
 	
@@ -323,9 +323,9 @@ func _apply_opponent_action_result(data: Dictionary):
 	if message != "":
 		var log_color = "red" if target == my_character else "cyan"
 		orchestrator.ui_controller.add_combat_log(message, log_color)
-		print("[BATTLE SYNC] Combat log: %s (color: %s)" % [message, log_color])
+		Log.debug("pvp", "[BATTLE SYNC] Combat log: %s (color: %s)" % [message, log_color])
 	
-	print("[BATTLE SYNC] After - My HP: %d/%d, Opponent HP: %d/%d" % [
+	Log.debug("pvp", "[BATTLE SYNC] After - My HP: %d/%d, Opponent HP: %d/%d" % [
 		my_character.current_hp, my_character.max_hp,
 		opponent_character.current_hp, opponent_character.max_hp
 	])
@@ -346,28 +346,28 @@ func _apply_opponent_action_result(data: Dictionary):
 	if not is_item:
 		var timestamp = data.get("timestamp", 0)
 		if timestamp > 0 and timestamp == last_turn_end_timestamp:
-			print("[BATTLE SYNC] ❌ Turn already ended for timestamp %d - skipping duplicate" % timestamp)
+			Log.debug("pvp", "[BATTLE SYNC] ❌ Turn already ended for timestamp %d - skipping duplicate" % timestamp)
 			return
 		last_turn_end_timestamp = timestamp
 		
-		print("[BATTLE SYNC]  Opponent main action complete - ending their turn")
+		Log.debug("pvp", "[BATTLE SYNC]  Opponent main action complete - ending their turn")
 		orchestrator.finish_remote_turn()
 	else:
-		print("[BATTLE SYNC] Opponent item complete - NO turn change")
+		Log.debug("pvp", "[BATTLE SYNC] Opponent item complete - NO turn change")
 
 # === BATTLE END ===
 
 func _on_match_ended(winner_id: int):
 	"""Called when opponent ends match via network signal"""
 	var i_won = (winner_id == local_player_id)
-	print("[BATTLE SYNC] Match ended via network signal, winner: %d (me: %s)" % [winner_id, i_won])
+	Log.debug("pvp", "[BATTLE SYNC] Match ended via network signal, winner: %d (me: %s)" % [winner_id, i_won])
 	# Stop the local turn loop - the result was decided on the other client
 	orchestrator.end_battle_from_network()
 	await _show_battle_end_dialog(i_won)
 
 func _cleanup_battle():
 	"""Clean up network resources"""
-	print("[BATTLE SYNC] Cleaning up battle")
+	Log.debug("pvp", "[BATTLE SYNC] Cleaning up battle")
 	
 	if network:
 		if network.action_received.is_connected(_on_network_action_received):
@@ -396,19 +396,19 @@ func send_status_damage(character: CharacterData, status_result: ActionResult):
 		"target_is_opponent": target_is_opponent
 	}
 	
-	print("[BATTLE SYNC] Sending status damage: dmg=%d, heal=%d to %s (target_is_opp=%s)" % [
+	Log.debug("pvp", "[BATTLE SYNC] Sending status damage: dmg=%d, heal=%d to %s (target_is_opp=%s)" % [
 		status_data["damage"], status_data["healing"], character.name, target_is_opponent
 	])
 	network.send_action(status_data)
 
 func on_battle_end(player_won: bool):
 	"""Called when battle ends - notify opponent and show dialog"""
-	print("[BATTLE SYNC] Battle ended - Player won: ", player_won)
+	Log.debug("pvp", "[BATTLE SYNC] Battle ended - Player won: ", player_won)
 	
 	var winner_id = local_player_id if player_won else opponent_player_id
 	
 	network.send_battle_end(winner_id)
-	print("[BATTLE SYNC] Sent battle end notification to opponent")
+	Log.debug("pvp", "[BATTLE SYNC] Sent battle end notification to opponent")
 	
 	await _show_battle_end_dialog(player_won)
 
@@ -431,19 +431,19 @@ func _show_battle_end_dialog(i_won: bool):
 	await dialog.confirmed
 	dialog.queue_free()
 	
-	print("[BATTLE SYNC] Saving and returning to town...")
+	Log.debug("pvp", "[BATTLE SYNC] Saving and returning to town...")
 	SaveManager.save_game(orchestrator.player)
 	_cleanup_battle()
 	SceneManager.change_to_town(orchestrator.player)
 
 func on_action_selected(action: BattleAction, result):
 	"""Called when local player performs an action - send RESULT to opponent"""
-	print("[BATTLE SYNC] Local action completed: %s" % action.get_description())
+	Log.debug("pvp", "[BATTLE SYNC] Local action completed: %s" % action.get_description())
 	
 	var serialized = _serialize_action_result(action, result)
 	network.send_action(serialized)
 	
-	print("[BATTLE SYNC] Action result sent to opponent: dmg=%d, heal=%d" % [
+	Log.debug("pvp", "[BATTLE SYNC] Action result sent to opponent: dmg=%d, heal=%d" % [
 		serialized.get("damage", 0),
 		serialized.get("healing", 0)
 	])
@@ -482,11 +482,11 @@ func _serialize_action_result(action: BattleAction, result) -> Dictionary:
 		# If I targeted myself, then target_is_opponent = false
 		data["target_is_opponent"] = (target_instance == opponent_instance)
 		
-		print("[BATTLE SYNC] Serializing:")
-		print("  - My character: %s (instance: %s)" % [my_character.name, my_instance])
-		print("  - Opponent: %s (instance: %s)" % [opponent_character.name, opponent_instance])
-		print("  - Target: %s (instance: %s)" % [target.name, target_instance])
-		print("  - target_is_opponent: %s" % data["target_is_opponent"])
+		Log.debug("pvp", "[BATTLE SYNC] Serializing:")
+		Log.debug("pvp", "  - My character: %s (instance: %s)" % [my_character.name, my_instance])
+		Log.debug("pvp", "  - Opponent: %s (instance: %s)" % [opponent_character.name, opponent_instance])
+		Log.debug("pvp", "  - Target: %s (instance: %s)" % [target.name, target_instance])
+		Log.debug("pvp", "  - target_is_opponent: %s" % data["target_is_opponent"])
 	
 	# Extract result data
 	if result:
@@ -528,12 +528,12 @@ func _serialize_action_result(action: BattleAction, result) -> Dictionary:
 		
 		#  NEW: Extract status effect removals (cure items)
 		if "status_effects_removed" in result and result.status_effects_removed is Array:
-			print("[BATTLE SYNC] Extracting %d status effect removals" % result.status_effects_removed.size())
+			Log.debug("pvp", "[BATTLE SYNC] Extracting %d status effect removals" % result.status_effects_removed.size())
 			for effect in result.status_effects_removed:
 				data["status_effects_removed"].append({
 					"name": effect.get("name", "")
 				})
-				print("[BATTLE SYNC] Added removal: %s" % effect.get("name", ""))
+				Log.debug("pvp", "[BATTLE SYNC] Added removal: %s" % effect.get("name", ""))
 		
 		# Extract buffs/debuffs
 		if "buffs" in result and result.buffs is Array:
@@ -561,7 +561,7 @@ func _serialize_action_result(action: BattleAction, result) -> Dictionary:
 		BattleAction.ActionType.ITEM:
 			data["item_id"] = action.item_data.id if action.item_data else ""
 	
-	print("[BATTLE SYNC] Serialized: dmg=%d, heal=%d, sp=%d, mp=%d, target_is_opp=%s, status_removed=%d" % [
+	Log.debug("pvp", "[BATTLE SYNC] Serialized: dmg=%d, heal=%d, sp=%d, mp=%d, target_is_opp=%s, status_removed=%d" % [
 		data["damage"], data["healing"], data["sp_cost"], data["mp_cost"], data["target_is_opponent"],
 		data["status_effects_removed"].size()
 	])

@@ -43,7 +43,7 @@ func start_dungeon(player: CharacterData, start_floor: int = 1, location_id: Str
 	EnemyFactory.set_location(current_location)
 	MomentumSystem.clear_accumulated_loot()  # no leftovers from a previous expedition
 	
-	print("DungeonState: Started %s at floor %d" % [LocationManager.get_display_name(current_location), current_floor])
+	Log.debug("dungeon_state", "DungeonState: Started %s at floor %d" % [LocationManager.get_display_name(current_location), current_floor])
 	emit_signal("floor_changed", current_floor)
 	GameEvents.expedition_started.emit(current_location, current_floor)
 
@@ -55,28 +55,28 @@ func advance_wave() -> Dictionary:
 	if current_wave == waves_per_floor + 1:
 		is_boss_fight = true
 		emit_signal("boss_spawned")
-		print("DungeonState: Boss wave! (Wave %d)" % current_wave)
+		Log.debug("dungeon_state", "DungeonState: Boss wave! (Wave %d)" % current_wave)
 	else:
 		is_boss_fight = false
 		emit_signal("wave_changed", current_wave)
-		print("DungeonState: Wave %d/%d" % [current_wave, waves_per_floor])
+		Log.debug("dungeon_state", "DungeonState: Wave %d/%d" % [current_wave, waves_per_floor])
 	
 	# Generate enemy group
 	enemy_group = EnemyGroup.new()
 	enemy_group.initialize(current_floor, current_wave, is_boss_fight)
 	active_enemies = enemy_group.enemies.duplicate()
 	
-	print("DungeonState: Generated %d enemies for battle" % active_enemies.size())
+	Log.debug("dungeon_state", "DungeonState: Generated %d enemies for battle" % active_enemies.size())
 	
 	return get_battle_data()
 
 func advance_floor() -> bool:
 	"""Move to next floor. Returns false if max floor reached."""
 	if current_floor >= max_floor:
-		print("DungeonState: Max floor reached!")
+		Log.debug("dungeon_state", "DungeonState: Max floor reached!")
 		return false
 	if active_player and active_player.is_player and RankManager.is_floor_capped(active_player, current_floor + 1):
-		print("DungeonState: floor %d needs a higher Adventurer rank" % (current_floor + 1))
+		Log.debug("dungeon_state", "DungeonState: floor %d needs a higher Adventurer rank" % (current_floor + 1))
 		return false
 	
 	current_floor += 1
@@ -90,7 +90,7 @@ func advance_floor() -> bool:
 	
 	EnemyFactory.set_location(current_location)  # mixed locations re-roll the boss race
 	
-	print("DungeonState: Advanced to floor %d, wave reset to 0" % current_floor)
+	Log.debug("dungeon_state", "DungeonState: Advanced to floor %d, wave reset to 0" % current_floor)
 	emit_signal("floor_changed", current_floor)
 	return true
 
@@ -139,4 +139,4 @@ func end_dungeon(cleared: bool = false):
 	is_boss_fight = false
 	active_enemies.clear()
 	enemy_group = null
-	print("DungeonState: Dungeon ended")
+	Log.debug("dungeon_state", "DungeonState: Dungeon ended")

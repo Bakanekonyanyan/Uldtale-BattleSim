@@ -23,7 +23,7 @@ func apply_effect(effect: Skill.StatusEffect, duration: int) -> String:
 	var effect_name = Skill.StatusEffect.keys()[effect]
 	var data = _get_effect_data(effect_name)
 	
-	print("[STATUS MGR] apply_effect: %s (enum=%d) for %d turns" % [effect_name, effect, duration])
+	Log.debug("status", "[STATUS MGR] apply_effect: %s (enum=%d) for %d turns" % [effect_name, effect, duration])
 	
 	# BLEED: Stackable logic
 	if effect == Skill.StatusEffect.BLEED:
@@ -34,14 +34,14 @@ func apply_effect(effect: Skill.StatusEffect, duration: int) -> String:
 		active_effects[effect] = duration
 		_apply_stat_modifiers(effect, true)
 		
-		print("[STATUS MGR] Added to active_effects: key=%d, value=%d" % [effect, duration])
-		print("[STATUS MGR] active_effects now has %d entries" % active_effects.size())
+		Log.debug("status", "[STATUS MGR] Added to active_effects: key=%d, value=%d" % [effect, duration])
+		Log.debug("status", "[STATUS MGR] active_effects now has %d entries" % active_effects.size())
 		
 		# Recalculate derived stats (attack, accuracy/dodge modifiers...)
 		character.calculate_secondary_attributes()
 		
 		if effect == Skill.StatusEffect.REGENERATION:
-			print("[STATUS] %s gained REGENERATION" % character.name)
+			Log.debug("status", "[STATUS] %s gained REGENERATION" % character.name)
 		
 		return "%s is now affected by %s for %d turns" % [character.name, effect_name, duration]
 	else:
@@ -111,17 +111,17 @@ func clear_all_effects():
 
 func update_effects() -> String:
 	""" CRITICAL DEBUG VERSION"""
-	print("\n[STATUS MGR] ========== update_effects START ==========")
-	print("[STATUS MGR] Character: %s" % character.name)
-	print("[STATUS MGR] active_effects dictionary size: %d" % active_effects.size())
-	print("[STATUS MGR] active_effects keys: %s" % str(active_effects.keys()))
-	print("[STATUS MGR] active_effects values: %s" % str(active_effects.values()))
+	Log.debug("status", "\n[STATUS MGR] ========== update_effects START ==========")
+	Log.debug("status", "[STATUS MGR] Character: %s" % character.name)
+	Log.debug("status", "[STATUS MGR] active_effects dictionary size: %d" % active_effects.size())
+	Log.debug("status", "[STATUS MGR] active_effects keys: %s" % str(active_effects.keys()))
+	Log.debug("status", "[STATUS MGR] active_effects values: %s" % str(active_effects.values()))
 	
 	# Debug: Print each effect in detail
 	for effect_key in active_effects.keys():
 		var effect_name = Skill.StatusEffect.keys()[effect_key]
 		var duration = active_effects[effect_key]
-		print("[STATUS MGR]   - %s (enum=%d): %d turns" % [effect_name, effect_key, duration])
+		Log.debug("status", "[STATUS MGR]   - %s (enum=%d): %d turns" % [effect_name, effect_key, duration])
 	
 	var message = ""
 	var effects_to_remove = []
@@ -130,33 +130,33 @@ func update_effects() -> String:
 	for effect in active_effects.keys():
 		loop_count += 1
 		var effect_name = Skill.StatusEffect.keys()[effect]
-		print("[STATUS MGR] Loop iteration %d: Processing %s (enum=%d)" % [loop_count, effect_name, effect])
+		Log.debug("status", "[STATUS MGR] Loop iteration %d: Processing %s (enum=%d)" % [loop_count, effect_name, effect])
 		
 		# Decrement
 		var old_duration = active_effects[effect]
 		active_effects[effect] -= 1
 		var new_duration = active_effects[effect]
-		print("[STATUS MGR]   Duration: %d → %d" % [old_duration, new_duration])
+		Log.debug("status", "[STATUS MGR]   Duration: %d → %d" % [old_duration, new_duration])
 		
 		if active_effects[effect] <= 0:
-			print("[STATUS MGR]   Effect expired, marking for removal")
+			Log.debug("status", "[STATUS MGR]   Effect expired, marking for removal")
 			effects_to_remove.append(effect)
 		else:
-			print("[STATUS MGR]   Calling _process_effect_damage...")
+			Log.debug("status", "[STATUS MGR]   Calling _process_effect_damage...")
 			var effect_msg = _process_effect_damage(effect)
-			print("[STATUS MGR]   _process_effect_damage returned: '%s'" % effect_msg)
+			Log.debug("status", "[STATUS MGR]   _process_effect_damage returned: '%s'" % effect_msg)
 			message += effect_msg
 	
-	print("[STATUS MGR] Loop completed, processed %d effects" % loop_count)
-	print("[STATUS MGR] Effects to remove: %d" % effects_to_remove.size())
+	Log.debug("status", "[STATUS MGR] Loop completed, processed %d effects" % loop_count)
+	Log.debug("status", "[STATUS MGR] Effects to remove: %d" % effects_to_remove.size())
 	
 	for effect in effects_to_remove:
 		var removal_msg = remove_effect(effect)
-		print("[STATUS MGR] Removed effect, message: %s" % removal_msg)
+		Log.debug("status", "[STATUS MGR] Removed effect, message: %s" % removal_msg)
 		message += removal_msg
 	
-	print("[STATUS MGR] Final message: '%s'" % message)
-	print("[STATUS MGR] ========== update_effects END ==========\n")
+	Log.debug("status", "[STATUS MGR] Final message: '%s'" % message)
+	Log.debug("status", "[STATUS MGR] ========== update_effects END ==========\n")
 	
 	return message
 
@@ -167,10 +167,10 @@ func _process_effect_damage(effect: Skill.StatusEffect) -> String:
 	var effect_name = Skill.StatusEffect.keys()[effect]
 	var data = _get_effect_data(effect_name)
 	
-	print("[PROCESS] _process_effect_damage: %s" % effect_name)
+	Log.debug("status", "[PROCESS] _process_effect_damage: %s" % effect_name)
 	
 	if data.is_empty():
-		print("[PROCESS] No data found, using fallback")
+		Log.debug("status", "[PROCESS] No data found, using fallback")
 		return _fallback_damage(effect)
 	
 	# BLEED
@@ -181,36 +181,36 @@ func _process_effect_damage(effect: Skill.StatusEffect) -> String:
 	
 	#  REGENERATION
 	if effect == Skill.StatusEffect.REGENERATION:
-		print("[REGEN] REGENERATION branch entered!")
-		print("[REGEN] HP before: %d/%d" % [character.current_hp, character.max_hp])
+		Log.debug("status", "[REGEN] REGENERATION branch entered!")
+		Log.debug("status", "[REGEN] HP before: %d/%d" % [character.current_hp, character.max_hp])
 		
 		var heal_percent = float(data.get("damage_value", 0.05))
 		var heal_amount = int(character.max_hp * heal_percent)
 		
-		print("[REGEN] Heal percent: %.2f, heal amount: %d" % [heal_percent, heal_amount])
+		Log.debug("status", "[REGEN] Heal percent: %.2f, heal amount: %d" % [heal_percent, heal_amount])
 		
 		var hp_before = character.current_hp
 		var actual_heal = min(heal_amount, character.max_hp - character.current_hp)
 		
-		print("[REGEN] Actual heal (capped): %d" % actual_heal)
+		Log.debug("status", "[REGEN] Actual heal (capped): %d" % actual_heal)
 		
 		if actual_heal > 0:
-			print("[REGEN] Calling character.heal(%d)..." % actual_heal)
+			Log.debug("status", "[REGEN] Calling character.heal(%d)..." % actual_heal)
 			var healed = character.heal(actual_heal)
-			print("[REGEN] character.heal() returned: %d" % healed)
+			Log.debug("status", "[REGEN] character.heal() returned: %d" % healed)
 			
 			var hp_after = character.current_hp
-			print("[REGEN] HP after: %d/%d" % [hp_after, character.max_hp])
+			Log.debug("status", "[REGEN] HP after: %d/%d" % [hp_after, character.max_hp])
 			
 			message += "[color=green]%s regenerated %d HP (%d → %d/%d)[/color]\n" % [
 				character.name, actual_heal, hp_before, hp_after, character.max_hp
 			]
 			
-			print("[REGEN] Message created: %s" % message)
+			Log.debug("status", "[REGEN] Message created: %s" % message)
 		else:
 			message += "%s's regeneration has no effect (already at max HP)\n" % character.name
 		
-		print("[REGEN] Returning message")
+		Log.debug("status", "[REGEN] Returning message")
 		return message
 	
 	# ENRAGED
@@ -299,7 +299,7 @@ func _get_effect_data(effect_name: String) -> Dictionary:
 	if StatusEffects:  # Direct reference to autoload
 		var data = StatusEffects.get_effect_data(effect_name)
 		if not data.is_empty():
-			print("[STATUS MGR] Got data for %s: %s" % [effect_name, str(data)])
+			Log.debug("status", "[STATUS MGR] Got data for %s: %s" % [effect_name, str(data)])
 		return data
 	else:
 		push_error("StatusEffectManager: StatusEffects autoload not found!")

@@ -97,7 +97,7 @@ func set_cooldown(skill_name: String, turns: int):
 	"""Set a skill on cooldown"""
 	if turns > 0:
 		skill_cooldowns[skill_name] = turns
-		print("%s's %s on cooldown: %d turns" % [character.name, skill_name, turns])
+		Log.debug("skill_progression", "%s's %s on cooldown: %d turns" % [character.name, skill_name, turns])
 
 func is_skill_ready(skill_name: String) -> bool:
 	"""Check if skill is off cooldown"""
@@ -118,7 +118,7 @@ func reduce_cooldowns():
 			skill_cooldowns.erase(skill_name)
 	
 	if not ready_skills.is_empty():
-		print("%s: Skills ready: %s" % [character.name, ", ".join(ready_skills)])
+		Log.debug("skill_progression", "%s: Skills ready: %s" % [character.name, ", ".join(ready_skills)])
 
 func clear_cooldowns():
 	"""Remove all cooldowns"""

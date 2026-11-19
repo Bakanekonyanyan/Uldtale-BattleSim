@@ -229,7 +229,7 @@ func get_available_weapon_types() -> Array:
 	# Load weapons data
 	var weapons_data = _load_weapons_data()
 	if not weapons_data:
-		print("ProficiencyManager: Failed to load weapons data")
+		Log.debug("proficiency", "ProficiencyManager: Failed to load weapons data")
 		return available
 	
 	# Check main_hand weapons
@@ -239,7 +239,7 @@ func get_available_weapon_types() -> Array:
 			for weapon_key in weapons_data["main_hand"]["one_handed"]:
 				var weapon_data = weapons_data["main_hand"]["one_handed"][weapon_key]
 				if typeof(weapon_data) != TYPE_DICTIONARY:
-					print("ProficiencyManager: Invalid weapon data for %s" % weapon_key)
+					Log.debug("proficiency", "ProficiencyManager: Invalid weapon data for %s" % weapon_key)
 					continue
 				if _can_equip_weapon(weapon_data, char_class):
 					available.append(weapon_key)
@@ -249,7 +249,7 @@ func get_available_weapon_types() -> Array:
 			for weapon_key in weapons_data["main_hand"]["two_handed"]:
 				var weapon_data = weapons_data["main_hand"]["two_handed"][weapon_key]
 				if typeof(weapon_data) != TYPE_DICTIONARY:
-					print("ProficiencyManager: Invalid weapon data for %s" % weapon_key)
+					Log.debug("proficiency", "ProficiencyManager: Invalid weapon data for %s" % weapon_key)
 					continue
 				if _can_equip_weapon(weapon_data, char_class):
 					available.append(weapon_key)
@@ -261,7 +261,7 @@ func get_available_weapon_types() -> Array:
 			for shield_key in weapons_data["off_hand"]["shield"]:
 				var shield_data = weapons_data["off_hand"]["shield"][shield_key]
 				if typeof(shield_data) != TYPE_DICTIONARY:
-					print("ProficiencyManager: Invalid shield data for %s" % shield_key)
+					Log.debug("proficiency", "ProficiencyManager: Invalid shield data for %s" % shield_key)
 					continue
 				if _can_equip_weapon(shield_data, char_class):
 					available.append(shield_key)
@@ -271,7 +271,7 @@ func get_available_weapon_types() -> Array:
 			for source_key in weapons_data["off_hand"]["source"]:
 				var source_data = weapons_data["off_hand"]["source"][source_key]
 				if typeof(source_data) != TYPE_DICTIONARY:
-					print("ProficiencyManager: Invalid source data for %s" % source_key)
+					Log.debug("proficiency", "ProficiencyManager: Invalid source data for %s" % source_key)
 					continue
 				if _can_equip_weapon(source_data, char_class):
 					available.append(source_key)
@@ -338,7 +338,7 @@ func _load_weapons_data() -> Dictionary:
 	"""Load weapons.json data"""
 	var file_path = "res://data/items/weapons.json"
 	if not FileAccess.file_exists(file_path):
-		print("ProficiencyManager: weapons.json not found at: ", file_path)
+		Log.debug("proficiency", "ProficiencyManager: weapons.json not found at: ", file_path)
 		return {}
 	
 	var file = FileAccess.open(file_path, FileAccess.READ)
@@ -349,7 +349,7 @@ func _load_weapons_data() -> Dictionary:
 	var error = json.parse(json_text)
 	
 	if error != OK:
-		print("ProficiencyManager: Error parsing weapons.json")
+		Log.debug("proficiency", "ProficiencyManager: Error parsing weapons.json")
 		return {}
 	
 	return json.data
@@ -358,7 +358,7 @@ func _load_armors_data() -> Dictionary:
 	"""Load armors.json data"""
 	var file_path = "res://data/items/armors.json"
 	if not FileAccess.file_exists(file_path):
-		print("ProficiencyManager: armors.json not found at: ", file_path)
+		Log.debug("proficiency", "ProficiencyManager: armors.json not found at: ", file_path)
 		return {}
 	
 	var file = FileAccess.open(file_path, FileAccess.READ)
@@ -369,7 +369,7 @@ func _load_armors_data() -> Dictionary:
 	var error = json.parse(json_text)
 	
 	if error != OK:
-		print("ProficiencyManager: Error parsing armors.json")
+		Log.debug("proficiency", "ProficiencyManager: Error parsing armors.json")
 		return {}
 	
 	return json.data

@@ -32,7 +32,7 @@ func initialize(p_combat: CombatEngine, p_visual: BattleVisualManager, p_ui: Bat
 ## Execute any action. `announce` logs "X uses Y!" first (used for enemy turns).
 func execute(action: BattleAction, announce: bool = false) -> Outcome:
 	var outcome = Outcome.new()
-	print("ActionExecutor: %s" % action.get_description())
+	Log.debug("battle", "ActionExecutor: %s" % action.get_description())
 
 	if announce:
 		ui_controller.add_combat_log("%s uses %s!" % [action.actor.name, _get_action_name(action)], "red")

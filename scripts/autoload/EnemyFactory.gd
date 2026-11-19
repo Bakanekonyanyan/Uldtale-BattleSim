@@ -53,7 +53,7 @@ func set_location(location_id: String) -> void:
 		location_id = LocationManager.DEFAULT_LOCATION
 	current_location = location_id
 	current_dungeon_race = _roll_race()
-	print("EnemyFactory: Location %s (headline race: %s)" % [
+	Log.debug("enemies", "EnemyFactory: Location %s (headline race: %s)" % [
 		LocationManager.get_display_name(location_id), current_dungeon_race
 	])
 
@@ -231,9 +231,9 @@ func apply_enemy_scaling(enemy: CharacterData, floor: int, wave: int, is_boss: b
 	enemy.fortitude = int(enemy.fortitude * total_multiplier)
 	
 	if momentum_level > 0:
-		print("Enemy scaled with momentum x%d: +%d%% stats" % [momentum_level, int((momentum_multiplier - 1.0) * 100)])
+		Log.debug("enemies", "Enemy scaled with momentum x%d: +%d%% stats" % [momentum_level, int((momentum_multiplier - 1.0) * 100)])
 	
-	print("Floor %d (Tier %d): Base multiplier %.2f, Total multiplier: %.2f" % [floor, difficulty_tier, base_multiplier, total_multiplier])
+	Log.debug("enemies", "Floor %d (Tier %d): Base multiplier %.2f, Total multiplier: %.2f" % [floor, difficulty_tier, base_multiplier, total_multiplier])
 
 func get_difficulty_tier(floor: int) -> int:
 	"""Returns difficulty tier 1-8 based on floor"""
@@ -364,7 +364,7 @@ func give_enemy_equipment(enemy: CharacterData, floor: int, is_boss: bool = fals
 					equipped_items.append(item)
 					enemy.set_meta("equipped_items", equipped_items)
 				
-				print("%s equipped ilvl %d %s: %s (%s)" % [
+				Log.debug("enemies", "%s equipped ilvl %d %s: %s (%s)" % [
 					enemy.name, 
 					item.item_level, 
 					slot, 
@@ -372,7 +372,7 @@ func give_enemy_equipment(enemy: CharacterData, floor: int, is_boss: bool = fals
 					item.rarity
 				])
 	
-	print("Enemy %s equipped %d armor pieces (minimum: %d)" % [
+	Log.debug("enemies", "Enemy %s equipped %d armor pieces (minimum: %d)" % [
 		enemy.name, armor_equipped_count, guaranteed_armor_pieces
 	])
 
@@ -419,7 +419,7 @@ func give_enemy_items(enemy: CharacterData, floor: int, is_boss: bool = false, m
 				if is_boss:
 					quantity += 1
 				enemy.inventory.add_item(item, quantity)
-				print("Enemy received %dx %s" % [quantity, item.display_name])
+				Log.debug("enemies", "Enemy received %dx %s" % [quantity, item.display_name])
 
 ## Stats from race + class data. `skill_list` replaces the class's own skills
 ## (archetype enemies roll theirs); empty uses class_data["skills"].

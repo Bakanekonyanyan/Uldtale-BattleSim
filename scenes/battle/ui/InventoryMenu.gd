@@ -115,7 +115,7 @@ func _get_item_type(item) -> int:
 	if script and script.has_script_property_default_value("item_type"):
 		return item.item_type
 	
-	print("Warning: Could not determine item_type for item: %s" % item.name)
+	Log.debug("battle", "Warning: Could not determine item_type for item: %s" % item.name)
 	return -1
 
 func _get_item_name(item) -> String:
@@ -133,7 +133,7 @@ func _get_item_name(item) -> String:
 		if id_val != null and id_val != "":
 			return id_val
 	
-	print("Warning: Could not get display_name or id for item: %s" % str(item))
+	Log.debug("battle", "Warning: Could not get display_name or id for item: %s" % str(item))
 	return "Unknown Item"
 
 func _on_item_list_selected(index: int):
@@ -153,7 +153,7 @@ func _on_use_pressed():
 	if not selected_item:
 		return
 	
-	print("InventoryMenu: Using item: %s (target_type: %s)" % [
+	Log.debug("battle", "InventoryMenu: Using item: %s (target_type: %s)" % [
 		selected_item.display_name, 
 		Item.TargetType.keys()[selected_item.target_type]
 	])
@@ -197,7 +197,7 @@ func _show_enemy_target_selection():
 			living_enemies.append(enemy)
 	
 	if living_enemies.is_empty():
-		print("InventoryMenu: No valid enemy targets!")
+		Log.debug("battle", "InventoryMenu: No valid enemy targets!")
 		hide_inventory()
 		if ui_controller.has_method("add_combat_log"):
 			ui_controller.add_combat_log("No valid targets for this item!", "red")
@@ -212,10 +212,10 @@ func _show_enemy_target_selection():
 	ui_controller.show_target_selection(
 		living_enemies,
 		func(target: CharacterData):
-			print("InventoryMenu: Enemy target selected: %s" % target.name)
+			Log.debug("battle", "InventoryMenu: Enemy target selected: %s" % target.name)
 			emit_signal("item_selected", selected_item, target),
 		func():
-			print("InventoryMenu: Target selection cancelled")
+			Log.debug("battle", "InventoryMenu: Target selection cancelled")
 			# Re-show inventory if cancelled
 			show_inventory(player, enemies)
 	)

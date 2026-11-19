@@ -24,7 +24,7 @@ var armor_tab: Button
 var buyback_tab: Button
 
 func _ready():
-	print("ShopScene: _ready called")
+	Log.debug("shop", "ShopScene: _ready called")
 	
 	# Enable multi-select
 	if item_list:
@@ -51,7 +51,7 @@ func _ready():
 	
 	player_character = CharacterManager.get_current_character()
 	if player_character == null:
-		print("Error: No character selected")
+		Log.debug("shop", "Error: No character selected")
 		SceneManager.change_to_character_selection()
 		return
 	
@@ -63,7 +63,7 @@ func _ready():
 	refresh_sell_items()
 	clear_item_info()
 	
-	print("ShopScene: Multi-select enabled")
+	Log.debug("shop", "ShopScene: Multi-select enabled")
 
 var chrome: ScreenChrome
 
@@ -292,7 +292,7 @@ func _on_shop_item_clicked(index: int, _at_position: Vector2, _mouse_button_inde
 	var item = metadata["item"]
 	var price = metadata["price"]
 	
-	print("Shop item selected: %s" % item.display_name)
+	Log.debug("shop", "Shop item selected: %s" % item.display_name)
 	display_item_info(item, price, true)
 
 func _on_sell_item_clicked(index: int, _at_position: Vector2, _mouse_button_index: int):
@@ -389,7 +389,7 @@ func _on_buy_pressed():
 	
 	# Check if player can afford
 	if player_character.currency.copper < total_cost:
-		print("Not enough gold!")
+		Log.debug("shop", "Not enough gold!")
 		var dialog = AcceptDialog.new()
 		dialog.dialog_text = "[color=#FF4444]Not enough gold![/color]\n\nNeed: %d copper\nHave: %d copper" % [total_cost, player_character.currency.copper]
 		dialog.title = "Cannot Purchase"
@@ -404,7 +404,7 @@ func _on_buy_pressed():
 			var price = item_data["price"]
 			player_character.currency.subtract(price)
 			player_character.add_to_pack(item, 1)  # over the carry limit -> stash
-			print("ShopScene: Purchased consumable: %s" % item.display_name)
+			Log.debug("shop", "ShopScene: Purchased consumable: %s" % item.display_name)
 		
 		elif item_data["type"] == "equipment":
 			var equipment = item_data["item"]
@@ -414,7 +414,7 @@ func _on_buy_pressed():
 			player_character.currency.subtract(price)
 			player_character.inventory.add_item(equipment, 1)
 			ShopManager.purchase_equipment(key)
-			print("ShopScene: Purchased equipment: %s" % equipment.display_name)
+			Log.debug("shop", "ShopScene: Purchased equipment: %s" % equipment.display_name)
 		
 		elif item_data["type"] == "buyback":
 			var item = item_data["item"]
@@ -425,19 +425,19 @@ func _on_buy_pressed():
 			if result["success"]:
 				player_character.currency.subtract(price)
 				player_character.add_to_pack(result["item"], result["quantity"])
-				print("ShopScene: Bought back: %s" % item.display_name)
+				Log.debug("shop", "ShopScene: Bought back: %s" % item.display_name)
 	
 	refresh_shop_display()
 	refresh_sell_items()
 	clear_item_info()
 	
-	print("Purchased %d items for %d copper" % [items_to_buy.size(), total_cost])
+	Log.debug("shop", "Purchased %d items for %d copper" % [items_to_buy.size(), total_cost])
 
 func _on_sell_pressed():
 	"""Sell selected items (one of each) - FIXED"""
 	var selected_items = sell_item_list.get_selected_items()
 	if selected_items.is_empty():
-		print("No items selected")
+		Log.debug("shop", "No items selected")
 		return
 	
 	# Sort indices in DESCENDING order to avoid index shifting
@@ -451,7 +451,7 @@ func _on_sell_pressed():
 		var current_keys = player_character.inventory.items.keys()
 		
 		if item_index >= current_keys.size():
-			print("Index %d out of range, skipping" % item_index)
+			Log.debug("shop", "Index %d out of range, skipping" % item_index)
 			continue
 		
 		var item_id = current_keys[item_index]
@@ -470,13 +470,13 @@ func _on_sell_pressed():
 	refresh_shop_display()
 	clear_item_info()
 	
-	print("Sold %d items for %d copper" % [selected_items.size(), total_earned])
+	Log.debug("shop", "Sold %d items for %d copper" % [selected_items.size(), total_earned])
 
 func _on_sell_all_pressed():
 	"""Sell all selected items (full stacks) - FIXED"""
 	var selected_items = sell_item_list.get_selected_items()
 	if selected_items.is_empty():
-		print("No items selected")
+		Log.debug("shop", "No items selected")
 		return
 	
 	# Sort indices in DESCENDING order
@@ -490,7 +490,7 @@ func _on_sell_all_pressed():
 		var current_keys = player_character.inventory.items.keys()
 		
 		if item_index >= current_keys.size():
-			print("Index %d out of range, skipping" % item_index)
+			Log.debug("shop", "Index %d out of range, skipping" % item_index)
 			continue
 		
 		var item_id = current_keys[item_index]
@@ -510,7 +510,7 @@ func _on_sell_all_pressed():
 	refresh_shop_display()
 	clear_item_info()
 	
-	print("Sold all quantities of %d items for %d copper" % [selected_items.size(), total_earned])
+	Log.debug("shop", "Sold all quantities of %d items for %d copper" % [selected_items.size(), total_earned])
 
 func _on_exit_pressed():
 	CharacterManager.save_character(player_character)

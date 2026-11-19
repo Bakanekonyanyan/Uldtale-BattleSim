@@ -35,7 +35,7 @@ func initialize(p_enemy: CharacterData, p_heroes: Variant, floor: int):
 	desperation_threshold = randf_range(0.2, 0.35)
 	role = EnemyArchetypes.role(String(enemy.get_meta("ai_role", "")))
 	
-	print("EnemyAI: Initialized for %s (Aggression: %.2f, Intelligence: %.2f)" % [
+	Log.debug("ai", "EnemyAI: Initialized for %s (Aggression: %.2f, Intelligence: %.2f)" % [
 		enemy.name, aggression, intelligence
 	])
 	
@@ -141,7 +141,7 @@ func _decide() -> BattleAction:
 
 func _decide_desperate_action() -> BattleAction:
 	"""When enemy is very low HP, go all-out or setup for final strike"""
-	print("EnemyAI: DESPERATION MODE activated!")
+	Log.debug("ai", "EnemyAI: DESPERATION MODE activated!")
 	
 	# Check target resources to assess threat
 	var player_mp_percent = float(target.current_mp) / float(target.max_mp) if target.max_mp > 0 else 0.0
@@ -149,7 +149,7 @@ func _decide_desperate_action() -> BattleAction:
 	
 	# If target is low on resources, go for the kill
 	if player_mp_percent < 0.3 and player_sp_percent < 0.3:
-		print("EnemyAI: Player low on resources - FULL AGGRO!")
+		Log.debug("ai", "EnemyAI: Player low on resources - FULL AGGRO!")
 		# Must be affordable - an unaffordable skill fails and wastes the turn
 		var best_damage_skill = _find_strongest_available_skill()
 		if best_damage_skill:
@@ -160,17 +160,17 @@ func _decide_desperate_action() -> BattleAction:
 	# Use healing item if available
 	var heal_item = _find_healing_item()
 	if heal_item:
-		print("EnemyAI: Desperate heal attempt!")
+		Log.debug("ai", "EnemyAI: Desperate heal attempt!")
 		return BattleAction.item(enemy, heal_item, [enemy])
 	
 	# Try to heal with skill
 	var heal_skill = _find_healing_skill()
 	if heal_skill and _can_afford_skill(heal_skill):
-		print("EnemyAI: Desperate heal skill!")
+		Log.debug("ai", "EnemyAI: Desperate heal skill!")
 		return BattleAction.skill(enemy, heal_skill, [enemy])
 	
 	# Last resort: ALL-OUT ATTACK
-	print("EnemyAI: Final desperate attack!")
+	Log.debug("ai", "EnemyAI: Final desperate attack!")
 	var strongest_skill = _find_strongest_available_skill()
 	if strongest_skill:
 		return BattleAction.skill(enemy, strongest_skill, [target])
@@ -191,28 +191,28 @@ func _try_use_item_smart() -> BattleAction:
 	if enemy_hp_percent < 0.7:
 		var heal_item = _find_healing_item()
 		if heal_item:
-			print("EnemyAI: Using heal item (HP: %.0f%%)" % (enemy_hp_percent * 100))
+			Log.debug("ai", "EnemyAI: Using heal item (HP: %.0f%%)" % (enemy_hp_percent * 100))
 			return BattleAction.item(enemy, heal_item, [enemy])
 	
 	# Resource restore items (only if low)
 	if enemy_mp_percent < 0.3 or enemy_sp_percent < 0.3:
 		var restore_item = _find_restore_item()
 		if restore_item:
-			print("EnemyAI: Using restore item")
+			Log.debug("ai", "EnemyAI: Using restore item")
 			return BattleAction.item(enemy, restore_item, [enemy])
 	
 	# Buff items (if not already buffed)
 	if not enemy.buff_manager.has_buffs():
 		var buff_item = _find_buff_item()
 		if buff_item:
-			print("EnemyAI: Using buff item")
+			Log.debug("ai", "EnemyAI: Using buff item")
 			return BattleAction.item(enemy, buff_item, [enemy])
 	
 	# Damage/debuff items (if target not debuffed)
 	if not target.buff_manager.has_debuffs():
 		var damage_item = _find_damage_item()
 		if damage_item:
-			print("EnemyAI: Using damage/debuff item")
+			Log.debug("ai", "EnemyAI: Using damage/debuff item")
 			return BattleAction.item(enemy, damage_item, [target])
 	
 	return null
@@ -228,7 +228,7 @@ func _try_buff_or_debuff() -> BattleAction:
 	if not target.buff_manager.has_debuffs() and RandomManager.randf() < float(role.debuff_chance):
 		var debuff_skill = _find_debuff_skill()
 		if debuff_skill and _can_afford_skill(debuff_skill):
-			print("EnemyAI: Applying debuff to player")
+			Log.debug("ai", "EnemyAI: Applying debuff to player")
 			return BattleAction.skill(enemy, debuff_skill, [target])
 	
 	#  FIX: Buff allies based on skill target type
@@ -237,11 +237,11 @@ func _try_buff_or_debuff() -> BattleAction:
 		if buff_skill and _can_afford_skill(buff_skill):
 			#  Check if skill targets ALL_ALLIES
 			if buff_skill.target == Skill.TargetType.ALL_ALLIES:
-				print("EnemyAI: Buffing all allies with %s" % buff_skill.name)
+				Log.debug("ai", "EnemyAI: Buffing all allies with %s" % buff_skill.name)
 				# Pass empty array - CombatEngine will resolve via get_allies_for_character()
 				return BattleAction.skill(enemy, buff_skill, [])
 			else:
-				print("EnemyAI: Buffing self with %s" % buff_skill.name)
+				Log.debug("ai", "EnemyAI: Buffing self with %s" % buff_skill.name)
 				return BattleAction.skill(enemy, buff_skill, [enemy])
 	
 	return null
@@ -266,12 +266,12 @@ func _decide_defensive_action() -> BattleAction:
 	# Try to heal
 	var heal_skill = _find_healing_skill()
 	if heal_skill and _can_afford_skill(heal_skill) and enemy_hp_percent < 0.6:
-		print("EnemyAI: Using heal skill (HP: %.0f%%)" % (enemy_hp_percent * 100))
+		Log.debug("ai", "EnemyAI: Using heal skill (HP: %.0f%%)" % (enemy_hp_percent * 100))
 		return BattleAction.skill(enemy, heal_skill, [enemy])
 	
 	# Defend only if very low and no healing available
 	if enemy_hp_percent < float(role.defend_below):
-		print("EnemyAI: Defending (HP: %.0f%%)" % (enemy_hp_percent * 100))
+		Log.debug("ai", "EnemyAI: Defending (HP: %.0f%%)" % (enemy_hp_percent * 100))
 		return BattleAction.defend(enemy)
 	
 	return null
@@ -300,7 +300,7 @@ func _try_heal_ally() -> BattleAction:
 				if hurt == enemy:
 					return BattleAction.skill(enemy, heal_skill, [enemy])
 			_:
-				print("EnemyAI: Healing %s with %s" % [hurt.name, heal_skill.name])
+				Log.debug("ai", "EnemyAI: Healing %s with %s" % [hurt.name, heal_skill.name])
 				return BattleAction.skill(enemy, heal_skill, [hurt])
 	return null
 
@@ -321,7 +321,7 @@ func _try_use_damage_skill() -> BattleAction:
 	# Pick best affordable skill
 	for skill in available_skills:
 		if _can_afford_skill(skill):
-			print("EnemyAI: Using damage skill: %s" % skill.name)
+			Log.debug("ai", "EnemyAI: Using damage skill: %s" % skill.name)
 			return BattleAction.skill(enemy, skill, [target])
 	
 	return null
@@ -341,7 +341,7 @@ func _try_combo() -> BattleAction:
 			best = skill
 			best_mult = combo.multiplier
 	if best:
-		print("EnemyAI: Combo with %s" % best.name)
+		Log.debug("ai", "EnemyAI: Combo with %s" % best.name)
 		return BattleAction.skill(enemy, best, [target])   # same as other damage skills; the engine expands AoE
 	if not Combos.find(target, Combos.hit_from_attack(enemy)).is_empty():
 		return BattleAction.attack(enemy, target)

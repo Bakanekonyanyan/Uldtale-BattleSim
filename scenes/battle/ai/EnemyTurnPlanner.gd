@@ -25,7 +25,7 @@ func initialize(p_context: BattleContext) -> void:
 		ai.set_allies_source(context.get_living_enemies)   # healers mend the pack
 		_brains[enemy] = ai
 
-	print("EnemyTurnPlanner: %d AI controllers ready" % _brains.size())
+	Log.debug("ai", "EnemyTurnPlanner: %d AI controllers ready" % _brains.size())
 
 ## An enemy that joins mid-battle (encounters) gets its own brain.
 func add_enemy(enemy: CharacterData) -> void:

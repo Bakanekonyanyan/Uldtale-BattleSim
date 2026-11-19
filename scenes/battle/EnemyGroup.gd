@@ -24,7 +24,7 @@ func initialize(floor: int, wave: int, boss_wave: bool = false):
 	
 	_generate_enemies()
 	
-	print("EnemyGroup: Generated %d enemies for Floor %d, Wave %d" % [
+	Log.debug("enemies", "EnemyGroup: Generated %d enemies for Floor %d, Wave %d" % [
 		enemies.size(), floor, wave
 	])
 
@@ -116,7 +116,7 @@ func _scale_enemy_group():
 	# Reduce stats by 15% per additional enemy (max 45% reduction for 4 enemies)
 	var reduction = 1.0 - (min(count - 1, 3) * 0.15)
 	
-	print("EnemyGroup: Scaling %d enemies by %.2f" % [count, reduction])
+	Log.debug("enemies", "EnemyGroup: Scaling %d enemies by %.2f" % [count, reduction])
 	
 	for enemy in enemies:
 		enemy.vitality = int(enemy.vitality * reduction)
@@ -145,7 +145,7 @@ func remove_dead_enemies():
 	
 	var removed_count = initial_count - enemies.size()
 	if removed_count > 0:
-		print("EnemyGroup: Removed %d defeated enemies" % removed_count)
+		Log.debug("enemies", "EnemyGroup: Removed %d defeated enemies" % removed_count)
 		
 		if enemies.is_empty():
 			emit_signal("all_enemies_defeated")

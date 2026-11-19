@@ -78,7 +78,7 @@ func check_battle_end() -> bool:
 	return true
 
 func _handle_victory() -> void:
-	print("BattleOutcomeHandler: Player victory!")
+	Log.debug("battle", "BattleOutcomeHandler: Player victory!")
 
 	if context.is_pvp_mode:
 		if network_sync:
@@ -97,7 +97,7 @@ func _handle_victory() -> void:
 	_show_battle_complete_dialog(total_xp)
 
 func _handle_defeat() -> void:
-	print("BattleOutcomeHandler: Player defeated!")
+	Log.debug("battle", "BattleOutcomeHandler: Player defeated!")
 
 	if context.is_pvp_mode:
 		if network_sync:
@@ -132,7 +132,7 @@ func _show_battle_complete_dialog(xp_gained: int) -> void:
 	dialog.take_breather_selected.connect(func(): _on_take_breather(xp_gained), CONNECT_ONE_SHOT)
 
 func _on_press_on(xp_gained: int) -> void:
-	print("BattleOutcomeHandler: Press on selected")
+	Log.debug("battle", "BattleOutcomeHandler: Press on selected")
 	MomentumSystem.gain_momentum()
 
 	var level_before = context.player.level

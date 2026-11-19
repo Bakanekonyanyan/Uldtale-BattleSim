@@ -12,7 +12,7 @@ var attribute_labels = {}
 @onready var done_button = $MainContainer/DoneButton
 
 func _ready():
-	print("LevelUpScene: _ready called")
+	Log.debug("level_up", "LevelUpScene: _ready called")
 	done_button.connect("pressed", Callable(self, "_on_done_pressed"))
 
 func setup(char1: CharacterData):
@@ -116,6 +116,6 @@ func _on_attribute_changed(attr: String, change: int):
 	update_ui()
 
 func _on_done_pressed():
-	print("Level up scene done")
+	Log.debug("level_up", "Level up scene done")
 	emit_signal("level_up_complete")
 	queue_free()

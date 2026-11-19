@@ -138,13 +138,13 @@ func get_resistance_string(element: ElementalDamage.Element) -> String:
 
 func print_all_resistances():
 	"""Debug: Print all elemental modifiers"""
-	print("=== Elemental Resistances for %s ===" % character.name)
+	Log.debug("elements", "=== Elemental Resistances for %s ===" % character.name)
 	for element in ElementalDamage.Element.values():
 		if element == ElementalDamage.Element.NONE:
 			continue
 		var name = ElementalDamage.get_element_name(element)
 		var info = get_resistance_string(element)
-		print("  %s: %s" % [name, info])
+		Log.debug("elements", "  %s: %s" % [name, info])
 
 # === BACKWARD COMPATIBILITY ===
 # These methods provide simpler access for external code

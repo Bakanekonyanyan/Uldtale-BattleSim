@@ -63,7 +63,7 @@ var scene_stack: Array[Dictionary] = []
 func _ready() -> void:
 	var root = get_tree().root
 	current_scene = root.get_child(root.get_child_count() - 1)
-	print("SceneManager: Initialized with scene: %s" % current_scene.name)
+	Log.debug("scenes", "SceneManager: Initialized with scene: %s" % current_scene.name)
 
 # ===== CORE NAVIGATION API =====
 
@@ -113,7 +113,7 @@ func _navigate_push(path: String, character: CharacterData, data: Dictionary) ->
 	}
 	
 	scene_stack.push_back(state)
-	print("SceneManager: Pushed to stack (depth: %d)" % scene_stack.size())
+	Log.debug("scenes", "SceneManager: Pushed to stack (depth: %d)" % scene_stack.size())
 	
 	call_deferred("_deferred_load", path, character, data)
 
@@ -124,7 +124,7 @@ func _navigate_pop() -> void:
 		return
 	
 	var state = scene_stack.pop_back()
-	print("SceneManager: Popped from stack (depth: %d)" % scene_stack.size())
+	Log.debug("scenes", "SceneManager: Popped from stack (depth: %d)" % scene_stack.size())
 	
 	var path = state.get("path", "")
 	var character = state.get("character", null)
@@ -136,7 +136,7 @@ func _navigate_pop() -> void:
 
 func _deferred_load(path: String, character: CharacterData, data: Dictionary) -> void:
 	"""Load and instantiate scene"""
-	print("SceneManager: Loading scene: %s" % path)
+	Log.debug("scenes", "SceneManager: Loading scene: %s" % path)
 	
 	# Cleanup current
 	if current_scene:
@@ -164,7 +164,7 @@ func _deferred_load(path: String, character: CharacterData, data: Dictionary) ->
 	if not data.is_empty():
 		_apply_data_to_scene(data)
 	
-	print("SceneManager: Scene loaded successfully")
+	Log.debug("scenes", "SceneManager: Scene loaded successfully")
 
 func _apply_character_to_scene(character: CharacterData) -> void:
 	"""Set character on scene if it has the method"""
@@ -261,7 +261,7 @@ func start_dungeon_from_floor(player: CharacterData, floor: int, location_id: St
 
 func start_battle(battle_data: Dictionary) -> void:
 	"""Transition to battle with data"""
-	print("SceneManager: Starting battle - Floor %d, Wave %d" % [
+	Log.debug("scenes", "SceneManager: Starting battle - Floor %d, Wave %d" % [
 		battle_data["current_floor"],
 		battle_data["current_wave"]
 	])
@@ -316,7 +316,7 @@ func _setup_battle_scene(battle_data: Dictionary) -> void:
 # ===== BATTLE COMPLETION =====
 
 func _on_battle_completed(player_won: bool, xp_gained: int) -> void:
-	print("SceneManager: Battle completed - Won: %s, XP: %d" % [player_won, xp_gained])
+	Log.debug("scenes", "SceneManager: Battle completed - Won: %s, XP: %d" % [player_won, xp_gained])
 	
 	if not player_won:
 		MomentumSystem.reset_momentum()
@@ -436,7 +436,7 @@ func _show_rewards(xp_gained: int) -> void:
 	# NOW trigger display
 	if current_scene.has_method("initialize_display"):
 		current_scene.initialize_display()
-		print("SceneManager: Reward scene display initialized")
+		Log.debug("scenes", "SceneManager: Reward scene display initialized")
 	else:
 		push_warning("SceneManager: Reward scene missing initialize_display() - display may not work")
 

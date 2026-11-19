@@ -17,14 +17,14 @@ func initialize_multi(p_player: CharacterData, p_enemies: Array[CharacterData], 
 	player = p_player
 	allies = p_allies
 	enemies = p_enemies
-	print("CombatEngine: Initialized - Player: %s vs %d enemies" % [player.name, enemies.size()])
+	Log.debug("battle", "CombatEngine: Initialized - Player: %s vs %d enemies" % [player.name, enemies.size()])
 
 func execute_action(action: BattleAction) -> ActionResult:
 	"""Main entry point for all combat actions"""
 	if not action.is_valid():
 		return ActionResult.failure_msg("Invalid action")
 	
-	print("CombatEngine: Executing %s" % action.get_description())
+	Log.debug("battle", "CombatEngine: Executing %s" % action.get_description())
 	
 	var confusion_result = _check_confusion_before_action(action)
 	if confusion_result:
@@ -98,7 +98,7 @@ func _execute_attack(action: BattleAction) -> ActionResult:
 	var combo_mult = combo.multiplier if not combo.is_empty() else 1.0
 	var damage = BattleFormulas.finalize(BattleFormulas.hit_damage(attacker, target, true) * crit_mult * combo_mult)
 	
-	print("[COMBAT] Attack: %s -> %s  offense=%.1f def=%.1f final=%d%s" % [
+	Log.debug("battle", "[COMBAT] Attack: %s -> %s  offense=%.1f def=%.1f final=%d%s" % [
 		attacker.name, target.name, BattleFormulas.physical_offense(attacker),
 		BattleFormulas.physical_defense(target), damage, " CRIT" if is_crit else ""
 	])
@@ -178,7 +178,7 @@ func _execute_skill(action: BattleAction) -> ActionResult:
 	#  CRITICAL FIX: Resolve empty targets for ALL_ALLIES skills
 	if targets.is_empty() and skill.target == Skill.TargetType.ALL_ALLIES:
 		targets = get_allies_for_character(caster)
-		print("[COMBAT ENGINE] Resolved ALL_ALLIES targets: %d allies for %s" % [targets.size(), caster.name])
+		Log.debug("battle", "[COMBAT ENGINE] Resolved ALL_ALLIES targets: %d allies for %s" % [targets.size(), caster.name])
 	
 	# Execute skill and get result
 	var skill_result = skill.use(caster, targets)
@@ -224,7 +224,7 @@ func _execute_skill(action: BattleAction) -> ActionResult:
 					effect_data["is_debuff"] = true
 					result.debuffs.append(effect_data)
 	
-	print("[COMBAT ENGINE] Skill result - damage=%d, healing=%d, mp=%d, sp=%d" % [
+	Log.debug("battle", "[COMBAT ENGINE] Skill result - damage=%d, healing=%d, mp=%d, sp=%d" % [
 		result.damage, result.healing, result.mp_gain, result.sp_gain
 	])
 	
@@ -241,7 +241,7 @@ func _execute_item(action: BattleAction) -> ActionResult:
 	if not is_alive(user):
 		return ActionResult.failure_msg("%s cannot use items while defeated" % user.name)
 	
-	print("[ITEM] %s using %s on %d target(s)" % [user.name, item.display_name, targets.size()])
+	Log.debug("battle", "[ITEM] %s using %s on %d target(s)" % [user.name, item.display_name, targets.size()])
 	
 	# Track ALL targets' HP BEFORE item use
 	var targets_before = {}
@@ -252,11 +252,11 @@ func _execute_item(action: BattleAction) -> ActionResult:
 			"sp": t.current_sp,
 			"name": t.name
 		}
-		print("[ITEM] Target %s BEFORE: HP=%d/%d" % [t.name, t.current_hp, t.max_hp])
+		Log.debug("battle", "[ITEM] Target %s BEFORE: HP=%d/%d" % [t.name, t.current_hp, t.max_hp])
 	
 	# Execute item (this modifies HP directly)
 	var item_msg = item.use(user, targets)
-	print("[ITEM] Item message: %s" % item_msg)
+	Log.debug("battle", "[ITEM] Item message: %s" % item_msg)
 	
 	# Calculate ACTUAL changes by comparing before/after
 	var total_damage = 0
@@ -270,16 +270,16 @@ func _execute_item(action: BattleAction) -> ActionResult:
 		var mp_change = t.current_mp - before.mp
 		var sp_change = t.current_sp - before.sp
 		
-		print("[ITEM] Target %s AFTER: HP=%d/%d (change: %+d)" % [
+		Log.debug("battle", "[ITEM] Target %s AFTER: HP=%d/%d (change: %+d)" % [
 			t.name, t.current_hp, t.max_hp, hp_change
 		])
 		
 		if hp_change < 0:
 			total_damage += abs(hp_change)
-			print("[ITEM]  %s took %d damage" % [t.name, abs(hp_change)])
+			Log.debug("battle", "[ITEM]  %s took %d damage" % [t.name, abs(hp_change)])
 		elif hp_change > 0:
 			total_healing += hp_change
-			print("[ITEM]  %s healed %d HP" % [t.name, hp_change])
+			Log.debug("battle", "[ITEM]  %s healed %d HP" % [t.name, hp_change])
 		
 		if mp_change > 0:
 			total_mp_restore += mp_change
@@ -294,9 +294,9 @@ func _execute_item(action: BattleAction) -> ActionResult:
 	
 	if user.inventory.items.has(item_id):
 		user.inventory.remove_item(item_id, 1)
-		print("[ITEM] Removed 1x %s from %s's inventory" % [item.display_name, user.name])
+		Log.debug("battle", "[ITEM] Removed 1x %s from %s's inventory" % [item.display_name, user.name])
 	else:
-		print("[ITEM] WARNING: Item '%s' not found in %s's inventory!" % [item_id, user.name])
+		Log.debug("battle", "[ITEM] WARNING: Item '%s' not found in %s's inventory!" % [item_id, user.name])
 	
 	# Create result with ACTUAL measured values
 	var result = ActionResult.item_result(user, item, targets, item_msg)
@@ -307,7 +307,7 @@ func _execute_item(action: BattleAction) -> ActionResult:
 	result.mp_gain = total_mp_restore
 	result.sp_gain = total_sp_restore
 	
-	print("[ITEM RESULT] Final - damage=%d, healing=%d, mp=%d, sp=%d" % [
+	Log.debug("battle", "[ITEM RESULT] Final - damage=%d, healing=%d, mp=%d, sp=%d" % [
 		result.damage, result.healing, result.mp_gain, result.sp_gain
 	])
 	
@@ -320,10 +320,10 @@ func process_status_effects(character: CharacterData) -> ActionResult:
 	
 	# ADD THIS CHECK AT THE VERY START
 	if not is_alive(character):
-		print("[STATUS] Skipping status effects for %s (already dead)" % character.name)
+		Log.debug("battle", "[STATUS] Skipping status effects for %s (already dead)" % character.name)
 		return ActionResult.success_msg("")
 	
-	print("[STATUS] Processing effects for %s (HP: %d/%d, Status: %s)" % [
+	Log.debug("battle", "[STATUS] Processing effects for %s (HP: %d/%d, Status: %s)" % [
 		character.name, 
 		character.current_hp, 
 		character.max_hp,
@@ -338,7 +338,7 @@ func process_status_effects(character: CharacterData) -> ActionResult:
 	var mp_before = character.current_mp
 	var sp_before = character.current_sp
 	
-	print("[STATUS] BEFORE - HP: %d, MP: %d, SP: %d" % [hp_before, mp_before, sp_before])
+	Log.debug("battle", "[STATUS] BEFORE - HP: %d, MP: %d, SP: %d" % [hp_before, mp_before, sp_before])
 	
 	# Call update_status_effects ONCE
 	var message = character.update_status_effects()
@@ -350,7 +350,7 @@ func process_status_effects(character: CharacterData) -> ActionResult:
 	var mp_after = character.current_mp
 	var sp_after = character.current_sp
 	
-	print("[STATUS] AFTER - HP: %d, MP: %d, SP: %d" % [hp_after, mp_after, sp_after])
+	Log.debug("battle", "[STATUS] AFTER - HP: %d, MP: %d, SP: %d" % [hp_after, mp_after, sp_after])
 	
 	# Calculate changes
 	var hp_change = hp_after - hp_before
@@ -362,12 +362,12 @@ func process_status_effects(character: CharacterData) -> ActionResult:
 	
 	if hp_change < 0:
 		damage = abs(hp_change)
-		print("[STATUS]  %s took %d damage from status effects" % [character.name, damage])
+		Log.debug("battle", "[STATUS]  %s took %d damage from status effects" % [character.name, damage])
 	elif hp_change > 0:
 		healing = hp_change
-		print("[STATUS]  %s healed %d HP from status effects (REGENERATION)" % [character.name, healing])
+		Log.debug("battle", "[STATUS]  %s healed %d HP from status effects (REGENERATION)" % [character.name, healing])
 	
-	print("[COMBAT ENGINE] Status effects - HP: %d -> %d (dmg: %d, heal: %d)" % [
+	Log.debug("battle", "[COMBAT ENGINE] Status effects - HP: %d -> %d (dmg: %d, heal: %d)" % [
 		hp_before, hp_after, damage, healing
 	])
 	
@@ -424,7 +424,7 @@ func get_allies_for_character(character: CharacterData) -> Array[CharacterData]:
 			if is_alive(e):
 				allies.append(e)
 	
-	print("[ALLIES] Found %d allies for %s" % [allies.size(), character.name])
+	Log.debug("battle", "[ALLIES] Found %d allies for %s" % [allies.size(), character.name])
 	return allies
 
 
@@ -447,7 +447,7 @@ func check_death_after_action(character: CharacterData) -> bool:
 		# Only log if HP wasn't already 0 (prevents duplicate death messages)
 		if character.current_hp < 0:
 			character.current_hp = 0
-			print("[DEATH CHECK] %s has died (HP clamped to 0)" % character.name)
+			Log.debug("battle", "[DEATH CHECK] %s has died (HP clamped to 0)" % character.name)
 		# Else: Already at 0, don't log again
 		return true
 	return false

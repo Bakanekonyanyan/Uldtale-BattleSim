@@ -11,11 +11,11 @@ func _on_start_pressed():
 	
 	if characters.is_empty():
 		# No characters exist - go straight to character creation
-		print("MainMenu: No characters found, going to character creation")
+		Log.debug("main_menu", "MainMenu: No characters found, going to character creation")
 		SceneManager.change_to_character_creation()
 	else:
 		# Characters exist - go to selection screen
-		print("MainMenu: Characters found, going to character selection")
+		Log.debug("main_menu", "MainMenu: Characters found, going to character selection")
 		SceneManager.change_to_character_selection()
 
 func _on_quit_pressed():

@@ -199,17 +199,17 @@ func save_game(player: CharacterData):
 	var file = FileAccess.open(get_save_file_path(player.name), FileAccess.WRITE)
 	file.store_string(JSON.stringify(save_data))
 	file.close()
-	print("Character saved: ", player.name)
+	Log.debug("save", "Character saved: ", player.name)
 
 func load_game(character_name: String) -> CharacterData:
 	var save_file = get_save_file_path(character_name)
 	if not FileAccess.file_exists(save_file):
-		print("Save file does not exist: ", save_file)
+		Log.debug("save", "Save file does not exist: ", save_file)
 		return null
 
 	var file = FileAccess.open(save_file, FileAccess.READ)
 	if file == null:
-		print("Error: Could not open file for reading: ", save_file)
+		Log.debug("save", "Error: Could not open file for reading: ", save_file)
 		return null
 
 	var json_string = file.get_as_text()
@@ -217,7 +217,7 @@ func load_game(character_name: String) -> CharacterData:
 
 	var save_data = JSON.parse_string(json_string)
 	if save_data == null:
-		print("Error: Could not parse save data for character: ", character_name)
+		Log.debug("save", "Error: Could not parse save data for character: ", character_name)
 		return null
 
 	var player = CharacterData.new()
@@ -259,17 +259,17 @@ func load_game(character_name: String) -> CharacterData:
 	if "skills" in save_data and save_data["skills"] is Array:
 		player.add_skills(save_data["skills"])
 	else:
-		print("Warning: Skills data not found or invalid for character: ", character_name)
+		Log.debug("save", "Warning: Skills data not found or invalid for character: ", character_name)
 	
 	if "skill_levels" in save_data and typeof(save_data["skill_levels"]) == TYPE_DICTIONARY:
 		player.skill_manager.skill_levels = save_data["skill_levels"]  #  Use skill_manager
-		print("Loaded skill levels: ", player.skill_manager.skill_levels)
+		Log.debug("save", "Loaded skill levels: ", player.skill_manager.skill_levels)
 
 	# Handle skills separately - this will now use the loaded skill_levels
 	if "skills" in save_data and save_data["skills"] is Array:
 		player.add_skills(save_data["skills"])
 	else:
-		print("Warning: Skills data not found or invalid")
+		Log.debug("save", "Warning: Skills data not found or invalid")
 	
 	# Class skills added since the save was made (e.g. the Monk's animal-style kit)
 	var cls_file = FileAccess.open("res://data/classes.json", FileAccess.READ)
@@ -331,7 +331,7 @@ func load_game(character_name: String) -> CharacterData:
 						"item": base_item,
 						"quantity": item_data["quantity"]
 					}
-					print("Loaded equipment to inventory: ", base_item.display_name, " with stat_modifiers: ", base_item.stat_modifiers)
+					Log.debug("save", "Loaded equipment to inventory: ", base_item.display_name, " with stat_modifiers: ", base_item.stat_modifiers)
 			else:
 				var item = ItemManager.get_item(item_key)
 				if item:
@@ -379,7 +379,7 @@ func load_game(character_name: String) -> CharacterData:
 						"item": base_item,
 						"quantity": item_data["quantity"]
 					}
-					print("Loaded equipment to stash: ", base_item.display_name)
+					Log.debug("save", "Loaded equipment to stash: ", base_item.display_name)
 			else:
 				var item = ItemManager.get_item(item_key)
 				if item:
@@ -426,15 +426,15 @@ func load_game(character_name: String) -> CharacterData:
 					item.apply_effects(player)
 					if item.has_method("apply_stat_modifiers"):
 						item.apply_stat_modifiers(player)
-					print("Loaded equipped item: ", item.display_name, " with stat_modifiers: ", item.stat_modifiers)
+					Log.debug("save", "Loaded equipped item: ", item.display_name, " with stat_modifiers: ", item.stat_modifiers)
 	
-	print("Loaded inventory items: ", player.inventory.items.keys())
-	print("Loaded stash items: ", player.stash.items.keys())
+	Log.debug("save", "Loaded inventory items: ", player.inventory.items.keys())
+	Log.debug("save", "Loaded stash items: ", player.stash.items.keys())
 	
 	# Consumables over the carry limit live in the stash (also migrates old saves)
 	var moved = player.enforce_carry_limit()
 	if moved > 0:
-		print("SaveManager: moved %d consumables over the carry limit to the stash" % moved)
+		Log.debug("save", "SaveManager: moved %d consumables over the carry limit to the stash" % moved)
 	
 	#  ADD THIS AFTER ALL CHARACTER DATA IS LOADED:
 	# Initialize elemental resistances if not already present
@@ -457,7 +457,7 @@ func _migrate(save_data: Dictionary) -> void:
 		# v1 had a single progress number from the (then only) mixed dungeon
 		var old_max = max(1, int(save_data.get("max_floor_cleared", 1)))
 		save_data["location_progress"] = {"the_dungeon": old_max}
-		print("SaveManager: migrated v1 save (floor %d -> The Dungeon)" % old_max)
+		Log.debug("save", "SaveManager: migrated v1 save (floor %d -> The Dungeon)" % old_max)
 	save_data["save_version"] = SAVE_VERSION
 
 func get_all_characters() -> Array:
@@ -487,9 +487,9 @@ func delete_character(character_name: String):
 		var dir = DirAccess.open(SAVE_DIR)
 		if dir:
 			dir.remove(file_name)
-			print("Character deleted: ", character_name)
+			Log.debug("save", "Character deleted: ", character_name)
 	else:
-		print("Character file not found: ", character_name)
+		Log.debug("save", "Character file not found: ", character_name)
 
 # === EQUIPMENT <-> SAVE DICT (shared helpers; used by the Guild's Lost & Found) ===
 

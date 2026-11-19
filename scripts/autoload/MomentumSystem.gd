@@ -32,13 +32,13 @@ func gain_momentum() -> void:
 	if current_momentum < MAX_MOMENTUM:
 		current_momentum += 1
 		emit_signal("momentum_changed", current_momentum)
-		print("Momentum increased to: ", current_momentum)
+		Log.debug("momentum", "Momentum increased to: ", current_momentum)
 
 func reset_momentum() -> void:
 	"""Momentum back to 0. Banked rewards are NOT touched here - they are paid
 	out by RewardsManager on a Breather, or discarded by clear_accumulated_loot()."""
 	if current_momentum > 0:
-		print("Momentum reset from %d" % current_momentum)
+		Log.debug("momentum", "Momentum reset from %d" % current_momentum)
 		current_momentum = 0
 		emit_signal("momentum_changed", current_momentum)
 
@@ -92,7 +92,7 @@ func apply_momentum_effects(character: CharacterData) -> void:
 		character.is_stunned = false
 		character.is_defending = false
 		
-		print("Breather: Restored 50%% HP/MP/SP, cleared status effects, kept cooldowns")
+		Log.debug("momentum", "Breather: Restored 50%% HP/MP/SP, cleared status effects, kept cooldowns")
 	# else: press on - keep everything as-is (including cooldowns)
 	
 	emit_signal("momentum_bonus_applied", character)

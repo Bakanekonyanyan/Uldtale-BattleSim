@@ -17,11 +17,11 @@ func _ready():
 	load_weapons()
 	load_armors()
 	update_items()
-	print("Loaded items: ", items.keys())
-	print("Loaded consumables: ", consumables.keys())
-	print("Loaded materials: ", materials.keys())
-	print("Loaded weapons: ", weapons.keys())
-	print("Loaded armors: ", armors.keys())
+	Log.debug("items", "Loaded items: ", items.keys())
+	Log.debug("items", "Loaded consumables: ", consumables.keys())
+	Log.debug("items", "Loaded materials: ", materials.keys())
+	Log.debug("items", "Loaded weapons: ", weapons.keys())
+	Log.debug("items", "Loaded armors: ", armors.keys())
 
 func load_consumables():
 	var file = FileAccess.open("res://data/items/consumables.json", FileAccess.READ)
@@ -56,7 +56,7 @@ func load_weapons():
 						weapon_data["key"] = weapon_id  # NEW: Add proficiency key
 						equipment_templates[weapon_id] = weapon_data
 						weapons[weapon_id] = weapon_data
-						print("ItemManager: Loaded weapon '%s' with key '%s'" % [weapon_data.get("name", ""), weapon_id])
+						Log.debug("items", "ItemManager: Loaded weapon '%s' with key '%s'" % [weapon_data.get("name", ""), weapon_id])
 
 func load_armors():
 	var file = FileAccess.open("res://data/items/armors.json", FileAccess.READ)
@@ -71,12 +71,12 @@ func load_armors():
 				armor_data["key"] = armor_id  # NEW: Add proficiency key
 				equipment_templates[armor_id] = armor_data
 				armors[armor_id] = armor_data
-				print("ItemManager: Loaded armor '%s' with key '%s'" % [armor_data.get("name", ""), armor_id])
+				Log.debug("items", "ItemManager: Loaded armor '%s' with key '%s'" % [armor_data.get("name", ""), armor_id])
 
 func create_equipment_instance(item_id: String) -> Equipment:
 	"""Creates a NEW equipment instance with fresh random rolls"""
 	if not equipment_templates.has(item_id):
-		print("ItemManager: Template not found for: ", item_id)
+		Log.debug("items", "ItemManager: Template not found for: ", item_id)
 		return null
 	
 	# Create NEW instance from template data
@@ -156,10 +156,10 @@ func filter_array(arr: Array, condition: Callable) -> Array:
 	return result
 
 func print_consumables():
-	print("Available consumables: ", consumables.keys())
+	Log.debug("items", "Available consumables: ", consumables.keys())
 
 func print_materials():
-	print("Available materials: ", materials.keys())
+	Log.debug("items", "Available materials: ", materials.keys())
 
 #  FIXED: Make min_rarity_tier OPTIONAL with default value of 0
 func create_equipment_for_floor(item_id: String, floor: int, min_rarity_tier: int = 0) -> Equipment:
@@ -172,7 +172,7 @@ func create_equipment_for_floor(item_id: String, floor: int, min_rarity_tier: in
 	- min_rarity_tier: OPTIONAL minimum rarity tier (0 = no minimum, uses random roll)
 	"""
 	if not equipment_templates.has(item_id):
-		print("ItemManager: Template not found for: ", item_id)
+		Log.debug("items", "ItemManager: Template not found for: ", item_id)
 		return null
 	
 	var template_data = equipment_templates[item_id].duplicate(true)
@@ -187,14 +187,14 @@ func create_equipment_for_floor(item_id: String, floor: int, min_rarity_tier: in
 	# NEW: Add minimum rarity tier if specified
 	if min_rarity_tier > 0:
 		template_data["min_rarity_tier"] = min_rarity_tier
-		print("ItemManager: Creating equipment with min rarity tier %d" % min_rarity_tier)
+		Log.debug("items", "ItemManager: Creating equipment with min rarity tier %d" % min_rarity_tier)
 	
 	# Clear any pre-existing rarity data to force fresh generation
 	template_data.erase("rarity")
 	template_data.erase("rarity_applied")
 	template_data.erase("stat_modifiers")
 	
-	print("ItemManager: Creating equipment for floor %d: %s (key: %s)" % [floor, item_id, template_data["key"]])
+	Log.debug("items", "ItemManager: Creating equipment for floor %d: %s (key: %s)" % [floor, item_id, template_data["key"]])
 	
 	# This will trigger generation in Equipment._init()
 	return Equipment.new(template_data)
@@ -210,10 +210,10 @@ func get_item(item_id: String) -> Item:
 	
 	# Equipment - create NEW instance (defaults to floor 1)
 	if equipment_templates.has(item_id):
-		print("ItemManager: WARNING - get_item() called for equipment, defaulting to floor 1. Use create_equipment_for_floor() instead.")
+		Log.debug("items", "ItemManager: WARNING - get_item() called for equipment, defaulting to floor 1. Use create_equipment_for_floor() instead.")
 		return create_equipment_for_floor(item_id, 1)
 	
-	print("ItemManager: Item not found: ", item_id)
+	Log.debug("items", "ItemManager: Item not found: ", item_id)
 	return null
 	
 # Class-biased random weapon selection (ClassEquipmentBias builds its class

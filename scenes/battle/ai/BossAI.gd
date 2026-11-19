@@ -27,7 +27,7 @@ func initialize(p_enemy: CharacterData, p_heroes: Variant, floor: int):
 	# Set enrage timer based on floor
 	max_enrage_turns = max(10, 20 - floor)
 	
-	print("BossAI: Initialized BOSS %s (Enrage in %d turns)" % [enemy.name, max_enrage_turns])
+	Log.debug("ai", "BossAI: Initialized BOSS %s (Enrage in %d turns)" % [enemy.name, max_enrage_turns])
 
 func _decide() -> BattleAction:
 	"""Boss decision-making with phase mechanics (target already chosen)"""
@@ -88,7 +88,7 @@ func _try_hp_trigger(hp_percent: float) -> BattleAction:
 		if skill == null or enemy.get_skill_cooldown(skill_name) > 0 or not _can_afford_skill(skill):
 			continue
 		_fired_triggers[i] = true
-		print("BossAI: HP trigger (%.0f%%) - %s!" % [hp_percent * 100, skill_name])
+		Log.debug("ai", "BossAI: HP trigger (%.0f%%) - %s!" % [hp_percent * 100, skill_name])
 		return BattleAction.skill(enemy, skill, _get_skill_targets_smart(skill))
 	return null
 
@@ -113,7 +113,7 @@ func _check_phase_transition():
 
 func _on_phase_transition(old_phase: BossPhase, new_phase: BossPhase):
 	"""Handle phase transition effects"""
-	print("BossAI: PHASE TRANSITION - %s -> %s!" % [
+	Log.debug("ai", "BossAI: PHASE TRANSITION - %s -> %s!" % [
 		BossPhase.keys()[old_phase],
 		BossPhase.keys()[new_phase]
 	])
@@ -126,18 +126,18 @@ func _on_phase_transition(old_phase: BossPhase, new_phase: BossPhase):
 		BossPhase.PHASE_2:
 			# Moderate buff
 			_apply_phase_buff(1.2)
-			print("BossAI: Phase 2 - Boss grows stronger!")
+			Log.debug("ai", "BossAI: Phase 2 - Boss grows stronger!")
 		
 		BossPhase.PHASE_3:
 			# Clear debuffs, then strong buff. (clear_all() AFTER the buff used
 			# to wipe the buff it had just applied.)
 			enemy.buff_manager.clear_debuffs()
 			_apply_phase_buff(1.5)
-			print("BossAI: Phase 3 - Boss enters final form!")
+			Log.debug("ai", "BossAI: Phase 3 - Boss enters final form!")
 
 func _trigger_enrage():
 	"""Boss enrages after too many turns"""
-	print("BossAI: BOSS ENRAGED - Time limit exceeded!")
+	Log.debug("ai", "BossAI: BOSS ENRAGED - Time limit exceeded!")
 	current_phase = BossPhase.ENRAGED
 	
 	# Clear all debuffs first, then the massive stat boost
@@ -174,7 +174,7 @@ func _try_phase_ability() -> BattleAction:
 	var special_skill = _get_phase_special_skill()
 	if special_skill and _can_afford_skill(special_skill):
 		phase_skill_used[phase_key] = true
-		print("BossAI: Using PHASE SPECIAL - %s!" % special_skill.name)
+		Log.debug("ai", "BossAI: Using PHASE SPECIAL - %s!" % special_skill.name)
 		
 		var targets = _get_skill_targets_smart(special_skill)
 		return BattleAction.skill(enemy, special_skill, targets)
@@ -227,24 +227,24 @@ func _get_skill_targets_smart(skill: Skill) -> Array:
 
 func _boss_opener() -> BattleAction:
 	"""Boss uses special move on first turn"""
-	print("BossAI: BOSS OPENER!")
+	Log.debug("ai", "BossAI: BOSS OPENER!")
 	
 	# Try to buff self first turn
 	var buff_skill = _find_buff_skill()
 	if buff_skill and _can_afford_skill(buff_skill):
-		print("BossAI: Opening with self-buff")
+		Log.debug("ai", "BossAI: Opening with self-buff")
 		return BattleAction.skill(enemy, buff_skill, [enemy])
 	
 	# Or debuff target
 	var debuff_skill = _find_debuff_skill()
 	if debuff_skill and _can_afford_skill(debuff_skill):
-		print("BossAI: Opening with target debuff")
+		Log.debug("ai", "BossAI: Opening with target debuff")
 		return BattleAction.skill(enemy, debuff_skill, [target])
 	
 	# Or strong attack
 	var damage_skill = _find_best_damage_skill()
 	if damage_skill and _can_afford_skill(damage_skill):
-		print("BossAI: Opening with strong attack")
+		Log.debug("ai", "BossAI: Opening with strong attack")
 		return BattleAction.skill(enemy, damage_skill, [target])
 	
 	return null
@@ -255,16 +255,16 @@ func _boss_opener() -> BattleAction:
 
 func _enraged_behavior() -> BattleAction:
 	"""Ultra-aggressive behavior when enraged"""
-	print("BossAI: ENRAGED ACTION!")
+	Log.debug("ai", "BossAI: ENRAGED ACTION!")
 	
 	# 80% chance to use skill, 20% attack
 	if RandomManager.randf() < 0.8:
 		var best_skill = _find_strongest_available_skill()
 		if best_skill:
-			print("BossAI: Enraged skill - %s" % best_skill.name)
+			Log.debug("ai", "BossAI: Enraged skill - %s" % best_skill.name)
 			return BattleAction.skill(enemy, best_skill, [target])
 	
-	print("BossAI: Enraged attack")
+	Log.debug("ai", "BossAI: Enraged attack")
 	return BattleAction.attack(enemy, target)
 
 # =============================================
@@ -273,14 +273,14 @@ func _enraged_behavior() -> BattleAction:
 
 func _decide_desperate_action() -> BattleAction:
 	"""Boss desperation is more dangerous"""
-	print("BossAI: BOSS DESPERATION MODE!")
+	Log.debug("ai", "BossAI: BOSS DESPERATION MODE!")
 	
 	# Bosses always go all-out when desperate
 	var strongest = _find_strongest_available_skill()
 	if strongest:
-		print("BossAI: Final desperate skill - %s!" % strongest.name)
+		Log.debug("ai", "BossAI: Final desperate skill - %s!" % strongest.name)
 		return BattleAction.skill(enemy, strongest, [target])
 	
 	# No mercy - attack
-	print("BossAI: Final desperate attack!")
+	Log.debug("ai", "BossAI: Final desperate attack!")
 	return BattleAction.attack(enemy, target)

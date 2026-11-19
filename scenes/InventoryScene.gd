@@ -23,7 +23,7 @@ var current_category: ItemCategory = ItemCategory.ALL
 func _ready():
 	player_character = CharacterManager.get_current_character()
 	if not player_character:
-		print("Oops! No character loaded.")
+		Log.debug("inventory", "Oops! No character loaded.")
 		return
 	
 	_apply_chrome()
@@ -257,7 +257,7 @@ func _on_use_pressed():
 		# Get filtered items
 		var filtered_items = _get_filtered_items()
 		if item_index >= filtered_items.size():
-			print("Invalid item selection")
+			Log.debug("inventory", "Invalid item selection")
 			return
 		
 		var item = filtered_items[item_index]
@@ -265,22 +265,22 @@ func _on_use_pressed():
 		
 		# Check if item is consumable
 		if item.item_type != Item.ItemType.CONSUMABLE:
-			print("Can only use consumable items outside combat")
+			Log.debug("inventory", "Can only use consumable items outside combat")
 			return
 		
 		# Check quantity
 		if not player_character.inventory.items.has(item_id):
-			print("Item not found in inventory")
+			Log.debug("inventory", "Item not found in inventory")
 			refresh_inventory()
 			return
 		
 		var item_data = player_character.inventory.items[item_id]
 		if item_data.quantity <= 0:
-			print("No quantity remaining")
+			Log.debug("inventory", "No quantity remaining")
 			refresh_inventory()
 			return
 		
-		print("Using item outside combat: %s (Quantity: %d)" % [item.display_name, item_data.quantity])
+		Log.debug("inventory", "Using item outside combat: %s (Quantity: %d)" % [item.display_name, item_data.quantity])
 		
 		# Use the item
 		var result = item.use(player_character, [player_character])
@@ -288,9 +288,9 @@ func _on_use_pressed():
 		# Remove one from inventory
 		var removed = player_character.inventory.remove_item(item_id, 1)
 		if removed:
-			print("Item used successfully: ", result)
+			Log.debug("inventory", "Item used successfully: ", result)
 		else:
-			print("ERROR: Failed to remove item!")
+			Log.debug("inventory", "ERROR: Failed to remove item!")
 		
 		refresh_inventory()
 

@@ -20,7 +20,7 @@ func add_item(item: Item, quantity: int = 1) -> bool:
 		
 		# Add as unique item with quantity 1
 		items[unique_key] = {"item": item, "quantity": 1}
-		print(" Added unique equipment to stash: '%s' (rarity: %s, damage: %d, armor: %d, mods: %s) with key: %s" % [
+		Log.debug("stash", " Added unique equipment to stash: '%s' (rarity: %s, damage: %d, armor: %d, mods: %s) with key: %s" % [
 			item.display_name, 
 			item.rarity, 
 			item.damage, 
@@ -36,5 +36,5 @@ func add_item(item: Item, quantity: int = 1) -> bool:
 	else:
 		items[item.id] = {"item": item, "quantity": quantity}
 	
-	print(" Added %dx %s to stash" % [quantity, item.display_name])
+	Log.debug("stash", " Added %dx %s to stash" % [quantity, item.display_name])
 	return true

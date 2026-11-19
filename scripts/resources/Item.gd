@@ -171,7 +171,7 @@ func deal_damage(user: CharacterData, targets: Array) -> String:
 	return "%s dealt %d damage to %d target(s)" % [display_name, total_damage, targets.size()]
 
 func apply_buff(user: CharacterData, targets: Array) -> String:
-	print("[ITEM DEBUG] apply_buff called: %s | buff_type=%s | effect_percent=%.2f | effect_power=%d | duration=%d" % [
+	Log.debug("item", "[ITEM DEBUG] apply_buff called: %s | buff_type=%s | effect_percent=%.2f | effect_power=%d | duration=%d" % [
 		display_name, buff_type, effect_percent, effect_power, effect_duration
 	])
 	
@@ -184,14 +184,14 @@ func apply_buff(user: CharacterData, targets: Array) -> String:
 	for target in targets:
 		if buff_type == "ATTACK":
 			target.apply_buff(Skill.AttributeTarget.STRENGTH, buff_value, effect_duration)
-			print("[ITEM DEBUG] Applied STRENGTH buff: +%d for %d turns" % [buff_value, effect_duration])
+			Log.debug("item", "[ITEM DEBUG] Applied STRENGTH buff: +%d for %d turns" % [buff_value, effect_duration])
 		
 		elif buff_type == "DODGE":
 			target.apply_buff(Skill.AttributeTarget.AGILITY, buff_value, effect_duration)
-			print("[ITEM DEBUG] Applied AGILITY buff (dodge): +%d for %d turns" % [buff_value, effect_duration])
+			Log.debug("item", "[ITEM DEBUG] Applied AGILITY buff (dodge): +%d for %d turns" % [buff_value, effect_duration])
 		
 		else:
-			print("[ITEM DEBUG] WARNING: Unknown buff_type '%s'" % buff_type)
+			Log.debug("item", "[ITEM DEBUG] WARNING: Unknown buff_type '%s'" % buff_type)
 	
 	if is_percentage_based:
 		return "%s applied %s buff (+%.0f%%) to %d target(s) for %d turns" % [
@@ -209,7 +209,7 @@ func apply_debuff(user: CharacterData, targets: Array) -> String:
 	return "%s applied debuff to %d target(s)" % [display_name, targets.size()]
 
 func cure_status(user: CharacterData, targets: Array) -> String:
-	print("[ITEM DEBUG] cure_status called: %s | status_effect=%s | effect_power=%d | is_percentage=%s" % [
+	Log.debug("item", "[ITEM DEBUG] cure_status called: %s | status_effect=%s | effect_power=%d | is_percentage=%s" % [
 		display_name, 
 		Skill.StatusEffect.keys()[status_effect] if status_effect != Skill.StatusEffect.NONE else "ALL",
 		effect_power,
@@ -226,17 +226,17 @@ func cure_status(user: CharacterData, targets: Array) -> String:
 		if status_effect != Skill.StatusEffect.NONE:
 			if target.status_manager and target.status_manager.active_effects.has(status_effect):
 				var msg = target.status_manager.remove_effect(status_effect)
-				print("[ITEM DEBUG] Removed specific effect: %s" % msg)
+				Log.debug("item", "[ITEM DEBUG] Removed specific effect: %s" % msg)
 			else:
-				print("[ITEM DEBUG] Target does not have %s" % Skill.StatusEffect.keys()[status_effect])
+				Log.debug("item", "[ITEM DEBUG] Target does not have %s" % Skill.StatusEffect.keys()[status_effect])
 		else:
 			if target.status_manager:
 				target.status_manager.clear_all_effects()
-				print("[ITEM DEBUG] Cleared all status effects")
+				Log.debug("item", "[ITEM DEBUG] Cleared all status effects")
 		
 		if heal_amount > 0:
 			target.heal(heal_amount)
-			print("[ITEM DEBUG] Healed %d HP" % heal_amount)
+			Log.debug("item", "[ITEM DEBUG] Healed %d HP" % heal_amount)
 	
 	var result = ""
 	if status_effect != Skill.StatusEffect.NONE:

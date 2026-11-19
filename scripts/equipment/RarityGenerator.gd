@@ -81,7 +81,7 @@ func roll_rarity(min_rarity_tier: int = 0) -> String:
 		if rolled_tier < min_rarity_tier:
 			# Upgrade to minimum tier
 			rarity = _get_rarity_by_tier(min_rarity_tier)
-			print("RarityGenerator: Upgraded to minimum tier %d (%s)" % [min_rarity_tier, rarity])
+			Log.debug("items", "RarityGenerator: Upgraded to minimum tier %d (%s)" % [min_rarity_tier, rarity])
 	
 	return rarity
 
