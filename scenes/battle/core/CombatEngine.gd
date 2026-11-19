@@ -166,20 +166,10 @@ func _execute_skill(action: BattleAction) -> ActionResult:
 	if cooldown_left > 0:
 		return ActionResult.failure_msg("%s is on cooldown (%d turns)" % [skill.name, cooldown_left])
 	
-	var cost_type = "MP" if skill.ability_type != Skill.AbilityType.PHYSICAL else "SP"
-	var cost = skill.mp_cost if cost_type == "MP" else skill.sp_cost
-	var current = caster.current_mp if cost_type == "MP" else caster.current_sp
-	
-	if current < cost:
-		return ActionResult.failure_msg("Not enough %s" % cost_type)
-	
-	if cost_type == "MP":
-		caster.current_mp -= cost
-	else:
-		caster.current_sp -= cost
-	# Blood magic: some skills also cost a share of max HP (never lethal)
-	if skill.hp_cost > 0.0:
-		caster.current_hp = max(1, caster.current_hp - int(round(caster.max_hp * skill.hp_cost)))
+	# Skills pay every cost they list (MP and SP, plus any HP cost)
+	if not skill.can_afford(caster):
+		return ActionResult.failure_msg("Not enough %s" % ("MP" if caster.current_mp < skill.mp_cost else "SP"))
+	skill.pay_costs(caster)
 	
 	#  CRITICAL FIX: Resolve empty targets for ALL_ALLIES skills
 	if targets.is_empty() and skill.target == Skill.TargetType.ALL_ALLIES:

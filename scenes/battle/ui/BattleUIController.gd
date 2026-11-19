@@ -314,13 +314,7 @@ func _can_use_skill(skill: Skill, cooldown: int) -> bool:
 	if cooldown > 0:
 		return false
 	
-	if skill.ability_type != Skill.AbilityType.PHYSICAL and player.current_mp < skill.mp_cost:
-		return false
-	
-	if skill.ability_type == Skill.AbilityType.PHYSICAL and player.current_sp < skill.sp_cost:
-		return false
-	
-	return true
+	return skill.can_afford(player)
 
 func _create_skill_button(skill: Skill, cooldown: int, can_use: bool) -> HBoxContainer:
 	"""Create skill button with info button - returns HBoxContainer"""

@@ -304,10 +304,7 @@ func _effective_power(skill: Skill) -> float:
 
 func _can_afford_skill(skill: Skill) -> bool:
 	"""Check if enemy can afford to use this skill"""
-	if skill.ability_type == Skill.AbilityType.PHYSICAL:
-		return enemy.current_sp >= skill.sp_cost
-	else:
-		return enemy.current_mp >= skill.mp_cost
+	return skill.can_afford(enemy)
 
 func _find_best_damage_skill() -> Skill:
 	"""Find highest damage skill regardless of cost"""

@@ -188,6 +188,24 @@ static func create_from_dict(data: Dictionary) -> Skill:
 	
 	return skill
 
+## Costs: a skill charges every cost it lists (MP and SP, plus hp_cost).
+func can_afford(user: CharacterData) -> bool:
+	return user.current_mp >= mp_cost and user.current_sp >= sp_cost
+
+func pay_costs(user: CharacterData) -> void:
+	user.current_mp -= mp_cost
+	user.current_sp -= sp_cost
+	if hp_cost > 0.0:   # blood magic, never lethal
+		user.current_hp = max(1, user.current_hp - int(round(user.max_hp * hp_cost)))
+
+## "20 MP, 10 SP" style cost text for UI ("Free" if none).
+func cost_text() -> String:
+	var parts: Array = []
+	if mp_cost > 0: parts.append("%d MP" % mp_cost)
+	if sp_cost > 0: parts.append("%d SP" % sp_cost)
+	if hp_cost > 0.0: parts.append("%d%% HP" % int(round(hp_cost * 100)))
+	return ", ".join(parts) if not parts.is_empty() else "Free"
+
 ## Damage multiplier from weapon_bonus for what `user` is wielding (1.0 = none).
 func weapon_multiplier(user: CharacterData) -> float:
 	if weapon_bonus.is_empty() or user == null:

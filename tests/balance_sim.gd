@@ -386,7 +386,7 @@ func player_policy(p: CharacterData, ctx: BattleContext) -> BattleAction:
 	for sn in p.get_battle_skills():
 		var s: Skill = p.get_skill_instance(sn)
 		if p.get_skill_cooldown(sn) > 0: continue
-		var cost_ok = (p.current_sp >= s.sp_cost) if s.ability_type == Skill.AbilityType.PHYSICAL else (p.current_mp >= s.mp_cost)
+		var cost_ok = s.can_afford(p)
 		if not cost_ok: continue
 		match s.type:
 			Skill.SkillType.HEAL:
@@ -410,7 +410,7 @@ func player_policy(p: CharacterData, ctx: BattleContext) -> BattleAction:
 	for sn in p.get_battle_skills():
 		var s: Skill = p.get_skill_instance(sn)
 		if p.get_skill_cooldown(sn) > 0: continue
-		var cost_ok = (p.current_sp >= s.sp_cost) if s.ability_type == Skill.AbilityType.PHYSICAL else (p.current_mp >= s.mp_cost)
+		var cost_ok = s.can_afford(p)
 		if not cost_ok or (s.type == Skill.SkillType.DRAIN and s.drain_source != Skill.DrainTarget.HP): continue
 		for e in living:
 			var c = Combos.preview(p, s, e)

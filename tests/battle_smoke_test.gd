@@ -143,6 +143,17 @@ func _unit_checks() -> void:
 
 ## Talent trees (data/talents.json, TalentManager.gd)
 func _talent_checks() -> void:
+	# skills charge every cost they list
+	var sam0 = CharacterFactory.create_character("C", "Hume", "Samurai", true)
+	var iaido0 = sam0.get_skill_instance("Iaido")
+	var dummy0 = make_player(); dummy0.vitality += 200; dummy0.calculate_secondary_attributes(); dummy0.current_hp = dummy0.max_hp
+	var mp0 = sam0.current_mp; var sp0 = sam0.current_sp
+	CombatEngine.new().execute_action(BattleAction.skill(sam0, iaido0, [dummy0]))
+	check(sam0.current_mp == mp0 - iaido0.mp_cost and sam0.current_sp == sp0 - iaido0.sp_cost and iaido0.mp_cost > 0 and iaido0.sp_cost > 0,
+		"Iaido charges both MP (%d) and SP (%d)" % [iaido0.mp_cost, iaido0.sp_cost])
+	sam0.current_mp = 0
+	check(not iaido0.can_afford(sam0), "a skill can't be used without its secondary resource")
+
 	var p = CharacterFactory.create_character("T", "Hume", "Paladin", true)
 	p.currency.copper = 100000
 	var t: TalentManager = p.talents
@@ -893,6 +904,7 @@ func _guild_checks() -> void:
 	check(not GuildManager.turn_in(p, int(brutes.uid)).ok, "unfinished bounties can't be turned in")
 	var deliver = _bounty(p, "supply_run", "DELIVER", {}, 4)
 	deliver.item = "wood"
+	p.take_owned("wood", p.count_owned("wood"))   # earlier random rewards may have paid out wood
 	check(not GuildManager.is_complete(p, deliver), "DELIVER isn't complete without the items")
 	p.stash.add_item(ItemManager.get_item("wood"), 5)
 	check(GuildManager.turn_in(p, int(deliver.uid)).ok and p.count_owned("wood") == 1, "DELIVER turn-in takes 4 wood from the stash")

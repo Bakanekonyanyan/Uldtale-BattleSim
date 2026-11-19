@@ -426,18 +426,5 @@ Engine: `scripts/resources/TalentManager.gd`. Lore: `docs/lore/CLASS_PHILOSOPHIE
 | 4 | Reaper | 2 | +12% damage (vs targets below 30% HP). *Finish the dying.* |
 | 5 | Danse Macabre | 1 | **Skill: Danse Macabre** (Ultimate; damage; all enemies; power 95; 55 MP; cd 8; applies confused; Dark). The dead rise and dance through the enemy ranks. |
 
-## Balance snapshot (sim, floor-1 full runs, talents spent first branch first)
-Heroes reach about level 4 on floor 1, so 3 talent points; clear rates rose a few points.
-
-| Class | Clear rate | | Class | Clear rate |
-|---|---|---|---|---|
-| Paladin | 34% | | Monk | 19% |
-| Necromancer | 25% | | Berserker | 27% |
-| Myrmidon | 28% | | Shinobi | 33% |
-| Cleric | 32% | | Kannagi | 30% |
-| Samurai | 38% | | Beastmaster | 31% |
-| Elementalist | 31% | | Druid | 21% |
-
-The Druid was 12%. It now has Plague Strike power 65, Arctic Blast cooldown 4 and base VIT 10.
-
-Run-to-run noise at 250 runs is about ±9 points. The sim can't yet judge late tiers (ultimates appear around level 9 with a focused branch).
+## Costs (update)
+Skills now charge every cost they list (MP **and** SP; plus HP for blood magic). When a skill listed both, its secondary cost (SP on spells, MP on physical skills) was halved, since it had never been charged before. Sim afterwards: every class 20-38%, within run-to-run noise of the snapshot above.

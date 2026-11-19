@@ -114,5 +114,5 @@ The original eight classes range from 13% (Druid) to 31% (Samurai). Tuning passe
 - **Berserker:** 65% → 31%. Core stats lowered from 13 to 10, Blood Feast heals 40% of damage (was 60%), Cleave power 20.
 - **Kannagi:** 6% → 19%. Attacks scale off Arcane; Wrath of the Ancients power 45 with a 2-turn cooldown.
 
-Note: the game charges only one resource per skill (MP for magical, SP for physical), so the SP listed on Wrath of the Ancients is not actually paid.
+Wrath of the Ancients costs 20 MP and 5 SP (skills now charge every cost they list).
 - **Shinobi:** Lightning Kunai power 30.

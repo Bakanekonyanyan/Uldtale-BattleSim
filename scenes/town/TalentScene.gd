@@ -173,9 +173,7 @@ func _update_details() -> void:
 			txt += "[color=%s]Unlocks skill[/color] [b]%s[/b]  (%s)\n" % [ACCENT, s.name, s.category.capitalize() if s.category != "" else "Skill"]
 			var bits: Array = []
 			if s.power > 0: bits.append("power %d" % s.power)
-			if s.mp_cost > 0 and s.ability_type != Skill.AbilityType.PHYSICAL: bits.append("%d MP" % s.mp_cost)
-			if s.sp_cost > 0 and s.ability_type == Skill.AbilityType.PHYSICAL: bits.append("%d SP" % s.sp_cost)
-			if s.hp_cost > 0: bits.append("%d%% max HP" % int(s.hp_cost * 100))
+			bits.append(s.cost_text())
 			if s.cooldown > 0: bits.append("%d turn cooldown" % s.cooldown)
 			if s.duration > 0: bits.append("%d turns" % s.duration)
 			txt += "[color=%s]%s[/color]\n" % [MUTED, "  -  ".join(bits)]
