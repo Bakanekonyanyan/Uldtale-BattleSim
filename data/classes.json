@@ -64,7 +64,7 @@
 	  "preferred_weapons": ["staff", "fetish"]
 	},
 	"Monk": {
-	  "base_vit": 9, "base_str": 9, "base_dex": 10, "base_int": 6,
+	  "base_vit": 11, "base_str": 10, "base_dex": 10, "base_int": 6,
 	  "base_fai": 8, "base_mnd": 10, "base_end": 7, "base_arc": 9,
 	  "base_agi": 8, "base_for": 5,
 	  "attack_power_type": "dexterity",
@@ -170,6 +170,36 @@
 	  "attack_power_type": "dexterity",
 	  "spell_power_type": "arcane",
 	  "skills": ["Fireball", "Frost Nova", "Arcane Intellect"]
+	},
+	"Hexer": {
+	  "base_vit": 6,
+	  "base_str": 4,
+	  "base_dex": 6,
+	  "base_int": 11,
+	  "base_fai": 6,
+	  "base_mnd": 11,
+	  "base_end": 6,
+	  "base_arc": 11,
+	  "base_agi": 6,
+	  "base_for": 6,
+	  "attack_power_type": "dexterity",
+	  "spell_power_type": "arcane",
+	  "skills": ["Dark Bolt", "Curse of Weakness", "Howl"]
+	},
+	"Guard": {
+	  "base_vit": 11,
+	  "base_str": 8,
+	  "base_dex": 5,
+	  "base_int": 4,
+	  "base_fai": 6,
+	  "base_mnd": 6,
+	  "base_end": 10,
+	  "base_arc": 4,
+	  "base_agi": 4,
+	  "base_for": 11,
+	  "attack_power_type": "strength",
+	  "spell_power_type": "faith",
+	  "skills": ["Shield Bash", "Divine Shield", "Smash"]
 	}
   },
 

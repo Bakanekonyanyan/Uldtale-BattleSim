@@ -9,11 +9,11 @@ const BOSS_STAT_MULT := 1.0
 ## Regular enemies have this fraction of a hero's HP / damage for the same stats.
 ## The hero fights alone against groups, so individual enemies are weaker.
 const ENEMY_HP_MULT := 0.5
-const ENEMY_DAMAGE_MULT := 0.8
+const ENEMY_DAMAGE_MULT := 0.72   # was 0.8 before archetype skill pools and talents (2026-11)
 ## Boss HP pool vs a hero with the same stats (bosses should be long fights).
 ## Applied to HP only - raising vitality instead also inflated attack and defense.
 const BOSS_HP_MULT := 1.0
-const BOSS_DAMAGE_MULT := 0.7
+const BOSS_DAMAGE_MULT := 0.65   # was 0.7 before boss ultimates, signatures and talents
 ## How much of the minion class's base stats a boss inherits (flavor + skills)
 const BOSS_MINION_STAT_SHARE := 0.25
 
@@ -26,6 +26,8 @@ var current_location: String = ""
 ## mixed location. Read by DungeonStateManager for flavor text.
 var current_dungeon_race: String = ""
 var current_floor: int = 0
+## Testing/balance: when set, every regular enemy uses this archetype
+var force_archetype: String = ""
 
 func _ready():
 	load_data()
@@ -79,12 +81,18 @@ func create_enemy(level: int = 1, floor: int = 1, wave: int = 1, momentum_level:
 		push_error("EnemyFactory: Race '%s' not found in races['non_playable']" % race_name)
 		return enemy
 	
-	var enemy_classes = classes["non_playable"].keys()
-	var chosen_class = enemy_classes[RandomManager.randi() % enemy_classes.size()]
-	
+	# Archetype (role template): stats from classes.json, skills from hero-class
+	# pools + monster skills, talents in one hero branch (EnemyArchetypes)
+	var archetype = force_archetype if EnemyArchetypes.archetypes().has(force_archetype) else EnemyArchetypes.pick_archetype(race_name)
+	var stats_class = String(EnemyArchetypes.get_archetype(archetype).get("stats_class", archetype))
+	if not classes["non_playable"].has(stats_class):
+		stats_class = classes["non_playable"].keys()[0]
 	var race_data = races["non_playable"][race_name]
-	setup_character(enemy, chosen_class, "non_playable", race_name, race_data)
-	enemy.name = "%s %s" % [race_name, chosen_class]
+	setup_character(enemy, stats_class, "non_playable", race_name, race_data,
+		EnemyArchetypes.roll_skills(archetype, race_name, skills, 0, floor))
+	enemy.character_class = archetype
+	enemy.name = "%s %s" % [race_name, archetype]
+	_tag_archetype(enemy, archetype)
 
 	#  ADD THIS: Initialize elemental resistances for enemies
 	if enemy.elemental_resistances == null:
@@ -97,6 +105,7 @@ func create_enemy(level: int = 1, floor: int = 1, wave: int = 1, momentum_level:
 	
 	enemy.hp_multiplier = ENEMY_HP_MULT
 	enemy.damage_multiplier = ENEMY_DAMAGE_MULT
+	EnemyArchetypes.apply_talents(enemy, archetype, EnemyArchetypes.enemy_points(floor))
 	apply_enemy_scaling(enemy, floor, wave, false, momentum_level)
 	give_enemy_equipment(enemy, floor)
 	give_enemy_items(enemy, floor, false, momentum_level)
@@ -117,18 +126,24 @@ func create_boss(floor: int = 1, wave: int = 1, momentum_level: int = 0) -> Char
 	
 	var boss = CharacterData.new()
 	var king_data = classes["boss"]["King"]
+	var bcfg = EnemyArchetypes.boss_cfg()
 	
-	var minion_classes = ["Shaman", "Brute", "Minion"]
-	var chosen_minion = minion_classes[RandomManager.randi() % minion_classes.size()]
-	var minion_data = classes["non_playable"][chosen_minion]
+	# Named (hand-authored) boss for this location and floor overrides the roll
+	var named = EnemyArchetypes.named_boss(current_location, floor)
+	if named.has("race") and races["non_playable"].has(named.race):
+		boss_race = named.race
+	var archetype = String(named.get("archetype", EnemyArchetypes.pick_archetype(boss_race)))
+	var stats_class = String(EnemyArchetypes.get_archetype(archetype).get("stats_class", archetype))
+	if not classes["non_playable"].has(stats_class):
+		stats_class = "Brute"
+	var minion_data = classes["non_playable"][stats_class]
 	var race_data = races["non_playable"][boss_race]
 	
-	boss.name = "%s %s King" % [boss_race, chosen_minion]
+	boss.name = String(named.get("name", "%s %s King" % [boss_race, archetype]))
 	boss.race = boss_race
-	boss.character_class = "King (%s)" % chosen_minion
+	boss.character_class = "King (%s)" % archetype
 	
 	var minion_contribution = BOSS_MINION_STAT_SHARE
-	#  FIX: Use bracket notation for dictionary access
 	boss.vitality = int((king_data["base_vit"] + race_data["vit_mod"]) + (minion_data["base_vit"] * minion_contribution))
 	boss.strength = int((king_data["base_str"] + race_data["str_mod"]) + (minion_data["base_str"] * minion_contribution))
 	boss.dexterity = int((king_data["base_dex"] + race_data["dex_mod"]) + (minion_data["base_dex"] * minion_contribution))
@@ -144,19 +159,24 @@ func create_boss(floor: int = 1, wave: int = 1, momentum_level: int = 0) -> Char
 	# STR/INT/FAI/END x1.5, then the whole block x1.5 again in apply_enemy_scaling,
 	# then x1.9 for wave 6 - a floor-1 boss had ~1400 HP and ~8x the player's attack.)
 	
-	boss.attack_power_type = king_data["attack_power_type"]
-	boss.spell_power_type = king_data["spell_power_type"]
+	boss.attack_power_type = minion_data.get("attack_power_type", king_data["attack_power_type"])
+	boss.spell_power_type = minion_data.get("spell_power_type", king_data["spell_power_type"])
 	
-	var combined_skills: Array = []
-	for skill_name in king_data["skills"]:
-		if skills.has(skill_name):
-			combined_skills.append(skill_name)
-	for skill_name in minion_data["skills"]:
-		if skills.has(skill_name) and skill_name not in combined_skills:
-			combined_skills.append(skill_name)
-	
+	# Skills: archetype roll (+extra), a royal skill or two, the race signature
+	var combined_skills: Array = EnemyArchetypes.roll_skills(archetype, boss_race, skills, int(bcfg.get("extra_skills", 0)), floor)
+	var king_pool: Array = (bcfg.get("king_pool", []) as Array).filter(func(n): return skills.has(n) and not n in combined_skills)
+	for i in range(min(int(bcfg.get("king_picks", 1)), king_pool.size())):
+		combined_skills.append(king_pool.pop_at(RandomManager.randi() % king_pool.size()))
+	var signature = String(named.get("signature", bcfg.get("signatures", {}).get(boss_race, "")))
+	if skills.has(signature) and not signature in combined_skills:
+		combined_skills.append(signature)
+	for extra in named.get("skills", []):
+		if skills.has(extra) and not extra in combined_skills:
+			combined_skills.append(extra)
 	if combined_skills.size() > 0:
 		boss.add_skills(combined_skills)
+	_tag_archetype(boss, archetype)
+	boss.set_meta("boss_signature", signature if skills.has(signature) else "")
 	
 	#  ADD THIS: Initialize elemental resistances for boss
 	if boss.elemental_resistances == null:
@@ -165,6 +185,10 @@ func create_boss(floor: int = 1, wave: int = 1, momentum_level: int = 0) -> Char
 	
 	boss.hp_multiplier = BOSS_HP_MULT
 	boss.damage_multiplier = BOSS_DAMAGE_MULT
+	# A full branch: the ultimate is learned as soon as it is reachable
+	var branch = String(named.get("branch", ""))
+	EnemyArchetypes.apply_talents(boss, archetype, EnemyArchetypes.boss_points(floor), true, branch)
+	boss.set_meta("boss_ultimate", EnemyArchetypes.ultimate_skill(boss, archetype, branch, bool(bcfg.get("grant_ultimate", true))))
 	apply_enemy_scaling(boss, floor, wave, true, momentum_level)
 	give_enemy_equipment(boss, floor, true)
 	give_enemy_items(boss, floor, true, momentum_level)
@@ -395,38 +419,18 @@ func give_enemy_items(enemy: CharacterData, floor: int, is_boss: bool = false, m
 				enemy.inventory.add_item(item, quantity)
 				print("Enemy received %dx %s" % [quantity, item.display_name])
 
-func setup_character(character: CharacterData, character_class: String, class_type: String, race_name: String, race_data: Dictionary):
-	"""
-	Setup character with race and class data
-	race_name: String key like "Goblin", "Elf", etc.
-	race_data: Dictionary with stat modifiers like {"vit_mod": -1, "str_mod": 0, ...}
-	"""
-	print("=== DEBUG setup_character ===")
-	print("1. character_class: ", character_class, " (type: ", typeof(character_class), ")")
-	print("2. class_type: ", class_type, " (type: ", typeof(class_type), ")")
-	print("3. race_name: ", race_name, " (type: ", typeof(race_name), ")")
-	print("4. race_data: ", race_data, " (type: ", typeof(race_data), ")")
-	
-	print("5. classes keys: ", classes.keys())
-	print("6. classes[class_type] type: ", typeof(classes[class_type]))
-	print("7. classes[class_type] keys: ", classes[class_type].keys())
-	
+## Stats from race + class data. `skill_list` replaces the class's own skills
+## (archetype enemies roll theirs); empty uses class_data["skills"].
+func setup_character(character: CharacterData, character_class: String, class_type: String, race_name: String, race_data: Dictionary, skill_list: Array = []):
 	if not classes[class_type].has(character_class):
 		push_error("ERROR: Class '%s' not found in classes['%s']!" % [character_class, class_type])
 		return
-	
-	print("8. classes[class_type][character_class] type: ", typeof(classes[class_type][character_class]))
-	
 	var class_data = classes[class_type][character_class]
-	
-	print("9. class_data: ", class_data)
 
 	character.name = "%s %s" % [race_name, character_class]
 	character.race = race_name
 	character.character_class = character_class
 
-	#  FIX: Use bracket notation for all dictionary access
-	print("10. Accessing class_data['base_vit']...")
 	character.vitality = class_data["base_vit"] + race_data["vit_mod"]
 	character.strength = class_data["base_str"] + race_data["str_mod"]
 	character.dexterity = class_data["base_dex"] + race_data["dex_mod"]
@@ -443,12 +447,17 @@ func setup_character(character: CharacterData, character_class: String, class_ty
 	character.calculate_secondary_attributes()
 
 	var valid_skills: Array = []
-	for skill_name in class_data["skills"]:
+	for skill_name in (skill_list if not skill_list.is_empty() else class_data["skills"]):
 		if skills.has(skill_name):
 			valid_skills.append(skill_name)
 
 	if valid_skills.size() > 0:
 		character.add_skills(valid_skills)
+
+## Remember the archetype and AI role on the character (read by EnemyAI).
+func _tag_archetype(c: CharacterData, archetype: String) -> void:
+	c.set_meta("archetype", archetype)
+	c.set_meta("ai_role", String(EnemyArchetypes.get_archetype(archetype).get("ai_role", "")))
 
 func get_rarity_tier(rarity: String) -> int:
 	match rarity:

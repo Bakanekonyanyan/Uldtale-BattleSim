@@ -176,6 +176,65 @@ func _defeat_checks() -> void:
 		var it = ItemManager.create_equipment_for_floor(id, 1); boss.inventory.add_item(it, 1); boss.equip_item(it)
 	check(DefeatManager.apply_defeat(boss, true).items.size() == 2, "boss defeats cost two items")
 
+## Enemy and boss archetypes (data/enemy_archetypes.json, EnemyArchetypes.gd)
+func _archetype_checks() -> void:
+	EnemyFactory.set_location("troll_caves")
+	var arch_ids = EnemyArchetypes.archetypes().keys()
+	var all_ok := true
+	var seen := {}
+	for i in range(30):
+		var e = EnemyFactory.create_enemy(1, 4, 1, 0)
+		var a = String(e.get_meta("archetype", ""))
+		seen[a] = true
+		var pools: Dictionary = EnemyArchetypes.get_archetype(a).get("skill_pools", {})
+		var allowed: Array = []
+		for p in pools: allowed.append_array(pools[p])
+		for p in EnemyArchetypes.data().races.Troll.skills: allowed.append_array(EnemyArchetypes.data().races.Troll.skills[p])
+		var rolled = e.skills.filter(func(s): return not s in e.talents.talent_skills())
+		if not (a in arch_ids and e.character_class == a and rolled.size() >= 2 and rolled.all(func(s): return s in allowed)):
+			all_ok = false
+			print("  bad archetype enemy: ", a, " ", e.skills)
+	check(all_ok, "enemies roll an archetype and skills from its pools (%s)" % ", ".join(seen.keys()))
+	check(seen.has("Brute") and not seen.has("Fairy"), "Troll Caves favour Brutes")
+	var e2 = EnemyFactory.create_enemy(1, 4, 1, 0)
+	check(e2.talents.spent_points() == EnemyArchetypes.enemy_points(4) and e2.talents.tree() != "", "floor-4 enemies spend %d talent points in their hero branch (%s)" % [EnemyArchetypes.enemy_points(4), e2.talents.tree()])
+	var shamans = 0
+	for i in range(40):
+		var s = EnemyFactory.create_enemy(1, 1, 1, 0)
+		if s.get_meta("archetype", "") == "Shaman":
+			shamans += 1
+			check(s.skills.any(func(n): return s.get_skill_instance(n) and s.get_skill_instance(n).type == Skill.SkillType.HEAL), "a Shaman always has a heal")
+			break
+	var b = EnemyFactory.create_boss(1, 6, 0)
+	var sig = String(b.get_meta("boss_signature", ""))
+	var ult = String(b.get_meta("boss_ultimate", ""))
+	check(b.character_class.begins_with("King (") and sig == "Avalanche Slam" and b.skills.has(sig), "a Troll boss is a King archetype with the Troll signature (%s)" % b.name)
+	check(ult != "" and b.skills.has(ult), "bosses learn their branch ultimate (%s)" % ult)
+	# HP triggers: signature below 60%, ultimate below 35% (each once)
+	var bai = BossAI.new()
+	bai.initialize(b, make_player(), 6)
+	b.current_hp = int(b.max_hp * 0.5)
+	var t1 = bai._try_hp_trigger(0.5)
+	check(t1 != null and t1.skill_data.name == sig, "boss uses its signature below 60% HP")
+	check(bai._try_hp_trigger(0.5) == null, "each HP trigger fires once")
+	b.current_hp = int(b.max_hp * 0.3)
+	var t2 = bai._try_hp_trigger(0.3)
+	check(t2 != null and t2.skill_data.name == ult, "boss uses its ultimate below 35%% HP (%s)" % ult)
+	# AI role: healers mend a hurt ally
+	var healer = EnemyFactory.create_enemy(1, 1, 1, 0)
+	healer.set_meta("ai_role", "healer")
+	healer.add_skills(["Ancestral Mending"])
+	var ally = EnemyFactory.create_enemy(1, 1, 1, 0)
+	ally.current_hp = int(ally.max_hp * 0.2)
+	var hero = make_player()
+	var ai = EnemyAI.new()
+	ai.initialize(healer, hero, 1)
+	ai.set_allies_source(func(): return [healer, ally])
+	ai.target = hero
+	var act = ai._try_heal_ally()
+	check(act != null and act.skill_data.type == Skill.SkillType.HEAL and (act.targets.is_empty() or act.targets[0] == ally or act.skill_data.target == Skill.TargetType.ALL_ALLIES), "a healer-role enemy heals its wounded ally")
+	EnemyFactory.set_location(LocationManager.DEFAULT_LOCATION)
+
 ## Talent trees (data/talents.json, TalentManager.gd)
 func _talent_checks() -> void:
 	# skills charge every cost they list
@@ -434,6 +493,7 @@ func _phase0_checks() -> void:
 	_philosophy_checks()
 	_talent_checks()
 	_defeat_checks()
+	_archetype_checks()
 	
 	# Class-biased loot rolls (Breather drops pass the player's class)
 	var biased_ok := true

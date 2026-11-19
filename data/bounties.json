@@ -1,5 +1,5 @@
 {
-	"_comment": "Guild bounty templates. The board rolls concrete bounties from these. Title fields: {location_name} {class} {class_plural} {race} {race_plural} {count} {floor} {item_name}. Placeholders: {any_location} (all 5), {themed_location} (single-race locations), {race} (the themed location's race), {any_class} (Minion/Brute/Shaman/Mage), {any_material}, {location_material} (common drop at the chosen location), {unknown_flask_recipe}. Gold rewards scale with the player's best floor. Objective types: KILL, KILL_BOSS, CLEAR_FLOOR, WIN_STREAK, DELIVER.",
+	"_comment": "Guild bounty templates. The board rolls concrete bounties from these. Title fields: {location_name} {class} {class_plural} {race} {race_plural} {count} {floor} {item_name}. Placeholders: {any_location} (all 5), {themed_location} (single-race locations), {race} (the themed location's race), {any_class} (an enemy archetype from settings.classes), {any_material}, {location_material} (common drop at the chosen location), {unknown_flask_recipe}. Gold rewards scale with the player's best floor. Objective types: KILL, KILL_BOSS, CLEAR_FLOOR, WIN_STREAK, DELIVER.",
 	"settings": {
 		"board_size": 3,
 		"max_active": 3,
@@ -7,7 +7,7 @@
 		"fail_point_penalty": 0.5,
 		"abandon_fee_fraction": 0.25,
 		"reroll_fee_per_floor": 50,
-		"classes": ["Minion", "Brute", "Shaman", "Mage"]
+		"classes": ["Minion", "Brute", "Shaman", "Mage", "Guard", "Hexer"]
 	},
 	"templates": {
 		"hunt_class": {

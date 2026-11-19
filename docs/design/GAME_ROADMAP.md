@@ -23,14 +23,16 @@ Earlier notes: `docs/design/TOWN_SERVICES.md` §9 (the parked Adventurer system)
 - Momentum and Breathers
 - Gear drops, crafting, upgrading and bounties
 - Skills charge every cost they list
+- Enemy and boss archetypes (B1, §2)
+- Defeat consequences (B3, §7): fee, injury, Lost & Found buy-back, Infirmary
 
 **Missing before the battle system is "done":**
 
 | # | System | Why it matters now | Size |
 |---|---|---|---|
-| B1 | **Enemy and boss classes** (§2) | Enemies still use 5 thin classes; heroes now have 12 classes and 180 talents | M |
+| ~~B1~~ | ~~**Enemy and boss classes** (§2)~~ | **Done** | M |
 | B2 | **Party of up to 3 heroes in battle** | Recruiting adventurers is the core fantasy. The engine is prepared (enemies target from a hero list); the battle UI and ally AI are not | M-L |
-| B3 | **Defeat consequences** | Today a loss just ends the run (banked loot is lost). The roleplay needs a rule: injury (stats down for N days), lost gear, gold fee, or rescue by a rival who now "owns" you a favor | S |
+| ~~B3~~ | ~~**Defeat consequences**~~ | **Done:** gold fee, injury, gear to the Guild's Lost & Found (buy-back), Infirmary. Rescue by a rival can come with NPC adventurers | S |
 | B4 | **Battle HUD with your art** | Status icons, combo/weak-spot callouts, ultimates presented as big moments | M (art-driven) |
 | B5 | Forms / stealth / summons | Druid shapeshift, Shinobi stealth, Necromancer undead are in the philosophies. Can wait: talents already give a taste | M |
 | B6 | Advanced combos (Link → Transcendent → Hidden chains) | Agreed for "after more skills and talents". The LINK and ULTIMATE skill categories now exist to chain | M |
@@ -67,6 +69,46 @@ Earlier notes: `docs/design/TOWN_SERVICES.md` §9 (the parked Adventurer system)
   "ai_role": "bruiser"
 }
 ```
+
+### What was built
+
+Data: `data/enemy_archetypes.json` (Content Manager tab **Enemy Archetypes**). Code: `scripts/resources/EnemyArchetypes.gd`, used by `EnemyFactory`, `EnemyAI` and `BossAI`.
+
+| Archetype | Stats | Pools (hero classes + monster) | Talent branch | AI role |
+|---|---|---|---|---|
+| Minion | Minion | Myrmidon, Shinobi, monster | Myrmidon / Skirmisher | skirmisher |
+| Brute | Brute | Berserker, Monk, monster | Berserker / Carnage | bruiser |
+| Shaman | Shaman | Kannagi, Druid, monster (always has a heal) | Kannagi / Ancestral Spirits | healer |
+| Mage | Mage | Elementalist, Necromancer, monster | Elementalist / Conflux | caster |
+| Guard *(new)* | Guard | Paladin, Samurai, monster | Paladin / Bulwark | tank |
+| Hexer *(new)* | Hexer | Necromancer, Beastmaster, monster | Necromancer / Curses | controller |
+
+**Races:**
+- Each race weights the archetypes. Troll Caves are mostly Brutes and Guards; Fairy Circles are Mages, Hexers and Shamans, with no Brutes or Guards.
+- Each race adds a flavour pool (Trolls: Smash/Stomp, Orcs: War Howl/Roar, Fairies: Howl/Tidal Wave).
+
+**Floors:**
+- Enemies get `floor × 0.5` talent points in their branch.
+- Rolled damage skills are capped at `35 + 5 × floor` power.
+- Strong buffs wait for a minimum floor (Wolf's Frenzy at 3).
+- So floor-1 enemies don't open with a hero finisher.
+
+**AI roles:**
+- Roles tune the AI's chances (skill, buff, debuff, combo, defend).
+- Healers mend the most wounded ally below 60% HP.
+
+**Bosses (`<Race> <Archetype> King`):**
+- Talent points: 3 + floor, spent in the branch.
+- The branch **ultimate** is always granted.
+- One royal skill: Royal Decree, Execution or Crown of Flames.
+- A race **signature**: Ambush Volley (Goblin), Warlord's Cleave (Orc), Avalanche Slam (Troll), Fae Cyclone (Fairy).
+- HP triggers: signature below 60%, ultimate below 35%. Each fires once, waiting for cooldown and resources if needed.
+- **Named bosses** go in `named_bosses` (by location and floors) and override race, archetype, branch, signature and skills. The section is empty until the first named boss is designed.
+
+**Balance:**
+- Enemy damage multipliers were lowered (regular 0.8 → 0.72, boss 0.7 → 0.65) to keep floor-1 clear rates in the old band.
+- Monk got +2 VIT and +1 STR.
+- Sim, best style, floor 1, 300–800 runs: 15–39% by class, Monk 22% (was 19–45% before archetypes).
 
 ## 3. The Adventurer Guild
 
@@ -116,7 +158,7 @@ Each day, the world simulates a little:
 
 ## 6. Build order (vertical slice)
 
-1. **Finish the battle core:** enemy/boss archetypes (B1), defeat consequences (B3).
+1. ~~**Finish the battle core:** enemy/boss archetypes (B1), defeat consequences (B3).~~ Done.
 2. **Adventurer ranks** in the Guild (small; the data is there).
 3. **World clock** (days, inn rest, deadlines in days, news ledger).
 4. **NPC adventurers:** generator, roster, rapport, simulated quests on the clock.

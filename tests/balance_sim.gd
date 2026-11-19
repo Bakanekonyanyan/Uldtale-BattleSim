@@ -176,6 +176,7 @@ func tool_report(args: Array) -> void:
 	var runs = max(1, int(opts.runs))
 	var potions = int(opts.potions)
 	var floor_num = max(1, int(opts.floor))
+	EnemyFactory.force_archetype = String(opts.get("archetype", ""))
 	var styles: Array = [false, true] if opts.setup == "both" else ([true] if opts.setup == "on" else [false])
 	var total = classes.size() * styles.size()
 	var done := 0
@@ -186,10 +187,15 @@ func tool_report(args: Array) -> void:
 			use_setup = setup
 			start_potions = potions
 			var clears := 0
+			var died := {}
 			for i in range(runs):
 				MomentumSystem.reset_momentum()
-				if sim_run(cls, floor_num).cleared: clears += 1
+				var r = sim_run(cls, floor_num)
+				if r.cleared: clears += 1
+				else: died[r.wave] = died.get(r.wave, 0) + 1
 			rates[setup] = int(round(100.0 * clears / runs))
+			if opts.has("deaths"):
+				print("SIM DEATHS|%s|%s|%s" % [cls, "set-up" if setup else "damage-only", str(died)])
 			done += 1
 			print("SIM PROGRESS|%d|%d" % [done, total])
 		var best_setup = rates[true] >= rates[false]
@@ -197,6 +203,7 @@ func tool_report(args: Array) -> void:
 	use_setup = true
 	start_potions = 0
 	sim_location = "the_dungeon"
+	EnemyFactory.force_archetype = ""
 	print("SIM DONE")
 
 func _clear_rate(cls: String, n: int, potions: int) -> int:

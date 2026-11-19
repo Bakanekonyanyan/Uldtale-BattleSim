@@ -2051,6 +2051,67 @@
 	  "mp_cost": 0,
 	  "sp_cost": 15,
 	  "cooldown": 2
+	},
+	"Fae Cyclone": {
+	  "name": "Fae Cyclone",
+	  "description": "A whirl of fairy wind that spins every foe around until they lose their bearings.",
+	  "ability_type": "MAGICAL",
+	  "type": "DAMAGE",
+	  "target": "ALL_ENEMIES",
+	  "category": "ADVANCED",
+	  "elements": ["WIND"],
+	  "status_effect": "CONFUSED",
+	  "power": 50,
+	  "duration": 2,
+	  "mp_cost": 45,
+	  "sp_cost": 0,
+	  "cooldown": 5
+	},
+	"Avalanche Slam": {
+	  "name": "Avalanche Slam",
+	  "description": "The troll brings the cave roof down: rock and ice crash onto every foe.",
+	  "ability_type": "PHYSICAL",
+	  "type": "DAMAGE",
+	  "target": "ALL_ENEMIES",
+	  "category": "ADVANCED",
+	  "damage_type": "BLUNT",
+	  "elements": ["EARTH", "ICE"],
+	  "status_effect": "STAGGERED",
+	  "power": 50,
+	  "duration": 2,
+	  "mp_cost": 0,
+	  "sp_cost": 45,
+	  "cooldown": 5
+	},
+	"Warlord's Cleave": {
+	  "name": "Warlord's Cleave",
+	  "description": "A warlord's two-handed cut that leaves a deep, bleeding wound.",
+	  "ability_type": "PHYSICAL",
+	  "type": "DAMAGE",
+	  "target": "ENEMY",
+	  "category": "ADVANCED",
+	  "damage_type": "SLASH",
+	  "status_effect": "BLEED",
+	  "power": 60,
+	  "duration": 3,
+	  "mp_cost": 0,
+	  "sp_cost": 40,
+	  "cooldown": 4
+	},
+	"Ambush Volley": {
+	  "name": "Ambush Volley",
+	  "description": "Goblins hidden in the brush loose poisoned darts at every foe.",
+	  "ability_type": "PHYSICAL",
+	  "type": "DAMAGE",
+	  "target": "ALL_ENEMIES",
+	  "category": "ADVANCED",
+	  "damage_type": "PIERCE",
+	  "status_effect": "POISON",
+	  "power": 45,
+	  "duration": 3,
+	  "mp_cost": 0,
+	  "sp_cost": 35,
+	  "cooldown": 5
 	}
   }
 }

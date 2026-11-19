@@ -245,6 +245,7 @@ class Validator:
         self._material_drops()
         self._damage_types()
         self._bounties()
+        self._archetypes()
         self._orphans()
 
     def _combos(self):
@@ -411,6 +412,42 @@ class Validator:
             if isinstance(rec, str) and rec and not PLACEHOLDER.match(rec) and rec not in recipes:
                 add("error", "Bounties", ref, "rewards", f"recipe '{rec}' does not exist")
 
+    def _archetypes(self):
+        p, add = self.p, self.r.add
+        tab = "Enemy Archetypes"
+        if tab not in p.data:
+            return
+        d = p.data[tab]
+        skills = set(p.source("skills"))
+        playable = set(p.source("playable_classes"))
+        archetypes = d.get("archetypes", {})
+        roles = {k for k in d.get("ai_roles", {}) if not k.startswith("_")}
+        talents = p.data.get("Talents", {}).get("branches", {})
+        for ref in self.refs(tab, 1):
+            a = p.get(ref)
+            if a.get("ai_role") and a["ai_role"] not in roles:
+                add("error", tab, ref, "ai_role", f"unknown AI role '{a['ai_role']}'")
+            for pool, names in (a.get("skill_pools") or {}).items():
+                if pool != "monster" and pool not in playable:
+                    add("error", tab, ref, "skill_pools", f"pool '{pool}' is not a playable class or 'monster'")
+            t = a.get("talents") or {}
+            if t.get("class") and t.get("branch") and t["branch"] not in talents.get(t["class"], {}):
+                add("error", tab, ref, "talents", f"{t['class']} has no talent branch '{t['branch']}'")
+            pool_count = sum(len(v) for v in (a.get("skill_pools") or {}).values())
+            if pool_count < int(a.get("skills_per_enemy", 3)):
+                add("warning", tab, ref, "skill_pools", f"only {pool_count} skills in the pools for {a.get('skills_per_enemy', 3)} picks")
+        for ref in self.refs(tab, 2):
+            for k in (p.get(ref).get("archetype_weights") or {}):
+                if k not in archetypes:
+                    add("error", tab, ref, "archetype_weights", f"unknown archetype '{k}'")
+        for ref in self.refs(tab, 5):
+            n = p.get(ref)
+            if n.get("archetype") and n["archetype"] not in archetypes:
+                add("error", tab, ref, "archetype", f"unknown archetype '{n['archetype']}'")
+        for i, ph in enumerate((d.get("boss") or {}).get("phases", []) or []):
+            if not isinstance(ph, dict) or ph.get("use") not in ("signature", "ultimate"):
+                add("error", tab, None, "phases", f"phase {i + 1}: 'use' must be 'signature' or 'ultimate'")
+
     def _orphans(self):
         p, add = self.p, self.r.add
         used = set()
@@ -440,6 +477,9 @@ class Validator:
             for ref in self.refs("Talents", 2):
                 if p.get(ref).get("skill"):
                     skill_users.add(p.get(ref)["skill"])
+        if "Enemy Archetypes" in p.data:
+            text = json.dumps(p.data["Enemy Archetypes"])
+            skill_users.update(s for s in p.source("skills") if f'"{s}"' in text)
         for ref in self.refs("Skills"):
             if ref.key not in skill_users:
                 add("info", "Skills", ref, "", "no class or talent grants this skill")

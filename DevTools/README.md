@@ -65,6 +65,10 @@ always see what's on screen.
   with the same options. Select any two runs to compare them. Changes smaller than
   the noise band are grey. The band is about 141/sqrt(runs) points: ±12 at 150 runs,
   ±6 at 500. Raise **Runs per class** to see smaller effects.
+- **From the command line**, `tests/balance_sim.tscn -- tool` also takes
+  `--archetype=Brute` (every regular enemy uses that archetype) and `--deaths=1`
+  (prints `SIM DEATHS|class|style|{wave: count}`, where runs died), which help when
+  tuning the **Enemy Archetypes** tab.
 
 ## Adding or changing fields
 Each data file has a schema in `DevTools/schemas/<name>.json`; the format is documented at

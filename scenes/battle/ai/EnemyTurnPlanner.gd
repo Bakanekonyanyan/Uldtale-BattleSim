@@ -22,6 +22,7 @@ func initialize(p_context: BattleContext) -> void:
 			ai = EnemyAI.new()
 		# AI reads the current living heroes each turn (party-ready)
 		ai.initialize(enemy, context.get_living_heroes, context.current_floor)
+		ai.set_allies_source(context.get_living_enemies)   # healers mend the pack
 		_brains[enemy] = ai
 
 	print("EnemyTurnPlanner: %d AI controllers ready" % _brains.size())

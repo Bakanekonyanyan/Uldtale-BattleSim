@@ -42,6 +42,11 @@ func _decide() -> BattleAction:
 	
 	var enemy_hp_percent = float(enemy.current_hp) / float(enemy.max_hp)
 	
+	# === HP TRIGGERS: signature / ultimate (data/enemy_archetypes.json boss.phases) ===
+	var trigger_action = _try_hp_trigger(enemy_hp_percent)
+	if trigger_action:
+		return trigger_action
+	
 	# === PHASE-SPECIFIC ABILITIES (Priority) ===
 	var phase_action = _try_phase_ability()
 	if phase_action:
@@ -59,6 +64,33 @@ func _decide() -> BattleAction:
 	
 	# Otherwise use enhanced base AI
 	return super._decide()
+
+# =============================================
+# HP TRIGGERS (archetype bosses)
+# =============================================
+
+## Each entry of boss.phases fires once when HP drops below hp_below: the boss
+## uses its signature or its talent ultimate. A trigger whose skill is on
+## cooldown or unaffordable waits for a later turn.
+var _fired_triggers: Dictionary = {}
+
+func _try_hp_trigger(hp_percent: float) -> BattleAction:
+	var phases: Array = EnemyArchetypes.boss_cfg().get("phases", [])
+	for i in range(phases.size()):
+		var ph: Dictionary = phases[i]
+		if _fired_triggers.has(i) or hp_percent > float(ph.get("hp_below", 0.0)):
+			continue
+		var skill_name = String(enemy.get_meta("boss_" + String(ph.get("use", "")), ""))
+		if skill_name == "" or not enemy.skills.has(skill_name):
+			_fired_triggers[i] = true      # nothing to use: don't keep checking
+			continue
+		var skill = enemy.get_skill_instance(skill_name)
+		if skill == null or enemy.get_skill_cooldown(skill_name) > 0 or not _can_afford_skill(skill):
+			continue
+		_fired_triggers[i] = true
+		print("BossAI: HP trigger (%.0f%%) - %s!" % [hp_percent * 100, skill_name])
+		return BattleAction.skill(enemy, skill, _get_skill_targets_smart(skill))
+	return null
 
 # =============================================
 # PHASE MANAGEMENT

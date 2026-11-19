@@ -18,6 +18,11 @@ var current_floor: int = 1
 var aggression: float = 0.5  # 0.0 = defensive, 1.0 = aggressive
 var intelligence: float = 0.5  # 0.0 = random, 1.0 = optimal
 var desperation_threshold: float = 0.25  # HP% when desperation kicks in
+## Archetype AI role tuning (EnemyArchetypes.role): skill_chance, consider_buffs,
+## debuff_chance, combo_bias, defend_below, heal_ally_below
+var role: Dictionary = EnemyArchetypes.DEFAULT_ROLE.duplicate()
+## Living allies (this enemy's side): Callable returning an Array, or null
+var _allies_source: Variant = null
 
 func initialize(p_enemy: CharacterData, p_heroes: Variant, floor: int):
 	enemy = p_enemy
@@ -28,6 +33,7 @@ func initialize(p_enemy: CharacterData, p_heroes: Variant, floor: int):
 	aggression = randf_range(0.3, 0.8)
 	intelligence = randf_range(0.4, 0.9)
 	desperation_threshold = randf_range(0.2, 0.35)
+	role = EnemyArchetypes.role(String(enemy.get_meta("ai_role", "")))
 	
 	print("EnemyAI: Initialized for %s (Aggression: %.2f, Intelligence: %.2f)" % [
 		enemy.name, aggression, intelligence
@@ -39,6 +45,19 @@ func decide_action() -> BattleAction:
 	if target == null:
 		return null
 	return _decide()
+
+func set_allies_source(source: Variant) -> void:
+	_allies_source = source
+
+func get_living_allies() -> Array:
+	var allies: Array = []
+	if _allies_source is Callable:
+		allies = _allies_source.call()
+	elif _allies_source is Array:
+		allies = _allies_source
+	if allies.is_empty():
+		allies = [enemy]
+	return allies.filter(func(a): return a != null and a.is_alive())
 
 func get_living_heroes() -> Array:
 	var heroes: Array = []
@@ -75,9 +94,15 @@ func _decide() -> BattleAction:
 		if desperate_action:
 			return desperate_action
 	
+	# === SUPPORT: healers mend a wounded ally first ===
+	if float(role.heal_ally_below) > 0.0:
+		var support_action = _try_heal_ally()
+		if support_action:
+			return support_action
+	
 	# === COMBO OPPORTUNITY (target has a set-up status we can pay off) ===
 	# Smarter enemies spot it more often (players = enemies: same combos as heroes).
-	if RandomManager.randf() < 0.3 + intelligence * 0.6:
+	if RandomManager.randf() < 0.3 + intelligence * 0.6 + float(role.combo_bias):
 		var combo_action = _try_combo()
 		if combo_action:
 			return combo_action
@@ -96,13 +121,13 @@ func _decide() -> BattleAction:
 			return defensive_action
 	
 	# === BUFF/DEBUFF PRIORITY (If unbuffed/target unbuffed) ===
-	if RandomManager.randf() < 0.6:  # 60% chance to consider buffs
+	if RandomManager.randf() < float(role.consider_buffs):
 		var buff_action = _try_buff_or_debuff()
 		if buff_action:
 			return buff_action
 	
 	# === OFFENSIVE SKILLS (Primary damage dealer) ===
-	if RandomManager.randf() < 0.75:
+	if RandomManager.randf() < float(role.skill_chance):
 		var skill_action = _try_use_damage_skill()
 		if skill_action:
 			return skill_action
@@ -200,7 +225,7 @@ func _try_buff_or_debuff() -> BattleAction:
 	"""Apply buffs/debuffs strategically"""
 	
 	# Prioritize debuffing target if they're strong
-	if not target.buff_manager.has_debuffs() and RandomManager.randf() < 0.6:
+	if not target.buff_manager.has_debuffs() and RandomManager.randf() < float(role.debuff_chance):
 		var debuff_skill = _find_debuff_skill()
 		if debuff_skill and _can_afford_skill(debuff_skill):
 			print("EnemyAI: Applying debuff to player")
@@ -245,11 +270,34 @@ func _decide_defensive_action() -> BattleAction:
 		return BattleAction.skill(enemy, heal_skill, [enemy])
 	
 	# Defend only if very low and no healing available
-	if enemy_hp_percent < 0.35:
+	if enemy_hp_percent < float(role.defend_below):
 		print("EnemyAI: Defending (HP: %.0f%%)" % (enemy_hp_percent * 100))
 		return BattleAction.defend(enemy)
 	
 	return null
+
+# =============================================
+# SUPPORT (healer role)
+# =============================================
+
+## Heal the most wounded ally under heal_ally_below, if a heal is ready.
+func _try_heal_ally() -> BattleAction:
+	var allies = get_living_allies()
+	allies.sort_custom(func(a, b): return float(a.current_hp) / a.max_hp < float(b.current_hp) / b.max_hp)
+	var hurt: CharacterData = allies[0] if not allies.is_empty() else null
+	if hurt == null or float(hurt.current_hp) / hurt.max_hp >= float(role.heal_ally_below):
+		return null
+	var heal_skill = _find_healing_skill()
+	if heal_skill == null or not _can_afford_skill(heal_skill):
+		return null
+	match heal_skill.target:
+		Skill.TargetType.ALL_ALLIES:
+			return BattleAction.skill(enemy, heal_skill, [])
+		Skill.TargetType.SELF:
+			return BattleAction.skill(enemy, heal_skill, [enemy]) if hurt == enemy else null
+		_:
+			print("EnemyAI: Healing %s with %s" % [hurt.name, heal_skill.name])
+			return BattleAction.skill(enemy, heal_skill, [hurt])
 
 # =============================================
 # OFFENSIVE SKILLS

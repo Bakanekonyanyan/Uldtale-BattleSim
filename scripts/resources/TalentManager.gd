@@ -32,6 +32,10 @@ static var _data: Dictionary = {}
 var character: CharacterData
 var ranks: Dictionary = {}          # "Branch/node" -> rank
 var _fx: Dictionary = {}            # aggregated effects, rebuilt on change
+## Enemies spend points in a hero class's tree (EnemyArchetypes): tree_class
+## names that class, points_override replaces the per-level point count.
+var tree_class: String = ""
+var points_override: int = -1
 
 func _init(owner_character: CharacterData):
 	character = owner_character
@@ -79,11 +83,14 @@ static func nodes_for(cls: String, branch: String) -> Array:
 	out.sort_custom(func(a, b): return int(a.get("tier", 1)) < int(b.get("tier", 1)))
 	return out
 
+func tree() -> String:
+	return tree_class if tree_class != "" else character.character_class
+
 func node(key: String) -> Dictionary:
 	var parts = key.split("/")
 	if parts.size() != 2:
 		return {}
-	var n = data().get("nodes", {}).get(character.character_class, {}).get(parts[0], {}).get(parts[1], {})
+	var n = data().get("nodes", {}).get(tree(), {}).get(parts[0], {}).get(parts[1], {})
 	if n.is_empty():
 		return {}
 	var e = n.duplicate()
@@ -95,6 +102,8 @@ func node(key: String) -> Dictionary:
 # ------------------------------------------------------------------ points
 
 func total_points() -> int:
+	if points_override >= 0:
+		return points_override
 	var first = int(settings().get("first_point_level", 2))
 	return max(0, (character.level - first + 1) * int(settings().get("points_per_level", 1)))
 
@@ -208,7 +217,7 @@ func load_save_data(saved: Dictionary) -> void:
 func _rebuild() -> void:
 	_fx = {"stats": {}, "damage": [], "defense": [], "heal_bonus": 0.0, "lifesteal": [],
 		"skill": {}, "combo": {}, "status_chance": 0.0, "regen": {"hp": 0.0, "mp": 0.0, "sp": 0.0}}
-	if character == null or character.character_class == "":
+	if character == null or tree() == "":
 		return
 	for key in ranks:
 		var r = int(ranks[key])

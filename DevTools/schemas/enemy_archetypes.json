@@ -1,0 +1,345 @@
+{
+ "tab": "Enemy Archetypes",
+ "file": "data/enemy_archetypes.json",
+ "order": 47,
+ "description": "Enemy and boss role templates (EnemyArchetypes.gd): skills drawn from hero-class pools plus monster skills, talents in one hero branch, AI role, boss signatures and HP triggers. Base stats live in Classes (non_playable).",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Settings",
+   "path": [
+    "settings"
+   ],
+   "fields": [
+    {
+     "name": "talent_points_per_floor",
+     "type": "float",
+     "min": 0,
+     "help": "Regular enemies get floor x this talent points (rounded down)."
+    },
+    {
+     "name": "race_skill_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Chance one rolled skill comes from the race's own pool."
+    },
+    {
+     "name": "damage_power_cap_base",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "damage_power_cap_per_floor",
+     "type": "float",
+     "min": 0,
+     "help": "Rolled DAMAGE skills above base + per_floor x floor are skipped."
+    },
+    {
+     "name": "skill_min_floor",
+     "type": "map",
+     "key": {
+      "type": "ref",
+      "source": "skills"
+     },
+     "value": {
+      "type": "int",
+      "min": 1
+     },
+     "help": "Skills enemies can't roll before this floor."
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Archetypes",
+   "path": [
+    "archetypes"
+   ],
+   "key_style": "title",
+   "name_field": "description",
+   "summary": "{ai_role}, {skills_per_enemy} skills",
+   "fields": [
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "stats_class",
+     "type": "ref",
+     "source": "enemy_classes",
+     "help": "Base stats come from this Classes entry."
+    },
+    {
+     "name": "ai_role",
+     "type": "str",
+     "help": "A key of AI roles below."
+    },
+    {
+     "name": "skills_per_enemy",
+     "type": "int",
+     "min": 1,
+     "max": 8,
+     "default": 3
+    },
+    {
+     "name": "skill_pools",
+     "type": "map",
+     "key": {
+      "type": "enum",
+      "source": "playable_classes",
+      "options": [
+       "monster"
+      ]
+     },
+     "value": {
+      "type": "ref_list",
+      "source": "skills"
+     },
+     "help": "Hero class (or 'monster') -> skills enemies of this archetype can roll."
+    },
+    {
+     "name": "pool_weights",
+     "type": "map",
+     "key": {
+      "type": "enum",
+      "source": "playable_classes",
+      "options": [
+       "monster"
+      ]
+     },
+     "value": {
+      "type": "float",
+      "min": 0
+     }
+    },
+    {
+     "name": "min_from",
+     "type": "map",
+     "key": {
+      "type": "enum",
+      "source": "playable_classes",
+      "options": [
+       "monster"
+      ]
+     },
+     "value": {
+      "type": "int",
+      "min": 0
+     },
+     "optional": true,
+     "help": "Guaranteed picks per pool."
+    },
+    {
+     "name": "require_types",
+     "type": "enum_list",
+     "source": "gd:SkillType",
+     "optional": true,
+     "help": "Always roll at least one skill of each type (e.g. HEAL for healers)."
+    },
+    {
+     "name": "talents",
+     "type": "object",
+     "fields": [
+      {
+       "name": "class",
+       "type": "ref",
+       "source": "playable_classes"
+      },
+      {
+       "name": "branch",
+       "type": "str",
+       "help": "Branch id in Talents for that class."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Races",
+   "path": [
+    "races"
+   ],
+   "key_style": "title",
+   "fields": [
+    {
+     "name": "archetype_weights",
+     "type": "json",
+     "help": "{archetype: weight} - how often each archetype appears for this race."
+    },
+    {
+     "name": "skills",
+     "type": "map",
+     "key": {
+      "type": "enum",
+      "source": "playable_classes",
+      "options": [
+       "monster"
+      ]
+     },
+     "value": {
+      "type": "ref_list",
+      "source": "skills"
+     },
+     "help": "Race flavour pool."
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "AI roles",
+   "path": [
+    "ai_roles"
+   ],
+   "key_style": "snake",
+   "fields": [
+    {
+     "name": "skill_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "consider_buffs",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "debuff_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "combo_bias",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "defend_below",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Defend below this HP fraction when no heal is ready."
+    },
+    {
+     "name": "heal_ally_below",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Heal the most wounded ally below this HP fraction (0 = never)."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Bosses",
+   "path": [
+    "boss"
+   ],
+   "fields": [
+    {
+     "name": "talent_points_min",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "talent_points_per_floor",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "grant_ultimate",
+     "type": "bool",
+     "help": "Give the branch's tier-5 skill even before the points reach it."
+    },
+    {
+     "name": "extra_skills",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "king_pool",
+     "type": "ref_list",
+     "source": "skills"
+    },
+    {
+     "name": "king_picks",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "signatures",
+     "type": "map",
+     "key": {
+      "type": "ref",
+      "source": "enemy_races"
+     },
+     "value": {
+      "type": "ref",
+      "source": "skills"
+     }
+    },
+    {
+     "name": "phases",
+     "type": "json",
+     "help": "[{\"hp_below\": 0.6, \"use\": \"signature\"|\"ultimate\"}] - each fires once."
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Named bosses",
+   "path": [
+    "named_bosses"
+   ],
+   "key_style": "snake",
+   "name_field": "name",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "location",
+     "type": "ref",
+     "source": "locations"
+    },
+    {
+     "name": "floors",
+     "type": "json",
+     "help": "Floors this boss appears on, e.g. [5, 10]."
+    },
+    {
+     "name": "race",
+     "type": "ref",
+     "source": "enemy_races"
+    },
+    {
+     "name": "archetype",
+     "type": "str"
+    },
+    {
+     "name": "branch",
+     "type": "str",
+     "optional": true
+    },
+    {
+     "name": "signature",
+     "type": "ref",
+     "source": "skills",
+     "optional": true
+    },
+    {
+     "name": "skills",
+     "type": "ref_list",
+     "source": "skills",
+     "optional": true
+    }
+   ]
+  }
+ ]
+}
