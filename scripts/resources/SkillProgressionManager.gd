@@ -5,7 +5,12 @@
 class_name SkillProgressionManager
 extends RefCounted
 
-var character: CharacterData
+## Weak back-reference: the character owns this manager, so a strong
+## reference here would be a cycle and neither would ever be freed.
+var _character_ref: WeakRef
+var character: CharacterData:
+	get: return _character_ref.get_ref() if _character_ref else null
+	set(value): _character_ref = weakref(value) if value else null
 var skill_levels: Dictionary = {}  # skill_name -> {level: int, uses: int}
 var skill_instances: Dictionary = {}  # skill_name -> Skill instance
 var skill_cooldowns: Dictionary = {}  # skill_name -> turns_remaining

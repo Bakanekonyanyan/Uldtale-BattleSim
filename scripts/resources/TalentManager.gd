@@ -29,7 +29,12 @@ extends RefCounted
 
 static var _data: Dictionary = {}
 
-var character: CharacterData
+## Weak back-reference: the character owns this manager, so a strong
+## reference here would be a cycle and neither would ever be freed.
+var _character_ref: WeakRef
+var character: CharacterData:
+	get: return _character_ref.get_ref() if _character_ref else null
+	set(value): _character_ref = weakref(value) if value else null
 var ranks: Dictionary = {}          # "Branch/node" -> rank
 var _fx: Dictionary = {}            # aggregated effects, rebuilt on change
 ## Enemies spend points in a hero class's tree (EnemyArchetypes): tree_class

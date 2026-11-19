@@ -4,7 +4,12 @@
 class_name StatusEffectManager
 extends RefCounted
 
-var character: CharacterData
+## Weak back-reference: the character owns this manager, so a strong
+## reference here would be a cycle and neither would ever be freed.
+var _character_ref: WeakRef
+var character: CharacterData:
+	get: return _character_ref.get_ref() if _character_ref else null
+	set(value): _character_ref = weakref(value) if value else null
 var active_effects: Dictionary = {}
 var effect_stacks: Dictionary = {}
 

@@ -607,6 +607,24 @@ func _levelup_on_breather_check() -> void:
 	rs.queue_free()
 	await get_tree().process_frame
 
+## Characters must be freed once nothing uses them (docs/CODE_AUDIT.md L1/L2).
+func _leak_checks() -> void:
+	var refs: Array = []
+	for i in 20:
+		refs.append(weakref(EnemyFactory.create_enemy(1, 3, 2)))
+	for i in 5:
+		refs.append(weakref(AutoBattler.build_hero({"name": "T", "race": "Hume", "cls": "Cleric", "level": 6, "gear_floor": 3, "branch": 0})))
+	var a = EnemyFactory.create_enemy(1, 2, 1)
+	var b = CharacterFactory.create_character("B", "Hume", "Paladin", true)
+	a.last_attacker = b
+	b.last_attacker = a
+	refs.append(weakref(a)); refs.append(weakref(b))
+	a = null; b = null
+	var alive = refs.filter(func(w): return w.get_ref() != null).size()
+	check(alive == 0, "released enemies, heroes and duelling pairs are freed (%d of %d still alive)" % [alive, refs.size()])
+	var e = EnemyFactory.create_enemy(1, 1, 1)
+	check(e.status_manager.character == e and e.talents.character == e, "managers still reach their character through the weak reference")
+
 ## Talent trees (data/talents.json, TalentManager.gd)
 func _talent_checks() -> void:
 	# skills charge every cost they list
@@ -871,6 +889,7 @@ func _phase0_checks() -> void:
 	_adventurer_checks()
 	_party_checks()
 	_revive_and_encounter_checks()
+	_leak_checks()
 	
 	# Class-biased loot rolls (Breather drops pass the player's class)
 	var biased_ok := true

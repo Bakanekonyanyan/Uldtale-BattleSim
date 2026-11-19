@@ -62,7 +62,11 @@ var hp_multiplier: float = 1.0
 ## Set by EnemyFactory; players and PvP opponents keep 1.0.
 var damage_multiplier: float = 1.0
 var is_stunned: bool = false
-var last_attacker: CharacterData = null
+## Weak: two fighters hitting each other would otherwise form a reference cycle.
+var _last_attacker_ref: WeakRef
+var last_attacker: CharacterData:
+	get: return _last_attacker_ref.get_ref() if _last_attacker_ref else null
+	set(value): _last_attacker_ref = weakref(value) if value else null
 
 # === PROGRESSION ===
 @export var xp: int = 0
