@@ -156,7 +156,7 @@ class EnumEditor(Editor):
 
     def _check(self):
         cur = self.var.get()
-        known = cur in self.choices(self.field) or (cur == "" and "" in self.field.options)
+        known = cur == "" or cur in self.choices(self.field)
         self.note.configure(text="" if known or self.field.allow_custom else "not a known value")
         if self.box.cget("state") == "normal":
             self.changed()

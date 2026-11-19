@@ -20,6 +20,7 @@ from cm import jsonio  # noqa: E402
 from cm.enums import parse_gd_enums  # noqa: E402
 from cm.project import EntryRef, Project  # noqa: E402
 from cm.splice import splice  # noqa: E402
+from cm.validate import validate  # noqa: E402
 
 
 def changed_lines(a: str, b: str) -> int:
@@ -165,6 +166,51 @@ class TestMinimalDiffSave(TempProject):
     def test_splice_falls_back_cleanly(self):
         self.assertIsNone(splice("{ not json", {"a": 1}))
         self.assertEqual(json.loads(splice('{\n\t"a": 1,\n\t"b": [1, 2]\n}\n', {"a": 1, "b": [1, 2, 3]})), {"a": 1, "b": [1, 2, 3]})
+
+
+class TestValidate(TempProject):
+    def errors(self):
+        return [(i.tab, i.where, i.field, i.message) for i in validate(self.p).issues if i.severity == "error"]
+
+    def assertCaught(self, needle):
+        errs = self.errors()
+        self.assertTrue(any(needle in " ".join(map(str, e)) for e in errs), f"expected an error mentioning {needle!r}, got {errs}")
+
+    def test_real_data_has_no_errors(self):
+        self.assertEqual(self.errors(), [])
+
+    def test_broken_references(self):
+        d = self.p.data
+        del d["Materials"]["glowcap_mushroom"]                       # used by recipes and drop tables
+        self.assertCaught("'glowcap_mushroom' is not in the materials")
+        d["Classes"]["playable"]["Paladin"]["skills"].append("Holy Strik")
+        self.assertCaught("'Holy Strik' is not in the skills")
+        d["Skills"]["skills"]["Iaido"]["status_effect"] = "BLED"
+        self.assertCaught("'BLED' is not in the StatusEffect values")
+
+    def test_types_ranges_and_case_hint(self):
+        d = self.p.data
+        d["Skills"]["skills"]["Iaido"]["power"] = "lots"
+        self.assertCaught("should be a number")
+        d["Skills"]["skills"]["Iaido"]["power"] = 900
+        self.assertCaught("above the maximum")
+        d["Skills"]["skills"]["Iaido"]["type"] = "damage"
+        self.assertCaught("did you mean 'DAMAGE'")
+
+    def test_cross_file_rules(self):
+        d = self.p.data
+        d["Armors"]["plate"]["head"][next(iter(d["Armors"]["plate"]["head"]))]["slot"] = "feet"
+        self.assertCaught("filed under 'head'")
+        del d["Blacksmith"]["max_level"]["epic"]
+        self.assertCaught("no max level for rarity 'epic'")
+        d["Materials"]["dagger"] = dict(d["Materials"]["wood"])
+        self.assertCaught("item ids must be unique")
+        d["Skills"]["skills"]["Iaido"]["name"] = "Iaido Strike"
+        self.assertCaught("differs from the id")
+        d["Recipes"]["recipes"]["health_potion"]["unlock"] = {"type": "purchase"}
+        self.assertCaught("purchase unlock needs a price")
+        d["Damage Types"]["races"]["Gobbo"] = {"SLASH": 0.1}
+        self.assertCaught("'Gobbo' is not a race")
 
 
 if __name__ == "__main__":

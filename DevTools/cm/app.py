@@ -11,6 +11,8 @@ from tkinter import filedialog, messagebox, ttk
 from . import widgets
 from .config import Config, is_project_root
 from .project import EntryRef, Project
+from .panels import ProblemsPanel
+from .validate import validate
 from .widgets import COLORS, Form, JsonEditor
 
 APP_TITLE = "Uldtale Content Manager"
@@ -508,7 +510,8 @@ class App(tk.Tk):
         ttk.Checkbutton(self.toolbar, text="Dark", variable=self.dark_var, style="Bar.TCheckbutton",
                         command=self._toggle_dark).pack(side="right")
         ttk.Button(self.toolbar, text="Change...", command=self.change_root).pack(side="right", padx=6)
-        self.root_lbl = ttk.Label(self.toolbar, text=self.project.root, style="Bar.TLabel")
+        shown = self.project.root if len(self.project.root) <= 48 else "..." + self.project.root[-45:]
+        self.root_lbl = ttk.Label(self.toolbar, text=shown, style="Bar.TLabel")
         self.root_lbl.pack(side="right")
 
         self.vpane = ttk.PanedWindow(self, orient="vertical")
@@ -519,8 +522,11 @@ class App(tk.Tk):
             v = TabView(self, s.tab)
             self.views[s.tab] = v
             self.notebook.add(v, text=s.tab)
-        self.dock = ttk.Notebook(self.vpane)       # Problems / Godot output (added later)
+        self.dock = ttk.Notebook(self.vpane)       # Problems / Godot output / sim history
         self._dock_shown = False
+        self.problems = ProblemsPanel(self.dock, self)
+        self.dock.add(self.problems, text="Problems")
+        ttk.Button(self.tools, text="Validate", command=self.run_validate).pack(side="left")
 
         self.status_var = tk.StringVar(value="Ready. Ctrl+S saves all changed files; Ctrl+F searches the current tab.")
         ttk.Label(self, textvariable=self.status_var, style="Bar.TLabel", padding=(8, 3)).pack(fill="x", side="bottom")
@@ -563,6 +569,18 @@ class App(tk.Tk):
 
     # ------------------------------------------------------------ actions
 
+    def run_validate(self, quiet: bool = False):
+        """Python-side checks over every file (instant). Godot-side checks run
+        from the Tests buttons and are merged into the same list."""
+        report = validate(self.project)
+        godot = [i for i in self.problems.issues if i.source == "godot"]
+        self.problems.set_issues(report.issues, "Checked all files: " + report.summary())
+        if godot:
+            self.problems.add_issues(godot)
+        if not quiet or report.count("error"):
+            self.show_dock(self.problems)
+        return report
+
     def save_all(self) -> list:
         try:
             saved = self.project.save_all()
@@ -570,7 +588,11 @@ class App(tk.Tk):
             messagebox.showerror("Save", str(e), parent=self)
             return []
         self.mark_changed()
-        self.status(("Saved: " + ", ".join(saved)) if saved else "Nothing to save.")
+        msg = ("Saved: " + ", ".join(saved)) if saved else "Nothing to save."
+        if saved:
+            report = self.run_validate(quiet=True)
+            msg += "   |   " + report.summary() + ("" if not report.count("error") else " - see Problems")
+        self.status(msg)
         return saved
 
     def reload(self):

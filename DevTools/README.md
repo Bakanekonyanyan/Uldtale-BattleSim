@@ -25,6 +25,21 @@ the project it lives in; **Change...** points it at another checkout.
 - **Rename** changes only the id; other files that refer to it are not updated
   (Validate lists them).
 
+## Validate
+**Validate** checks every file at once and lists problems at the bottom; double-click
+one to jump to the entry and field. It also runs automatically after each save.
+- **Errors**: the game will misbehave. Unknown ids (a recipe ingredient that isn't a
+  material, a class skill that doesn't exist), wrong types, out-of-range numbers,
+  duplicate item ids, armor filed under the wrong slot, Blacksmith tables missing a
+  rarity, and so on.
+- **Warnings**: probably a mistake (missing keys the game defaults, a weapon with no
+  damage type).
+- **Notes** (hidden unless "Show notes" is ticked): content nothing uses yet.
+
+`tests/validate_content.tscn` does the same from inside Godot: it builds every item,
+skill, class, enemy group, recipe and bounty board through the real game code.
+Run it from the Tests buttons, or `godot --headless res://tests/validate_content.tscn`.
+
 ## Adding or changing fields
 Each data file has a schema in `DevTools/schemas/<name>.json`; the format is documented at
 the top of `DevTools/cm/schema.py`. A new data file only needs a new schema file. A new
