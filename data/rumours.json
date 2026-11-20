@@ -1,0 +1,11 @@
+{
+	"_comment": "Tavern rumours (RumorManager.gd). Up to max_active at once, each lasting days_valid days. elite: the first regular wave on that floor of that location has the named Elite; beating it banks the bonus. cache: clearing that floor's boss banks the bonus. Bonus = gold_per_floor x floor, material_rolls, gear_chance.",
+	"max_active": 2,
+	"days_valid": 6,
+	"new_chance_per_day": 0.5,
+	"reward": { "gold_per_floor": 60, "material_rolls": 3, "gear_chance": 0.5 },
+	"types": {
+		"elite": { "weight": 1.0, "text": "Folk whisper of a {affix} beast prowling floor {floor} of {location}. They say it guards a fortune." },
+		"cache": { "weight": 1.0, "text": "A dying adventurer spoke of a cache hidden past the guardian of floor {floor} in {location}." }
+	}
+}

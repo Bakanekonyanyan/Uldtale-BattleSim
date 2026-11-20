@@ -1263,6 +1263,7 @@ func _phase0_checks() -> void:
 	_enchant_checks()
 	_run_state_checks()
 	_bond_checks()
+	_town_life_checks()
 	_guild_checks()
 
 # ------------------------------------------------------------------ momentum + gear drops
@@ -1461,6 +1462,69 @@ func _material_checks() -> void:
 	robe.set_upgrade_level(5)
 	check(BlacksmithManager.get_upgrade_cost(robe).materials.has("silk_cloth"), "higher cloth upgrades need Silk")
 	check(BlacksmithManager.get_salvage_preview(vest).ore_id == "rawhide", "salvaging leather armor gives hide")
+
+## Commissions, rumours and nemesis rivals.
+func _town_life_checks() -> void:
+	var p = make_player()
+	var prev_cur = CharacterManager.get_current_character()
+	CharacterManager.current_character_resource.set_meta("current_character", p)
+	# --- commissions
+	CommissionManager.refresh(p)
+	for shop in ["blacksmith", "alchemist", "enchanter"]:
+		check(not CommissionManager.active(p, shop).is_empty(), "the %s posts a commission" % shop)
+	var a = CommissionManager.active(p, "blacksmith")
+	check(not CommissionManager.deliver(p, "blacksmith").ok, "can't deliver without the materials")
+	var sword = _make_gear("rare")
+	var cost0 = BlacksmithManager.get_upgrade_cost(sword).gold
+	var gold0 = p.currency.copper
+	for i in range(2):
+		a = CommissionManager.active(p, "blacksmith")
+		_give(p, String(a.item), int(a.qty))
+		var r = CommissionManager.deliver(p, "blacksmith")
+		if i == 0:
+			check(r.ok, "delivering pays (%s)" % r.reason)
+	check(p.currency.copper > gold0 and CommissionManager.done(p, "blacksmith") == 2 and CommissionManager.tier_name(p, "blacksmith") == "Known", "two deliveries: Known standing")
+	check(BlacksmithManager.get_upgrade_cost(sword).gold < cost0 or cost0 <= 10, "standing makes the Blacksmith cheaper (%d -> %d)" % [cost0, BlacksmithManager.get_upgrade_cost(sword).gold])
+	# --- rumours
+	p.town_state.erase("rumours")
+	RumorManager.refresh(p, true)
+	var rl = RumorManager.list(p)
+	check(rl.size() == int(RumorManager.cfg().max_active), "the Tavern has %d rumours" % rl.size())
+	var rum = rl[0]
+	rum.type = "elite"
+	rum.affix = "swift"
+	var got = RumorManager.take_elite(p, String(rum.location), int(rum.floor))
+	check(not got.is_empty() and RumorManager.take_elite(p, String(rum.location), int(rum.floor)).is_empty(), "a rumoured elite appears once")
+	MomentumSystem.clear_accumulated_loot()
+	var line = RumorManager.claim(p, int(rum.id))
+	check(line.contains("rumour was true") and int(MomentumSystem.momentum_loot_accumulated.currency) > 0 and RumorManager.list(p).size() == rl.size(), "beating it banks the bonus and ends the rumour")
+	var cache = RumorManager.list(p)[0]
+	cache.type = "cache"
+	var keep_active = DungeonStateManager.active_player
+	DungeonStateManager.active_player = p
+	var before_bank = int(MomentumSystem.momentum_loot_accumulated.currency)
+	GameEvents.floor_cleared.emit(String(cache.location), int(cache.floor))
+	check(int(MomentumSystem.momentum_loot_accumulated.currency) > before_bank and not RumorManager.list(p).has(cache), "clearing a rumoured floor finds the cache")
+	DungeonStateManager.active_player = keep_active
+	MomentumSystem.clear_accumulated_loot()
+	# --- nemesis rivals
+	AdventurerManager.state(p)
+	var npc = AdventurerManager._add(p, AdventurerManager.generate(p, [2, 2], true))
+	npc.status = "idle"
+	npc.rivalry = 3
+	npc.traits = ["cruel"]
+	check(not EncounterManager.candidates(p, "nemesis").has(npc), "a fresh rival (rivalry 3) isn't a nemesis yet")
+	npc.rivalry = 5
+	check(EncounterManager.candidates(p, "nemesis").has(npc) and not EncounterManager.candidates(p, "saboteur").has(npc), "rivalry 5 makes a nemesis (not a mere saboteur)")
+	var foe = EncounterManager.build_nemesis(p, npc)
+	check(foe.level >= p.level + 2 and foe.name.contains("Nemesis") and not foe.is_player, "a nemesis returns stronger (level %d)" % foe.level)
+	var enc = {"type": "nemesis", "npc_id": int(npc.id), "location": "the_dungeon"}
+	var lines = EncounterManager.finish(enc, p, true, [foe])
+	var banked: Array = MomentumSystem.momentum_loot_accumulated.equipment_instances
+	check(not banked.is_empty() and banked[0].display_name.begins_with(String(npc.name).get_slice(" ", 0)) and int(npc.rivalry) == 0 and not npc.get("nemesis", false),
+		"beating a nemesis wins their signature item (%s)" % (banked[0].display_name if not banked.is_empty() else "none"))
+	MomentumSystem.clear_accumulated_loot()
+	CharacterManager.current_character_resource.set_meta("current_character", prev_cur)
 
 ## Bonds (scenes per rapport tier, duo techs) and companion opinions.
 func _bond_checks() -> void:

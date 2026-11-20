@@ -56,6 +56,8 @@ func get_success_chance(item: Equipment, steps: int = 0) -> float:
 	var chance = get_base_chance(target)
 	chance += steps * float(cfg.get("reinforce_step_bonus", 0.10))
 	chance += item.tempered * float(cfg.get("tempered_bonus", 0.05))
+	if chance < 1.0:   # commission standing
+		chance += CommissionManager.perk(CharacterManager.get_current_character(), "blacksmith", "success")
 	return min(1.0, chance)
 
 ## Fewest reinforcement steps that make the next attempt certain.
@@ -80,7 +82,8 @@ func get_upgrade_cost(item: Equipment, steps: int = 0) -> Dictionary:
 		mats["monster_core"] = mats.get("monster_core", 0) + 1
 	for id in mats:
 		mats[id] = int(ceil(mats[id] * mult))
-	return {"gold": int(ceil(base_gold * mult * WorldClock.current_modifier("upgrade_fee"))), "materials": mats}
+	var standing = 1.0 - CommissionManager.perk(CharacterManager.get_current_character(), "blacksmith", "discount")
+	return {"gold": int(ceil(base_gold * mult * WorldClock.current_modifier("upgrade_fee") * standing)), "materials": mats}
 
 func can_afford(player: CharacterData, cost: Dictionary) -> bool:
 	if player.currency.copper < cost.gold:

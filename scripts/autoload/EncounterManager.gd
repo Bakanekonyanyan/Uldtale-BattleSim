@@ -61,7 +61,12 @@ func candidates(player: CharacterData, type: String) -> Array:
 			"rival_theft":
 				if rival or r <= int(c.get("max_rapport", 10)) and (AdventurerManager.trait_mult(n, "compete") > 1.0):
 					out.append(n)
+			"nemesis":
+				if n.get("nemesis", false) or int(n.get("rivalry", 0)) >= int(c.get("min_rivalry", 5)):
+					out.append(n)
 			"saboteur":
+				if n.get("nemesis", false) or int(n.get("rivalry", 0)) >= int(_t("nemesis").get("min_rivalry", 5)):
+					continue   # nemeses come as nemeses
 				var schemer = n.traits.any(func(t): return t in c.get("traits_any", []))
 				if schemer and (r <= int(c.get("max_rapport", -10)) or (c.get("rival_counts", true) and rival)):
 					out.append(n)
@@ -100,7 +105,7 @@ func roll(battle_data: Dictionary, force_type := "") -> Dictionary:
 	_count += 1
 	var enc := {"type": type, "npc_id": int(npc.id), "location": DungeonStateManager.current_location}
 	match type:
-		"helper", "saboteur":
+		"helper", "saboteur", "nemesis":
 			enc.mode = _pick_mode(_t(type).get("modes", {"start": 1.0}))
 			enc.round = _rangei(_t(type).get("mid_round", [2, 3]))
 	return enc
@@ -183,6 +188,19 @@ func begin(enc: Dictionary, player: CharacterData, parent: Node) -> Dictionary:
 				WorldClock.add_news(player, _fmt(String(c.get("news", "")), npc, loc), "rival")
 				out.log.append("%s saunters off with %s." % [npc.name, Currency.format_copper(stolen)])
 				out.log.append_array(BondManager.react(player, "let_thief_go"))
+		"nemesis":
+			var foe = build_nemesis(player, npc)
+			var grudges: Dictionary = c.get("grudges", {})
+			var line = String(grudges.get("default", ""))
+			for t in npc.get("traits", []):
+				if grudges.has(t):
+					line = String(grudges[t])
+					break
+			out.log.append("[color=#ff6b6b][b]Nemesis![/b] %s[/color]" % _fmt(line, npc))
+			if String(enc.get("mode", "after")) == "after":
+				out.pending.append({"side": "enemy", "chars": [foe], "trigger": "victory", "text": _fmt(String(c.get("text_after", "")), npc)})
+			else:
+				out.pending.append({"side": "enemy", "chars": [foe], "trigger": "round", "round": int(enc.get("round", 2)), "text": _fmt(String(c.get("text_mid", "")), npc)})
 		"saboteur":
 			var foe = build_combatant(player, npc, true)
 			foe.set_meta("encounter", "saboteur")
@@ -193,6 +211,31 @@ func begin(enc: Dictionary, player: CharacterData, parent: Node) -> Dictionary:
 			else:
 				out.pending.append({"side": "enemy", "chars": [foe], "trigger": "round", "round": int(enc.get("round", 2)), "text": _fmt(String(c.get("text_mid", "")), npc)})
 	return out
+
+## A nemesis: a stronger enemy version of the adventurer, carrying the
+## signature item they drop when beaten.
+func build_nemesis(player: CharacterData, npc: Dictionary) -> CharacterData:
+	var c = _t("nemesis")
+	var spec = npc.duplicate()
+	spec.level = max(int(npc.level), player.level) + int(c.get("level_bonus", 2))
+	var foe = build_combatant(player, spec, true)
+	foe.set_meta("npc_id", int(npc.id))
+	foe.set_meta("encounter", "nemesis")
+	foe.name = "%s (Nemesis)" % npc.name
+	foe.hp_multiplier = float(c.get("hp_mult", 1.4))
+	foe.damage_multiplier = float(c.get("damage_mult", 0.9))
+	foe.calculate_secondary_attributes()
+	foe.current_hp = foe.max_hp
+	return foe
+
+## Their signature item: rare or better gear named after them.
+func signature_item(npc: Dictionary, floor: int) -> Equipment:
+	var id = ItemManager.get_random_weapon_biased(String(npc.get("cls", ""))) if RandomManager.randf() < 0.6 else ItemManager.get_random_armor()
+	var g: Equipment = ItemManager.create_equipment_for_floor(id, max(1, floor), int(_t("nemesis").get("signature_min_rarity", 3)))
+	if g:
+		g.display_name = "%s's %s" % [String(npc.name).get_slice(" ", 0), g.display_name]
+		g.flavor_text = "Taken from your nemesis, %s." % npc.name
+	return g
 
 ## Consequences when the battle ends. `joined` = encounter combatants that
 ## actually took part.
@@ -212,6 +255,27 @@ func finish(enc: Dictionary, player: CharacterData, won: bool, joined: Array) ->
 			AdventurerManager._history(npc, day, "Fought beside %s in %s." % [player.name, LocationManager.get_display_name(loc)])
 			WorldClock.add_news(player, _fmt(String(c.get("news", "")), npc, loc), "adventurer")
 			lines.append("%s salutes and heads off (+%d rapport)." % [npc.name, int(c.get("rapport_after", 3))])
+		"nemesis":
+			if joined.is_empty():
+				return lines
+			if won:
+				var item = signature_item(npc, DungeonStateManager.current_floor)
+				if item:
+					MomentumSystem.bank_rewards({"currency": 0, "equipment_instances": [item]})
+				npc.rivalry = 0
+				npc.nemesis = false
+				npc.nemesis_beaten = int(npc.get("nemesis_beaten", 0)) + 1
+				npc.status = "injured"
+				npc.job = {}
+				npc.injured_until = day + _rangei(c.get("injury_days", [5, 9]))
+				AdventurerManager._set_rapport(npc, int(c.get("win_rapport", 5)))
+				AdventurerManager._history(npc, day, "Was defeated by their nemesis %s." % player.name)
+				WorldClock.add_news(player, String(c.get("news_beaten", "")).format({"name": npc.name, "location": LocationManager.get_display_name(loc), "item": item.display_name if item else "weapon"}), "rival")
+				lines.append("%s yields. Their %s is yours (banked with your loot)." % [npc.name, item.display_name if item else "gear"])
+			else:
+				npc.rivalry = int(npc.get("rivalry", 0)) + 1
+				AdventurerManager._history(npc, day, "Bested their nemesis %s in %s." % [player.name, LocationManager.get_display_name(loc)])
+				WorldClock.add_news(player, _fmt(String(c.get("news_lost", "")), npc, loc), "rival")
 		"rival_theft", "saboteur":
 			if joined.is_empty():
 				return lines
@@ -233,6 +297,7 @@ func finish(enc: Dictionary, player: CharacterData, won: bool, joined: Array) ->
 					AdventurerManager._history(npc, day, "Was made to give back what they stole from %s." % player.name)
 					lines.append("You take back your %s." % Currency.format_copper(stolen))
 			else:
+				npc.nemesis = true   # they'll be back (encounter type nemesis)
 				AdventurerManager._history(npc, day, "Got the better of %s in %s." % [player.name, LocationManager.get_display_name(loc)])
 				WorldClock.add_news(player, _fmt(String(_t("saboteur").get("news_lost", "")), npc, loc), "rival")
 	return lines

@@ -1,0 +1,38 @@
+{
+	"_comment": "Shop commissions (CommissionManager.gd). Each shop keeps one open request: bring qty of a material by the due day. Delivering pays gold (material value x reward_per_value, at least min_reward) and raises your standing with that shop. Standing tiers give the shop's perks: Blacksmith and Enchanter take discount off their gold cost and add success; the Alchemist teaches recipes (recipes.json unlock type standing).",
+	"deadline_days": 7,
+	"reward_per_value": 2.5,
+	"min_reward": 60,
+	"standing_tiers": [
+		{ "done": 2, "name": "Known", "discount": 0.05, "success": 0.03 },
+		{ "done": 5, "name": "Valued", "discount": 0.1, "success": 0.06 },
+		{ "done": 10, "name": "Partner", "discount": 0.15, "success": 0.1 }
+	],
+	"shops": {
+		"blacksmith": {
+			"name": "Blacksmith",
+			"line": "\"My forge is hungry. Bring me {qty} {item} by day {due}.\"",
+			"materials": {
+				"iron_ore": { "qty": [4, 8] }, "wood": { "qty": [3, 6] }, "linen_cloth": { "qty": [3, 6] }, "rawhide": { "qty": [3, 6] },
+				"mithril_ore": { "qty": [2, 4], "min_floor": 6 }, "silk_cloth": { "qty": [2, 4], "min_floor": 6 }, "thick_hide": { "qty": [2, 4], "min_floor": 6 },
+				"adamant_ore": { "qty": [1, 3], "min_floor": 12 }
+			}
+		},
+		"alchemist": {
+			"name": "Alchemist",
+			"line": "\"I'm short on {item} - {qty} of them, by day {due}, if you'd be so kind.\"",
+			"materials": {
+				"bogblossom_petal": { "qty": [3, 6] }, "frostroot_chunk": { "qty": [3, 6] }, "glowcap_mushroom": { "qty": [3, 6] },
+				"bloodvine_fiber": { "qty": [3, 6] }, "rousepepper_seeds": { "qty": [3, 6] }, "mindglass_shard": { "qty": [3, 5] }
+			}
+		},
+		"enchanter": {
+			"name": "Enchanter",
+			"line": "\"The weave needs feeding: {qty} {item}, by day {due}.\"",
+			"materials": {
+				"embershard_fragment": { "qty": [3, 5] }, "voltslate_pebble": { "qty": [3, 5] }, "mindglass_shard": { "qty": [3, 5] },
+				"frostroot_chunk": { "qty": [3, 5] }, "monster_core": { "qty": [1, 1], "min_floor": 5 }
+			}
+		}
+	}
+}

@@ -202,6 +202,12 @@ func _start_challenge() -> void:
 	ui_controller.update_all_character_info()
 
 func _finish_challenge(won: bool) -> void:
+	if won and DungeonStateManager.dungeon_active:   # a rumoured Elite was beaten
+		for e in context.enemies:
+			if e.has_meta("rumour_id"):
+				var line = RumorManager.claim(context.player, int(e.get_meta("rumour_id")), context.enemies)
+				if line != "":
+					ui_controller.add_combat_log(line, "lime")
 	if rules == null or rules.challenge.is_empty() or not won:
 		return
 	if WaveChallenges.met(rules.challenge, rules.battle_stats()):

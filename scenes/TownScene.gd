@@ -88,6 +88,14 @@ func _ready():
 	bestiary_button.size = Vector2(180, 60)
 	bestiary_button.pressed.connect(func(): BestiaryGuide.open(self))
 	$UI.add_child(bestiary_button)
+	# Commissions: the shops' material requests (CommissionManager)
+	var commissions_button := Button.new()
+	commissions_button.name = "CommissionsButton"
+	commissions_button.text = "Commissions"
+	commissions_button.position = Vector2(40, 528)
+	commissions_button.size = Vector2(180, 60)
+	commissions_button.pressed.connect(func(): CommissionBoard.open(self, current_character))
+	$UI.add_child(commissions_button)
 	# Enchanter: raise rarity with materials (EnchantManager)
 	var enchanter_button := Button.new()
 	enchanter_button.name = "EnchanterButton"

@@ -72,8 +72,14 @@ func _generate_enemies():
 	# Scale stats if multiple enemies
 	if enemies.size() > 1 and not is_boss_wave:
 		_scale_enemy_group()
+	# A Tavern rumour can promise a named Elite on this floor (RumorManager)
+	var rumour = {} if is_boss_wave or enemies.is_empty() or not DungeonStateManager.dungeon_active \
+		else RumorManager.take_elite(DungeonStateManager.active_player, DungeonStateManager.current_location, current_floor)
+	if not rumour.is_empty():
+		EliteAffixes.apply(enemies[0], String(rumour.affix))
+		enemies[0].set_meta("rumour_id", int(rumour.id))
 	# Sometimes one enemy is an Elite with an affix (data/elites.json)
-	if not is_boss_wave and not enemies.is_empty() and RandomManager.randf() < EliteAffixes.chance(current_floor):
+	elif not is_boss_wave and not enemies.is_empty() and RandomManager.randf() < EliteAffixes.chance(current_floor):
 		EliteAffixes.apply(enemies[RandomManager.randi() % enemies.size()], EliteAffixes.roll_affix())
 	
 	# A party faces sturdier waves

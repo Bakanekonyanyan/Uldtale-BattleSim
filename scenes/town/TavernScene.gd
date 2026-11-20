@@ -79,6 +79,7 @@ func _build_ui() -> void:
 	details.position = Vector2(16, 12)
 	details.size = Vector2(640, 416)
 	panel.add_child(details)
+	_button(ui, "Rumours", Vector2(1020, 72), _on_rumours, Vector2(148, 36))
 	chat_button = _button(ui, "Chat", Vector2(496, 526), _on_chat)
 	drink_button = _button(ui, "Buy a Drink", Vector2(656, 526), _on_drink, Vector2(190, 40))
 	gift_button = _button(ui, "Give a Gift...", Vector2(856, 526), _on_gift_pressed, Vector2(170, 40))
@@ -219,6 +220,25 @@ func _update_details() -> void:
 	var why = PartyManager.why_not_recruit(p, int(n.id))
 	party_button.disabled = tab != Tab.ROSTER or (not member and why != "")
 	party_button.tooltip_text = "" if member else why
+
+## Tavern talk: tips about rumoured elites and caches (RumorManager).
+func _on_rumours() -> void:
+	RumorManager.refresh(player_character, true)
+	var day = WorldClock.day(player_character)
+	var t := ""
+	for r in RumorManager.list(player_character):
+		t += "• %s\n   [color=gray]%d day%s left%s[/color]\n\n" % [RumorManager.text(r), max(0, int(r.expires) - day), "" if int(r.expires) - day == 1 else "s", " - already stirred up" if r.get("spawned", false) else ""]
+	var d = AcceptDialog.new()
+	d.title = "Rumours"
+	var label = RichTextLabel.new()
+	label.bbcode_enabled = true
+	label.fit_content = true
+	label.custom_minimum_size = Vector2(560, 0)
+	label.text = t if t != "" else "[i]Nobody's talking tonight.[/i]"
+	d.add_child(label)
+	add_child(d)
+	d.popup_centered(Vector2i(600, 0))
+	d.confirmed.connect(d.queue_free)
 
 func _after(r: Dictionary) -> void:
 	status_label.text = r.reason

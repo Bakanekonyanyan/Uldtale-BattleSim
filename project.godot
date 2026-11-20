@@ -50,6 +50,8 @@ WorldClock="*res://scripts/autoload/WorldClock.gd"
 AdventurerManager="*res://scripts/autoload/AdventurerManager.gd"
 PartyManager="*res://scripts/autoload/PartyManager.gd"
 BondManager="*res://scripts/autoload/BondManager.gd"
+CommissionManager="*res://scripts/autoload/CommissionManager.gd"
+RumorManager="*res://scripts/autoload/RumorManager.gd"
 EncounterManager="*res://scripts/autoload/EncounterManager.gd"
 
 [display]

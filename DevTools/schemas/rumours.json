@@ -1,0 +1,40 @@
+{
+ "tab": "Rumours",
+ "file": "data/rumours.json",
+ "order": 54,
+ "description": "Tavern rumours (RumorManager.gd): named elites and caches on specific floors.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Rumours",
+   "fields": [
+    {
+     "name": "max_active",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "days_valid",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "new_chance_per_day",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "reward",
+     "type": "json",
+     "help": "{gold_per_floor, material_rolls, gear_chance}"
+    },
+    {
+     "name": "types",
+     "type": "json",
+     "help": "elite / cache -> {weight, text}; {floor} {location} {affix}"
+    }
+   ]
+  }
+ ]
+}

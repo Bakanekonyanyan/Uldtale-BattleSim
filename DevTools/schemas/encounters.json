@@ -190,6 +190,40 @@
      "name": "news_lost",
      "type": "text",
      "optional": true
+    },
+    {
+     "name": "min_rivalry",
+     "type": "int",
+     "optional": true,
+     "min": 0,
+     "help": "nemesis: rivalry needed (or a win over you)"
+    },
+    {
+     "name": "level_bonus",
+     "type": "int",
+     "optional": true,
+     "min": 0,
+     "help": "nemesis: levels above you"
+    },
+    {
+     "name": "signature_min_rarity",
+     "type": "int",
+     "optional": true,
+     "min": 0,
+     "max": 5,
+     "help": "nemesis: signature item minimum rarity tier"
+    },
+    {
+     "name": "win_rapport",
+     "type": "int",
+     "optional": true,
+     "help": "nemesis: rapport after you beat them"
+    },
+    {
+     "name": "grudges",
+     "type": "json",
+     "optional": true,
+     "help": "nemesis: trait -> opening line"
     }
    ]
   }

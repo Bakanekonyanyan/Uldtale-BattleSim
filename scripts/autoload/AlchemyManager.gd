@@ -47,6 +47,9 @@ func is_known(player: CharacterData, recipe_id: String) -> bool:
 		"adventurer_rank":
 			return RankManager.get_rank_index(player) >= RankManager.rank_index(String(unlock.get("rank", "S"))) \
 				or recipe_id in _state(player).known_recipes
+		"standing":   # commissions (CommissionManager)
+			return CommissionManager.tier(player, String(unlock.get("shop", "alchemist"))) >= int(unlock.get("tier", 0)) \
+				or recipe_id in _state(player).known_recipes
 		_:  # purchase, bounty_reward: learned explicitly
 			return recipe_id in _state(player).known_recipes
 
@@ -62,6 +65,10 @@ func get_unlock_text(recipe_id: String) -> String:
 		"floor_reached": return "Reach floor %d in any location" % int(unlock.get("floor", 1))
 		"bounty_reward": return "Reward from a Guild bounty"
 		"adventurer_rank": return "Requires Adventurer rank %s" % unlock.get("rank", "?")
+		"standing":
+			var t: Array = CommissionManager.cfg().get("standing_tiers", [])
+			var i = int(unlock.get("tier", 0))
+			return "Reach %s standing with the %s (commissions)" % [String(t[i].get("name", "?")) if i < t.size() else "?", String(unlock.get("shop", "alchemist")).capitalize()]
 	return ""
 
 func get_purchase_price(recipe_id: String) -> int:
