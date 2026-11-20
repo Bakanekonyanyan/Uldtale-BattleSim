@@ -693,7 +693,9 @@ func _combat_rules_checks() -> void:
 		return rules.after_action(a, snap)
 	var lines: Array = []
 	var need = BattleRules.break_max(f1)
-	for i in need:
+	var tries := 0
+	while not f1.get_meta("broken", false) and tries < 12:   # attacks can miss
+		tries += 1
 		hero.current_sp = hero.max_sp
 		lines.append_array(run.call(BattleAction.attack(hero, f1)))
 	check(f1.get_meta("broken", false) and f1.is_stunned and lines.any(func(l): return l.contains("BREAK")), "%d weakness hits Break an enemy (it loses its next turn)" % need)

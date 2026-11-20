@@ -37,6 +37,57 @@ Earlier notes: `docs/design/TOWN_SERVICES.md` §9 (the parked Adventurer system)
 | B5 | Forms / stealth / summons | Druid shapeshift, Shinobi stealth, Necromancer undead are in the philosophies. Can wait: talents already give a taste | M |
 | B6 | Advanced combos (Link → Transcendent → Hidden chains) | Agreed for "after more skills and talents". The LINK and ULTIMATE skill categories now exist to chain | M |
 
+## 1b. Combat depth (built)
+
+Five systems on one shared rules layer (`scenes/battle/core/BattleRules.gd`). The battle scene and every headless battle (NPC fights, companions on Auto, the balance sim) play by the same rules. Tuning: `data/combat.json` and `data/elites.json` (Content Manager tabs **Combat** and **Elites**).
+
+**1. Enemy intents:**
+- Each enemy's next action is planned ahead and shown on its panel ("Fireball → Mira", "Howl → everyone").
+- On its turn, the enemy does what it showed (re-targeted if the target fell).
+- **Boss charge-ups:** at the 60% and 35% HP triggers, a boss spends a turn charging its signature or ultimate ("⚠ CHARGING Avalanche Slam"). The charged strike hits ×1.5 next turn. Defend halves it, and a Break cancels it.
+
+**2. Break:**
+- Weakness hits fill an enemy's Break pips: the damage type or element it's weak to (shown on the panel). A hit that also triggers a combo counts one extra. Neutral hits don't count.
+- Hits needed: 2 for regular enemies, 2 for elites, 3 for bosses, +1 after each Break.
+- A Broken enemy loses its next turn, takes +30% damage until then, and loses any charge (and an elite's shield).
+
+**3. Turn order:**
+- A timeline under the wave banner shows the next turns ("|" marks next round, which is re-rolled).
+- Skills with `turn_delay` push enemies back:
+  - Ox Kick, Glacial Prison, Behemoth Charge: 2 places.
+  - Shield Bash, Kiai, Pinning Thrust, Sacred Seal, Crane Wing Sweep: 1 place.
+- Bless, Spirit Barrier and Divine Blessing pull an ally forward to act next.
+
+**4. Link gauge (party):**
+- Fills from hits (split across the party), combos (+15) and Breaks (+25). It starts at 10 per Momentum level.
+- **Ultimates cost 50 Link.**
+- LINK skills add 15 and pull the next ally forward.
+- At 100, **Unison Strike**: every standing hero hits one target together (×1.4).
+
+**5. Elites:**
+- From floor 2, one enemy in a regular wave may be an Elite (6% + 1% per floor, max 30%): ×1.5 HP, +2 levels, ×1.5 gold, and an affix:
+
+| Affix | Effect |
+|---|---|
+| Shielded | A barrier of 30% max HP soaks damage first; a Break shatters it |
+| Vampiric | Heals for 30% of the damage it deals |
+| Raging | Below 50% HP it enrages and hits ×1.35 |
+| Splitting | Splits into two 35% copies on death |
+| Swift | ×1.6 agility |
+| Thorned | Reflects 20% of the damage it takes |
+
+**Balance:**
+- Floor-1 clear rate stays around 27% solo (was 29%).
+- Party scaling was raised to keep a party an advantage but not an auto-win: about 38% with one companion and 48% with two. Per companion, enemies get +70% HP and +1 enemy, and bosses get +200% HP and +30% damage.
+
+**Hero AI** (companions on Auto, NPC fights):
+- Uses Unison when the gauge is full.
+- Breaks a charging boss if it can this turn, otherwise Defends against the charged hit.
+- Finishes Breaks that are one hit away and builds Breaks on bosses and elites.
+- Aims at the target worth the most: share of HP removed × threat, weakness, kills.
+
+**What the sim can't measure:** a scripted "smart" policy scores about the same as "strongest skill" (within noise). The value of these systems is information and timing for a human player: when to brace, whom to break, when to spend the gauge. Playtesting is the real check.
+
 ## 2. Enemy and boss classes: recommendation
 
 **Use archetypes that blend hero classes, plus a few monster-only skills.**

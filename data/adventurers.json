@@ -614,9 +614,9 @@
     ],
     "wipe_death_chance": 0.04,
     "enemy_extra_per_ally": 1,
-    "boss_hp_per_ally": 1.2,
-    "boss_damage_per_ally": 0.2,
+    "boss_hp_per_ally": 2.0,
+    "boss_damage_per_ally": 0.3,
     "_scaling_doc": "Battles scale with your party: regular waves get enemy_extra_per_ally more enemies and +enemy_hp_per_ally HP per companion (group stat reduction uses the base count); bosses get +boss_hp_per_ally HP and +boss_damage_per_ally damage per companion.",
-    "enemy_hp_per_ally": 0.35
+    "enemy_hp_per_ally": 0.7
   }
 }

@@ -99,8 +99,8 @@ func after_action(action: BattleAction, snap: Dictionary) -> Array[String]:
 				if meter >= break_max(e):
 					lines.append(break_enemy(e))
 	if hero:
-		if hit_any:
-			add_link(_link().get("gain_per_hit", 4))
+		if hit_any:   # split across the party so the gauge fills at a similar pace
+			add_link(float(_link().get("gain_per_hit", 4)) / max(1, ctx.get_heroes().size()))
 		add_link(float(_link().get("gain_combo", 15)) * combo_targets.size())
 	# --- skills: link costs, LINK skills, turn order
 	if action.type == BattleAction.ActionType.SKILL and action.skill_data:
