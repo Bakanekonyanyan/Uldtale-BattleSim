@@ -434,4 +434,32 @@ Deep alignment, branching dialogue and story quests can wait: for a later milest
 | Roster | Start with **12–20 named adventurers**. Later, adventurers are **generated dynamically**, so every fresh playthrough has a different guild |
 | Time pressure | **Rivals out-rank you** if you idle too long, or if they avoid injury and get lucky |
 | Recruits | **Level with you** while in your party; when off on their own, their progress comes from the **world simulation** |
-| Exploration | **Etrian Odyssey style:** first-person dungeon crawling with floor mapping. Details to be discussed when we build it |
+| Exploration | **Etrian Odyssey style:** first-person dungeon crawling with floor mapping. Design in section 8 (build starts Wednesday) |
+
+## 8. Exploration mode (design agreed, not built yet)
+
+Concept sketch: a first-person illustrated view of the path ahead, with a minimap in the top-right corner that fills in as you explore (start, chests, skulls).
+
+**Decisions**
+
+| Topic | Decision |
+|---|---|
+| Movement | **Full grid with turning:** step forward/back, turn left/right on any tile |
+| Layouts | **Generated per location** from rules (size, branching, chests, fights); **boss floors can be handmade** in the Content Manager |
+| Fights | **Random encounters** (step counter); fixed skull tiles for Elites, rumoured foes and the boss stairs |
+| Wave mode | **Per location:** themed locations (forest, caves, glades) use exploration; the Dungeon stays a wave gauntlet |
+
+**View: layered set pieces (stays 2D illustration)**
+- The view is stacked from pieces for what is 1, 2 and 3 tiles ahead, so turning only changes which tiles are looked up. No view is painted per direction, which keeps full-grid turning affordable.
+- Per location: a backdrop (sky + horizon band), ground/path pieces at 3 depths (straight, opening left, opening right, dead end), side scenery at 3 depths (tree lines, rocks; mirrored for the other side) and props scaled by depth (chest, skull, campfire, stairs, NPC). About 15–20 pieces per location.
+- Line-art placeholders like the sketch until the real art is ready.
+
+**Minimap**
+- Top-right corner; full map on a key. Visited tiles revealed, neighbouring tiles dimmed.
+- Icons: S start, chest, skull, campfire, stairs, NPC, ★ rumoured Elite.
+
+**Ties to existing systems**
+- Random encounters and skull tiles use the current wave builder (enemies, Elites, boss).
+- Campfires replace Press On / Breather: Momentum builds until you rest.
+- Encounters (helpers, wounded, thieves, nemeses), rumours (marked tiles) and commission materials (gathering spots) happen on the map. Omens, boons, challenges and the Bestiary carry over unchanged.
+
