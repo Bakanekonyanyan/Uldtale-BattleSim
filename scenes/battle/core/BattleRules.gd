@@ -34,6 +34,9 @@ static func cfg() -> Dictionary:
 func _brk() -> Dictionary:
 	return cfg().get("break", {})
 
+func _guard() -> Dictionary:
+	return cfg().get("guard", {})
+
 func _link() -> Dictionary:
 	return cfg().get("link", {})
 
@@ -74,6 +77,7 @@ func after_action(action: BattleAction, snap: Dictionary) -> Array[String]:
 		return lines
 	var actor = action.actor
 	var hero = ctx.is_hero(actor)
+	var was_charged = actor.get_meta("charged_strike", false)
 	if actor.has_meta("charged_strike"):
 		actor.remove_meta("charged_strike")
 	var hp: Dictionary = snap.get("hp", {})
@@ -91,6 +95,9 @@ func after_action(action: BattleAction, snap: Dictionary) -> Array[String]:
 		if dealt <= 0:
 			continue
 		hit_any = true
+		if not hero and t.is_defending and t.get_meta("perfect_guard", false):
+			lines.append_array(_perfect_guard(t, actor, was_charged))
+			continue
 		if t.is_alive() and not t.get_meta("broken", false):
 			var pts := 0
 			if _weak_hit(action, t):
@@ -106,6 +113,11 @@ func after_action(action: BattleAction, snap: Dictionary) -> Array[String]:
 		if hit_any:   # split across the party so the gauge fills at a similar pace
 			add_link(float(_link().get("gain_per_hit", 4)) / max(1, ctx.get_heroes().size()))
 		add_link(float(_link().get("gain_combo", 15)) * combo_targets.size())
+	# --- Defend against an attack you can see coming: Perfect Guard
+	if hero and action.type == BattleAction.ActionType.DEFEND and _guard().get("enabled", true):
+		if is_threatened(actor):
+			actor.set_meta("perfect_guard", true)
+			lines.append("[color=#90e0ef]%s reads the attack and braces - Perfect Guard![/color]" % actor.name)
 	# --- skills: link costs, LINK skills, turn order
 	if action.type == BattleAction.ActionType.SKILL and action.skill_data:
 		var s = action.skill_data
@@ -133,6 +145,40 @@ func after_action(action: BattleAction, snap: Dictionary) -> Array[String]:
 	for e in ctx.enemies.duplicate():
 		lines.append_array(_affix_checks(e, int(hp.get(e, e.current_hp))))
 	return lines.filter(func(l): return l != "")
+
+## Does an enemy's shown intent (or a charge-up) threaten `hero` this round?
+func is_threatened(hero_c: CharacterData) -> bool:
+	for e in ctx.get_living_enemies():
+		if e.has_meta("charging"):
+			return true
+		var a = ctx.intents.get(e, null)
+		if not (a is BattleAction):
+			continue
+		if a.type == BattleAction.ActionType.ATTACK and a.targets.has(hero_c):
+			return true
+		if a.type == BattleAction.ActionType.SKILL and a.skill_data \
+				and a.skill_data.type in [Skill.SkillType.DAMAGE, Skill.SkillType.DRAIN, Skill.SkillType.DEBUFF] \
+				and (a.targets.has(hero_c) or a.skill_data.target == Skill.TargetType.ALL_ENEMIES):
+			return true
+	return false
+
+## A Perfect Guard absorbed `attacker`'s hit on `guard`: no Break pips for the
+## hero, the attacker is staggered, and a charged strike is countered.
+func _perfect_guard(guard: CharacterData, attacker: CharacterData, charged: bool) -> Array[String]:
+	var out: Array[String] = []
+	var g = _guard()
+	out.append("[color=#90e0ef][b]PERFECT GUARD![/b] %s turns the blow aside.[/color]" % guard.name)
+	if attacker.is_alive() and not attacker.get_meta("broken", false):
+		var meter = int(attacker.get_meta("break_meter", 0)) + int(g.get("attacker_pips", 1))
+		attacker.set_meta("break_meter", meter)
+		if meter >= break_max(attacker, false):
+			out.append(break_unit(attacker))
+	if charged and attacker.is_alive() and guard.is_alive():
+		var dmg = int(round(BattleFormulas.hit_damage(guard, attacker, true) * float(g.get("counter_mult", 0.75))))
+		if dmg > 0:
+			attacker.take_damage(dmg, guard)
+			out.append("[color=#90e0ef]%s counters the charged strike for %d![/color]" % [guard.name, dmg])
+	return out
 
 ## Weakness hits needed to Break `e` (grows each time it is broken).
 ## Heroes and companions use hero_hits: the same rule as enemies, own threshold.
@@ -196,7 +242,7 @@ func break_enemy(e: CharacterData) -> String:
 static func clear_break(c: CharacterData) -> void:
 	if c == null:
 		return
-	for m in ["broken", "break_meter", "times_broken"]:
+	for m in ["broken", "break_meter", "times_broken", "perfect_guard"]:
 		if c.has_meta(m):
 			c.remove_meta(m)
 
@@ -210,6 +256,8 @@ func _next_hero_after(actor: CharacterData) -> CharacterData:
 
 ## Call at the start of `actor`'s turn, before the stun check. Returns a log line.
 func on_turn_start(actor: CharacterData) -> String:
+	if actor.has_meta("perfect_guard"):
+		actor.remove_meta("perfect_guard")
 	if actor.get_meta("broken", false):
 		actor.set_meta("broken", false)   # this skipped turn is the recovery
 		return "%s recovers from the break." % actor.name

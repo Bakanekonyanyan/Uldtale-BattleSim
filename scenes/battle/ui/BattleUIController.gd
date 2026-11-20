@@ -421,7 +421,11 @@ func _add_attack_button():
 	action_buttons.add_child(btn)
 
 func _add_defend_button():
-	var btn = _create_action_button("Defend")
+	var guard = rules != null and rules.is_threatened(player)
+	var btn = _create_action_button("Defend  ⛨ Perfect Guard" if guard else "Defend")
+	if guard:
+		btn.add_theme_color_override("font_color", Color("90e0ef"))
+		btn.tooltip_text = "An enemy is about to hit you: Defend now to take far less damage, gain no Break pips, stagger the attacker and counter a charged strike."
 	btn.pressed.connect(_on_defend_pressed)
 	action_buttons.add_child(btn)
 

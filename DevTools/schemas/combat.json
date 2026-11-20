@@ -77,6 +77,38 @@
   },
   {
    "kind": "settings",
+   "label": "Perfect Guard",
+   "path": [
+    "guard"
+   ],
+   "fields": [
+    {
+     "name": "enabled",
+     "type": "bool"
+    },
+    {
+     "name": "damage_mult",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Multiplies the already-halved Defend damage."
+    },
+    {
+     "name": "attacker_pips",
+     "type": "int",
+     "min": 0,
+     "help": "Break pips the attacker gains."
+    },
+    {
+     "name": "counter_mult",
+     "type": "float",
+     "min": 0,
+     "help": "Counter vs a charged strike: share of a basic hit."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
    "label": "Link",
    "path": [
     "link"

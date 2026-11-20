@@ -728,6 +728,28 @@ func _combat_rules_checks() -> void:
 	BattleRules.new(ctx, q)
 	check(not hero.has_meta("times_broken") and not hero.has_meta("break_meter"), "hero poise resets at the next battle")
 	ctx.rules = rules
+	# Perfect Guard: Defend while an enemy's intent targets you
+	hero.reset_defense()
+	ctx.intents.clear()
+	check(not rules.is_threatened(hero), "no intent on you = no Perfect Guard")
+	ctx.intents[f2] = BattleAction.attack(f2, hero)
+	check(rules.is_threatened(hero), "an enemy's shown attack on you readies Perfect Guard")
+	var glines = run.call(BattleAction.defend(hero))
+	check(hero.get_meta("perfect_guard", false) and glines.any(func(l): return l.contains("Perfect Guard")), "Defending then sets Perfect Guard")
+	f2.set_meta("broken", false); f2.is_stunned = false; f2.set_meta("break_meter", 0)
+	hero.set_meta("break_meter", 0)
+	var guard_hits := 0
+	var plines: Array = []
+	while guard_hits < 12 and not plines.any(func(l): return l.contains("PERFECT GUARD")):
+		guard_hits += 1
+		hero.current_hp = hero.max_hp
+		plines = run.call(BattleAction.skill(f2, club, [hero]))
+	check(plines.any(func(l): return l.contains("PERFECT GUARD")) and int(hero.get_meta("break_meter", 0)) == 0 and int(f2.get_meta("break_meter", 0)) >= 1,
+		"a guarded weakness hit gives the hero no pips and staggers the attacker")
+	rules.on_turn_start(hero)
+	check(not hero.has_meta("perfect_guard"), "Perfect Guard ends at the hero's next turn")
+	hero.reset_defense()
+	ctx.intents.clear()
 	hero.race = old_race
 	# ultimates wait for the Link gauge
 	var ult = Skill.create_from_dict({"name": "Test Ult", "description": "", "ability_type": "PHYSICAL", "type": "DAMAGE", "target": "ENEMY", "category": "ULTIMATE", "power": 80, "cooldown": 0, "duration": 0})

@@ -15,6 +15,13 @@
     "link_gain": 25,
     "_doc": "Break counts weakness hits (damage type or element the enemy is weak to): each is 1 point, a hit that also triggers a combo is 1 more. Neutral hits don't count. Heroes and companions have the same meter (hero_hits): enemies hitting their weaknesses (race, armor) break them too. At the enemy's threshold it is Broken; each break raises that enemy's threshold by growth_per_break."
   },
+  "guard": {
+    "enabled": true,
+    "damage_mult": 0.5,
+    "attacker_pips": 1,
+    "counter_mult": 0.75,
+    "_doc": "Perfect Guard: a hero who Defends while an enemy's shown intent targets them (or a boss is charging) takes damage_mult of the already-halved damage, gains no Break pips, gives the attacker attacker_pips, and counters a charged strike for counter_mult of a basic hit."
+  },
   "link": {
     "max": 100,
     "start_per_momentum": 10,

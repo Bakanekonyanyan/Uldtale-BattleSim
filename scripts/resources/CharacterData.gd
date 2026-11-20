@@ -357,6 +357,8 @@ func take_damage(amount: float, attacker: CharacterData = null):
 	
 	if is_defending:
 		amount *= 0.5
+		if get_meta("perfect_guard", false):   # BattleRules: Defend against a shown intent
+			amount *= float(BattleRules.cfg().get("guard", {}).get("damage_mult", 0.5))
 	
 	# Elite barrier (Shielded) soaks damage first
 	var barrier = int(get_meta("barrier", 0))
