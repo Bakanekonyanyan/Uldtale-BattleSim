@@ -115,9 +115,18 @@
      "type": "enum",
      "options": [
       "ATTACK",
-      "DODGE"
+      "DODGE",
+      "SPEED",
+      "DEFENSE",
+      "MAGIC",
+      "FAITH",
+      "FORTITUDE",
+      "ARCANE",
+      "PRECISION",
+      "VIGOR"
      ],
-     "optional": true
+     "optional": true,
+     "help": "Attribute raised (Item.BUFF_STATS): ATTACK=Strength, DODGE/SPEED=Agility, DEFENSE=Endurance, MAGIC=Intelligence, PRECISION=Dexterity, VIGOR=Vitality"
     },
     {
      "name": "craft_only",

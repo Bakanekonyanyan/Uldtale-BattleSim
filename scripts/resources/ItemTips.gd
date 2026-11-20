@@ -29,13 +29,13 @@ static func effect_line(item: Item) -> String:
 		Item.ConsumableType.BUFF:
 			what = "+%s %s" % [amt, item.buff_type.capitalize() if item.buff_type != "" else "stats"]
 		Item.ConsumableType.DEBUFF:
-			what = "-%s %s" % [amt, item.buff_type.capitalize() if item.buff_type != "" else "stats"]
+			what = ("-%s %s" % [amt, item.buff_type.capitalize()]) if item.buff_type != "" else ""
 		Item.ConsumableType.CURE:
 			what = "Cures status effects" + ((" and heals %s HP" % amt) if item.effect_percent > 0 or item.effect_power > 0 else "")
 	if item.status_effect != Skill.StatusEffect.NONE:
 		var st = Skill.StatusEffect.keys()[item.status_effect].capitalize()
 		var chance = "" if item.poison_chance >= 1.0 else " (%d%% chance)" % int(round(item.poison_chance * 100))
-		what += ", inflicts %s%s" % [st, chance]
+		what += ("Inflicts %s%s" if what == "" else ", inflicts %s%s") % [st, chance]
 	if item.effect_duration > 0 and item.consumable_type in [Item.ConsumableType.BUFF, Item.ConsumableType.DEBUFF, Item.ConsumableType.DAMAGE]:
 		what += " for %d turns" % item.effect_duration
 	return "%s - %s" % [what, TARGETS.get(item.target_type, "")]

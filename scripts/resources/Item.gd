@@ -170,6 +170,15 @@ func deal_damage(user: CharacterData, targets: Array) -> String:
 	
 	return "%s dealt %d damage to %d target(s)" % [display_name, total_damage, targets.size()]
 
+## Item buff_type -> the attribute it raises.
+const BUFF_STATS := {
+	"ATTACK": Skill.AttributeTarget.STRENGTH, "DODGE": Skill.AttributeTarget.AGILITY,
+	"SPEED": Skill.AttributeTarget.AGILITY, "DEFENSE": Skill.AttributeTarget.ENDURANCE,
+	"MAGIC": Skill.AttributeTarget.INTELLIGENCE, "FAITH": Skill.AttributeTarget.FAITH,
+	"FORTITUDE": Skill.AttributeTarget.FORTITUDE, "ARCANE": Skill.AttributeTarget.ARCANE,
+	"PRECISION": Skill.AttributeTarget.DEXTERITY, "VIGOR": Skill.AttributeTarget.VITALITY,
+}
+
 func apply_buff(user: CharacterData, targets: Array) -> String:
 	Log.debug("item", "[ITEM DEBUG] apply_buff called: %s | buff_type=%s | effect_percent=%.2f | effect_power=%d | duration=%d" % [
 		display_name, buff_type, effect_percent, effect_power, effect_duration
@@ -181,15 +190,11 @@ func apply_buff(user: CharacterData, targets: Array) -> String:
 	else:
 		buff_value = effect_power
 	
+	var stat = BUFF_STATS.get(buff_type, Skill.AttributeTarget.NONE)
 	for target in targets:
-		if buff_type == "ATTACK":
-			target.apply_buff(Skill.AttributeTarget.STRENGTH, buff_value, effect_duration)
-			Log.debug("item", "[ITEM DEBUG] Applied STRENGTH buff: +%d for %d turns" % [buff_value, effect_duration])
-		
-		elif buff_type == "DODGE":
-			target.apply_buff(Skill.AttributeTarget.AGILITY, buff_value, effect_duration)
-			Log.debug("item", "[ITEM DEBUG] Applied AGILITY buff (dodge): +%d for %d turns" % [buff_value, effect_duration])
-		
+		if stat != Skill.AttributeTarget.NONE:
+			target.apply_buff(stat, buff_value, effect_duration)
+			Log.debug("item", "[ITEM DEBUG] Applied %s buff: +%d for %d turns" % [Skill.AttributeTarget.keys()[stat], buff_value, effect_duration])
 		else:
 			Log.debug("item", "[ITEM DEBUG] WARNING: Unknown buff_type '%s'" % buff_type)
 	

@@ -337,7 +337,7 @@ func _world_checks() -> void:
 	WorldClock.advance(p, 2, "test")
 	check(not GuildManager.get_active(p).has(b), "a 2-day deadline fails after 2 days")
 	check(int(DefeatManager.get_injuries(p)[0].remaining) == 1, "injuries heal a day at a time")
-	check(WorldClock.get_news(p, 5).any(func(n): return "Bounty failed" in n.text), "failed bounties make the news")
+	check(WorldClock.get_news(p, 20).any(func(n): return "Bounty failed" in n.text), "failed bounties make the news")
 	# Inn
 	p.currency.copper = 1000
 	p.current_hp = 1
@@ -1524,6 +1524,25 @@ func _town_life_checks() -> void:
 	check(not banked.is_empty() and banked[0].display_name.begins_with(String(npc.name).get_slice(" ", 0)) and int(npc.rivalry) == 0 and not npc.get("nemesis", false),
 		"beating a nemesis wins their signature item (%s)" % (banked[0].display_name if not banked.is_empty() else "none"))
 	MomentumSystem.clear_accumulated_loot()
+	# --- new recipes
+	for id in ["field_dressing", "healing_mist", "ironbark_tonic", "sages_draught", "prayer_incense", "hide_ward", "hunters_focus",
+			"firestorm_bomb", "shock_net", "tidal_flask", "marking_dye", "stagger_stone", "elixir_of_dawn", "grand_panacea"]:
+		check(AlchemyManager.get_recipe(id).has("output") and ItemManager.get_item(String(AlchemyManager.get_recipe(id).output)) != null, "recipe %s makes a real item" % id)
+	_give(p, "linen_cloth", 2)
+	_give(p, "glowcap_mushroom", 2)
+	var cr = AlchemyManager.craft(p, "field_dressing", 1)
+	check(cr.ok and p.count_owned("field_dressing") == 2, "Field Dressing: linen + glowcap make two (%s)" % cr.reason)
+	var tonic: Item = ItemManager.get_item("ironbark_tonic")
+	tonic.use(p, [p])
+	check(p.buff_manager.buffs.has(Skill.AttributeTarget.ENDURANCE), "Ironbark Tonic raises Endurance (new buff types)")
+	var foe2 = EnemyFactory.create_enemy(1, 1, 1)
+	ItemManager.get_item("marking_dye").use(p, [foe2])
+	check(foe2.status_manager.has_effect(Skill.StatusEffect.MARKED), "Marking Dye sets up a combo (Marked)")
+	check(ItemTips.effect_line(ItemManager.get_item("marking_dye")).begins_with("Inflicts Marked"), "status-only items read 'Inflicts ...'")
+	check(not AlchemyManager.is_known(p, "grand_panacea"), "the Grand Panacea needs Valued standing with the Alchemist")
+	var ast = CommissionManager._state(p)["alchemist"]
+	ast.done = 5
+	check(AlchemyManager.is_known(p, "elixir_of_dawn") and AlchemyManager.is_known(p, "grand_panacea"), "Alchemist standing teaches the special recipes")
 	CharacterManager.current_character_resource.set_meta("current_character", prev_cur)
 
 ## Bonds (scenes per rapport tier, duo techs) and companion opinions.

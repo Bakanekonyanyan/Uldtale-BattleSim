@@ -264,6 +264,20 @@
 				"rank": "E"
 			},
 			"category": "Flasks"
-		}
-	}
+		},
+		"field_dressing": {"output": "field_dressing", "quantity": 2, "ingredients": {"linen_cloth": 1, "glowcap_mushroom": 1}, "fee": 10, "unlock": {"type": "default"}, "category": "Potions"},
+		"healing_mist": {"output": "healing_mist", "quantity": 1, "ingredients": {"glowcap_mushroom": 2, "bogblossom_petal": 1, "mindglass_shard": 1}, "fee": 25, "unlock": {"type": "floor_reached", "floor": 4}, "category": "Potions"},
+		"ironbark_tonic": {"output": "ironbark_tonic", "quantity": 1, "ingredients": {"wood": 2, "frostroot_chunk": 1}, "fee": 15, "unlock": {"type": "default"}, "category": "Elixirs"},
+		"sages_draught": {"output": "sages_draught", "quantity": 1, "ingredients": {"mindglass_shard": 2, "glowcap_mushroom": 1}, "fee": 15, "unlock": {"type": "default"}, "category": "Elixirs"},
+		"prayer_incense": {"output": "prayer_incense", "quantity": 1, "ingredients": {"glowcap_mushroom": 1, "rousepepper_seeds": 1, "wood": 1}, "fee": 15, "unlock": {"type": "purchase", "price": 250}, "category": "Elixirs"},
+		"hide_ward": {"output": "hide_ward", "quantity": 1, "ingredients": {"thick_hide": 1, "bogblossom_petal": 1}, "fee": 20, "unlock": {"type": "floor_reached", "floor": 6}, "category": "Elixirs"},
+		"hunters_focus": {"output": "hunters_focus", "quantity": 1, "ingredients": {"rousepepper_seeds": 2, "bloodvine_fiber": 1}, "fee": 15, "unlock": {"type": "purchase", "price": 250}, "category": "Elixirs"},
+		"firestorm_bomb": {"output": "firestorm_bomb", "quantity": 1, "ingredients": {"embershard_fragment": 2, "wood": 1, "linen_cloth": 1}, "fee": 30, "unlock": {"type": "adventurer_rank", "rank": "D"}, "category": "Flasks"},
+		"shock_net": {"output": "shock_net", "quantity": 1, "ingredients": {"voltslate_pebble": 2, "linen_cloth": 2}, "fee": 30, "unlock": {"type": "adventurer_rank", "rank": "D"}, "category": "Flasks"},
+		"tidal_flask": {"output": "tidal_flask", "quantity": 2, "ingredients": {"frostroot_chunk": 1, "mindglass_shard": 1}, "fee": 15, "unlock": {"type": "default"}, "category": "Flasks"},
+		"marking_dye": {"output": "marking_dye", "quantity": 2, "ingredients": {"bloodvine_fiber": 1, "rousepepper_seeds": 1}, "fee": 10, "unlock": {"type": "default"}, "category": "Flasks"},
+		"stagger_stone": {"output": "stagger_stone", "quantity": 2, "ingredients": {"iron_ore": 1, "voltslate_pebble": 1}, "fee": 10, "unlock": {"type": "default"}, "category": "Flasks"},
+		"elixir_of_dawn": {"output": "elixir_of_dawn", "quantity": 1, "ingredients": {"monster_core": 1, "mindglass_shard": 2, "silk_cloth": 1}, "fee": 60, "unlock": {"type": "standing", "shop": "alchemist", "tier": 0}, "category": "Elixirs"},
+		"grand_panacea": {"output": "grand_panacea", "quantity": 1, "ingredients": {"monster_core": 1, "glowcap_mushroom": 2, "bogblossom_petal": 2, "spellweave_cloth": 1}, "fee": 90, "unlock": {"type": "standing", "shop": "alchemist", "tier": 1}, "category": "Elixirs"}
+}
 }
