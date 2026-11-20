@@ -69,7 +69,7 @@ static func progress(ch: Dictionary, stats: Dictionary) -> String:
 ## The reward for meeting a challenge (a rewards dict MomentumSystem can bank).
 static func roll_reward(floor: int, is_boss: bool, enemies: Array) -> Dictionary:
 	var r: Dictionary = cfg().get("reward", {})
-	var out: Dictionary = {"currency": int(round(float(r.get("gold_per_floor", 40)) * floor * (float(r.get("boss_mult", 2.0)) if is_boss else 1.0))), "equipment_instances": []}
+	var out: Dictionary = {"currency": int(round(float(r.get("gold_base", 60)) * RewardsManager.floor_scale(floor) * (float(r.get("boss_mult", 2.0)) if is_boss else 1.0))), "equipment_instances": []}
 	for i in range(int(r.get("material_rolls", 2))):
 		var drops = RewardsManager.roll_material_drops({"current_floor": floor, "is_boss_fight": false, "enemies": enemies})
 		for id in drops:

@@ -96,7 +96,7 @@ func _on_floor_cleared(location: String, fl: int) -> void:
 func _pay(player: CharacterData, r: Dictionary, enemies: Array) -> String:
 	var rw: Dictionary = cfg().get("reward", {})
 	var fl = int(r.floor)
-	var bank: Dictionary = {"currency": int(round(float(rw.get("gold_per_floor", 60)) * fl)), "equipment_instances": []}
+	var bank: Dictionary = {"currency": int(round(float(rw.get("gold_base", 300)) * RewardsManager.floor_scale(fl))), "equipment_instances": []}
 	for i in range(int(rw.get("material_rolls", 3))):
 		var drops = RewardsManager.roll_material_drops({"current_floor": fl, "is_boss_fight": false, "enemies": enemies})
 		for id in drops:

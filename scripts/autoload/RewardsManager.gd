@@ -22,7 +22,7 @@ func roll_wave_rewards(battle_data: Dictionary) -> Dictionary:
 	var player_class = battle_data.get("player_class", "")
 	
 	var rewards = {
-		"currency": (50 + (current_wave * 10)) * current_floor,
+		"currency": int(round((float(_gold().get("wave_base", 40)) + float(_gold().get("per_wave", 6)) * current_wave) * floor_scale(current_floor))),
 		"equipment_instances": []
 	}
 	
@@ -154,6 +154,14 @@ func is_session_active() -> bool:
 	return is_reward_session_active
 
 # ===== HELPER METHODS =====
+
+func _gold() -> Dictionary:
+	var d = DataRegistry.get_data("loot/gold")
+	return d if d is Dictionary else {}
+
+## The gold curve every reward follows: 1 + floor_growth x (floor - 1).
+func floor_scale(floor_num: int) -> float:
+	return 1.0 + float(_gold().get("floor_growth", 0.3)) * max(0, floor_num - 1)
 
 func _gear_cfg() -> Dictionary:
 	var d = DataRegistry.get_data("loot/gear_drops")

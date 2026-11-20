@@ -20,6 +20,11 @@
       "min": 0
      },
      "help": "item -> base price (copper)"
+    },
+    {
+     "name": "sell_fraction",
+     "type": "json",
+     "help": "{equipment, other}: share of an item's value the shop pays when you sell it"
     }
    ]
   }

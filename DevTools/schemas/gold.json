@@ -1,0 +1,30 @@
+{
+ "tab": "Gold Curve",
+ "file": "data/loot/gold.json",
+ "order": 46,
+ "description": "How gold scales with floor (RewardsManager.floor_scale). Every gold source follows it.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Gold curve",
+   "fields": [
+    {
+     "name": "wave_base",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "per_wave",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "floor_growth",
+     "type": "float",
+     "min": 0,
+     "help": "floor_scale = 1 + this x (floor - 1)"
+    }
+   ]
+  }
+ ]
+}

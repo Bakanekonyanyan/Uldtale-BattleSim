@@ -74,7 +74,7 @@ func _new_request(player: CharacterData, shop: String, today: int) -> Dictionary
 	var qty = RandomManager.randi_range(int(q[0]), int(q[1]))
 	var item = ItemManager.get_item(id)
 	var value = int(item.value) if item else 10
-	var reward = max(int(cfg().get("min_reward", 60)), int(round(value * qty * float(cfg().get("reward_per_value", 2.5)))))
+	var reward = int(round(max(float(cfg().get("min_reward", 60)), value * qty * float(cfg().get("reward_per_value", 2.5))) * RewardsManager.floor_scale(deepest + 1)))
 	return {"item": id, "qty": qty, "due": today + int(cfg().get("deadline_days", 7)), "reward": reward}
 
 func active(player: CharacterData, shop: String) -> Dictionary:

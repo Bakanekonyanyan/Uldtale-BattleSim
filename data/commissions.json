@@ -1,5 +1,5 @@
 {
-	"_comment": "Shop commissions (CommissionManager.gd). Each shop keeps one open request: bring qty of a material by the due day. Delivering pays gold (material value x reward_per_value, at least min_reward) and raises your standing with that shop. Standing tiers give the shop's perks: Blacksmith and Enchanter take discount off their gold cost and add success; the Alchemist teaches recipes (recipes.json unlock type standing).",
+	"_comment": "Shop commissions (CommissionManager.gd). Each shop keeps one open request: bring qty of a material by the due day. Delivering pays gold (material value x reward_per_value, at least min_reward, x the gold curve at your deepest floor) and raises your standing with that shop. Standing tiers give the shop's perks: Blacksmith and Enchanter take discount off their gold cost and add success; the Alchemist teaches recipes (recipes.json unlock type standing).",
 	"deadline_days": 7,
 	"reward_per_value": 2.5,
 	"min_reward": 60,

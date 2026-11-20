@@ -765,7 +765,7 @@ func _combat_rules_checks() -> void:
 	check(WaveChallenges.met({"stat": "items", "at_most": 0}, {"items": 0}) and not WaveChallenges.met({"stat": "items", "at_most": 0}, {"items": 1}), "at_most challenges fail when exceeded")
 	check(WaveChallenges.progress(breaker, {"breaks": 1}).ends_with("(1/2)"), "challenge progress text")
 	var creward = WaveChallenges.roll_reward(3, false, ctx.enemies)
-	check(int(creward.currency) == int(WaveChallenges.cfg().reward.gold_per_floor) * 3 and creward.size() > 2, "a met challenge rewards gold and materials (%s)" % str(creward.keys()))
+	check(int(creward.currency) == int(round(float(WaveChallenges.cfg().reward.gold_base) * RewardsManager.floor_scale(3))) and creward.size() > 2, "a met challenge rewards gold and materials (%s)" % str(creward.keys()))
 	var picked := 0
 	var bad := 0
 	for i in range(50):
@@ -1283,7 +1283,7 @@ func _reward_checks() -> void:
 	MomentumSystem.bank_rewards({"currency": 100, "equipment_instances": [], "iron_ore": 4})
 	var data = {"current_wave": 3, "current_floor": 1, "is_boss_fight": false, "enemies": foes, "momentum_level": 5}
 	var payout = RewardsManager.calculate_battle_rewards(data)
-	var wave_gold = (50 + 3 * 10) * 1
+	var wave_gold = int(round((40.0 + 3 * 6.0) * RewardsManager.floor_scale(1)))   # data/loot/gold.json
 	check(payout.currency == int(round((200 + wave_gold) * 1.5)),
 		"Breather pays banked + current gold with +50%% (%d)" % payout.currency)
 	check(payout.get("iron_ore", 0) >= 12, "banked materials paid out with bonus (%d iron ore from 8 banked)" % payout.get("iron_ore", 0))
@@ -1692,8 +1692,9 @@ func _blacksmith_checks() -> void:
 	
 	# Cost: gold = value x 0.25 x L, ore x L, +wood for weapons; reinforcement +25%/step
 	var c1 = BlacksmithManager.get_upgrade_cost(sword, 0)
-	check(c1.gold == max(10, int(round(sword.value * 0.25))) and c1.materials.get("iron_ore", 0) == 1 and c1.materials.get("wood", 0) == 1,
-		"+1 costs value x 25%%, 1 iron ore, 1 wood (%s)" % str(c1))
+	var gpl = float(BlacksmithManager.cfg.get("gold_per_level", 0.5))
+	check(c1.gold == max(10, int(round(sword.value * gpl))) and c1.materials.get("iron_ore", 0) == 1 and c1.materials.get("wood", 0) == 1,
+		"+1 costs value x %d%%, 1 iron ore, 1 wood (%s)" % [int(gpl * 100), str(c1)])
 	var c2 = BlacksmithManager.get_upgrade_cost(sword, 2)
 	check(c2.gold == int(ceil(c1.gold * 1.5)) and c2.materials.iron_ore == 2, "2 reinforcement steps = +50%% cost (%s)" % str(c2))
 	check(BlacksmithManager.get_success_chance(sword, 0) == 1.0, "+1..+3 always succeed")

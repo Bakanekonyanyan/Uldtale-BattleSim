@@ -27,7 +27,7 @@
     {
      "name": "reward",
      "type": "json",
-     "help": "{gold_per_floor, material_rolls, gear_chance}"
+     "help": "{gold_base (x the gold curve), material_rolls, gear_chance}"
     },
     {
      "name": "types",

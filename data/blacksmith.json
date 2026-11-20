@@ -2,7 +2,7 @@
 	"_comment": "Blacksmith tuning. See docs/design/TOWN_SERVICES.md section 5. Upgrade step (+8% damage/armor per level) is Equipment.UPGRADE_STEP.",
 	"max_level": { "common": 3, "uncommon": 4, "magic": 5, "rare": 6, "epic": 8, "legendary": 10 },
 	"success_chance": { "4": 0.9, "5": 0.8, "6": 0.7, "7": 0.6, "8": 0.5, "9": 0.4, "10": 0.3 },
-	"gold_per_level": 0.25,
+	"gold_per_level": 0.5,
 	"min_gold": 10,
 	"ore_by_target_level": [
 		{ "max_level": 3, "ore": "iron_ore" },

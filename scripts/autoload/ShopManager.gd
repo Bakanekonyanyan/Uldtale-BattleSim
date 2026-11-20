@@ -21,6 +21,14 @@ var last_floor: int = 0
 # Track if shop has been initialized
 var shop_initialized: bool = false
 
+
+## What the shop pays for an item (data/shop.json sell_fraction): looted gear
+## sells low - it's for wearing, not a gold mine (see tests/economy_sim.tscn).
+func sell_price(item: Item) -> int:
+	var f: Dictionary = DataRegistry.get_data("shop").get("sell_fraction", {})
+	var frac = float(f.get("equipment", 0.2)) if item is Equipment else float(f.get("other", 0.5))
+	return int(item.value * frac)
+
 func _ready():
 	initialize_shop()
 

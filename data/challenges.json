@@ -2,7 +2,7 @@
 	"_comment": "Wave challenges (WaveChallenges.gd): an optional goal shown at the start of a wave. Meet it and win to bank a bonus (gold, material rolls, a chance at gear) with the wave's loot - kept at a Breather, lost if you fall. stat is counted by BattleRules.stats; a challenge needs at_least and/or at_most.",
 	"chance": 0.6,
 	"boss_chance": 1.0,
-	"reward": { "gold_per_floor": 40, "boss_mult": 2.0, "material_rolls": 2, "gear_chance": 0.25 },
+	"reward": { "gold_base": 60, "boss_mult": 2.0, "material_rolls": 2, "gear_chance": 0.25 },
 	"challenges": {
 		"breaker": { "name": "Breaker", "description": "Break 2 enemies.", "stat": "breaks", "at_least": 2, "min_enemies": 2, "weight": 1.0 },
 		"shatter": { "name": "Shatter", "description": "Break an enemy.", "stat": "breaks", "at_least": 1, "weight": 1.0 },

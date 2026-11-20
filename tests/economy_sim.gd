@@ -59,7 +59,7 @@ func _band(f: int) -> void:
 				var bonus = 1.0 + MomentumSystem.get_reward_bonus(momentum)
 				src.waves += rw.currency * bonus
 				for e in rw.equipment_instances:
-					src.gear += int(e.value / 2.5)
+					src.gear += ShopManager.sell_price(e)
 				for k in rw:
 					if k in ["currency", "equipment_instances", "xp"]:
 						continue
@@ -82,8 +82,8 @@ func _band(f: int) -> void:
 		mat_in[k] /= runs
 	# materials beyond what upgrades use are sold (value / 2)
 	var days = float(WorldClock.expedition_days("goblin_forest", FLOORS_PER_EXPEDITION, false))
-	var rumour = (float(RumorManager.cfg().get("reward", {}).get("gold_per_floor", 60)) * f) * RUMOURS_PER_DAY * days
-	var commission = _commission_value(f) * COMMISSIONS_PER_WEEK / 7.0 * days
+	var rumour = float(RumorManager.cfg().get("reward", {}).get("gold_base", 300)) * RewardsManager.floor_scale(f) * RUMOURS_PER_DAY * days
+	var commission = _commission_value(f) * RewardsManager.floor_scale(f) * COMMISSIONS_PER_WEEK / 7.0 * days
 	var per_exp = src.waves + src.gear + src.challenges + rumour + commission + src.mats
 	per_exp *= 1.0 - PARTY_SHARE
 	var band_income = per_exp * EXPEDITIONS_PER_BAND

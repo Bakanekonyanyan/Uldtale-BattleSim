@@ -1,6 +1,6 @@
 {
   "_doc": "Shop consumables and their base prices in copper (ShopManager). Prices drift weekly and with world events (WorldClock).",
-  "consumables": {
+  "sell_fraction": {"equipment": 0.2, "other": 0.5}, "consumables": {
     "health_potion": 25,
     "mana_potion": 30,
     "stamina_potion": 30,

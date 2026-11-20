@@ -270,7 +270,7 @@ func refresh_sell_items():
 				var item = item_data.item
 				
 				if item:
-					var sell_value = item.value / 2
+					var sell_value = ShopManager.sell_price(item)
 					var display_text = _format_sell_item(item, sell_value, item_data.quantity)
 					sell_item_list.add_item(display_text)
 					
@@ -299,7 +299,7 @@ func _on_sell_item_clicked(index: int, _at_position: Vector2, _mouse_button_inde
 	var item_id = player_character.inventory.items.keys()[index]
 	var item = player_character.inventory.items[item_id].item
 	
-	display_item_info(item, item.value / 2, false)
+	display_item_info(item, ShopManager.sell_price(item), false)
 
 func display_item_info(item: Item, price: int, is_buying: bool):
 	"""Enhanced item info display"""
@@ -457,7 +457,7 @@ func _on_sell_pressed():
 		var item_id = current_keys[item_index]
 		var item_data = player_character.inventory.items[item_id]
 		var item = item_data.item
-		var sell_value = item.value / 2
+		var sell_value = ShopManager.sell_price(item)
 		
 		# Add to buyback BEFORE removing
 		ShopManager.add_to_buyback(item, sell_value, 1)
@@ -497,7 +497,7 @@ func _on_sell_all_pressed():
 		var item_data = player_character.inventory.items[item_id]
 		var item = item_data.item
 		var quantity = item_data.quantity
-		var sell_value = item.value / 2
+		var sell_value = ShopManager.sell_price(item)
 		
 		# Add to buyback BEFORE removing
 		ShopManager.add_to_buyback(item, sell_value, quantity)
