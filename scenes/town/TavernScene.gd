@@ -27,6 +27,29 @@ func _ready():
 	if player_character == null:
 		player_character = CharacterManager.get_current_character()
 	_refresh()
+	_play_bond_scenes.call_deferred()
+
+## Bond scenes waiting for this visit (BondManager), one dialog each.
+func _play_bond_scenes() -> void:
+	if player_character == null:
+		return
+	for npc in BondManager.pending(player_character):
+		var scene = BondManager.play_scene(player_character, npc)
+		if scene.is_empty():
+			continue
+		var d = AcceptDialog.new()
+		d.title = scene.title
+		var label = RichTextLabel.new()
+		label.bbcode_enabled = true
+		label.fit_content = true
+		label.custom_minimum_size = Vector2(520, 0)
+		label.text = scene.text
+		d.add_child(label)
+		add_child(d)
+		d.popup_centered(Vector2i(560, 0))
+		await d.visibility_changed
+		d.queue_free()
+	_refresh()
 
 func set_player(character: CharacterData) -> void:
 	player_character = character
@@ -167,6 +190,9 @@ func _update_details() -> void:
 	t += "[color=gray]%s[/color]\n\n" % AdventurerManager.status_text(p, n)
 	var tg = AdventurerManager.tags(n)
 	t += "[b]Rapport:[/b] %s%s\n" % [_rapport_bar(int(n.rapport)), ("   " + ", ".join(tg)) if not tg.is_empty() else ""]
+	var bond = BondManager.tier_name(n)
+	if bond != "":
+		t += "[b]Bond:[/b] [color=#ffd166]%s[/color]%s\n" % [bond, ("   Duo tech: %s" % BondManager.duo_data(n).get("name", "")) if BondManager.is_bonded(n) else ""]
 	var known: Array = []
 	for tr in n.traits:
 		known.append(String(AdventurerManager.trait_data(tr).get("name", tr)) if tr in n.known_traits else "???")

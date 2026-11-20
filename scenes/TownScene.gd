@@ -370,6 +370,7 @@ func show_omen_dialog(location_id: String, start_floor: int) -> void:
 	dialog.confirmed.connect(func():
 		RunState.clear()
 		RunState.set_omens(boxes.filter(func(b): return b.button_pressed).map(func(b): return b.get_meta("id")))
+		BondManager.react_to_news(current_character, "omens", RunState.omens.size())
 		Log.debug("town", "TownScene: Starting %s at floor %d, omens %s" % [location_id, start_floor, str(RunState.omens)])
 		SceneManager.start_dungeon_from_floor(current_character, start_floor, location_id)
 		dialog.queue_free())

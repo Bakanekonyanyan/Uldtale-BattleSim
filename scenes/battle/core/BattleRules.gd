@@ -144,6 +144,11 @@ func after_action(action: BattleAction, snap: Dictionary) -> Array[String]:
 		var s = action.skill_data
 		if hero and link_cost(s) > 0:
 			add_link(-link_cost(s))
+		if s.has_meta("duo_partner_id"):   # duo tech: the partner acts next
+			for h in ctx.get_living_heroes():
+				if int(h.get_meta("npc_id", -2)) == int(s.get_meta("duo_partner_id")):
+					queue.haste(h)
+					lines.append("%s follows up at once!" % h.name)
 		if hero and s.category == "LINK":
 			add_link(_link().get("gain_link_skill", 15))
 			var nxt = _next_hero_after(actor)

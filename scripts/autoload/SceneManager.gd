@@ -353,6 +353,11 @@ func _on_battle_completed(player_won: bool, xp_gained: int) -> void:
 			player.unlock_floor(location_id, cleared_floor + 1)
 			SaveManager.save_game(player)
 	
+	# Companions react to how you play (BondManager opinions)
+	var you = DungeonStateManager.active_player
+	if DungeonStateManager.is_boss_fight:
+		BondManager.react_to_news(you, "boss_win")
+	BondManager.react_to_news(you, "press_on" if xp_gained == -1 else "breather")
 	# Press on (-1) or take breather (xp)
 	if xp_gained == -1:
 		RewardsManager.bank_wave_rewards(DungeonStateManager.get_battle_data())

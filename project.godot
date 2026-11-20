@@ -49,6 +49,7 @@ RankManager="*res://scripts/autoload/RankManager.gd"
 WorldClock="*res://scripts/autoload/WorldClock.gd"
 AdventurerManager="*res://scripts/autoload/AdventurerManager.gd"
 PartyManager="*res://scripts/autoload/PartyManager.gd"
+BondManager="*res://scripts/autoload/BondManager.gd"
 EncounterManager="*res://scripts/autoload/EncounterManager.gd"
 
 [display]

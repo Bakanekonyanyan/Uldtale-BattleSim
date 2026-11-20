@@ -428,6 +428,22 @@ func setup_player_actions(item_used: bool, main_action_taken: bool):
 				func(target): action_selected.emit(BattleAction.unison(player, target)),
 				func(): unlock_ui(); enable_actions()))
 		action_buttons.add_child(uni)
+	if not main_action_taken and rules and player == battle_context.player:
+		for duo in BondManager.battle_duos(player, heroes):
+			var s: Skill = duo.skill
+			var btn = _create_action_button("♥ %s" % s.name)
+			btn.add_theme_color_override("font_color", Color("ff9fbf"))
+			btn.tooltip_text = "Duo tech with %s (%d Link): %s" % [duo.partner.name, rules.link_cost(s), s.description]
+			btn.disabled = not rules.link_ok(player, s)
+			btn.pressed.connect(func():
+				lock_ui()
+				if s.target == Skill.TargetType.ALL_ENEMIES:
+					action_selected.emit(BattleAction.skill(player, s, _get_living_enemies()))
+				else:
+					show_target_selection(_get_living_enemies(),
+						func(target): action_selected.emit(BattleAction.skill(player, s, [target])),
+						func(): unlock_ui(); enable_actions()))
+			action_buttons.add_child(btn)
 	var combos = _create_action_button("Combos")
 	combos.tooltip_text = "Combo guide (free - doesn't use your turn)"
 	combos.pressed.connect(func(): ComboGuide.open(self, heroes if not heroes.is_empty() else [player], enemies))

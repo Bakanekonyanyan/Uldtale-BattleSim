@@ -210,6 +210,8 @@ func _finish_challenge(won: bool) -> void:
 		ui_controller.add_combat_log("[b]Challenge complete: %s![/b] +%d gold and materials banked with the wave's loot%s." % [
 			rules.challenge.name, reward.currency, " (and gear!)" if not reward.equipment_instances.is_empty() else ""], "lime")
 		GameEvents.challenge_completed.emit(String(rules.challenge.id))
+		for l in BondManager.react(context.player, "challenge_done"):
+			ui_controller.add_combat_log(l, "pink")
 	else:
 		ui_controller.add_combat_log("Challenge failed: %s." % rules.challenge.name, "gray")
 

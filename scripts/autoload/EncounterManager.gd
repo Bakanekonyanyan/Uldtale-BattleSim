@@ -157,10 +157,13 @@ func begin(enc: Dictionary, player: CharacterData, parent: Node) -> Dictionary:
 				AdventurerManager._set_rapport(npc, int(c.get("give_rapport", 10)))
 				AdventurerManager._history(npc, day, "%s shared a potion when they were bleeding out." % player.name)
 				out.log.append("%s thanks you warmly (+%d rapport)." % [npc.name, int(c.get("give_rapport", 10))])
+				out.log.append_array(BondManager.react(player, "help_wounded"))
 			else:
 				var d = int(c.get("refuse_rapport", -4)) if has else 0
 				AdventurerManager._set_rapport(npc, d)
 				out.log.append("You leave %s behind.%s" % [npc.name, " (%d rapport)" % d if d != 0 else ""])
+				if has:
+					out.log.append_array(BondManager.react(player, "refuse_wounded"))
 		"rival_theft":
 			var banked: Dictionary = MomentumSystem.momentum_loot_accumulated
 			var frac = RandomManager.randf_range(float(c.get("steal_fraction", [0.3, 0.5])[0]), float(c.get("steal_fraction", [0.3, 0.5])[1]))
@@ -174,10 +177,12 @@ func begin(enc: Dictionary, player: CharacterData, parent: Node) -> Dictionary:
 				rival.set_meta("encounter", "rival_theft")
 				rival.set_meta("stolen", stolen)
 				out.pending.append({"side": "enemy", "chars": [rival], "trigger": "victory", "text": "%s stands their ground, purse in hand. Fight!" % npc.name})
+				out.log.append_array(BondManager.react(player, "confront_thief"))
 			else:
 				AdventurerManager._set_rapport(npc, int(c.get("let_go_rapport", -3)))
 				WorldClock.add_news(player, _fmt(String(c.get("news", "")), npc, loc), "rival")
 				out.log.append("%s saunters off with %s." % [npc.name, Currency.format_copper(stolen)])
+				out.log.append_array(BondManager.react(player, "let_thief_go"))
 		"saboteur":
 			var foe = build_combatant(player, npc, true)
 			foe.set_meta("encounter", "saboteur")

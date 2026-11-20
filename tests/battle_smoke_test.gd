@@ -1262,6 +1262,7 @@ func _phase0_checks() -> void:
 	_material_checks()
 	_enchant_checks()
 	_run_state_checks()
+	_bond_checks()
 	_guild_checks()
 
 # ------------------------------------------------------------------ momentum + gear drops
@@ -1460,6 +1461,43 @@ func _material_checks() -> void:
 	robe.set_upgrade_level(5)
 	check(BlacksmithManager.get_upgrade_cost(robe).materials.has("silk_cloth"), "higher cloth upgrades need Silk")
 	check(BlacksmithManager.get_salvage_preview(vest).ore_id == "rawhide", "salvaging leather armor gives hide")
+
+## Bonds (scenes per rapport tier, duo techs) and companion opinions.
+func _bond_checks() -> void:
+	var p = make_player()
+	AdventurerManager.state(p)
+	var npc = AdventurerManager._add(p, AdventurerManager.generate(p, [3, 3]))
+	npc.traits = ["reckless"]
+	npc.cls = "Samurai"
+	npc.status = "idle"
+	npc.rapport = 10
+	check(BondManager.pending(p).is_empty(), "no bond scene below the first tier")
+	npc.rapport = 80
+	check(BondManager.pending(p).size() == 1, "reaching a tier queues a bond scene")
+	var sc1 = BondManager.play_scene(p, npc)
+	check(sc1.title.contains("Acquainted") and sc1.text.contains(String(npc.name)) and not sc1.bonded, "the first scene uses the companion's trait lines (%s)" % sc1.title)
+	BondManager.play_scene(p, npc)
+	var sc3 = BondManager.play_scene(p, npc)
+	check(sc3.bonded and BondManager.is_bonded(npc) and sc3.text.contains("Twin Moon Cut"), "the last tier bonds you and unlocks their class's duo tech")
+	check(BondManager.play_scene(p, npc).is_empty() and BondManager.pending(p).is_empty(), "each scene plays once")
+	var duo = BondManager.duo_skill(npc)
+	check(duo != null and duo.category == "ULTIMATE" and duo.mp_cost == 0 and duo.power > 0, "a duo tech is a Link skill with no MP/SP cost")
+	# in battle: only with the bonded companion standing beside you
+	var partner = AutoBattler.build_hero(npc)
+	partner.set_meta("npc_id", int(npc.id))
+	check(BondManager.battle_duos(p, [p, partner]).size() == 1, "the duo tech is offered while your Bonded companion fights")
+	partner.current_hp = 0
+	check(BondManager.battle_duos(p, [p, partner]).is_empty(), "not while they're down")
+	# opinions: party members react by trait
+	PartyManager.party_ids(p).append(int(npc.id))
+	var r0 = int(npc.rapport)
+	var lines = BondManager.react(p, "press_on")
+	check(int(npc.rapport) == r0 + 2 and lines.size() == 1 and lines[0].contains("approves"), "a Reckless companion approves of pressing on (%s)" % str(lines))
+	BondManager.react(p, "omens", 2)
+	check(int(npc.rapport) == min(100, r0 + 2 + 4), "reactions scale with how many Omens you take")
+	BondManager.react(p, "breather")
+	check(int(npc.rapport) == min(100, r0 + 5), "and frowns at a Breather")
+	PartyManager.party_ids(p).clear()
 
 ## Omens (and boons) modify the current expedition only.
 func _run_state_checks() -> void:
