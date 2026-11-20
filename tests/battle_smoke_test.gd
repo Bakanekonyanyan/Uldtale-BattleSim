@@ -708,6 +708,27 @@ func _combat_rules_checks() -> void:
 	f1.set_meta("broken", true)
 	check(rules.on_turn_start(f1).contains("recovers") and not f1.get_meta("broken", false), "a Broken enemy recovers after its skipped turn")
 	check(BattleRules.break_max(f1) == int(BattleRules.cfg().break.regular_hits) + 1, "each Break raises the threshold")
+	# heroes have the same poise: enemies hitting their weakness Break them
+	var old_race = hero.race
+	hero.race = "Fairy"   # weak to Blunt
+	var club = Skill.create_from_dict({"name": "Test Club", "description": "", "ability_type": "PHYSICAL", "type": "DAMAGE", "target": "ENEMY", "power": 5, "cooldown": 0, "duration": 0, "damage_type": "BLUNT"})
+	var hlines: Array = []
+	var htries := 0
+	while not hero.get_meta("broken", false) and htries < 20:   # hits can miss
+		htries += 1
+		hero.current_hp = hero.max_hp
+		f2.current_mp = f2.max_mp; f2.current_sp = f2.max_sp
+		hlines.append_array(run.call(BattleAction.skill(f2, club, [hero])))
+	check(hero.get_meta("broken", false) and hero.is_stunned and hlines.any(func(l): return l.contains("BREAK")),
+		"%d weakness hits Break a hero too" % BattleRules.break_max(hero, true))
+	var link_now = ctx.link_gauge
+	check(rules.on_turn_start(hero).contains("recovers") and not hero.get_meta("broken", false), "a Broken hero recovers after the skipped turn")
+	check(ctx.link_gauge == link_now, "enemies breaking a hero don't fill the party's Link")
+	hero.is_stunned = false
+	BattleRules.new(ctx, q)
+	check(not hero.has_meta("times_broken") and not hero.has_meta("break_meter"), "hero poise resets at the next battle")
+	ctx.rules = rules
+	hero.race = old_race
 	# ultimates wait for the Link gauge
 	var ult = Skill.create_from_dict({"name": "Test Ult", "description": "", "ability_type": "PHYSICAL", "type": "DAMAGE", "target": "ENEMY", "category": "ULTIMATE", "power": 80, "cooldown": 0, "duration": 0})
 	ctx.link_gauge = 10

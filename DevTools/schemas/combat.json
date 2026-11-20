@@ -47,6 +47,12 @@
      "min": 1
     },
     {
+     "name": "hero_hits",
+     "type": "int",
+     "min": 1,
+     "help": "Weakness hits that Break a hero or companion."
+    },
+    {
      "name": "growth_per_break",
      "type": "int",
      "min": 0

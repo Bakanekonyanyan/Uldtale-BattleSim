@@ -50,16 +50,17 @@ Five systems on one shared rules layer (`scenes/battle/core/BattleRules.gd`). Th
 - Weakness hits fill an enemy's Break pips: the damage type or element it's weak to (shown on the panel). A hit that also triggers a combo counts one extra. Neutral hits don't count.
 - Hits needed: 2 for regular enemies, 2 for elites, 3 for bosses, +1 after each Break.
 - A Broken enemy loses its next turn, takes +30% damage until then, and loses any charge (and an elite's shield).
+- **Heroes and companions have the same meter.** Enemies hitting a hero's weakness (race and armor, shown as "Weak:" on the player panel) fill the hero's pips. 3 hits (`hero_hits`) Break a hero, with the same loss of a turn and +30% damage taken. Pips show on the player panel and the party rows. Breaking a hero gives the enemies no Link. Hero poise resets every battle.
 
 **3. Turn order:**
-- A timeline under the wave banner shows the next turns ("|" marks next round, which is re-rolled).
+- A timeline directly under the dungeon banner shows the next turns ("|" marks next round, which is re-rolled).
 - Skills with `turn_delay` push enemies back:
   - Ox Kick, Glacial Prison, Behemoth Charge: 2 places.
   - Shield Bash, Kiai, Pinning Thrust, Sacred Seal, Crane Wing Sweep: 1 place.
 - Bless, Spirit Barrier and Divine Blessing pull an ally forward to act next.
 
 **4. Link gauge (party):**
-- Fills from hits (split across the party), combos (+15) and Breaks (+25). It starts at 10 per Momentum level.
+- Fills from hits (split across the party), combos (+15) and Breaks (+25). It starts at 10 per Momentum level. Shown directly under the player panel.
 - **Ultimates cost 50 Link.**
 - LINK skills add 15 and pull the next ally forward.
 - At 100, **Unison Strike**: every standing hero hits one target together (×1.4).

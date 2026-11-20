@@ -95,8 +95,9 @@ func _create_rules_hud() -> void:
 	timeline_label = RichTextLabel.new()
 	timeline_label.bbcode_enabled = true
 	timeline_label.scroll_active = false
-	timeline_label.position = Vector2(376, 108)
-	timeline_label.size = Vector2(480, 26)
+	timeline_label.position = Vector2(192, 54)   # right under the dungeon banner
+	timeline_label.size = Vector2(768, 21)
+	timeline_label.add_theme_stylebox_override("normal", _slim_box())
 	timeline_label.add_theme_font_size_override("normal_font_size", 14)
 	timeline_label.add_theme_font_size_override("bold_font_size", 14)
 	timeline_label.tooltip_text = "Turn order. After | is next round (re-rolled, so it's a preview)."
@@ -104,11 +105,27 @@ func _create_rules_hud() -> void:
 	link_label = RichTextLabel.new()
 	link_label.bbcode_enabled = true
 	link_label.scroll_active = false
-	link_label.position = Vector2(286, 262)
-	link_label.size = Vector2(200, 28)
+	link_label.position = Vector2(64, 258)      # right under the player panel
+	link_label.size = Vector2(304, 21)
+	link_label.add_theme_stylebox_override("normal", _slim_box())
 	link_label.add_theme_font_size_override("normal_font_size", 14)
 	link_label.tooltip_text = "Party Link gauge: fills from hits, combos and Breaks. Ultimates cost %d; Unison Strike at full." % int(BattleRules.cfg().get("link", {}).get("ultimate_cost", 50))
 	add_child(link_label)
+	# make room: turn label below the timeline, XP line below the Link bar
+	if turn_label:
+		turn_label.position.y = 76
+	if xp_label:
+		xp_label.position.y = 284
+
+## Thin dark strip: the theme's padded panel is too tall for a one-line HUD row.
+func _slim_box() -> StyleBoxFlat:
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color(0.06, 0.05, 0.08, 0.75)
+	sb.content_margin_left = 8
+	sb.content_margin_right = 8
+	sb.content_margin_top = 1
+	sb.content_margin_bottom = 1
+	return sb
 
 func _update_rules_hud() -> void:
 	if timeline_label and turn_queue:
@@ -138,12 +155,12 @@ func _create_party_strip() -> void:
 	if heroes.size() <= 1:
 		return
 	party_strip = VBoxContainer.new()
-	party_strip.position = Vector2(64, 294)
+	party_strip.position = Vector2(64, 310)
 	party_strip.size = Vector2(300, 100)
 	party_strip.add_theme_constant_override("separation", 0)
 	add_child(party_strip)
 	if action_buttons:
-		action_buttons.position.y = 400   # make room for the party rows
+		action_buttons.position.y = 416   # make room for the party rows
 	for h in heroes:
 		var row = HBoxContainer.new()
 		var lbl = Label.new()
@@ -169,8 +186,8 @@ func _update_party_strip() -> void:
 		var h: CharacterData = row.get_meta("hero")
 		var lbl: Label = row.get_node("Info")
 		var ko = not h.is_alive()
-		lbl.text = "%s%s   HP %d/%d  MP %d  SP %d" % ["> " if h == player else "", h.name.get_slice(" ", 0), h.current_hp, h.max_hp, h.current_mp, h.current_sp] if not ko else "%s   Knocked out" % h.name.get_slice(" ", 0)
-		lbl.modulate = Color(0.55, 0.55, 0.55) if ko else (Color(1, 0.9, 0.5) if h == player else Color.WHITE)
+		lbl.text = "%s%s   HP %d/%d  MP %d  SP %d  %s" % ["> " if h == player else "", h.name.get_slice(" ", 0), h.current_hp, h.max_hp, h.current_mp, h.current_sp, _break_text(h, false)] if not ko else "%s   Knocked out" % h.name.get_slice(" ", 0)
+		lbl.modulate = Color(0.55, 0.55, 0.55) if ko else (Color(1, 0.55, 0.5) if h.get_meta("broken", false) else (Color(1, 0.9, 0.5) if h == player else Color.WHITE))
 
 ## Point the action buttons and the info panel at the hero whose turn it is.
 func set_active_hero(h: CharacterData) -> void:
@@ -226,13 +243,29 @@ func update_player_info():
 		return
 	
 	var status_text = player.get_status_effects_string()
-	player_info.text = "[b]%s[/b]%s\nHP: %d/%d\nMP: %d/%d\nSP: %d/%d\nStatus: %s" % [
+	player_info.text = "[b]%s[/b]%s\nHP: %d/%d   %s\nMP: %d/%d   SP: %d/%d\nStatus: %s" % [
 		player.name, ("  [color=gray](%s)[/color]" % player.character_class) if heroes.size() > 1 else "",
-		player.current_hp, player.max_hp,
+		player.current_hp, player.max_hp, _break_text(player, true),
 		player.current_mp, player.max_mp,
 		player.current_sp, player.max_sp,
 		status_text
 	]
+	if rules:
+		var weak = BattleRules.weaknesses(player)
+		player_info.text += "\n[color=#a99f90]Weak:[/color] %s" % (", ".join(weak) if not weak.is_empty() else "[color=#666666]none[/color]")
+
+## Break meter as pips: "Break ◆◇◇" or "BROKEN" (BBCode, or plain for Labels).
+func _break_text(c: CharacterData, bbcode: bool) -> String:
+	if rules == null:
+		return ""
+	var hero = battle_context.is_hero(c) if battle_context else true
+	if c.get_meta("broken", false):
+		return "[color=#ff6b6b][b]BROKEN[/b][/color]" if bbcode else "BROKEN"
+	var bm = BattleRules.break_max(c, hero)
+	var bn = int(c.get_meta("break_meter", 0))
+	if not bbcode:
+		return "%s%s" % ["◆".repeat(bn), "◇".repeat(max(0, bm - bn))]
+	return "Break [color=#ffd166]%s[/color][color=#555555]%s[/color]" % ["◆".repeat(bn), "◇".repeat(max(0, bm - bn))]
 
 func update_enemies_info():
 	for i in range(min(enemies.size(), enemy_panels.size())):
@@ -269,7 +302,7 @@ func update_enemies_info():
 		if enemy.get_meta("broken", false):
 			t += "[color=#ffd166][b]BROKEN[/b][/color]\n"
 		else:
-			var bm = BattleRules.break_max(enemy)
+			var bm = BattleRules.break_max(enemy, false)
 			var bn = int(enemy.get_meta("break_meter", 0))
 			t += "Break [color=#ffd166]%s[/color][color=#555555]%s[/color]\n" % ["◆".repeat(bn), "◇".repeat(max(0, bm - bn))]
 		var weak = BattleRules.weaknesses(enemy)
@@ -756,6 +789,10 @@ func hide_battle_ui():
 	if wave_label: wave_label.hide()
 	if floor_label: floor_label.hide()
 	if dungeon_description_label: dungeon_description_label.hide()
+	# built in code: party rows, turn timeline, Link gauge
+	for n in [party_strip, timeline_label, link_label]:
+		if n:
+			n.hide()
 
 # === HELPERS ===
 

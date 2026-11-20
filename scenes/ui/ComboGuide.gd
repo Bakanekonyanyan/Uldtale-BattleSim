@@ -11,6 +11,7 @@ var enemies: Array = []
 var ids: Array = []
 var list: ItemList
 var details: RichTextLabel
+var show_all := false
 
 static func open(parent: Node, p_heroes: Array, p_enemies: Array = []) -> ComboGuide:
 	var g = ComboGuide.new()
@@ -36,7 +37,7 @@ func _ready() -> void:
 	title.add_theme_font_size_override("font_size", 24)
 	panel.add_child(title)
 	var hint = Label.new()
-	hint.text = "Set up a status, then hit it with the right payoff for bonus damage.  ★ = your party can do both."
+	hint.text = "Combos your party can use now.  ⚡ = an enemy is primed, ★ = you can set it up and pay it off."
 	hint.position = Vector2(150, 20)
 	hint.add_theme_font_size_override("font_size", 14)
 	hint.modulate = Color(0.75, 0.72, 0.65)
@@ -51,6 +52,13 @@ func _ready() -> void:
 	details.position = Vector2(370, 60)
 	details.size = Vector2(650, 490)
 	panel.add_child(details)
+	var all_box = CheckBox.new()
+	all_box.text = "Show all combos"
+	all_box.position = Vector2(20, 566)
+	all_box.toggled.connect(func(on):
+		show_all = on
+		_fill())
+	panel.add_child(all_box)
 	var close = Button.new()
 	close.text = "Close"
 	close.custom_minimum_size = Vector2(150, 40)
@@ -64,9 +72,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		queue_free()
 		get_viewport().set_input_as_handled()
 
+## Usable = you can pay it off, and your party can set it up or an enemy
+## already carries the set-up status.
+func is_available(c: Dictionary) -> bool:
+	return not _payers(c).is_empty() and (not _setters(c).is_empty() or not _primed(c).is_empty())
+
 func _fill() -> void:
+	list.clear()
 	var all = Combos.all()
-	ids = all.keys().filter(func(k): return not String(k).begins_with("_"))
+	ids = all.keys().filter(func(k): return not String(k).begins_with("_") and (show_all or is_available(all[k])))
 	# primed right now first, then ones your party can do, then the rest
 	ids.sort_custom(func(a, b):
 		var ka = _sort_key(a)
@@ -87,6 +101,8 @@ func _fill() -> void:
 	if not ids.is_empty():
 		list.select(0)
 		_show(0)
+	else:
+		details.text = "[i]Your party has no combo it can use right now.[/i]\n\nCombos need a skill that sets up a status (Freeze, Bleed, Shock...) and one that pays it off. Tick [b]Show all combos[/b] to see what to look for in talents and companions."
 
 func _sort_key(id) -> int:
 	var c: Dictionary = Combos.all()[id]

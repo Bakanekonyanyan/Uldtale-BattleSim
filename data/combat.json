@@ -8,11 +8,12 @@
     "regular_hits": 2,
     "elite_hits": 2,
     "boss_hits": 3,
+    "hero_hits": 3,
     "growth_per_break": 1,
     "combo_bonus": 1,
     "broken_damage_bonus": 0.3,
     "link_gain": 25,
-    "_doc": "Break counts weakness hits (damage type or element the enemy is weak to): each is 1 point, a hit that also triggers a combo is 1 more. Neutral hits don't count. At the enemy's threshold it is Broken; each break raises that enemy's threshold by growth_per_break."
+    "_doc": "Break counts weakness hits (damage type or element the enemy is weak to): each is 1 point, a hit that also triggers a combo is 1 more. Neutral hits don't count. Heroes and companions have the same meter (hero_hits): enemies hitting their weaknesses (race, armor) break them too. At the enemy's threshold it is Broken; each break raises that enemy's threshold by growth_per_break."
   },
   "link": {
     "max": 100,

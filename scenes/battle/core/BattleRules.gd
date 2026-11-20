@@ -2,7 +2,7 @@
 # Combat rules on top of the engine (data/combat.json, data/elites.json),
 # shared by the battle scene (BattleOrchestrator) and headless battles
 # (AutoBattler: NPC fights, the balance sim):
-#   - Break: damage fills an enemy's break meter; at 100 it is Broken
+#   - Break: weakness hits fill a break meter (enemies AND heroes); full = Broken
 #   - Link: the party gauge (ultimates spend it, Unison Strike empties it)
 #   - Turn order: skills with turn_delay push enemies back / pull allies forward
 #   - Elite affixes: enrage, splitting
@@ -23,6 +23,8 @@ func _init(p_ctx: BattleContext, p_queue: TurnQueue) -> void:
 	ctx = p_ctx
 	queue = p_queue
 	ctx.rules = self
+	for h in ctx.get_heroes():   # hero poise starts fresh every battle
+		clear_break(h)
 	ctx.link_gauge = min(link_max(), MomentumSystem.get_momentum() * int(_link().get("start_per_momentum", 10)))
 
 static func cfg() -> Dictionary:
@@ -79,25 +81,27 @@ func after_action(action: BattleAction, snap: Dictionary) -> Array[String]:
 	for r in Combos.recent:
 		combo_targets[r.target] = true
 	Combos.recent.clear()
-	# --- damage to enemies: break points (weakness hits, combos) and link gauge
+	# --- damage: break points (weakness hits, combos) on the other side, both ways
 	var hit_any := false
-	for e in ctx.enemies:
-		var before = int(hp.get(e, e.current_hp))
-		var dealt = before - max(0, e.current_hp)
-		if dealt <= 0 or not hero:
+	for t in ctx.get_heroes() + ctx.enemies:
+		if t == null or ctx.is_hero(t) == hero:
+			continue
+		var before = int(hp.get(t, t.current_hp))
+		var dealt = before - max(0, t.current_hp)
+		if dealt <= 0:
 			continue
 		hit_any = true
-		if e.is_alive() and not e.get_meta("broken", false):
+		if t.is_alive() and not t.get_meta("broken", false):
 			var pts := 0
-			if _weak_hit(action, e):
+			if _weak_hit(action, t):
 				pts += 1
-				if combo_targets.has(e):
+				if combo_targets.has(t):
 					pts += int(_brk().get("combo_bonus", 1))
 			if pts > 0:
-				var meter = int(e.get_meta("break_meter", 0)) + pts
-				e.set_meta("break_meter", meter)
-				if meter >= break_max(e):
-					lines.append(break_enemy(e))
+				var meter = int(t.get_meta("break_meter", 0)) + pts
+				t.set_meta("break_meter", meter)
+				if meter >= break_max(t, not hero):
+					lines.append(break_unit(t))
 	if hero:
 		if hit_any:   # split across the party so the gauge fills at a similar pace
 			add_link(float(_link().get("gain_per_hit", 4)) / max(1, ctx.get_heroes().size()))
@@ -131,10 +135,13 @@ func after_action(action: BattleAction, snap: Dictionary) -> Array[String]:
 	return lines.filter(func(l): return l != "")
 
 ## Weakness hits needed to Break `e` (grows each time it is broken).
-static func break_max(e: CharacterData) -> int:
+## Heroes and companions use hero_hits: the same rule as enemies, own threshold.
+static func break_max(e: CharacterData, hero := false) -> int:
 	var b: Dictionary = cfg().get("break", {})
 	var base = int(b.get("regular_hits", 2))
-	if e.character_class.begins_with("King") or e.has_meta("boss_signature"):
+	if hero:
+		base = int(b.get("hero_hits", 3))
+	elif e.character_class.begins_with("King") or e.has_meta("boss_signature"):
 		base = int(b.get("boss_hits", 4))
 	elif e.has_meta("elite_affix") or e.has_meta("encounter"):
 		base = int(b.get("elite_hits", 3))
@@ -161,7 +168,10 @@ func _weak_hit(action: BattleAction, e: CharacterData) -> bool:
 				return true
 	return false
 
-func break_enemy(e: CharacterData) -> String:
+## Break `e` (enemy or hero): it loses its next turn and takes extra damage
+## until then. Breaking an enemy also fills the party's Link gauge.
+func break_unit(e: CharacterData) -> String:
+	var is_hero = ctx.is_hero(e)
 	e.set_meta("broken", true)
 	e.set_meta("break_meter", 0)
 	e.set_meta("times_broken", int(e.get_meta("times_broken", 0)) + 1)
@@ -174,8 +184,21 @@ func break_enemy(e: CharacterData) -> String:
 		e.set_meta("barrier", 0)
 		extra += " The barrier shatters!"
 	ctx.intents.erase(e)
+	if is_hero:
+		return "[color=#ff6b6b][b]BREAK![/b] %s is staggered and loses the next turn.%s[/color]" % [e.name, extra.replace("Its", "The")]
 	add_link(_brk().get("link_gain", 25))
 	return "[b]BREAK![/b] %s is staggered and loses its next turn.%s" % [e.name, extra]
+
+## Kept for older callers: Break an enemy.
+func break_enemy(e: CharacterData) -> String:
+	return break_unit(e)
+
+static func clear_break(c: CharacterData) -> void:
+	if c == null:
+		return
+	for m in ["broken", "break_meter", "times_broken"]:
+		if c.has_meta(m):
+			c.remove_meta(m)
 
 func _next_hero_after(actor: CharacterData) -> CharacterData:
 	for c in queue.queue:
@@ -187,8 +210,6 @@ func _next_hero_after(actor: CharacterData) -> CharacterData:
 
 ## Call at the start of `actor`'s turn, before the stun check. Returns a log line.
 func on_turn_start(actor: CharacterData) -> String:
-	if ctx.is_hero(actor):
-		return ""
 	if actor.get_meta("broken", false):
 		actor.set_meta("broken", false)   # this skipped turn is the recovery
 		return "%s recovers from the break." % actor.name
