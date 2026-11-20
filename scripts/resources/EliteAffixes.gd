@@ -18,7 +18,8 @@ static func chance(floor_num: int) -> float:
 	var s: Dictionary = data().get("settings", {})
 	if floor_num < int(s.get("min_floor", 2)):
 		return 0.0
-	return min(float(s.get("chance_max", 0.3)), float(s.get("chance_base", 0.06)) + float(s.get("chance_per_floor", 0.01)) * floor_num)
+	var c = min(float(s.get("chance_max", 0.3)), float(s.get("chance_base", 0.06)) + float(s.get("chance_per_floor", 0.01)) * floor_num)
+	return min(1.0, c + RunState.add("elite_chance_add"))   # Omen: Thin Veil
 
 static func roll_affix() -> String:
 	var affs: Dictionary = data().get("affixes", {})

@@ -97,6 +97,8 @@ func set_enemies(enemy_list: Array[CharacterData]) -> void:
 	context.enemies = enemy_list
 	for e in context.enemies:
 		e.calculate_secondary_attributes()
+	if DungeonStateManager.dungeon_active:
+		RunState.apply_to_enemies(context.enemies)   # Omens / boons
 
 func set_enemy(new_enemy: CharacterData) -> void:
 	set_enemies([new_enemy])

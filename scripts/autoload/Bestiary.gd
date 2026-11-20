@@ -70,6 +70,8 @@ func add_break(e: CharacterData) -> void:
 ## any remain unknown. Everything is known when the bestiary is off.
 func shown_weaknesses(e: CharacterData) -> Array:
 	var all = BattleRules.weaknesses(e)
+	if RunState.flag("hide_weaknesses"):   # Omen: Dim Sight
+		return ["???"]
 	if not enabled() or _player() == null:
 		return all
 	var en: Dictionary = book().get(String(e.race), {})

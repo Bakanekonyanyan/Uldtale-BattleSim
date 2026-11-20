@@ -1261,6 +1261,7 @@ func _phase0_checks() -> void:
 	_blacksmith_checks()
 	_material_checks()
 	_enchant_checks()
+	_run_state_checks()
 	_guild_checks()
 
 # ------------------------------------------------------------------ momentum + gear drops
@@ -1459,6 +1460,30 @@ func _material_checks() -> void:
 	robe.set_upgrade_level(5)
 	check(BlacksmithManager.get_upgrade_cost(robe).materials.has("silk_cloth"), "higher cloth upgrades need Silk")
 	check(BlacksmithManager.get_salvage_preview(vest).ore_id == "rawhide", "salvaging leather armor gives hide")
+
+## Omens (and boons) modify the current expedition only.
+func _run_state_checks() -> void:
+	RunState.clear()
+	var foe = EnemyFactory.create_enemy(1, 2, 1)
+	var dmg = foe.damage_multiplier
+	var hp = foe.max_hp
+	var need = BattleRules.break_max(foe, false)
+	RunState.set_omens(["bloodmoon", "ironhide", "brittle", "discord"])
+	check(RunState.omens.size() == int(RunState.omen_data().get("max_omens", 3)), "Omens are capped (%d)" % RunState.omens.size())
+	check(is_equal_approx(RunState.reward_bonus(), 0.5), "Omen loot bonus adds up (+%d%%)" % int(RunState.reward_bonus() * 100))
+	RunState.apply_to_enemies([foe])
+	check(foe.damage_multiplier > dmg * 1.15 and foe.max_hp > hp and foe.current_hp == foe.max_hp, "Bloodmoon + Ironhide: harder-hitting, tougher enemies")
+	RunState.apply_to_enemies([foe])
+	check(is_equal_approx(foe.damage_multiplier, dmg * 1.2), "Omens apply to an enemy only once")
+	check(BattleRules.break_max(foe, false) == max(1, need - 1) and BattleRules.break_max(foe, true) == max(1, int(BattleRules.cfg().break.hero_hits) - 1), "Brittle: one fewer hit to Break, for heroes too")
+	var w = RewardsManager.roll_wave_rewards({"current_wave": 1, "current_floor": 1, "is_boss_fight": false, "enemies": [], "momentum_level": 0})
+	RunState.clear()
+	var w0 = RewardsManager.roll_wave_rewards({"current_wave": 1, "current_floor": 1, "is_boss_fight": false, "enemies": [], "momentum_level": 0})
+	check(w.currency == int(round(w0.currency * 1.5)), "Omens boost wave gold (%d vs %d)" % [w.currency, w0.currency])
+	RunState.set_omens(["dim_sight"])
+	check(Bestiary.shown_weaknesses(foe) == ["???"], "Dim Sight hides every weakness")
+	GameEvents.expedition_ended.emit("the_dungeon", true)
+	check(RunState.omens.is_empty(), "Omens end with the expedition")
 
 func _enchant_checks() -> void:
 	var p = make_player()

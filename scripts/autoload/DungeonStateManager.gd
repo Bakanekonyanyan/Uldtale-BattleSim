@@ -125,6 +125,9 @@ func get_dungeon_description() -> String:
 	
 	if is_boss_fight:
 		base += " [color=red][b]BOSS BATTLE![/b][/color]"
+	var mods = RunState.describe()
+	if mods != "":
+		base += "\n[color=#c77dff]%s[/color]" % mods
 	
 	dungeon_description = base
 	return base

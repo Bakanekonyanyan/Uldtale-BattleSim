@@ -318,9 +318,8 @@ func show_floor_selection_dialog(location_id: String = "the_dungeon"):
 	
 	dialog.confirmed.connect(func():
 		var final_floor = current_character.current_floor
-		Log.debug("town", "TownScene: Starting %s at floor %d" % [location_id, final_floor])
-		SceneManager.start_dungeon_from_floor(current_character, final_floor, location_id)
 		dialog.queue_free()
+		show_omen_dialog(location_id, final_floor)
 	)
 	
 	# "Back" returns to the location picker
@@ -328,6 +327,55 @@ func show_floor_selection_dialog(location_id: String = "the_dungeon"):
 		dialog.queue_free()
 		show_location_selection_dialog()
 	)
+
+## Step 3: optional Omens - harder rules for more loot (RunState, data/omens.json).
+func show_omen_dialog(location_id: String, start_floor: int) -> void:
+	var omens = RunState.all_omens()
+	var cap = int(RunState.omen_data().get("max_omens", 3))
+	var dialog = ConfirmationDialog.new()
+	dialog.title = "Omens - tempt fate for better loot"
+	dialog.ok_button_text = "Set Out"
+	dialog.cancel_button_text = "Back"
+	var vbox = VBoxContainer.new()
+	vbox.custom_minimum_size = Vector2(520, 0)
+	var info = Label.new()
+	info.text = "Pick up to %d Omens. Each makes the expedition harder and adds to its gold and materials." % cap
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD
+	info.custom_minimum_size = Vector2(520, 0)
+	vbox.add_child(info)
+	var total = Label.new()
+	var boxes: Array = []
+	var refresh = func():
+		var picked = boxes.filter(func(b): return b.button_pressed)
+		for b in boxes:
+			b.disabled = not b.button_pressed and picked.size() >= cap
+		var bonus := 0.0
+		for b in picked:
+			bonus += float(omens[b.get_meta("id")].get("reward", 0.0))
+		total.text = "Loot bonus: +%d%%" % int(round(bonus * 100)) if not picked.is_empty() else "No Omens: a normal expedition."
+	for id in omens:
+		var o: Dictionary = omens[id]
+		var cb = CheckBox.new()
+		cb.text = "%s  (+%d%%)  -  %s" % [o.get("name", id), int(round(float(o.get("reward", 0)) * 100)), o.get("description", "")]
+		cb.set_meta("id", id)
+		cb.toggled.connect(func(_on): refresh.call())
+		boxes.append(cb)
+		vbox.add_child(cb)
+	total.add_theme_color_override("font_color", Color("ffd166"))
+	vbox.add_child(total)
+	refresh.call()
+	dialog.add_child(vbox)
+	add_child(dialog)
+	dialog.popup_centered()
+	dialog.confirmed.connect(func():
+		RunState.clear()
+		RunState.set_omens(boxes.filter(func(b): return b.button_pressed).map(func(b): return b.get_meta("id")))
+		Log.debug("town", "TownScene: Starting %s at floor %d, omens %s" % [location_id, start_floor, str(RunState.omens)])
+		SceneManager.start_dungeon_from_floor(current_character, start_floor, location_id)
+		dialog.queue_free())
+	dialog.canceled.connect(func():
+		dialog.queue_free()
+		show_floor_selection_dialog(location_id))
 
 func _on_equipment_pressed():
 	SceneManager.change_to_equipment(current_character)

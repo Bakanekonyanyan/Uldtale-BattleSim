@@ -51,6 +51,8 @@ func link_max() -> int:
 # ------------------------------------------------------------------ link
 
 func add_link(amount: float) -> void:
+	if amount > 0:
+		amount *= RunState.mult("link_gain_mult")   # Omen: Discord
 	ctx.link_gauge = clamp(ctx.link_gauge + int(round(amount)), 0, link_max())
 
 ## Gauge a hero skill costs (ultimates), 0 for anything else.
@@ -212,7 +214,8 @@ static func break_max(e: CharacterData, hero := false) -> int:
 		base = int(b.get("boss_hits", 4))
 	elif e.has_meta("elite_affix") or e.has_meta("encounter"):
 		base = int(b.get("elite_hits", 3))
-	return base + int(e.get_meta("times_broken", 0)) * int(b.get("growth_per_break", 1))
+	base += int(RunState.add("break_hits_delta"))   # Omen: Brittle
+	return max(1, base + int(e.get_meta("times_broken", 0)) * int(b.get("growth_per_break", 1)))
 
 func _is_boss(e: CharacterData) -> bool:
 	return e.character_class.begins_with("King") or e.has_meta("boss_signature")

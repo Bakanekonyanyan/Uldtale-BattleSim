@@ -53,6 +53,13 @@ func roll_wave_rewards(battle_data: Dictionary) -> Dictionary:
 	
 	# Materials: from the races of the enemies just defeated (data/loot/material_tables.json)
 	_merge_counts(rewards, roll_material_drops(battle_data))
+	# Omens: more gold and materials for a harder run
+	var omen = RunState.reward_bonus()
+	if omen > 0.0:
+		rewards["currency"] = int(round(rewards["currency"] * (1.0 + omen)))
+		for key in rewards.keys():
+			if key not in ["currency", "xp", "equipment_instances"]:
+				rewards[key] = _boost_count(rewards[key], omen)
 	return rewards
 
 ## Press On: no reward screen, so bank this wave's rewards for the next Breather.
@@ -159,6 +166,7 @@ func get_equipment_drop_chance(rarity: String, is_boss: bool) -> float:
 		return 0.0
 	if is_boss:
 		base_chance += float(cfg.get("boss_bonus", 0.1))
+	base_chance *= RunState.mult("gear_drop_mult")   # Omen: Thin Veil
 	return min(float(cfg.get("max_chance", 0.5)), base_chance)
 
 ## Pieces the defeated enemies drop: each piece rolls its chance, at most
