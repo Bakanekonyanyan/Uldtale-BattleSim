@@ -72,8 +72,14 @@ static func find(target: CharacterData, hit: Dictionary) -> Dictionary:
 	return best
 
 ## Call after the payoff hit landed: removes the set-up status if the combo consumes it.
+## Combos triggered since BattleRules.before_action ([{target, combo}]).
+static var recent: Array = []
+
 static func consume(target: CharacterData, combo: Dictionary) -> void:
-	if combo.is_empty() or not combo.consume or target.status_manager == null:
+	if combo.is_empty():
+		return
+	recent.append({"target": target, "combo": combo})
+	if not combo.consume or target.status_manager == null:
 		return
 	target.status_manager.remove_effect(combo.setup)
 

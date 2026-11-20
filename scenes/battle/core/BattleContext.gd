@@ -13,6 +13,17 @@ var player: CharacterData
 ## Recruited party members fighting beside the player (0-2, PartyManager)
 var allies: Array[CharacterData] = []
 var enemies: Array[CharacterData] = []
+## Party Link gauge (BattleRules): fills from hits, combos and breaks
+var link_gauge: int = 0
+## Each enemy's planned next action (EnemyTurnPlanner). Kept here, not on the
+## enemy: an action references its actor, so storing it on the enemy would be
+## a reference cycle.
+var intents: Dictionary = {}
+var _rules_ref: WeakRef
+## The battle's BattleRules (weak: the rules object holds this context).
+var rules: BattleRules:
+	get: return _rules_ref.get_ref() if _rules_ref else null
+	set(value): _rules_ref = weakref(value) if value else null
 
 # --- Dungeon info (PvE only) ---
 var is_boss_battle: bool = false

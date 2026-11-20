@@ -73,7 +73,14 @@ static func fight_floor(hero: CharacterData, location_id: String, floor_num: int
 	return r
 
 ## `allies` fight beside `p` on the same hero policy.
-static func fight(p: CharacterData, enemies: Array[CharacterData], floor_num: int, boss: bool, allies: Array[CharacterData] = []) -> Dictionary:
+## A headless battle with the full rules (BattleRules: break, Link, intents,
+## turn order, elite affixes). opts:
+##   potions: true  - heroes drink a potion (free action) when low
+##   policy: "smart" (default) | "naive" - naive ignores intents, breaks and
+##           the Link gauge: always the strongest skill (to measure how much
+##           playing well is worth)
+##   setup: true    - use buffs/debuffs (false = damage only)
+static func fight(p: CharacterData, enemies: Array[CharacterData], floor_num: int, boss: bool, allies: Array[CharacterData] = [], opts: Dictionary = {}) -> Dictionary:
 	var ctx = BattleContext.new()
 	ctx.player = p
 	ctx.allies = allies
@@ -83,9 +90,12 @@ static func fight(p: CharacterData, enemies: Array[CharacterData], floor_num: in
 	engine.initialize_multi(p, enemies, allies)
 	var q = TurnQueue.new()
 	q.initialize(p, enemies, allies)
+	var rules = BattleRules.new(ctx, q)
 	var planner = EnemyTurnPlanner.new()
 	planner.initialize(ctx)
+	planner.plan_all_intents()
 	var turns := 0
+	var breaks := 0
 	while not ctx.is_battle_decided() and turns < 300:
 		var actor = q.current_actor()
 		if actor == null:
@@ -97,28 +107,64 @@ static func fight(p: CharacterData, enemies: Array[CharacterData], floor_num: in
 			q.remove(actor)
 			q.advance()
 			continue
+		rules.on_turn_start(actor)
 		if actor.is_stunned:
 			actor.is_stunned = false
+			if not ctx.is_hero(actor):
+				planner.plan_intent(actor)
 			q.advance()
 			continue
-		var action: BattleAction = hero_policy(actor, ctx) if ctx.is_hero(actor) else planner.plan_action(actor)
+		if ctx.is_hero(actor) and opts.get("potions", false):
+			var potion = potion_policy(actor)
+			if potion:
+				var ps = rules.before_action(potion)
+				engine.execute_action(potion)
+				rules.after_action(potion, ps)
+		var action: BattleAction
+		if ctx.is_hero(actor):
+			action = hero_policy(actor, ctx, bool(opts.get("setup", true)), String(opts.get("policy", "smart")))
+		else:
+			action = planner.take_intent(actor)
 		if action:
+			var snap = rules.before_action(action)
 			engine.execute_action(action)
-		for c in ctx.get_heroes() + enemies:
+			for line in rules.after_action(action, snap):
+				if line.contains("BREAK"):
+					breaks += 1
+		if not ctx.is_hero(actor):
+			planner.plan_intent(actor)
+		for c in rules.take_spawns():
+			planner.add_enemy(c)
+			planner.plan_intent(c)
+		for c in ctx.get_heroes() + ctx.enemies:
 			if not c.is_alive():
 				q.remove(c)
 		q.rejoin_revived()
 		q.advance()
-	return {"won": ctx.did_player_win(), "turns": turns, "hp_frac": float(max(0, p.current_hp)) / max(1, p.max_hp)}
+	return {"won": ctx.did_player_win(), "turns": turns, "breaks": breaks, "hp_frac": float(max(0, p.current_hp)) / max(1, p.max_hp)}
+
+## Drink a health potion below 40% HP, or a mana potion below 25% MP (casters).
+static func potion_policy(p: CharacterData) -> BattleAction:
+	if p.current_hp < p.max_hp * 0.4 and p.inventory.get_quantity("health_potion") > 0:
+		return BattleAction.item(p, p.inventory.get_item("health_potion"), [p])
+	if p.spell_power > p.attack_power and p.current_mp < p.max_mp * 0.25 and p.inventory.get_quantity("mana_potion") > 0:
+		return BattleAction.item(p, p.inventory.get_item("mana_potion"), [p])
+	return null
 
 ## Heal when low -> pay off a combo -> buff early -> debuff a fresh enemy ->
 ## strongest damage skill -> attack the weakest enemy.
 ## use_setup = false plays "damage only" (no buffs/debuffs) - the balance sim
 ## compares both styles. Companions on Auto and NPC battles use set-ups.
-static func hero_policy(p: CharacterData, ctx: BattleContext, use_setup := true) -> BattleAction:
+static func hero_policy(p: CharacterData, ctx: BattleContext, use_setup := true, policy := "smart") -> BattleAction:
 	var living = ctx.get_living_enemies()
 	if living.is_empty():
 		return null
+	var rules: BattleRules = ctx.rules
+	var smart = policy != "naive"
+	if smart and policy != "hit":
+		var plan = _smart_moves(p, ctx, living, rules)
+		if plan:
+			return plan
 	living.sort_custom(func(a, b): return a.current_hp < b.current_hp)
 	var enemy_hp := 0.0
 	var enemy_max := 0.0
@@ -133,6 +179,8 @@ static func hero_policy(p: CharacterData, ctx: BattleContext, use_setup := true)
 		var s: Skill = p.get_skill_instance(sn)
 		if s == null or p.get_skill_cooldown(sn) > 0 or not s.can_afford(p):
 			continue
+		if rules and not rules.link_ok(p, s):
+			continue   # ultimates wait for the Link gauge
 		match s.type:
 			Skill.SkillType.REVIVE:
 				var fallen = ctx.get_heroes().filter(func(h): return not h.is_alive())
@@ -159,6 +207,8 @@ static func hero_policy(p: CharacterData, ctx: BattleContext, use_setup := true)
 		var s: Skill = p.get_skill_instance(sn)
 		if s == null or p.get_skill_cooldown(sn) > 0 or not s.can_afford(p):
 			continue
+		if rules and not rules.link_ok(p, s):
+			continue
 		if s.type == Skill.SkillType.DRAIN and s.drain_source != Skill.DrainTarget.HP:
 			continue
 		for e in living:
@@ -182,6 +232,113 @@ static func hero_policy(p: CharacterData, ctx: BattleContext, use_setup := true)
 		var fresh = living.filter(func(e): return not e.buff_manager.has_debuffs())
 		if not fresh.is_empty():
 			return BattleAction.skill(p, debuff, living if debuff.target == Skill.TargetType.ALL_ENEMIES else [fresh[-1]])
+	if smart and policy != "moves":
+		# same skill choice, smarter aim: weakness, near-Break, kills
+		var aim = _best_target(p, best, living, rules)
+		if aim:
+			return BattleAction.skill(p, best, living if best and best.target == Skill.TargetType.ALL_ENEMIES else [aim]) if best else BattleAction.attack(p, aim)
 	if best:
 		return BattleAction.skill(p, best, living if best.target == Skill.TargetType.ALL_ENEMIES else [living[0]])
 	return BattleAction.attack(p, living[0])
+
+
+## The "reads the fight" layer on top of the basic policy:
+##   Unison Strike when the gauge is full -> brace for a telegraphed big hit ->
+##   break the enemy that is charging -> otherwise null (basic policy decides).
+static func _smart_moves(p: CharacterData, ctx: BattleContext, living: Array, rules: BattleRules) -> BattleAction:
+	var charging = living.filter(func(e): return e.has_meta("charging"))
+	# Unison at full gauge: on a charging enemy, else the toughest one
+	if rules and rules.unison_ready():
+		var tgt = charging[0] if not charging.is_empty() else living.reduce(func(a, b): return a if a.current_hp > b.current_hp else b)
+		return BattleAction.unison(p, tgt)
+	# Something big is coming at us: heal up or brace
+	var threatened = not charging.is_empty() or living.any(func(e):
+		var a = ctx.intents.get(e, null)
+		return a is BattleAction and a.type == BattleAction.ActionType.SKILL and a.skill_data.power >= 50 and (a.skill_data.target == Skill.TargetType.ALL_ENEMIES or a.primary_target == p))
+	if threatened and p.current_hp < p.max_hp * 0.45:
+		for sn in p.get_battle_skills():
+			var s: Skill = p.get_skill_instance(sn)
+			if s and s.type == Skill.SkillType.HEAL and p.get_skill_cooldown(sn) == 0 and s.can_afford(p):
+				return BattleAction.skill(p, s, [p])
+	# Something is charging: Break it this turn if we can, else brace for it
+	if not charging.is_empty():
+		var target = charging[0]
+		var best: Skill = null
+		var best_power := -1.0
+		for sn in p.get_battle_skills():
+			var s: Skill = p.get_skill_instance(sn)
+			if s == null or s.type != Skill.SkillType.DAMAGE or p.get_skill_cooldown(sn) > 0 or not s.can_afford(p):
+				continue
+			if rules and not rules.link_ok(p, s):
+				continue
+			if rules and rules._weak_hit(BattleAction.skill(p, s, [target]), target) and s.power > best_power:
+				best = s
+				best_power = s.power
+		var weak_attack = rules and rules._weak_hit(BattleAction.attack(p, target), target)
+		var meter = int(target.get_meta("break_meter", 0))
+		if meter + 1 >= BattleRules.break_max(target):
+			if best:
+				return BattleAction.skill(p, best, living if best.target == Skill.TargetType.ALL_ENEMIES else [target])
+			if weak_attack:
+				return BattleAction.attack(p, target)
+		if p.current_hp < p.max_hp * 0.75:
+			return BattleAction.defend(p)     # halves the charged hit
+		if best:   # chip in a weakness hit toward the Break
+			return BattleAction.skill(p, best, living if best.target == Skill.TargetType.ALL_ENEMIES else [target])
+		if weak_attack:
+			return BattleAction.attack(p, target)
+	# Build a Break on the big threats (bosses, elites): a weakness skill nearly
+	# as strong as our best is worth more, because Breaks cost them turns
+	if rules:
+		var bigs = living.filter(func(e): return not e.get_meta("broken", false) and BattleRules.break_max(e) >= 3 - int(e.get_meta("times_broken", 0)) and (e.character_class.begins_with("King") or e.has_meta("elite_affix")))
+		if not bigs.is_empty():
+			var t = bigs[0]
+			var top := 0.0
+			for sn in p.get_battle_skills():
+				var s: Skill = p.get_skill_instance(sn)
+				if s and s.type == Skill.SkillType.DAMAGE and p.get_skill_cooldown(sn) == 0 and s.can_afford(p) and rules.link_ok(p, s):
+					top = max(top, s.power)
+			for sn in p.get_battle_skills():
+				var s: Skill = p.get_skill_instance(sn)
+				if s and s.type == Skill.SkillType.DAMAGE and p.get_skill_cooldown(sn) == 0 and s.can_afford(p) and rules.link_ok(p, s) \
+						and s.power >= top * 0.6 and rules._weak_hit(BattleAction.skill(p, s, [t]), t):
+					return BattleAction.skill(p, s, living if s.target == Skill.TargetType.ALL_ENEMIES else [t])
+			if rules._weak_hit(BattleAction.attack(p, t), t) and top < 35:
+				return BattleAction.attack(p, t)
+	# Finish a Break that is one weakness hit away (most dangerous enemy first)
+	if rules:
+		var ready = living.filter(func(e): return not e.get_meta("broken", false) and int(e.get_meta("break_meter", 0)) + 1 >= BattleRules.break_max(e))
+		ready.sort_custom(func(a, b): return max(a.attack_power, a.spell_power) > max(b.attack_power, b.spell_power))
+		for t in ready:
+			for sn in p.get_battle_skills():
+				var s: Skill = p.get_skill_instance(sn)
+				if s and s.type == Skill.SkillType.DAMAGE and p.get_skill_cooldown(sn) == 0 and s.can_afford(p) and rules.link_ok(p, s) \
+						and rules._weak_hit(BattleAction.skill(p, s, [t]), t):
+					return BattleAction.skill(p, s, living if s.target == Skill.TargetType.ALL_ENEMIES else [t])
+			if rules._weak_hit(BattleAction.attack(p, t), t):
+				return BattleAction.attack(p, t)
+	return null
+
+## The best target for `s` (null = basic attack): share of the target removed
+## x its threat, more for a hit that Breaks it or a weakness hit, a kill bonus.
+static func _best_target(p: CharacterData, s: Skill, living: Array, rules: BattleRules) -> CharacterData:
+	if rules == null or living.is_empty():
+		return null
+	var brk: Dictionary = BattleRules.cfg().get("break", {})
+	var focus: CharacterData = null
+	var focus_score := -1.0
+	var physical = s == null or s.ability_type == Skill.AbilityType.PHYSICAL
+	for t in living:
+		var act = BattleAction.attack(p, t) if s == null else BattleAction.skill(p, s, [t])
+		var dmg = BattleFormulas.hit_damage(p, t, physical, 0.0 if s == null else s.power, -1 if s == null else s.damage_type, s)
+		var threat = max(t.attack_power, t.spell_power) * t.damage_multiplier
+		var value = min(dmg, t.current_hp) / max(1.0, float(t.current_hp)) * threat
+		if dmg >= t.current_hp:
+			value *= 1.5
+		if rules._weak_hit(act, t) and not t.get_meta("broken", false):
+			value *= 1.8 if int(t.get_meta("break_meter", 0)) + 1 >= BattleRules.break_max(t) else 1.25
+		if value > focus_score:
+			focus_score = value
+			focus = t
+	return focus
+

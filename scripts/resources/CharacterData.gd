@@ -358,12 +358,21 @@ func take_damage(amount: float, attacker: CharacterData = null):
 	if is_defending:
 		amount *= 0.5
 	
+	# Elite barrier (Shielded) soaks damage first
+	var barrier = int(get_meta("barrier", 0))
+	if barrier > 0 and amount > 0:
+		var soaked = min(barrier, int(amount))
+		set_meta("barrier", barrier - soaked)
+		amount -= soaked
+	
 	# Reflection - the ONLY place reflected damage is applied.
 	# Only reflect when a live attacker hit us directly; status ticks, confusion
 	# self-harm and reflected damage itself pass no attacker. (Previously this used
 	# the stale `last_attacker`, so e.g. poison damage was reflected too.)
 	if attacker and attacker != self:
 		var reflection = status_manager.get_total_reflection() if status_manager else 0.0
+		if get_meta("elite_affix", "") == "thorns":
+			reflection += float(EliteAffixes.affix("thorns").get("reflect", 0.2))
 		if reflection > 0.0:
 			var reflected = int(amount * reflection)
 			if reflected > 0:

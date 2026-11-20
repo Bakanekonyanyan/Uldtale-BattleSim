@@ -180,6 +180,7 @@ func tool_report(args: Array) -> void:
 	var floor_num = max(1, int(opts.floor))
 	EnemyFactory.force_archetype = String(opts.get("archetype", ""))
 	sim_party = clamp(int(opts.get("party", "0")), 0, 2)
+	sim_policy = String(opts.get("policy", "smart"))
 	var styles: Array = [false, true] if opts.setup == "both" else ([true] if opts.setup == "on" else [false])
 	var total = classes.size() * styles.size()
 	var done := 0
@@ -291,7 +292,7 @@ func sim_run(cls: String, floor_num: int, p: CharacterData = null) -> Dictionary
 		var enemies = make_enemies(floor_num, wave)
 		var xp := 0
 		for e in enemies: xp += e.level * 50 * floor_num
-		var r = fight(p, enemies, floor_num, wave == 6) if allies.is_empty() else AutoBattler.fight(p, enemies, floor_num, wave == 6, allies)
+		var r = fight(p, enemies, floor_num, wave == 6, allies)
 		for a in ([p] + allies if not allies.is_empty() else []):   # knocked-out heroes get back up after a win
 			if r.won and not a.is_alive():
 				a.current_hp = max(1, int(a.max_hp * 0.1))
@@ -338,66 +339,11 @@ func spend_point(p: CharacterData) -> void:
 func sim_fight(cls: String, floor_num: int, wave: int) -> Dictionary:
 	return fight(make_player(cls), make_enemies(floor_num, wave), floor_num, wave == 6)
 
-func fight(p: CharacterData, enemies: Array[CharacterData], floor_num: int, boss: bool) -> Dictionary:
-	var ctx = BattleContext.new()
-	ctx.player = p; ctx.enemies = enemies
-	ctx.set_dungeon_info(boss, 1, floor_num, 5, "")
-	var engine = CombatEngine.new(); engine.initialize_multi(p, enemies)
-	var q = TurnQueue.new(); q.initialize(p, enemies)
-	var planner = EnemyTurnPlanner.new(); planner.initialize(ctx)
-	var direct := 0.0; var status := 0.0; var turns := 0
-
-	while not ctx.is_battle_decided() and turns < 300:
-		var actor = q.current_actor()
-		if actor == null: break
-		turns += 1
-		actor.reset_defense()
-
-		var hp0 = p.current_hp
-		engine.process_status_effects(actor)
-		if actor == p: status += hp0 - p.current_hp
-		if not actor.is_alive():
-			q.remove(actor); q.advance(); continue
-		if actor.is_stunned:
-			actor.is_stunned = false; q.advance(); continue
-
-		# Items are a free action (one per turn) before the main action
-		if actor == p:
-			var potion = potion_policy(p)
-			if potion:
-				engine.execute_action(potion)
-				tally("player item " + potion.item_data.id, 1)
-		
-		var action: BattleAction = player_policy(p, ctx) if actor == p else planner.plan_action(actor)
-		if action:
-			var hp_before = p.current_hp
-			var tgt_hp := {}
-			for e in enemies: tgt_hp[e] = e.current_hp
-			var res = engine.execute_action(action)
-			if actor != p:
-				var lost = hp_before - p.current_hp
-				direct += max(0, lost)
-				if lost > 0:
-					tally("enemy %s" % ("skill " + action.skill_data.name if action.skill_data else "attack"), lost)
-			else:
-				var dealt := 0
-				for e in enemies: dealt += tgt_hp[e] - e.current_hp
-				tally("player %s" % ("skill " + action.skill_data.name if action.skill_data else BattleAction.ActionType.keys()[action.type].to_lower()), dealt)
-		for c in [p] + enemies:
-			if not c.is_alive(): q.remove(c)
-		q.advance()
-
-	return {"won": ctx.did_player_win(), "direct": direct, "status": status, "turns": turns}
-
-# Drink a health potion below 40% HP, or a mana potion below 25% MP (casters).
-func potion_policy(p: CharacterData) -> BattleAction:
-	if p.current_hp < p.max_hp * 0.4 and p.inventory.get_quantity("health_potion") > 0:
-		return BattleAction.item(p, p.inventory.get_item("health_potion"), [p])
-	if p.spell_power > p.attack_power and p.current_mp < p.max_mp * 0.25 and p.inventory.get_quantity("mana_potion") > 0:
-		return BattleAction.item(p, p.inventory.get_item("mana_potion"), [p])
-	return null
-
-# The hero's turn: the same policy companions on Auto and NPC battles use
-# (AutoBattler.hero_policy), so balance numbers match the game.
-func player_policy(p: CharacterData, ctx: BattleContext) -> BattleAction:
-	return AutoBattler.hero_policy(p, ctx, use_setup)
+## Every sim fight uses the game's headless battle (AutoBattler.fight) with the
+## full combat rules. sim_policy: "smart" or "naive" (tool --policy=naive).
+var sim_policy := "smart"
+func fight(p: CharacterData, enemies: Array[CharacterData], floor_num: int, boss: bool, allies: Array[CharacterData] = []) -> Dictionary:
+	var r = AutoBattler.fight(p, enemies, floor_num, boss, allies, {"potions": true, "setup": use_setup, "policy": sim_policy})
+	r["direct"] = 0.0
+	r["status"] = 0.0
+	return r

@@ -87,6 +87,10 @@ func _try_hp_trigger(hp_percent: float) -> BattleAction:
 			continue
 		_fired_triggers[i] = true
 		Log.debug("ai", "BossAI: HP trigger (%.0f%%) - %s!" % [hp_percent * 100, skill_name])
+		# Telegraphed: spend this turn charging, unleash it next turn (a Break
+		# in between cancels it). data/combat.json intents.boss_charge
+		if bool(BattleRules.cfg().get("intents", {}).get("boss_charge", true)):
+			return BattleAction.charge(enemy, skill_name)
 		return BattleAction.skill(enemy, skill, _get_skill_targets_smart(skill))
 	return null
 

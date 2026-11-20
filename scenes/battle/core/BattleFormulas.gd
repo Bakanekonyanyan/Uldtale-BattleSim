@@ -98,13 +98,21 @@ static func hit_damage(attacker: CharacterData, target: CharacterData, is_physic
 			raw *= attacker.talents.damage_mult(ctx)
 		if target.talents:
 			raw *= target.talents.defense_mult(ctx)
+	# A charged (telegraphed) strike hits harder
+	if attacker.get_meta("charged_strike", false):
+		raw *= float(BattleRules.cfg().get("intents", {}).get("charge_power_mult", 1.5))
+	# Broken enemies take extra damage until their skipped turn (BattleRules)
+	if target.get_meta("broken", false):
+		raw *= 1.0 + float(BattleRules.cfg().get("break", {}).get("broken_damage_bonus", 0.3))
 	return raw * mitigation(defense)
 
 ## Talent lifesteal after a hit landed: heals the attacker. Returns HP healed.
 static func apply_lifesteal(attacker: CharacterData, target: CharacterData, dealt: float, is_physical: bool, skill = null, damage_type: int = -1) -> int:
-	if attacker == null or attacker.talents == null or dealt <= 0 or not attacker.is_alive():
+	if attacker == null or dealt <= 0 or not attacker.is_alive():
 		return 0
-	var f = attacker.talents.lifesteal(TalentManager.hit_context(attacker, target, is_physical, skill, damage_type))
+	var f = attacker.talents.lifesteal(TalentManager.hit_context(attacker, target, is_physical, skill, damage_type)) if attacker.talents else 0.0
+	if attacker.get_meta("elite_affix", "") == "vampiric":   # elite affix (data/elites.json)
+		f += float(EliteAffixes.affix("vampiric").get("lifesteal", 0.3))
 	if f <= 0.0:
 		return 0
 	return attacker.heal(int(round(dealt * f)))

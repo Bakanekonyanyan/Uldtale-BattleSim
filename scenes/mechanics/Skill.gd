@@ -76,6 +76,9 @@ enum ElementType {
 @export var weapon_bonus: Dictionary = {}
 ## BASIC / ADVANCED / LINK / ULTIMATE... (docs/lore/ABILITY_TYPES.md); talents can key off it
 @export var category: String = ""
+## Turn order (BattleRules): > 0 pushes enemy targets back that many places,
+## < 0 pulls an ally target forward to act next.
+@export var turn_delay: int = 0
 ## Fraction of the user's max HP paid on use (Necromancer blood magic). Never kills.
 @export var hp_cost: float = 0.0
 ## Talent upgrades {power, cooldown, duration, mp_cost, sp_cost} (set by SkillProgressionManager)
@@ -108,6 +111,7 @@ static func create_from_dict(data: Dictionary) -> Skill:
 	skill.damage_type = DamageTypes.parse(String(data.get("damage_type", "")))
 	skill.weapon_bonus = data.get("weapon_bonus", {})
 	skill.category = String(data.get("category", "")).to_upper()
+	skill.turn_delay = int(data.get("turn_delay", 0))
 	skill.hp_cost = float(data.get("hp_cost", 0.0))
 	
 	# Parse elements

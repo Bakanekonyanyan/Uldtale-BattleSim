@@ -50,6 +50,11 @@ func roll_wave_rewards(battle_data: Dictionary) -> Dictionary:
 		add_random_item_to_rewards(rewards, "consumable", 0.7 * drop_chance_multiplier, current_floor)
 		add_random_item_to_rewards(rewards, "equipment", 0.1 * drop_chance_multiplier, current_floor, player_class)
 	
+	# Elites pay better (data/elites.json gold_mult)
+	for e in battle_data.get("enemies", []):
+		if e is CharacterData and e.has_meta("elite_affix"):
+			rewards["currency"] = int(rewards["currency"] * float(EliteAffixes.data().get("settings", {}).get("gold_mult", 1.5)))
+	
 	# Location reward multiplier x world event (e.g. a Monster Surge)
 	var loc = DungeonStateManager.current_location
 	rewards["currency"] = int(round(rewards["currency"] * LocationManager.get_reward_mult(loc) * WorldClock.current_modifier("reward_mult", loc)))

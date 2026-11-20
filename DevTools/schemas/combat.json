@@ -1,0 +1,122 @@
+{
+ "tab": "Combat",
+ "file": "data/combat.json",
+ "order": 12,
+ "description": "Combat rules (BattleRules.gd): enemy intents and boss charge-ups, Break (weakness hits), the party Link gauge and Unison Strike.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Intents",
+   "path": [
+    "intents"
+   ],
+   "fields": [
+    {
+     "name": "boss_charge",
+     "type": "bool",
+     "help": "Bosses spend a turn charging their signature/ultimate (shown as an intent)."
+    },
+    {
+     "name": "charge_power_mult",
+     "type": "float",
+     "min": 0,
+     "help": "Damage multiplier of a charged strike."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Break",
+   "path": [
+    "break"
+   ],
+   "fields": [
+    {
+     "name": "regular_hits",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "elite_hits",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "boss_hits",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "growth_per_break",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "combo_bonus",
+     "type": "int",
+     "min": 0,
+     "help": "Extra points when the weakness hit also triggers a combo."
+    },
+    {
+     "name": "broken_damage_bonus",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "link_gain",
+     "type": "int",
+     "min": 0
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Link",
+   "path": [
+    "link"
+   ],
+   "fields": [
+    {
+     "name": "max",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "start_per_momentum",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "gain_per_hit",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "gain_combo",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "gain_link_skill",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "ultimate_cost",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "unison_cost",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "unison_mult",
+     "type": "float",
+     "min": 0
+    }
+   ]
+  }
+ ]
+}

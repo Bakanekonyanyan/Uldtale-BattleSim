@@ -69,6 +69,36 @@ func advance() -> void:
 		Log.debug("battle", "TurnQueue: Round %d - re-rolling turn order" % round_number)
 		_roll_turn_order()
 
+## Push `character` back `places` positions in the order (never before the
+## actor whose turn it is).
+func delay(character: CharacterData, places: int) -> void:
+	var i = queue.find(character)
+	if i <= 0:
+		return
+	queue.remove_at(i)
+	queue.insert(min(i + places, queue.size()), character)
+
+## Pull `character` forward to act right after the current actor.
+func haste(character: CharacterData) -> void:
+	var i = queue.find(character)
+	if i <= 1:
+		return
+	queue.remove_at(i)
+	queue.insert(1, character)
+	_acted_this_round.erase(character)
+
+## The next `count` turns: [{character, next_round}] (next_round = after the
+## current round ends; the order is re-rolled then, so it's a preview).
+func upcoming(count: int = 8) -> Array:
+	var out: Array = []
+	for c in queue:
+		if not c.is_alive():
+			continue
+		out.append({"character": c, "next_round": _acted_this_round.has(c) and c != queue[0]})
+		if out.size() >= count:
+			break
+	return out
+
 ## Someone joining mid-battle (encounter reinforcements) acts from next round.
 func join(character: CharacterData, is_hero_side: bool) -> void:
 	if character in all_combatants:

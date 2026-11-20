@@ -41,6 +41,8 @@ func execute(action: BattleAction, announce: bool = false) -> Outcome:
 
 	await _play_animation(action)
 
+	var rules: BattleRules = context.rules
+	var snap = rules.before_action(action) if rules else {}
 	outcome.result = combat_engine.execute_action(action)
 	if not outcome.result:
 		push_error("ActionExecutor: CombatEngine returned null for %s" % action.get_description())
@@ -49,6 +51,13 @@ func execute(action: BattleAction, announce: bool = false) -> Outcome:
 	await _play_feedback(action, outcome.result)
 
 	ui_controller.display_result(outcome.result, action)
+	# Break, Link, turn order, elite affixes (BattleRules)
+	if rules:
+		for line in rules.after_action(action, snap):
+			ui_controller.add_combat_log(line, "gold")
+			if line.contains("BREAK") and visual_manager:
+				visual_manager.shake_and_flash_screen(0.25)
+		ui_controller.update_all_character_info()
 	if outcome.result.has_level_up():
 		ui_controller.add_combat_log(outcome.result.level_up_message, "cyan")
 
@@ -128,6 +137,10 @@ func _get_action_name(action: BattleAction) -> String:
 			return action.skill_data.name
 		BattleAction.ActionType.ITEM:
 			return action.item_data.display_name
+		BattleAction.ActionType.CHARGE:
+			return "a charge-up"
+		BattleAction.ActionType.UNISON:
+			return "Unison Strike"
 	return "Unknown"
 
 ## Anyone touched by the action who is now dead (targets + the actor, who can

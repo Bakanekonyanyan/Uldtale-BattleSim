@@ -330,7 +330,8 @@
 	  "duration": 4,
 	  "mp_cost": 30,
 	  "sp_cost": 5,
-	  "cooldown": 5
+	  "cooldown": 5,
+	  "turn_delay": -1
 	},
 	"Smite": {
 	  "name": "Smite",
@@ -773,7 +774,8 @@
 	  "duration": 4,
 	  "mp_cost": 45,
 	  "sp_cost": 5,
-	  "cooldown": 6
+	  "cooldown": 6,
+	  "turn_delay": -1
 	},
 	"Berserker Rage": {
 	  "name": "Berserker Rage",
@@ -863,7 +865,8 @@
 	  "duration": 3,
 	  "mp_cost": 30,
 	  "sp_cost": 0,
-	  "cooldown": 5
+	  "cooldown": 5,
+	  "turn_delay": -1
 	},
 	"Ancestral Mending": {
 	  "name": "Ancestral Mending",
@@ -1144,7 +1147,8 @@
 	  "duration": 2,
 	  "mp_cost": 0,
 	  "sp_cost": 20,
-	  "cooldown": 3
+	  "cooldown": 3,
+	  "turn_delay": 2
 	},
 	"Call of Fenrisulfr": {
 	  "name": "Call of Fenrisulfr",
@@ -1263,7 +1267,8 @@
 	  "duration": 2,
 	  "mp_cost": 20,
 	  "sp_cost": 0,
-	  "cooldown": 3
+	  "cooldown": 3,
+	  "turn_delay": 2
 	},
 	"Voice of Nyxara": {
 	  "name": "Voice of Nyxara",
@@ -1334,7 +1339,8 @@
 	  "duration": 3,
 	  "mp_cost": 20,
 	  "sp_cost": 0,
-	  "cooldown": 3
+	  "cooldown": 3,
+	  "turn_delay": 1
 	},
 	"Dawnfire": {
 	  "name": "Dawnfire",
@@ -1622,7 +1628,8 @@
 	  "duration": 3,
 	  "mp_cost": 0,
 	  "sp_cost": 15,
-	  "cooldown": 3
+	  "cooldown": 3,
+	  "turn_delay": 1
 	},
 	"Hundred Blades": {
 	  "name": "Hundred Blades",
@@ -1743,7 +1750,8 @@
 	  "duration": 2,
 	  "mp_cost": 0,
 	  "sp_cost": 20,
-	  "cooldown": 3
+	  "cooldown": 3,
+	  "turn_delay": 1
 	},
 	"Five Animal Fury": {
 	  "name": "Five Animal Fury",
@@ -1774,7 +1782,8 @@
 	  "duration": 2,
 	  "mp_cost": 0,
 	  "sp_cost": 15,
-	  "cooldown": 2
+	  "cooldown": 2,
+	  "turn_delay": 2
 	},
 	"Second Wind": {
 	  "name": "Second Wind",
@@ -1918,7 +1927,8 @@
 	  "duration": 2,
 	  "mp_cost": 0,
 	  "sp_cost": 20,
-	  "cooldown": 4
+	  "cooldown": 4,
+	  "turn_delay": 1
 	},
 	"Thousand Cuts": {
 	  "name": "Thousand Cuts",
@@ -2050,7 +2060,8 @@
 	  "duration": 2,
 	  "mp_cost": 0,
 	  "sp_cost": 15,
-	  "cooldown": 2
+	  "cooldown": 2,
+	  "turn_delay": 1
 	},
 	"Fae Cyclone": {
 	  "name": "Fae Cyclone",

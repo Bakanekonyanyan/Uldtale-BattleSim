@@ -18,6 +18,12 @@ var enemies: Array[CharacterData] = []
 ## Emitted when you flip a party member's Auto toggle
 signal ally_auto_toggled(ally: CharacterData, auto: bool)
 var party_strip: VBoxContainer
+## Set by BattleOrchestrator (PvE): combat rules, turn order and battle state
+var rules: BattleRules
+var turn_queue: TurnQueue
+var battle_context: BattleContext
+var timeline_label: RichTextLabel
+var link_label: RichTextLabel
 
 # UI Components
 @onready var player_info: RichTextLabel = $PlayerInfo
@@ -74,7 +80,55 @@ func initialize_multi(p_player: CharacterData, p_enemies: Array[CharacterData], 
 	enemies = p_enemies
 	_create_enemy_panels()
 	_create_party_strip()
+	_create_rules_hud()
 	update_all_character_info()
+
+## Turn-order timeline (top) and the party Link gauge (by the XP line).
+func _create_rules_hud() -> void:
+	for n in [timeline_label, link_label]:
+		if n:
+			n.queue_free()
+	timeline_label = null
+	link_label = null
+	if rules == null:
+		return
+	timeline_label = RichTextLabel.new()
+	timeline_label.bbcode_enabled = true
+	timeline_label.scroll_active = false
+	timeline_label.position = Vector2(376, 108)
+	timeline_label.size = Vector2(480, 26)
+	timeline_label.add_theme_font_size_override("normal_font_size", 14)
+	timeline_label.add_theme_font_size_override("bold_font_size", 14)
+	timeline_label.tooltip_text = "Turn order. After | is next round (re-rolled, so it's a preview)."
+	add_child(timeline_label)
+	link_label = RichTextLabel.new()
+	link_label.bbcode_enabled = true
+	link_label.scroll_active = false
+	link_label.position = Vector2(286, 262)
+	link_label.size = Vector2(200, 28)
+	link_label.add_theme_font_size_override("normal_font_size", 14)
+	link_label.tooltip_text = "Party Link gauge: fills from hits, combos and Breaks. Ultimates cost %d; Unison Strike at full." % int(BattleRules.cfg().get("link", {}).get("ultimate_cost", 50))
+	add_child(link_label)
+
+func _update_rules_hud() -> void:
+	if timeline_label and turn_queue:
+		var parts: Array = []
+		var crossed := false
+		for e in turn_queue.upcoming(9):
+			var c: CharacterData = e.character
+			if e.next_round and not crossed and not parts.is_empty():
+				parts[-1] += " [color=#777777]|[/color]"
+				crossed = true
+			var nm = c.name.get_slice(" ", 0) if heroes.has(c) else c.name.replace("Goblin ", "Gob ").replace("Troll ", "").replace("Fairy ", "").replace("Orc ", "")
+			var col = "#7bd389" if heroes.has(c) else ("#ffd166" if c.get_meta("broken", false) else "#ff8c69")
+			parts.append("[color=%s]%s%s[/color]" % [col, "[b]" if parts.is_empty() else "", nm + ("[/b]" if parts.is_empty() else "")])
+		timeline_label.text = "Next: " + " › ".join(parts)
+	if link_label and battle_context:
+		var g = battle_context.link_gauge
+		var full = rules.link_max()
+		var filled = int(round(10.0 * g / max(1, full)))
+		var col = "#ffd166" if rules.unison_ready() else "#90e0ef"
+		link_label.text = "Link [color=%s]%s[/color][color=#444444]%s[/color] %d" % [col, "▰".repeat(filled), "▱".repeat(10 - filled), g]
 
 ## Party members under your info panel: HP/MP/SP and an Auto toggle each.
 func _create_party_strip() -> void:
@@ -136,13 +190,13 @@ func _create_enemy_panels():
 		var vbox = VBoxContainer.new()
 		
 		var panel = Panel.new()
-		panel.custom_minimum_size = Vector2(300, 120)
+		panel.custom_minimum_size = Vector2(300, 128)
 		
 		var rich_label = RichTextLabel.new()
 		rich_label.bbcode_enabled = true
 		rich_label.fit_content = true
 		rich_label.scroll_active = true
-		rich_label.custom_minimum_size = Vector2(280, 80)
+		rich_label.custom_minimum_size = Vector2(285, 112)
 		rich_label.position = Vector2(10, 10)
 		
 		panel.add_child(rich_label)
@@ -165,6 +219,7 @@ func update_all_character_info():
 	update_player_info()
 	update_enemies_info()
 	_update_party_strip()
+	_update_rules_hud()
 
 func update_player_info():
 	if not player or not player_info:
@@ -195,13 +250,43 @@ func update_enemies_info():
 		var alive_status = "[color=lime]ALIVE[/color]" if enemy.is_alive() else "[color=red]DEFEATED[/color]"
 		
 		rich_label.clear()
-		rich_label.append_text("[b][color=%s]%s[/color][/b] %s\nHP: %d/%d (%.0f%%)\nMP: %d/%d | SP: %d/%d\nStatus: %s" % [
-			color, enemy.name, alive_status,
-			enemy.current_hp, enemy.max_hp, hp_percent,
-			enemy.current_mp, enemy.max_mp,
-			enemy.current_sp, enemy.max_sp,
-			status_text
-		])
+		if rules == null:   # PvP: plain panel
+			rich_label.append_text("[b][color=%s]%s[/color][/b] %s\nHP: %d/%d (%.0f%%)\nMP: %d/%d | SP: %d/%d\nStatus: %s" % [
+				color, enemy.name, alive_status,
+				enemy.current_hp, enemy.max_hp, hp_percent,
+				enemy.current_mp, enemy.max_mp,
+				enemy.current_sp, enemy.max_sp,
+				status_text
+			])
+			continue
+		var name_col = "#ffd166" if enemy.has_meta("elite_affix") else color
+		var t = "[b][color=%s]%s%s[/color][/b]\n" % [name_col, "★ " if enemy.has_meta("elite_affix") else "", enemy.name]
+		if not enemy.is_alive():
+			rich_label.append_text(t + "[color=red]DEFEATED[/color]")
+			continue
+		var barrier = int(enemy.get_meta("barrier", 0))
+		t += "HP %d/%d%s   " % [enemy.current_hp, enemy.max_hp, ("  [color=#90e0ef]+%d shield[/color]" % barrier) if barrier > 0 else ""]
+		if enemy.get_meta("broken", false):
+			t += "[color=#ffd166][b]BROKEN[/b][/color]\n"
+		else:
+			var bm = BattleRules.break_max(enemy)
+			var bn = int(enemy.get_meta("break_meter", 0))
+			t += "Break [color=#ffd166]%s[/color][color=#555555]%s[/color]\n" % ["◆".repeat(bn), "◇".repeat(max(0, bm - bn))]
+		var weak = BattleRules.weaknesses(enemy)
+		t += "[color=#a99f90]Weak:[/color] %s\n" % (", ".join(weak) if not weak.is_empty() else "[color=#666666]none[/color]")
+		var intent = BattleRules.describe_intent(enemy, battle_context.intents if battle_context else {})
+		t += "[color=#a99f90]Next:[/color] %s" % (intent if intent != "" else "[color=#666666]?[/color]")
+		var tags: Array = []
+		if enemy.status_manager:
+			for k in enemy.status_manager.get_active_effects().keys():
+				tags.append(String(Skill.StatusEffect.keys()[k] if k is int else k).capitalize())
+		if enemy.buff_manager and enemy.buff_manager.has_buffs():
+			tags.append("buffed")
+		if enemy.buff_manager and enemy.buff_manager.has_debuffs():
+			tags.append("debuffed")
+		if not tags.is_empty():
+			t += "\n[color=#c77dff]%s[/color]" % ", ".join(tags)
+		rich_label.append_text(t)
 
 func _get_hp_color(hp_percent: float) -> String:
 	if hp_percent < 25: return "red"
@@ -282,6 +367,16 @@ func setup_player_actions(item_used: bool, main_action_taken: bool):
 			_add_skills_button()
 	
 	_add_items_button(item_used)
+	if not main_action_taken and rules and rules.unison_ready():
+		var uni = _create_action_button("★ Unison Strike")
+		uni.add_theme_color_override("font_color", Color("ffd166"))
+		uni.tooltip_text = "Spend the full Link gauge: every standing hero strikes one enemy together (x%.1f)." % float(BattleRules.cfg().get("link", {}).get("unison_mult", 1.4))
+		uni.pressed.connect(func():
+			lock_ui()
+			show_target_selection(_get_living_enemies(),
+				func(target): action_selected.emit(BattleAction.unison(player, target)),
+				func(): unlock_ui(); enable_actions()))
+		action_buttons.add_child(uni)
 	var combos = _create_action_button("Combos")
 	combos.tooltip_text = "Combo guide (free - doesn't use your turn)"
 	combos.pressed.connect(func(): ComboGuide.open(self, heroes if not heroes.is_empty() else [player], enemies))
@@ -378,6 +473,8 @@ func _can_use_skill(skill: Skill, cooldown: int) -> bool:
 		return false
 	if skill.type == Skill.SkillType.REVIVE and _fallen_heroes().is_empty():
 		return false   # nobody to raise
+	if rules and not rules.link_ok(player, skill):
+		return false   # ultimates need the Link gauge
 	return skill.can_afford(player)
 
 func _create_skill_button(skill: Skill, cooldown: int, can_use: bool) -> HBoxContainer:
@@ -411,6 +508,14 @@ func _create_skill_button(skill: Skill, cooldown: int, can_use: bool) -> HBoxCon
 		btn.add_theme_color_override("font_color", Color("e5c34a"))
 		btn.tooltip_text = "Hits a target with a set-up status for bonus damage (see data/combos.json)."
 	
+	if rules and rules.link_cost(skill) > 0:
+		btn.text += "  [Link %d]" % rules.link_cost(skill)
+		if not rules.link_ok(player, skill):
+			btn.tooltip_text = "Ultimate: needs %d Link (you have %d). Hits, combos and Breaks fill it." % [rules.link_cost(skill), battle_context.link_gauge]
+	if skill.turn_delay > 0:
+		btn.tooltip_text += ("\n" if btn.tooltip_text != "" else "") + "Knocks the target back %d place(s) in the turn order." % skill.turn_delay
+	elif skill.turn_delay < 0:
+		btn.tooltip_text += ("\n" if btn.tooltip_text != "" else "") + "Pulls the ally forward to act next."
 	btn.disabled = not can_use
 	btn.pressed.connect(func(): _on_skill_selected(skill))
 	
@@ -692,6 +797,10 @@ func _show_enemy_info(enemy_index: int):
 	
 	var info_text = "[center][b][color=cyan]%s[/color][/b][/center]\n" % enemy.name
 	info_text += "[center]Level %d %s[/center]\n\n" % [enemy.level, enemy.character_class]
+	if enemy.has_meta("elite_affix"):
+		info_text += "[color=#ffd166][b]Elite[/b] - %s[/color]\n\n" % EliteAffixes.describe(enemy)
+	if rules:
+		info_text += "[b]Weak to:[/b] %s   [b]Break:[/b] %d weakness hits\n\n" % [", ".join(BattleRules.weaknesses(enemy)), BattleRules.break_max(enemy)]
 	
 	# Status
 	var status = "[color=lime]ALIVE[/color]" if enemy.is_alive() else "[color=red]DEFEATED[/color]"

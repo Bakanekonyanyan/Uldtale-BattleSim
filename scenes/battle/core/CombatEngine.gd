@@ -41,8 +41,34 @@ func execute_action(action: BattleAction) -> ActionResult:
 			return _execute_item(action)
 		BattleAction.ActionType.VIEW_EQUIPMENT:
 			return ActionResult.success_msg("Viewing equipment")
+		BattleAction.ActionType.CHARGE:
+			action.actor.set_meta("charging", String(action.get_meta("charge_skill", "")))
+			return ActionResult.success_msg("%s is gathering power for %s!" % [action.actor.name, action.get_meta("charge_skill", "a big attack")])
+		BattleAction.ActionType.UNISON:
+			return _execute_unison(action)
 	
 	return ActionResult.failure_msg("Unknown action type")
+
+## Unison Strike: every standing hero hits the target together (x unison_mult).
+func _execute_unison(action: BattleAction) -> ActionResult:
+	var target = action.primary_target
+	if not is_alive(target):
+		return ActionResult.failure_msg("No target")
+	var mult = float(BattleRules.cfg().get("link", {}).get("unison_mult", 1.4))
+	var total := 0
+	var names: Array = []
+	for h in [player] + allies:
+		if not is_alive(h) or not is_alive(target):
+			continue
+		var dmg = BattleFormulas.finalize(BattleFormulas.hit_damage(h, target, true) * mult)
+		target.take_damage(dmg, h)
+		total += dmg
+		names.append(h.name.get_slice(" ", 0))
+	var result = ActionResult.new()
+	result.success = true
+	result.damage = total
+	result.message = "[b]UNISON STRIKE![/b] %s hit %s together for %d damage!" % [" + ".join(names), target.name, total]
+	return result
 
 func _check_confusion_before_action(action: BattleAction) -> ActionResult:
 	var actor = action.actor

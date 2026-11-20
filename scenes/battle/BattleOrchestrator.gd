@@ -35,6 +35,7 @@ var action_executor: ActionExecutor
 var enemy_planner: EnemyTurnPlanner
 var outcome: BattleOutcomeHandler
 var network_sync: BattleNetworkSync  # PvP only
+var rules: BattleRules              # break, Link, intents, turn order (PvE)
 
 # Expedition encounter for this battle (EncounterManager), and people waiting
 # to join: [{side: "enemy"/"ally", chars, trigger: "round"/"victory", round, text}]
@@ -175,6 +176,9 @@ func start_battle() -> void:
 
 	if not encounter.is_empty() and not context.is_pvp_mode:
 		await _begin_encounter()
+	if enemy_planner:
+		enemy_planner.plan_all_intents()       # intents are visible from the first turn
+		ui_controller.update_all_character_info()
 
 	_run_battle_loop()
 
@@ -201,6 +205,7 @@ func _build_components() -> void:
 		network_sync = BattleNetworkSync.new()
 		network_sync.initialize(self, true)
 	else:
+		rules = BattleRules.new(context, turn_queue)
 		enemy_planner = EnemyTurnPlanner.new()
 		enemy_planner.initialize(context)
 
@@ -220,6 +225,9 @@ func _initialize_resources() -> void:
 			c.current_sp = c.max_sp
 
 func _initialize_ui() -> void:
+	ui_controller.rules = rules
+	ui_controller.turn_queue = turn_queue
+	ui_controller.battle_context = context
 	ui_controller.initialize_multi(context.player, context.enemies, context.allies)
 	if not ui_controller.ally_auto_toggled.is_connected(_on_ally_auto_toggled):
 		ui_controller.ally_auto_toggled.connect(_on_ally_auto_toggled)
@@ -247,6 +255,7 @@ func _run_battle_loop() -> void:
 			break
 
 		await _run_turn(actor)
+		_after_turn(actor)
 		# revived heroes rejoin the turn order
 		for h in turn_queue.rejoin_revived():
 			ui_controller.add_combat_log("%s is back in the fight!" % h.name, "lime")
@@ -269,6 +278,10 @@ func _run_turn(actor: CharacterData) -> void:
 	if network_sync:
 		network_sync.on_turn_started(actor, is_player_turn)
 
+	if rules:
+		var recover = rules.on_turn_start(actor)
+		if recover != "":
+			ui_controller.add_combat_log(recover, "gray")
 	var start_result: TurnStartProcessor.Result = await turn_start.run(actor)
 	match start_result:
 		TurnStartProcessor.Result.DIED:
@@ -315,7 +328,7 @@ func _on_player_action_selected(action: BattleAction) -> void:
 	match action.type:
 		BattleAction.ActionType.ITEM:
 			await _handle_player_item(action)
-		BattleAction.ActionType.ATTACK, BattleAction.ActionType.SKILL, BattleAction.ActionType.DEFEND:
+		BattleAction.ActionType.ATTACK, BattleAction.ActionType.SKILL, BattleAction.ActionType.DEFEND, BattleAction.ActionType.UNISON:
 			await _handle_player_main_action(action)
 		_:
 			_present_player_actions()
@@ -374,6 +387,22 @@ func _handle_player_main_action(action: BattleAction) -> void:
 	_action_in_progress = false
 	_player_turn_finished.emit()
 
+# --- Rules bookkeeping after each turn ---
+
+## Plan the next intents, bring in split-off enemies, refresh the HUD.
+func _after_turn(actor: CharacterData) -> void:
+	if not rules or not enemy_planner:
+		return
+	if not context.is_hero(actor):
+		enemy_planner.plan_intent(actor)
+	var spawned = rules.take_spawns()
+	for c in spawned:
+		enemy_planner.add_enemy(c)
+	if not spawned.is_empty():
+		ui_controller._create_enemy_panels()
+	enemy_planner.plan_all_intents()
+	ui_controller.update_all_character_info()
+
 # --- Expedition encounters ---
 
 func _begin_encounter() -> void:
@@ -410,6 +439,7 @@ func _join(side: String, c: CharacterData) -> void:
 		turn_queue.join(c, false)
 		if enemy_planner:
 			enemy_planner.add_enemy(c)
+			enemy_planner.plan_intent(c)
 		ui_controller._create_enemy_panels()
 	ui_controller.update_all_character_info()
 
@@ -442,6 +472,8 @@ func _run_auto_hero_turn(ally: CharacterData) -> void:
 	var action = AutoBattler.hero_policy(ally, context)
 	if not action:
 		return
+	if action.type == BattleAction.ActionType.UNISON:
+		ui_controller.add_combat_log("%s calls the party together!" % ally.name, "gold")
 	var result: ActionExecutor.Outcome = await action_executor.execute(action, true)
 	await outcome.handle_deaths(result.dead)
 
@@ -456,7 +488,7 @@ func _run_enemy_turn(enemy_character: CharacterData) -> void:
 	if not enemy_character.is_alive() or context.get_living_heroes().is_empty():
 		return
 
-	var action = enemy_planner.plan_action(enemy_character)
+	var action = enemy_planner.take_intent(enemy_character)   # what its intent showed
 	if not action:
 		return
 

@@ -5,7 +5,9 @@
 class_name BattleAction
 extends RefCounted
 
-enum ActionType { ATTACK, SKILL, ITEM, DEFEND, VIEW_EQUIPMENT }
+## CHARGE: an enemy winds up a big skill (shown as an intent, used next turn).
+## UNISON: the whole party strikes one target (spends a full Link gauge).
+enum ActionType { ATTACK, SKILL, ITEM, DEFEND, VIEW_EQUIPMENT, CHARGE, UNISON }
 
 var type: ActionType
 var actor: CharacterData
@@ -63,6 +65,20 @@ static func item(actor: CharacterData, item_inst: Item, targets_array: Array) ->
 	
 	return action
 
+static func charge(actor: CharacterData, skill_name: String) -> BattleAction:
+	var action = BattleAction.new()
+	action.type = ActionType.CHARGE
+	action.actor = actor
+	action.set_meta("charge_skill", skill_name)
+	return action
+
+static func unison(actor: CharacterData, target: CharacterData) -> BattleAction:
+	var action = BattleAction.new()
+	action.type = ActionType.UNISON
+	action.actor = actor
+	action.targets.append(target)
+	return action
+
 static func view_equipment(actor: CharacterData, target: CharacterData) -> BattleAction:
 	var action = BattleAction.new()
 	action.type = ActionType.VIEW_EQUIPMENT
@@ -94,9 +110,12 @@ func is_valid() -> bool:
 			# Items need targets
 			return item_data != null and not targets.is_empty()
 		
-		ActionType.DEFEND:
-			# Defend needs no targets
+		ActionType.DEFEND, ActionType.CHARGE:
+			# Defend / charge need no targets
 			return true
+		
+		ActionType.UNISON:
+			return targets.size() == 1 and targets[0] != null
 	
 	return false
 
@@ -117,6 +136,10 @@ func get_description() -> String:
 			return "%s defends" % actor.name
 		ActionType.VIEW_EQUIPMENT:
 			return "%s views %s's equipment" % [actor.name, primary_target.name if primary_target else "???"]
+		ActionType.CHARGE:
+			return "%s charges %s" % [actor.name, get_meta("charge_skill", "a big attack")]
+		ActionType.UNISON:
+			return "%s leads a Unison Strike on %s" % [actor.name, primary_target.name if primary_target else "???"]
 	return "Unknown action"
 
 func has_multiple_targets() -> bool:

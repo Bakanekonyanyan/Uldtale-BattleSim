@@ -72,6 +72,10 @@ func _generate_enemies():
 	# Scale stats if multiple enemies
 	if enemies.size() > 1 and not is_boss_wave:
 		_scale_enemy_group()
+	# Sometimes one enemy is an Elite with an affix (data/elites.json)
+	if not is_boss_wave and not enemies.is_empty() and RandomManager.randf() < EliteAffixes.chance(current_floor):
+		EliteAffixes.apply(enemies[RandomManager.randi() % enemies.size()], EliteAffixes.roll_affix())
+	
 	# A party faces sturdier waves
 	if allies > 0 and not is_boss_wave:
 		for e in enemies:

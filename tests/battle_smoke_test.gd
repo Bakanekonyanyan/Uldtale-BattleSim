@@ -220,11 +220,35 @@ func _archetype_checks() -> void:
 	bai.initialize(b, make_player(), 6)
 	b.current_hp = int(b.max_hp * 0.5)
 	var t1 = bai._try_hp_trigger(0.5)
-	check(t1 != null and t1.skill_data.name == sig, "boss uses its signature below 60% HP")
+	check(t1 != null and t1.type == BattleAction.ActionType.CHARGE and String(t1.get_meta("charge_skill", "")) == sig, "below 60% HP the boss charges its signature (a telegraph)")
 	check(bai._try_hp_trigger(0.5) == null, "each HP trigger fires once")
+	# the charge shows as an intent, then the signature comes out next turn
+	var bctx = BattleContext.new()
+	var hero_t = make_player()
+	bctx.player = hero_t
+	bctx.enemies.append(b)
+	bctx.is_boss_battle = true
+	var beng = CombatEngine.new()
+	beng.initialize_multi(hero_t, bctx.enemies)
+	beng.execute_action(t1)
+	var bplan = EnemyTurnPlanner.new()
+	bplan.initialize(bctx)
+	bplan.plan_intent(b)
+	check(BattleRules.describe_intent(b, bctx.intents).contains("CHARGING"), "the charge is shown as the boss's intent")
+	var unleash = bplan.take_intent(b)
+	check(unleash != null and unleash.skill_data and unleash.skill_data.name == sig and not b.has_meta("charging"), "next turn the boss unleashes %s" % sig)
+	# a Break cancels a charge
+	var bq = TurnQueue.new()
+	bq.initialize(hero_t, bctx.enemies)
+	var brules = BattleRules.new(bctx, bq)
+	b.set_meta("charging", sig)
+	brules.break_enemy(b)
+	check(not b.has_meta("charging") and b.is_stunned and b.get_meta("broken", false), "breaking a charging boss cancels the charge and costs it a turn")
+	b.is_stunned = false
+	b.set_meta("broken", false)
 	b.current_hp = int(b.max_hp * 0.3)
 	var t2 = bai._try_hp_trigger(0.3)
-	check(t2 != null and t2.skill_data.name == ult, "boss uses its ultimate below 35%% HP (%s)" % ult)
+	check(t2 != null and String(t2.get_meta("charge_skill", "")) == ult, "below 35%% the boss charges its ultimate (%s)" % ult)
 	# AI role: healers mend a hurt ally
 	EnemyFactory.force_archetype = "Shaman"
 	var healer = EnemyFactory.create_enemy(1, 1, 1, 0)
@@ -622,6 +646,13 @@ func _leak_checks() -> void:
 	a = null; b = null
 	var alive = refs.filter(func(w): return w.get_ref() != null).size()
 	check(alive == 0, "released enemies, heroes and duelling pairs are freed (%d of %d still alive)" % [alive, refs.size()])
+	var hb = AutoBattler.build_hero({"name": "T", "race": "Hume", "cls": "Paladin", "level": 6, "gear_floor": 3, "branch": 0})
+	var foes: Array[CharacterData] = [EnemyFactory.create_enemy(1, 2, 3), EnemyFactory.create_enemy(1, 2, 3)]
+	var wrefs = [weakref(hb), weakref(foes[0]), weakref(foes[1])]
+	AutoBattler.fight(hb, foes, 2, false)
+	hb = null
+	foes = []
+	check(wrefs.all(func(w): return w.get_ref() == null), "a full battle with intents, breaks and Link leaves nothing behind")
 	var e = EnemyFactory.create_enemy(1, 1, 1)
 	check(e.status_manager.character == e and e.talents.character == e, "managers still reach their character through the weak reference")
 
@@ -635,6 +666,113 @@ func _data_registry_checks() -> void:
 	for f in ["res://scripts/autoload/EnemyFactory.gd", "res://scripts/factories/CharacterFactory.gd", "res://scripts/autoload/ItemManager.gd", "res://scripts/resources/TalentManager.gd"]:
 		src += FileAccess.get_file_as_string(f)
 	check(not src.contains("FileAccess.open(\"res://data"), "core systems load data only through DataRegistry")
+
+## Combat rules: Break, Link, turn order, intents, elites (BattleRules.gd)
+func _combat_rules_checks() -> void:
+	MomentumSystem.reset_momentum()
+	var hero = CharacterFactory.create_character("Rules", "Hume", "Monk", true)   # Monk hits Blunt
+	EnemyFactory.set_location("fairy_circles")                                       # Fairies are weak to Blunt
+	var f1 = EnemyFactory.create_enemy(1, 2, 1)
+	var f2 = EnemyFactory.create_enemy(1, 2, 1)
+	for f in [f1, f2]:
+		f.hp_multiplier = 20.0
+		f.calculate_secondary_attributes()
+		f.current_hp = f.max_hp
+	var ctx = BattleContext.new()
+	ctx.player = hero
+	ctx.enemies.append(f1); ctx.enemies.append(f2)
+	var eng = CombatEngine.new()
+	eng.initialize_multi(hero, ctx.enemies)
+	var q = TurnQueue.new()
+	q.initialize(hero, ctx.enemies)
+	var rules = BattleRules.new(ctx, q)
+	check(BattleRules.weaknesses(f1).has("Blunt"), "Fairies show Blunt as a weakness (%s)" % ", ".join(BattleRules.weaknesses(f1)))
+	var run = func(a: BattleAction) -> Array:
+		var snap = rules.before_action(a)
+		eng.execute_action(a)
+		return rules.after_action(a, snap)
+	var lines: Array = []
+	var need = BattleRules.break_max(f1)
+	for i in need:
+		hero.current_sp = hero.max_sp
+		lines.append_array(run.call(BattleAction.attack(hero, f1)))
+	check(f1.get_meta("broken", false) and f1.is_stunned and lines.any(func(l): return l.contains("BREAK")), "%d weakness hits Break an enemy (it loses its next turn)" % need)
+	check(ctx.link_gauge >= int(BattleRules.cfg().link.get("gain_per_hit", 4)) + int(BattleRules.cfg().get("break", {}).get("link_gain", 25)), "hits and Breaks fill the Link gauge (%d)" % ctx.link_gauge)
+	var hp_before = f1.current_hp
+	var dmg_broken = BattleFormulas.hit_damage(hero, f1, true)
+	f1.set_meta("broken", false)
+	var dmg_normal = BattleFormulas.hit_damage(hero, f1, true)
+	check(dmg_broken > dmg_normal * 1.2, "Broken enemies take extra damage (%.0f vs %.0f)" % [dmg_broken, dmg_normal])
+	f1.set_meta("broken", true)
+	check(rules.on_turn_start(f1).contains("recovers") and not f1.get_meta("broken", false), "a Broken enemy recovers after its skipped turn")
+	check(BattleRules.break_max(f1) == int(BattleRules.cfg().break.regular_hits) + 1, "each Break raises the threshold")
+	# ultimates wait for the Link gauge
+	var ult = Skill.create_from_dict({"name": "Test Ult", "description": "", "ability_type": "PHYSICAL", "type": "DAMAGE", "target": "ENEMY", "category": "ULTIMATE", "power": 80, "cooldown": 0, "duration": 0})
+	ctx.link_gauge = 10
+	check(not rules.link_ok(hero, ult), "ultimates need %d Link" % rules.link_cost(ult))
+	ctx.link_gauge = 60
+	check(rules.link_ok(hero, ult), "with enough Link they are available")
+	# Unison Strike
+	ctx.link_gauge = 100
+	check(rules.unison_ready(), "a full gauge readies Unison Strike")
+	var hp_u = f2.current_hp
+	run.call(BattleAction.unison(hero, f2))
+	check(f2.current_hp < hp_u and ctx.link_gauge < 100, "Unison Strike hits and empties the gauge")
+	# turn order: delay and haste
+	var ox = Skill.create_from_dict({"name": "Shove", "description": "", "ability_type": "PHYSICAL", "type": "DAMAGE", "target": "ENEMY", "power": 10, "cooldown": 0, "duration": 0, "turn_delay": 2})
+	var q2 = TurnQueue.new()
+	var ally = CharacterFactory.create_character("Ally", "Hume", "Cleric", true)
+	var mates: Array[CharacterData] = [ally]
+	q2.initialize(hero, ctx.enemies, mates)
+	q2.queue.clear()
+	for c in [hero, f2, ally, f1]:
+		q2.queue.append(c)
+	q2.delay(f2, 2)
+	check(q2.queue.find(f2) == 3, "a turn_delay skill knocks an enemy back in the order")
+	q2.haste(f1)
+	check(q2.queue[1] == f1, "haste pulls someone forward to act next")
+	check(q2.upcoming(4).size() == 4, "the timeline previews the next turns")
+	# elites
+	EnemyFactory.set_location("the_dungeon")
+	var ok_all := true
+	for aff in EliteAffixes.data().affixes:
+		var el = EnemyFactory.create_enemy(1, 3, 1)
+		var hp0 = el.max_hp
+		EliteAffixes.apply(el, aff)
+		ok_all = ok_all and el.get_meta("elite_affix", "") == aff and el.max_hp > hp0 and el.name.begins_with(String(EliteAffixes.affix(aff).name))
+	check(ok_all, "every elite affix applies (tougher, renamed)")
+	var sh = EnemyFactory.create_enemy(1, 3, 1)
+	EliteAffixes.apply(sh, "shielded")
+	var b0 = int(sh.get_meta("barrier", 0))
+	var hp_s = sh.current_hp
+	sh.take_damage(5, hero)
+	check(b0 > 0 and sh.current_hp == hp_s and int(sh.get_meta("barrier", 0)) == b0 - 5, "a Shielded elite's barrier soaks damage first")
+	var sp = EnemyFactory.create_enemy(1, 3, 1)
+	EliteAffixes.apply(sp, "splitting")
+	ctx.enemies.append(sp)
+	var hp_sp = sp.current_hp
+	sp.current_hp = 0
+	rules._affix_checks(sp, hp_sp)
+	var spawned = rules.take_spawns()
+	check(spawned.size() == 2 and spawned.all(func(c): return c.max_hp < sp.max_hp and c in ctx.enemies), "a Splitting elite splits into two smaller enemies")
+	var rg = EnemyFactory.create_enemy(1, 3, 1)
+	EliteAffixes.apply(rg, "enraged")
+	var dm = rg.damage_multiplier
+	rg.current_hp = int(rg.max_hp * 0.4)
+	rules._affix_checks(rg, rg.max_hp)
+	check(rg.damage_multiplier > dm, "a Raging elite hits harder below half HP")
+	# intents: a planned action is what the enemy does
+	var ictx = BattleContext.new()
+	ictx.player = hero
+	var foe = EnemyFactory.create_enemy(1, 1, 1)
+	ictx.enemies.append(foe)
+	var plan = EnemyTurnPlanner.new()
+	plan.initialize(ictx)
+	plan.plan_intent(foe)
+	var shown = ictx.intents.get(foe)
+	check(shown is BattleAction and BattleRules.describe_intent(foe, ictx.intents) != "", "each enemy shows its next action (%s)" % BattleRules.describe_intent(foe, ictx.intents))
+	check(plan.take_intent(foe) == shown, "on its turn the enemy does what its intent showed")
+	EnemyFactory.set_location(LocationManager.DEFAULT_LOCATION)
 
 ## Talent trees (data/talents.json, TalentManager.gd)
 func _talent_checks() -> void:
@@ -902,6 +1040,7 @@ func _phase0_checks() -> void:
 	_revive_and_encounter_checks()
 	_leak_checks()
 	_data_registry_checks()
+	_combat_rules_checks()
 	
 	# Class-biased loot rolls (Breather drops pass the player's class)
 	var biased_ok := true

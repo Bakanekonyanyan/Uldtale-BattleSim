@@ -1,0 +1,130 @@
+{
+ "tab": "Elites",
+ "file": "data/elites.json",
+ "order": 48,
+ "description": "Elite enemies with affixes (EliteAffixes.gd, BattleRules.gd).",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Settings",
+   "path": [
+    "settings"
+   ],
+   "fields": [
+    {
+     "name": "min_floor",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "chance_base",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "chance_per_floor",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "chance_max",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "hp_mult",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "level_bonus",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "gold_mult",
+     "type": "float",
+     "min": 0
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Affixes",
+   "path": [
+    "affixes"
+   ],
+   "key_style": "snake",
+   "name_field": "name",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "weight",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "barrier",
+     "type": "float",
+     "optional": true,
+     "min": 0,
+     "help": "shielded: barrier as share of max HP"
+    },
+    {
+     "name": "lifesteal",
+     "type": "float",
+     "optional": true,
+     "min": 0
+    },
+    {
+     "name": "threshold",
+     "type": "float",
+     "optional": true,
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "damage_mult",
+     "type": "float",
+     "optional": true,
+     "min": 0
+    },
+    {
+     "name": "count",
+     "type": "int",
+     "optional": true,
+     "min": 1
+    },
+    {
+     "name": "hp_frac",
+     "type": "float",
+     "optional": true,
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "agility_mult",
+     "type": "float",
+     "optional": true,
+     "min": 0
+    },
+    {
+     "name": "reflect",
+     "type": "float",
+     "optional": true,
+     "min": 0,
+     "max": 1
+    }
+   ]
+  }
+ ]
+}

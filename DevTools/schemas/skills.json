@@ -196,6 +196,14 @@
      "max": 3,
      "optional": true,
      "help": "DRAIN skills: fraction of the drained amount restored."
+    },
+    {
+     "name": "turn_delay",
+     "type": "int",
+     "optional": true,
+     "min": -1,
+     "max": 5,
+     "help": "Turn order: >0 pushes enemy targets back that many places; -1 pulls the ally target forward to act next."
     }
    ]
   }
