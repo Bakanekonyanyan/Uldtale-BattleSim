@@ -87,6 +87,7 @@ func after_action(action: BattleAction, snap: Dictionary) -> Array[String]:
 	Combos.recent.clear()
 	# --- damage: break points (weakness hits, combos) on the other side, both ways
 	var hit_any := false
+	var tracking = Bestiary.tracks(ctx)
 	for t in ctx.get_heroes() + ctx.enemies:
 		if t == null or ctx.is_hero(t) == hero:
 			continue
@@ -98,6 +99,12 @@ func after_action(action: BattleAction, snap: Dictionary) -> Array[String]:
 		if not hero and t.is_defending and t.get_meta("perfect_guard", false):
 			lines.append_array(_perfect_guard(t, actor, was_charged))
 			continue
+		if hero and tracking:
+			var fresh = Bestiary.reveal(t, _weak_names(action, t))
+			if not fresh.is_empty():
+				lines.append("[color=#c77dff]Weakness found: %s is weak to %s![/color]" % [t.name, ", ".join(fresh)])
+			if not t.is_alive():
+				Bestiary.add_kill(t)
 		if t.is_alive() and not t.get_meta("broken", false):
 			var pts := 0
 			if _weak_hit(action, t):
@@ -198,6 +205,11 @@ func _is_boss(e: CharacterData) -> bool:
 
 ## Did this action hit a weakness of `e` (damage type or element)?
 func _weak_hit(action: BattleAction, e: CharacterData) -> bool:
+	return not _weak_names(action, e).is_empty()
+
+## Which of `e`'s weaknesses this action hits: ["Blunt", "Fire"].
+func _weak_names(action: BattleAction, e: CharacterData) -> Array:
+	var out: Array = []
 	var physical := true
 	var dt := -1
 	var elements: Array = []
@@ -206,13 +218,15 @@ func _weak_hit(action: BattleAction, e: CharacterData) -> bool:
 		dt = action.skill_data.damage_type
 		for el in action.skill_data.elements:
 			elements.append(Skill.ElementType.keys()[el])
-	if physical and DamageTypes.multiplier(e, DamageTypes.attack_type(action.actor, dt)) > 1.05:
-		return true
+	if physical:
+		var t = DamageTypes.attack_type(action.actor, dt)
+		if DamageTypes.multiplier(e, t) > 1.05:
+			out.append(DamageTypes.Type.keys()[t].capitalize())
 	if e.elemental_resistances:
 		for n in elements:
 			if ElementalDamage.Element.has(n) and e.elemental_resistances.get_total_weakness(ElementalDamage.Element[n]) > 0.0:
-				return true
-	return false
+				out.append(String(n).capitalize())
+	return out
 
 ## Break `e` (enemy or hero): it loses its next turn and takes extra damage
 ## until then. Breaking an enemy also fills the party's Link gauge.
@@ -230,6 +244,11 @@ func break_unit(e: CharacterData) -> String:
 		e.set_meta("barrier", 0)
 		extra += " The barrier shatters!"
 	ctx.intents.erase(e)
+	if not is_hero and Bestiary.tracks(ctx):
+		Bestiary.add_break(e)
+		var learned = Bestiary.study(e)
+		if not learned.is_empty():
+			extra += " [color=#c77dff]Studied: weak to %s.[/color]" % ", ".join(learned)
 	if is_hero:
 		return "[color=#ff6b6b][b]BREAK![/b] %s is staggered and loses the next turn.%s[/color]" % [e.name, extra.replace("Its", "The")]
 	add_link(_brk().get("link_gain", 25))

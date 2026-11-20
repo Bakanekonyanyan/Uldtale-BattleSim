@@ -77,6 +77,30 @@
   },
   {
    "kind": "settings",
+   "label": "Bestiary",
+   "path": [
+    "bestiary"
+   ],
+   "fields": [
+    {
+     "name": "enabled",
+     "type": "bool",
+     "help": "Off = all enemy weaknesses are always shown."
+    },
+    {
+     "name": "scholar_classes",
+     "type": "json",
+     "help": "Classes whose Inspect reveals all weaknesses."
+    },
+    {
+     "name": "scholar_traits",
+     "type": "json",
+     "help": "Companion traits that do the same."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
    "label": "Perfect Guard",
    "path": [
     "guard"

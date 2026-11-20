@@ -687,6 +687,11 @@ func _combat_rules_checks() -> void:
 	q.initialize(hero, ctx.enemies)
 	var rules = BattleRules.new(ctx, q)
 	check(BattleRules.weaknesses(f1).has("Blunt"), "Fairies show Blunt as a weakness (%s)" % ", ".join(BattleRules.weaknesses(f1)))
+	# Bestiary: weaknesses are hidden until found (only the current player's battles count)
+	var prev_cur = CharacterManager.get_current_character()
+	CharacterManager.current_character_resource.set_meta("current_character", hero)
+	hero.town_state.erase("bestiary")
+	check(Bestiary.shown_weaknesses(f1).has("???") and not Bestiary.shown_weaknesses(f1).has("Blunt"), "unknown weaknesses show as ??? (%s)" % str(Bestiary.shown_weaknesses(f1)))
 	var run = func(a: BattleAction) -> Array:
 		var snap = rules.before_action(a)
 		eng.execute_action(a)
@@ -699,6 +704,10 @@ func _combat_rules_checks() -> void:
 		hero.current_sp = hero.max_sp
 		lines.append_array(run.call(BattleAction.attack(hero, f1)))
 	check(f1.get_meta("broken", false) and f1.is_stunned and lines.any(func(l): return l.contains("BREAK")), "%d weakness hits Break an enemy (it loses its next turn)" % need)
+	check(lines.any(func(l): return l.contains("Weakness found")) and Bestiary.shown_weaknesses(f1).has("Blunt"), "a weakness hit reveals it")
+	check(Bestiary.entry("Fairy").get("studied", false) and not Bestiary.shown_weaknesses(f1).has("???") and int(Bestiary.entry("Fairy").breaks) == 1,
+		"a Break studies the race: all of its weaknesses are known")
+	CharacterManager.current_character_resource.set_meta("current_character", prev_cur)
 	check(ctx.link_gauge >= int(BattleRules.cfg().link.get("gain_per_hit", 4)) + int(BattleRules.cfg().get("break", {}).get("link_gain", 25)), "hits and Breaks fill the Link gauge (%d)" % ctx.link_gauge)
 	var hp_before = f1.current_hp
 	var dmg_broken = BattleFormulas.hit_damage(hero, f1, true)

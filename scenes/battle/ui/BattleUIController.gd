@@ -305,7 +305,7 @@ func update_enemies_info():
 			var bm = BattleRules.break_max(enemy, false)
 			var bn = int(enemy.get_meta("break_meter", 0))
 			t += "Break [color=#ffd166]%s[/color][color=#555555]%s[/color]\n" % ["◆".repeat(bn), "◇".repeat(max(0, bm - bn))]
-		var weak = BattleRules.weaknesses(enemy)
+		var weak = Bestiary.shown_weaknesses(enemy)
 		t += "[color=#a99f90]Weak:[/color] %s\n" % (", ".join(weak) if not weak.is_empty() else "[color=#666666]none[/color]")
 		var intent = BattleRules.describe_intent(enemy, battle_context.intents if battle_context else {})
 		t += "[color=#a99f90]Next:[/color] %s" % (intent if intent != "" else "[color=#666666]?[/color]")
@@ -841,7 +841,16 @@ func _show_enemy_info(enemy_index: int):
 	if enemy.has_meta("elite_affix"):
 		info_text += "[color=#ffd166][b]Elite[/b] - %s[/color]\n\n" % EliteAffixes.describe(enemy)
 	if rules:
-		info_text += "[b]Weak to:[/b] %s   [b]Break:[/b] %d weakness hits\n\n" % [", ".join(BattleRules.weaknesses(enemy)), BattleRules.break_max(enemy)]
+		if Bestiary.tracks(battle_context) and Bestiary.party_can_study(heroes) and enemy.is_alive():
+			var learned = Bestiary.study(enemy)
+			if not learned.is_empty():
+				add_combat_log("Your scholar studies %s: weak to %s." % [enemy.name, ", ".join(learned)], "purple")
+				update_enemies_info()
+		var shown = Bestiary.shown_weaknesses(enemy)
+		info_text += "[b]Weak to:[/b] %s   [b]Break:[/b] %d weakness hits\n" % [", ".join(shown) if not shown.is_empty() else "none", BattleRules.break_max(enemy)]
+		if shown.has("???"):
+			info_text += "[color=gray]Find weaknesses by hitting them, Breaking the enemy, or bringing a scholar (%s, or a Scholarly companion).[/color]\n" % ", ".join(Bestiary.cfg().get("scholar_classes", []))
+		info_text += "\n"
 	
 	# Status
 	var status = "[color=lime]ALIVE[/color]" if enemy.is_alive() else "[color=red]DEFEATED[/color]"

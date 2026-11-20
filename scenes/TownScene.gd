@@ -80,6 +80,14 @@ func _ready():
 			party.append(AutoBattler.build_hero(n))
 		ComboGuide.open(self, party))
 	$UI.add_child(combo_button)
+	# Bestiary: enemy weaknesses you've found
+	var bestiary_button := Button.new()
+	bestiary_button.name = "BestiaryButton"
+	bestiary_button.text = "Bestiary"
+	bestiary_button.position = Vector2(256, 440)
+	bestiary_button.size = Vector2(180, 60)
+	bestiary_button.pressed.connect(func(): BestiaryGuide.open(self))
+	$UI.add_child(bestiary_button)
 	# Enchanter: raise rarity with materials (EnchantManager)
 	var enchanter_button := Button.new()
 	enchanter_button.name = "EnchanterButton"
