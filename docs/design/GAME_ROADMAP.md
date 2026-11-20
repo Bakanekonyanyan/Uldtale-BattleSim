@@ -89,6 +89,29 @@ Five systems on one shared rules layer (`scenes/battle/core/BattleRules.gd`). Th
 
 **What the sim can't measure:** a scripted "smart" policy scores about the same as "strongest skill" (within noise). The value of these systems is information and timing for a human player: when to brace, whom to break, when to spend the gauge. Playtesting is the real check.
 
+## 1c. Replayability, skill and NPC systems (built)
+
+Each system is data-driven; the Content Manager tab is in brackets.
+
+**Skill expression**
+- **Perfect Guard** (Combat): Defend while an enemy's shown intent targets you (or a boss is charging). You take a quarter of the damage, gain no Break pips, the attacker gains one, and a charged strike is countered. The Defend button reads "⛨ Perfect Guard" when it applies.
+- **Hidden weaknesses + Bestiary** (Combat → Bestiary): enemy weaknesses show "???" until found. A weakness hit reveals it for that race, a Break studies the race (everything), and Inspect studies an enemy if the party has a scholar (Elementalist, Necromancer, Druid, Kannagi, or a Scholarly companion). Town button **Bestiary**.
+- **Wave challenges** (Challenges): 60% of waves (every boss wave) offer a goal such as Break 2, Win without items, Perfect Guard, Win in 3 rounds. Progress shows under the turn order. Meet it and win to bank gold, materials and a chance at gear.
+
+**Replayability**
+- **Omens** (Omens): after choosing a floor, take up to 3: Bloodmoon, Ironhide, Quickened, Thin Veil, Brittle, Discord, Dim Sight. Each adds 10–20% to wave gold and materials. The dungeon banner lists them.
+- **Run boons** (Boons): after each boss, pick 1 of 3 that last the expedition: Vigor, Kindred Spirits, Keen Eye, Ruthless, Steadfast, Second Wind, Opening Gambit, Plunder, Bulwark.
+- Both live in `RunState` and clear when the expedition ends.
+
+**NPC interaction**
+- **Bonds + duo techs** (Bonds): at rapport 25 / 50 / 75 a companion's next Tavern visit plays a scene written from their traits (Acquainted, Trusted, Bonded). Bonded companions unlock a duo tech for their class: a 50-Link skill you use while they fight beside you, after which they act next.
+- **Companion opinions** (Bonds): party members react by trait to Press On, Breather, Omens, boss wins, helping or leaving the wounded, confronting a thief, completed challenges.
+- **Commissions** (Commissions): the Blacksmith, Alchemist and Enchanter each post a material request. Deliveries build standing (Known 2, Valued 5, Partner 10): Blacksmith/Enchanter discounts and success bonuses; the Alchemist teaches Elixir of Dawn (Known) and Grand Panacea (Valued). Town button **Commissions**.
+- **Rumours** (Rumours): the Tavern's **Rumours** button lists up to 2 tips: a named Elite on a floor, or a cache past a floor's boss. Acting on one banks a bonus.
+- **Nemesis rivals** (Encounters): a rival at rivalry 5, or anyone who beat you in an ambush, returns as a Nemesis encounter (2 levels up, sturdier, a grudge line). Beat them for their named signature item.
+
+**Recipes** (Recipes): 14 new, 34 in all. Party heals (Field Dressing, Healing Mist), attribute tonics (Ironbark Tonic, Sage's Draught, Prayer Incense, Hide Ward, Hunter's Focus), area flasks (Firestorm Bomb, Shock Net), combo set-up items (Tidal Flask → Soaked, Marking Dye → Marked, Stagger Stone → Staggered) and the two standing recipes.
+
 ## 2. Enemy and boss classes: recommendation
 
 **Use archetypes that blend hero classes, plus a few monster-only skills.**
