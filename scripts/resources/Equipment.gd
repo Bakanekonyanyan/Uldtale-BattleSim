@@ -54,6 +54,11 @@ var base_armor: int = -1
 ## Consecutive failed upgrade attempts; each adds a success bonus ("Tempered")
 var tempered: int = 0
 
+# Enchanter (EnchantManager): names of applied enchantments, and failed
+# attempts since the last success (each adds a bonus: "Attuned").
+var enchants: Array = []
+var enchant_fails: int = 0
+
 # === MANAGERS (delegate complex operations) ===
 var rarity_generator: RarityGenerator
 var equipment_namer: EquipmentNamer
@@ -282,6 +287,8 @@ func get_upgrade_save_data() -> Dictionary:
 		"base_damage": base_damage,
 		"base_armor": base_armor,
 		"tempered": tempered,
+		"enchants": enchants.duplicate(),
+		"enchant_fails": enchant_fails,
 		"item_level": item_level,
 		"value": value
 	}
@@ -293,6 +300,8 @@ func apply_upgrade_save_data(data: Dictionary) -> void:
 	base_damage = int(data.get("base_damage", damage))
 	base_armor = int(data.get("base_armor", armor_value))
 	tempered = int(data.get("tempered", 0))
+	enchants = Array(data.get("enchants", []))
+	enchant_fails = int(data.get("enchant_fails", 0))
 	upgrade_level = int(data.get("upgrade_level", 0))
 	if upgrade_level > 0:
 		set_upgrade_level(upgrade_level)
@@ -311,6 +320,8 @@ func get_full_description() -> String:
 	if upgrade_level > 0:
 		desc += "[color=gold]Upgraded +%d[/color]\n" % upgrade_level
 	desc += "[color=%s]%s[/color]\n" % [get_rarity_color(), rarity.capitalize()]
+	if not enchants.is_empty():
+		desc += "[color=#c77dff]Enchanted: %s[/color]\n" % ", ".join(enchants)
 	desc += "\n%s\n" % description
 	
 	if damage > 0:

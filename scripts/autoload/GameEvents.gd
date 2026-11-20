@@ -16,6 +16,7 @@ signal floor_cleared(location_id: String, floor_num: int)
 ## Town crafting / upgrading (emitted by AlchemyManager / BlacksmithManager).
 signal item_crafted(item_id: String, quantity: int)
 signal item_upgraded(item: Equipment, new_level: int, success: bool)
+signal item_enchanted(item: Equipment, rarity: String, success: bool)
 ## World clock (WorldClock.gd): one per day passed, then one per advance.
 signal day_passed(player: CharacterData, day: int)
 signal days_advanced(player: CharacterData, from_day: int, to_day: int)

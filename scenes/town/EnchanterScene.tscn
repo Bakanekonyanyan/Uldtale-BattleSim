@@ -1,0 +1,24 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scenes/town/EnchanterScene.gd" id="1_smith"]
+[ext_resource type="Texture2D" uid="uid://cr2guw71lqnyd" path="res://assets/Images/backgrounds/TownScene.png" id="2_bg"]
+[ext_resource type="Texture2D" uid="uid://mpkhewcv2ely" path="res://assets/Images/shopkeepers/Shopkeep.png" id="3_keeper"]
+
+[node name="EnchanterScene" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_smith")
+
+[node name="Background" type="Sprite2D" parent="."]
+modulate = Color(0.541176, 0.541176, 0.541176, 1)
+position = Vector2(352, 360)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_bg")
+
+[node name="Shopkeeper" type="Sprite2D" parent="."]
+modulate = Color(0.581033, 0.581033, 0.581033, 1)
+position = Vector2(824, 360)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("3_keeper")
+
+[node name="UI" type="CanvasLayer" parent="."]

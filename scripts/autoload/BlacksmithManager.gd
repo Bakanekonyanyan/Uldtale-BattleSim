@@ -72,7 +72,7 @@ func get_upgrade_cost(item: Equipment, steps: int = 0) -> Dictionary:
 	var mult = 1.0 + steps * float(cfg.get("reinforce_step_cost", 0.25))
 	var base_gold = max(int(cfg.get("min_gold", 10)), int(round(item.value * float(cfg.get("gold_per_level", 0.25)) * target)))
 	var mats := {}
-	mats[_ore_for_level(target)] = target
+	mats[material_for(item, _ore_for_level(target))] = target
 	if item.is_weapon():
 		for id in cfg.get("weapon_extra_materials", {}):
 			mats[id] = mats.get(id, 0) + int(cfg.weapon_extra_materials[id])
@@ -126,7 +126,7 @@ func upgrade(player: CharacterData, item: Equipment, steps: int = 0) -> Dictiona
 func get_salvage_preview(item: Equipment) -> Dictionary:
 	var table: Dictionary = cfg.get("salvage", {}).get(item.rarity, {"ore": [1, 1], "core_chance": 0.0})
 	return {
-		"ore_id": _ore_for_item_level(item.item_level),
+		"ore_id": material_for(item, _ore_for_item_level(item.item_level)),
 		"ore_min": int(table.ore[0]),
 		"ore_max": int(table.ore[1]),
 		"core_chance": float(table.get("core_chance", 0.0))
@@ -159,6 +159,15 @@ func salvage(player: CharacterData, item: Equipment) -> Dictionary:
 	return {"ok": true, "reason": "Salvaged %s into %s." % [item.display_name, ", ".join(parts)], "materials": mats}
 
 # === INTERNAL ===
+
+## The material this item uses in place of `ore_id`: cloth armor takes cloth,
+## leather armor takes hide (blacksmith.json armor_material_swap); everything
+## else keeps the ore.
+func material_for(item: Equipment, ore_id: String) -> String:
+	if item == null or item.is_weapon():
+		return ore_id
+	var swap: Dictionary = cfg.get("armor_material_swap", {}).get(String(item.type), {})
+	return String(swap.get(ore_id, ore_id))
 
 func _ore_for_level(target_level: int) -> String:
 	for tier in cfg.get("ore_by_target_level", []):

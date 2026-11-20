@@ -126,6 +126,11 @@
        "source": "materials"
       }
      ]
+    },
+    {
+     "name": "armor_material_swap",
+     "type": "json",
+     "help": "armor type -> {ore id: material id}. Cloth and leather armor use cloth/hide in place of the listed ore (upgrades and salvage)."
     }
    ]
   }

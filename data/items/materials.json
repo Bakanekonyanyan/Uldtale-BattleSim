@@ -102,5 +102,53 @@
 		"value": 150,
 		"stackable": true,
 		"max_stack": 999
+	},
+	"linen_cloth": {
+		"name": "Linen Cloth",
+		"description": "Plain woven linen. Upgrades cloth armor (up to +3).",
+		"item_type": "MATERIAL",
+		"value": 10,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"silk_cloth": {
+		"name": "Silk Cloth",
+		"description": "Fine silk that holds enchantments well. Upgrades cloth armor (+4 to +6).",
+		"item_type": "MATERIAL",
+		"value": 30,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"spellweave_cloth": {
+		"name": "Spellweave Cloth",
+		"description": "Cloth spun with living threads of mana. Upgrades cloth armor (+7 and up).",
+		"item_type": "MATERIAL",
+		"value": 70,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"rawhide": {
+		"name": "Rawhide",
+		"description": "Untreated hide. Upgrades leather armor (up to +3).",
+		"item_type": "MATERIAL",
+		"value": 10,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"thick_hide": {
+		"name": "Thick Hide",
+		"description": "Tough hide from large beasts. Upgrades leather armor (+4 to +6).",
+		"item_type": "MATERIAL",
+		"value": 30,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"drake_hide": {
+		"name": "Drake Hide",
+		"description": "Scaled hide that shrugs off flame. Upgrades leather armor (+7 and up).",
+		"item_type": "MATERIAL",
+		"value": 70,
+		"stackable": true,
+		"max_stack": 999
 	}
 }

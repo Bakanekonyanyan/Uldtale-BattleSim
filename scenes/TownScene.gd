@@ -80,6 +80,14 @@ func _ready():
 			party.append(AutoBattler.build_hero(n))
 		ComboGuide.open(self, party))
 	$UI.add_child(combo_button)
+	# Enchanter: raise rarity with materials (EnchantManager)
+	var enchanter_button := Button.new()
+	enchanter_button.name = "EnchanterButton"
+	enchanter_button.text = "Enchanter"
+	enchanter_button.position = Vector2(472, 440)
+	enchanter_button.size = Vector2(180, 60)
+	enchanter_button.pressed.connect(func(): SceneManager.change_to_enchanter(current_character))
+	$UI.add_child(enchanter_button)
 	# Inn: rest to pass days (WorldClock)
 	var inn_button := Button.new()
 	inn_button.name = "InnButton"

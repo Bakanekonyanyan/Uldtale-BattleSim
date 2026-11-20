@@ -6,14 +6,18 @@
 	"floor_bonus_every": 5,
 	"uncommon_chance": 0.25,
 	"races": {
-		"Goblin": { "common": ["bogblossom_petal", "rousepepper_seeds"], "uncommon": ["iron_ore"] },
-		"Orc":    { "common": ["iron_ore", "bloodvine_fiber"],         "uncommon": ["wood"] },
-		"Troll":  { "common": ["frostroot_chunk", "wood"],              "uncommon": ["voltslate_pebble"] },
-		"Fairy":  { "common": ["glowcap_mushroom", "mindglass_shard"],  "uncommon": ["embershard_fragment"] }
+		"Goblin": { "common": ["bogblossom_petal", "rousepepper_seeds"], "uncommon": ["iron_ore", "rawhide", "linen_cloth"] },
+		"Orc":    { "common": ["iron_ore", "bloodvine_fiber", "rawhide"],       "uncommon": ["wood"] },
+		"Troll":  { "common": ["frostroot_chunk", "wood", "rawhide"],              "uncommon": ["voltslate_pebble"] },
+		"Fairy":  { "common": ["glowcap_mushroom", "mindglass_shard", "linen_cloth"],  "uncommon": ["embershard_fragment"] }
 	},
 	"floor_materials": [
 		{ "id": "mithril_ore", "min_floor": 6, "chance_per_wave": 0.25 },
-		{ "id": "adamant_ore", "min_floor": 12, "chance_per_wave": 0.20 }
+		{ "id": "adamant_ore", "min_floor": 12, "chance_per_wave": 0.20 },
+		{ "id": "silk_cloth", "min_floor": 6, "chance_per_wave": 0.20 },
+		{ "id": "thick_hide", "min_floor": 6, "chance_per_wave": 0.20 },
+		{ "id": "spellweave_cloth", "min_floor": 12, "chance_per_wave": 0.15 },
+		{ "id": "drake_hide", "min_floor": 12, "chance_per_wave": 0.15 }
 	],
 	"boss_drops": { "monster_core": 0.6 }
 }

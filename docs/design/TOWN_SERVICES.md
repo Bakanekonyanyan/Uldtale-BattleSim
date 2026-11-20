@@ -290,6 +290,19 @@ materials = ore × L          (iron_ore for L ≤ 3, mithril_ore for L 4–6, ad
 Example: a Short Sword (value 100) from +0 to +3 costs 25 + 50 + 75 = **150 copper and
 6 Iron Ore**, with no risk.
 
+**Cloth and leather armor** use their own materials instead of ore
+(`armor_material_swap` in `data/blacksmith.json`). Upgrades and salvage both follow it:
+
+| Ore tier | Cloth armor | Leather armor |
+|---|---|---|
+| Iron Ore (+1–3) | Linen Cloth | Rawhide |
+| Mithril Ore (+4–6) | Silk Cloth | Thick Hide |
+| Adamant Ore (+7+) | Spellweave Cloth | Drake Hide |
+
+Linen and Rawhide drop from Goblins, Orcs, Trolls and Fairies. Silk and Thick Hide are
+floor materials from floor 6 (20% per wave), and Spellweave and Drake Hide from floor 12 (15%).
+Mail, plate and weapons keep ore.
+
 ### 5.4 Success chance and reinforcement *(Q2)*
 Upgrades to +1…+3 always succeed. Above that, each attempt has a **base success chance**:
 
@@ -499,3 +512,48 @@ per-NPC relationship values, and a quest engine with branching and prerequisites
 Each phase ships on its own: playable, saved, covered by a headless test, and checked
 with the balance simulator where it adds player power. Phase 0 is now the largest,
 because Locations and the carry limit change how expeditions start.
+
+## 9. Enchanter
+
+`EnchanterScene` / `EnchantManager`, tuning in `data/enchanting.json` (Content Manager tab
+**Enchanting**). Enchanting raises an item **one rarity tier, up to Epic**, and adds an
+enchantment. Legendary gear only drops.
+
+- **The material picks the effect.** Each enchantment costs one material and gives one
+  attribute bonus, rolled in the item level's stat range. On a weapon with no on-hit
+  effect yet, it also adds a chance to inflict a status:
+
+| Enchant | Material | Bonus | Weapon on-hit |
+|---|---|---|---|
+| Ember | Embershard Fragment | Strength | Burn |
+| Frost | Frostroot Chunk | Endurance | Freeze |
+| Storm | Voltslate Pebble | Agility | Shock |
+| Blight | Bogblossom Petal | Vitality | Poison |
+| Thorn | Bloodvine Fiber | Dexterity | Bleed |
+| Mindglass | Mindglass Shard | Intelligence | Confused |
+| Glowcap | Glowcap Mushroom | Faith | Blind |
+| Rousing | Rousepepper Seeds | Arcane | — |
+
+- **Rarity:** damage, armor and value rescale like a dropped item of the new rarity. The
+  Blacksmith's upgrade cap rises with the rarity.
+- **Cost and odds** by the rarity reached:
+
+| Target | Materials | Monster Cores | Success |
+|---|---|---|---|
+| Uncommon | 3 | 0 | 90% |
+| Magic | 5 | 0 | 75% |
+| Rare | 8 | 1 | 60% |
+| Epic | 12 | 2 | 45% |
+
+  Gold = max(50, item value × 0.5) × tier (Uncommon 1 … Epic 4).
+- **Failure:** the gold and materials are lost, the item is never harmed. Each failure
+  gives the item **Attuned**: +10% on its next try, reset on success.
+- Enchanted items list their enchantments ("Enchanted: Ember, Frost"); saves keep them.
+
+## 10. Enemy gear drops
+
+Gear worn by defeated enemies (`data/loot/gear_drops.json`, tab **Gear Drops**). Each
+piece rolls its rarity's chance × the Momentum reward bonus: common 0%, uncommon 8%,
+magic 12%, rare 18%, epic 24%, legendary 30% (bosses +10%, capped at 50%). An enemy drops
+**at most one piece**, and a boss fight always yields **one piece** (the rarest worn).
+

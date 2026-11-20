@@ -29,16 +29,8 @@ func roll_wave_rewards(battle_data: Dictionary) -> Dictionary:
 	var momentum_mult = 1.0 + MomentumSystem.get_reward_bonus(momentum_level)
 	var drop_chance_multiplier = (1 + (current_floor * 0.1)) * momentum_mult
 	
-	# Gear the defeated enemies were wearing. (This read a single
-	# battle_data["enemy"], which multi-enemy waves never set, so enemy gear
-	# had stopped dropping entirely.)
-	for enemy in battle_data.get("enemies", []):
-		if not (enemy is CharacterData and enemy.has_meta("equipped_items")):
-			continue
-		for item in enemy.get_meta("equipped_items"):
-			if item is Equipment and RandomManager.randf() < min(1.0, get_equipment_drop_chance(item.rarity, is_boss) * momentum_mult):
-				rewards["equipment_instances"].append(item)
-				Log.debug("rewards", "RewardsManager: %s dropped %s (%s, ilvl %d)" % [enemy.name, item.display_name, item.rarity, item.item_level])
+	# Gear the defeated enemies were wearing (data/loot/gear_drops.json)
+	rewards["equipment_instances"].append_array(roll_enemy_gear(battle_data.get("enemies", []), is_boss, momentum_mult))
 	
 	# Regular loot drops
 	if is_boss:
@@ -155,19 +147,51 @@ func is_session_active() -> bool:
 
 # ===== HELPER METHODS =====
 
+func _gear_cfg() -> Dictionary:
+	var d = DataRegistry.get_data("loot/gear_drops")
+	return d if d is Dictionary else {}
+
 func get_equipment_drop_chance(rarity: String, is_boss: bool) -> float:
-	"""Chance an enemy's equipped item drops (common gear never drops)."""
-	var base_chance = 0.0
-	match rarity:
-		"uncommon": base_chance = 0.50
-		"magic": base_chance = 0.65
-		"rare": base_chance = 0.75
-		"epic": base_chance = 0.85
-		"legendary": base_chance = 0.95
-		_: return 0.0
+	"""Chance one piece an enemy wore drops (before the momentum bonus)."""
+	var cfg = _gear_cfg()
+	var base_chance = float(cfg.get("chance_by_rarity", {}).get(rarity, 0.0))
+	if base_chance <= 0.0:
+		return 0.0
 	if is_boss:
-		base_chance = min(1.0, base_chance + 0.15)
-	return base_chance
+		base_chance += float(cfg.get("boss_bonus", 0.1))
+	return min(float(cfg.get("max_chance", 0.5)), base_chance)
+
+## Pieces the defeated enemies drop: each piece rolls its chance, at most
+## max_per_enemy per enemy, and a boss fight always yields boss_guaranteed.
+func roll_enemy_gear(enemies: Array, is_boss: bool, momentum_mult: float = 1.0) -> Array:
+	var cfg = _gear_cfg()
+	var per_enemy = int(cfg.get("max_per_enemy", 1))
+	var out: Array = []
+	var worn: Array = []
+	for enemy in enemies:
+		if not (enemy is CharacterData and enemy.has_meta("equipped_items")):
+			continue
+		var pieces: Array = (enemy.get_meta("equipped_items") as Array).filter(func(i): return i is Equipment)
+		worn.append_array(pieces)
+		pieces.shuffle()
+		var dropped := 0
+		for item in pieces:
+			if dropped >= per_enemy:
+				break
+			if RandomManager.randf() < min(1.0, get_equipment_drop_chance(item.rarity, is_boss) * momentum_mult):
+				out.append(item)
+				dropped += 1
+				Log.debug("rewards", "RewardsManager: %s dropped %s (%s, ilvl %d)" % [enemy.name, item.display_name, item.rarity, item.item_level])
+	if is_boss:
+		var need = int(cfg.get("boss_guaranteed", 1)) - out.size()
+		var left = worn.filter(func(i): return not i in out)
+		left.sort_custom(func(a, b): return _rarity_rank(a.rarity) > _rarity_rank(b.rarity))
+		for i in range(min(need, left.size())):
+			out.append(left[i])
+	return out
+
+func _rarity_rank(r: String) -> int:
+	return ["common", "uncommon", "magic", "rare", "epic", "legendary"].find(r)
 
 # ===== MATERIAL DROPS =====
 

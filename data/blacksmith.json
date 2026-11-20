@@ -27,5 +27,10 @@
 		{ "max_item_level": 5, "ore": "iron_ore" },
 		{ "max_item_level": 11, "ore": "mithril_ore" },
 		{ "max_item_level": 999, "ore": "adamant_ore" }
-	]
+	],
+	"_armor_material_swap": "Cloth and leather armor use cloth/hide instead of ore: every ore id in the upgrade and salvage tiers is swapped for that armor type's material. Mail, plate and weapons keep ore.",
+	"armor_material_swap": {
+		"cloth": { "iron_ore": "linen_cloth", "mithril_ore": "silk_cloth", "adamant_ore": "spellweave_cloth" },
+		"leather": { "iron_ore": "rawhide", "mithril_ore": "thick_hide", "adamant_ore": "drake_hide" }
+	}
 }

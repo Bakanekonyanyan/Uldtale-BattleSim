@@ -1179,7 +1179,7 @@ func _phase0_checks() -> void:
 	# Material drops follow the defeated enemies' race
 	EnemyFactory.set_location("troll_caves")
 	var trolls: Array[CharacterData] = [EnemyFactory.create_enemy(1, 1, 1), EnemyFactory.create_enemy(1, 1, 1)]
-	var troll_mats = ["frostroot_chunk", "wood", "voltslate_pebble"]
+	var troll_mats = ["frostroot_chunk", "wood", "rawhide", "voltslate_pebble"]
 	var only_troll := true
 	var total := 0
 	for i in range(30):
@@ -1209,6 +1209,8 @@ func _phase0_checks() -> void:
 	_alchemy_checks()
 	_status_modifier_checks()
 	_blacksmith_checks()
+	_material_checks()
+	_enchant_checks()
 	_guild_checks()
 
 # ------------------------------------------------------------------ momentum + gear drops
@@ -1244,10 +1246,28 @@ func _reward_checks() -> void:
 	wearer.set_meta("equipped_items", [gear])
 	var crowd: Array[CharacterData] = [EnemyFactory.create_enemy(1, 1, 1), wearer]
 	var drops := 0
-	for i in range(40):
+	for i in range(200):
 		var r = RewardsManager.roll_wave_rewards({"current_wave": 1, "current_floor": 1, "is_boss_fight": false, "enemies": crowd, "momentum_level": 0})
 		if gear in r.equipment_instances: drops += 1
-	check(drops >= 20 and drops <= 39, "rare enemy gear drops ~75%% of the time (%d/40)" % drops)
+	var rare_chance = RewardsManager.get_equipment_drop_chance("rare", false)
+	check(drops >= int(200 * rare_chance * 0.4) and drops <= int(200 * rare_chance * 1.8) + 2, "rare enemy gear drops only sometimes (~%d%%: %d/200)" % [int(rare_chance * 100), drops])
+	# at most one piece per enemy, and a boss always drops one
+	var kit: Array = []
+	for i in range(4):
+		var piece = ItemManager.create_equipment_for_floor(ItemManager.get_random_weapon(), 1)
+		piece.rarity = "legendary"
+		kit.append(piece)
+	var champ = EnemyFactory.create_enemy(1, 1, 1)
+	champ.set_meta("equipped_items", kit)
+	var most := 0
+	for i in range(100):
+		most = max(most, RewardsManager.roll_enemy_gear([champ], false, 3.0).size())
+	check(most == 1, "an enemy drops at most one piece of its gear")
+	var boss_ok := true
+	for i in range(30):
+		if RewardsManager.roll_enemy_gear([champ], true).size() != 1:
+			boss_ok = false
+	check(boss_ok, "a boss always drops one piece")
 	EnemyFactory.set_location("the_dungeon")
 
 # ------------------------------------------------------------------ buff / debuff rework
@@ -1374,6 +1394,79 @@ func _make_gear(rarity: String, weapon := true) -> Equipment:
 	if not weapon and e.armor_value <= 0: e.armor_value = 6
 	return e
 
+## Cloth and leather armor use cloth and hide at the Blacksmith.
+func _material_checks() -> void:
+	for id in ["linen_cloth", "silk_cloth", "spellweave_cloth", "rawhide", "thick_hide", "drake_hide"]:
+		check(ItemManager.get_item(id) != null, "material %s exists" % id)
+	var robe = _make_gear("rare", false)
+	robe.type = "cloth"
+	var vest = _make_gear("rare", false)
+	vest.type = "leather"
+	var plate = _make_gear("rare", false)
+	plate.type = "plate"
+	check(BlacksmithManager.get_upgrade_cost(robe).materials.has("linen_cloth") and BlacksmithManager.get_upgrade_cost(vest).materials.has("rawhide")
+		and BlacksmithManager.get_upgrade_cost(plate).materials.has("iron_ore"), "cloth armor upgrades with cloth, leather with hide, plate with ore")
+	robe.set_upgrade_level(5)
+	check(BlacksmithManager.get_upgrade_cost(robe).materials.has("silk_cloth"), "higher cloth upgrades need Silk")
+	check(BlacksmithManager.get_salvage_preview(vest).ore_id == "rawhide", "salvaging leather armor gives hide")
+
+func _enchant_checks() -> void:
+	var p = make_player()
+	var sword = _make_gear("common")
+	sword.status_effect_type = Skill.StatusEffect.NONE
+	sword.stat_modifiers = {}
+	p.inventory.add_item(sword, 1)
+	p.currency.copper = 100000
+	check(EnchantManager.next_rarity(sword) == "uncommon", "an enchant raises common to uncommon")
+	var cost = EnchantManager.get_cost(sword, "ember")
+	check(cost.materials.get("embershard_fragment", 0) == 3 and not cost.materials.has("monster_core"), "the enchant's material pays for it (%s)" % str(cost))
+	check(not EnchantManager.can_afford(p, cost), "no materials = can't enchant")
+	_give(p, "embershard_fragment", 40)
+	_give(p, "monster_core", 5)
+	var dmg = sword.damage
+	sword.enchant_fails = 99   # force success for the effect check
+	var r = EnchantManager.enchant(p, sword, "ember")
+	check(r.ok and r.success and sword.rarity == "uncommon" and sword.enchants == ["Ember"], "a successful enchant raises the rarity and records the enchant (%s)" % r.reason)
+	check(sword.damage > dmg and sword.stat_modifiers.get(Skill.AttributeTarget.STRENGTH, 0) > 0, "it rescales damage (%d -> %d) and adds Strength" % [dmg, sword.damage])
+	check(sword.status_effect_type == Skill.StatusEffect.BURN and sword.status_effect_chance > 0.0, "an Ember weapon can Burn")
+	check(p.count_owned("embershard_fragment") == 37 and sword.enchant_fails == 0, "materials spent, Attuned reset")
+	# failure: payment lost, item unchanged, Attuned grows
+	var helm = _make_gear("magic", false)
+	p.inventory.add_item(helm, 1)
+	var before = [helm.rarity, helm.armor_value, helm.stat_modifiers.duplicate()]
+	var base_chance = EnchantManager.get_success_chance(helm)
+	_give(p, "frostroot_chunk", 20)
+	helm.enchant_fails = -20   # forces a 0% chance
+	var frost_before = p.count_owned("frostroot_chunk")
+	var res = EnchantManager.enchant(p, helm, "frost")
+	check(res.ok and not res.success and helm.rarity == before[0] and helm.armor_value == before[1] and helm.stat_modifiers == before[2],
+		"a failed enchant leaves the item unharmed")
+	check(p.count_owned("frostroot_chunk") < frost_before and helm.enchant_fails == -19, "a failed enchant loses the materials and adds Attuned")
+	helm.enchant_fails = 2
+	check(is_equal_approx(EnchantManager.get_success_chance(helm), min(1.0, base_chance + 0.2)), "each earlier failure adds +10%% (Attuned x2: %d%%)" % int(EnchantManager.get_success_chance(helm) * 100))
+	helm.enchant_fails = 99
+	EnchantManager.enchant(p, helm, "frost")
+	check(helm.rarity == "rare" and helm.enchants == ["Frost"], "magic -> rare with Frost")
+	# cap: nothing above Epic
+	var epic = _make_gear("epic")
+	check(not EnchantManager.can_enchant(epic) and not EnchantManager.can_enchant(_make_gear("legendary")), "enchanting stops at Epic")
+	# equipped items keep the character's bonuses in sync
+	var ring = _make_gear("common", false)
+	ring.stat_modifiers = {}
+	ring.enchant_fails = 99
+	p.equipment[ring.slot] = ring
+	ring.apply_stat_modifiers(p)
+	_give(p, "glowcap_mushroom", 5)
+	var faith_before = int(p.equipment_bonuses.get("faith", 0))
+	EnchantManager.enchant(p, ring, "glow")
+	check(int(p.equipment_bonuses.get("faith", 0)) == faith_before + int(ring.stat_modifiers.get(Skill.AttributeTarget.FAITH, 0)), "enchanting worn gear updates the character's bonuses")
+	p.equipment[ring.slot] = null
+	# save round trip
+	var d = sword.get_upgrade_save_data()
+	var copy = _make_gear("common")
+	copy.apply_upgrade_save_data(d)
+	check(copy.enchants == ["Ember"], "enchants survive a save")
+
 func _blacksmith_checks() -> void:
 	var p = make_player()
 	var sword = _make_gear("rare")
@@ -1400,6 +1493,7 @@ func _blacksmith_checks() -> void:
 	
 	# A guaranteed upgrade spends the payment (pack/stash) and levels up
 	var armor = _make_gear("uncommon", false)
+	armor.type = "mail"   # mail takes ore (cloth and leather are checked below)
 	p.inventory.add_item(armor, 1)
 	p.currency.copper = 1000
 	_give(p, "iron_ore", 10)
