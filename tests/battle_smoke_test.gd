@@ -1161,7 +1161,8 @@ func _phase0_checks() -> void:
 	var crusher = make_player(); crusher.equipment["main_hand"] = null
 	var slash_hit = BattleFormulas.hit_damage(crusher, troll, true, 0.0, DamageTypes.Type.SLASH)
 	var blunt_hit = BattleFormulas.hit_damage(crusher, troll, true, 0.0, DamageTypes.Type.BLUNT)
-	check(is_equal_approx(slash_hit / blunt_hit, 1.5), "hit_damage applies the type multiplier (Slash/Blunt on Troll = 1.2/0.8)")
+	var wb = 1.0 + float(BattleRules.cfg().get("weakness_bonus", 0.0))
+	check(is_equal_approx(slash_hit / blunt_hit, 1.5 * wb), "hit_damage applies the type multiplier and the weakness bonus (Slash/Blunt on Troll = 1.2/0.8 x %.1f)" % wb)
 	check(is_equal_approx(BattleFormulas.hit_damage(crusher, troll, false, 0.0, DamageTypes.Type.SLASH), BattleFormulas.hit_damage(crusher, troll, false)), "magic ignores damage types")
 	var iaido = Skill.create_from_dict({"name": "T", "description": "", "ability_type": "PHYSICAL", "type": "DAMAGE", "target": "ENEMY", "power": 10, "cooldown": 0, "duration": 0, "damage_type": "slash"})
 	check(iaido.damage_type == DamageTypes.Type.SLASH, "skills read damage_type from data")
@@ -1493,6 +1494,8 @@ func _town_life_checks() -> void:
 	var rum = rl[0]
 	rum.type = "elite"
 	rum.affix = "swift"
+	for other in rl.slice(1):   # random rumours could share the floor
+		other.type = "cache"
 	var got = RumorManager.take_elite(p, String(rum.location), int(rum.floor))
 	check(not got.is_empty() and RumorManager.take_elite(p, String(rum.location), int(rum.floor)).is_empty(), "a rumoured elite appears once")
 	MomentumSystem.clear_accumulated_loot()

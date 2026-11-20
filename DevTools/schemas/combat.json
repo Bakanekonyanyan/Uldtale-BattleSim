@@ -6,6 +6,18 @@
  "sections": [
   {
    "kind": "settings",
+   "label": "Damage",
+   "fields": [
+    {
+     "name": "weakness_bonus",
+     "type": "float",
+     "min": 0,
+     "help": "Extra damage for a hit on a weakness (damage type or element)."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
    "label": "Intents",
    "path": [
     "intents"
@@ -21,6 +33,19 @@
      "type": "float",
      "min": 0,
      "help": "Damage multiplier of a charged strike."
+    },
+    {
+     "name": "regular_charge_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Chance a regular enemy winds up a heavy skill instead of using it at once."
+    },
+    {
+     "name": "regular_charge_min_power",
+     "type": "int",
+     "min": 0,
+     "help": "Only skills at least this strong are charged."
     }
    ]
   },

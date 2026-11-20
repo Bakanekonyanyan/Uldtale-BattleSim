@@ -2,8 +2,12 @@
   "_doc": "Combat rules shared by real battles and headless ones (BattleRules.gd). Intents: each enemy's next action is planned and shown ahead of time; bosses charge their signature/ultimate for a turn first. Break: weakness hits (and combos) fill an enemy's break meter; at its threshold the enemy is Broken - it loses its next turn, takes extra damage until then, and a charge is cancelled. Link: a party gauge that fills from hits, combos and breaks; ultimates spend it, LINK skills add to it and pull the next ally forward, Unison Strike spends a full gauge for an attack by the whole party.",
   "intents": {
     "boss_charge": true,
-    "charge_power_mult": 1.5
+    "charge_power_mult": 2.0,
+    "regular_charge_chance": 0.3,
+    "regular_charge_min_power": 30
   },
+  "weakness_bonus": 0.3,
+  "_weakness_bonus": "Extra damage for a hit on a weakness (damage type or element), on top of the affinity itself.",
   "break": {
     "regular_hits": 2,
     "elite_hits": 2,

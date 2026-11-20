@@ -89,8 +89,19 @@ static func hit_damage(attacker: CharacterData, target: CharacterData, is_physic
 	var raw = offense * BASE_SCALE * (1.0 + skill_power * SKILL_POWER_SCALE)
 	raw *= attacker.damage_multiplier  # enemy tuning (EnemyFactory), 1.0 for players
 	raw *= MomentumSystem.get_damage_multiplier() if attacker.is_player else 1.0
+	var weak := false
 	if is_physical:
-		raw *= DamageTypes.multiplier(target, DamageTypes.attack_type(attacker, damage_type))
+		var tm = DamageTypes.multiplier(target, DamageTypes.attack_type(attacker, damage_type))
+		raw *= tm
+		weak = tm > 1.05
+	if not weak and skill is Skill and target.elemental_resistances:
+		for el in skill.elements:
+			var n = Skill.ElementType.keys()[el]
+			if ElementalDamage.Element.has(n) and target.elemental_resistances.get_total_weakness(ElementalDamage.Element[n]) > 0.0:
+				weak = true
+				break
+	if weak:   # exploiting a weakness is worth aiming for (combat.json weakness_bonus)
+		raw *= 1.0 + float(BattleRules.cfg().get("weakness_bonus", 0.0))
 	# Talents (data/talents.json): attacker's damage bonuses, target's damage reduction
 	if attacker.talents or target.talents:
 		var ctx = TalentManager.hit_context(attacker, target, is_physical, skill, damage_type)

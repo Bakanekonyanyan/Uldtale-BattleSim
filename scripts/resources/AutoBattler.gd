@@ -122,6 +122,7 @@ static func fight(p: CharacterData, enemies: Array[CharacterData], floor_num: in
 				rules.after_action(potion, ps)
 		var action: BattleAction
 		if ctx.is_hero(actor):
+			ctx.set_meta("sim_no_guard", not bool(opts.get("guard", true)))
 			action = hero_policy(actor, ctx, bool(opts.get("setup", true)), String(opts.get("policy", "smart")))
 		else:
 			action = planner.take_intent(actor)
@@ -160,6 +161,8 @@ static func hero_policy(p: CharacterData, ctx: BattleContext, use_setup := true,
 	if living.is_empty():
 		return null
 	var rules: BattleRules = ctx.rules
+	if policy == "simple":
+		return _simple_move(p, ctx, living)
 	var smart = policy != "naive"
 	if smart and policy != "hit":
 		var plan = _smart_moves(p, ctx, living, rules)
@@ -226,6 +229,11 @@ static func hero_policy(p: CharacterData, ctx: BattleContext, use_setup := true,
 	if not use_setup:
 		buff = null
 		debuff = null
+	# A skilled player only spends turns on set-ups when the fight is long
+	# enough for them to pay back (bosses, elites, big waves)
+	if smart and policy != "moves" and (buff or debuff) and hero_actions_left(p, ctx, best) < 4.0:
+		buff = null
+		debuff = null
 	if buff and fight_young and not p.buff_manager.has_buffs():
 		return BattleAction.skill(p, buff, [p])
 	if debuff and fight_young:
@@ -242,6 +250,58 @@ static func hero_policy(p: CharacterData, ctx: BattleContext, use_setup := true,
 	return BattleAction.attack(p, living[0])
 
 
+## The baseline a casual player plays: the strongest damage skill it can
+## afford (else a basic attack) on the first enemy in the list. No focus fire,
+## combos, buffs, Defend or Link play. Heals itself when low.
+static func _simple_move(p: CharacterData, ctx: BattleContext, living: Array) -> BattleAction:
+	var rules: BattleRules = ctx.rules
+	var best: Skill = null
+	for sn in p.get_battle_skills():
+		var s: Skill = p.get_skill_instance(sn)
+		if s == null or p.get_skill_cooldown(sn) > 0 or not s.can_afford(p) or (rules and not rules.link_ok(p, s)):
+			continue
+		if s.type == Skill.SkillType.HEAL and p.current_hp < p.max_hp * 0.4:
+			return BattleAction.skill(p, s, [p])
+		if s.type == Skill.SkillType.DAMAGE and (best == null or s.power > best.power):
+			best = s
+	if best:
+		return BattleAction.skill(p, best, living if best.target == Skill.TargetType.ALL_ENEMIES else [living[0]])
+	return BattleAction.attack(p, living[0])
+
+## Rough number of actions `p` (with the party's help) needs to finish the
+## fight with its best skill: total enemy HP / (damage per action x heroes).
+static func hero_actions_left(p: CharacterData, ctx: BattleContext, best: Skill) -> float:
+	var living = ctx.get_living_enemies()
+	if living.is_empty():
+		return 0.0
+	var hp := 0.0
+	for e in living:
+		hp += e.current_hp
+	var physical = best == null or best.ability_type == Skill.AbilityType.PHYSICAL
+	var per = BattleFormulas.hit_damage(p, living[0], physical, 0.0 if best == null else best.power, -1 if best == null else best.damage_type, best)
+	return hp / max(1.0, per * max(1, ctx.get_living_heroes().size()))
+
+## Expected damage `p` takes this round from intents aimed at it (a rough
+## read of the panels: basic hits, skill power, charged strikes).
+static func incoming_damage(p: CharacterData, ctx: BattleContext) -> float:
+	var total := 0.0
+	var charge = float(BattleRules.cfg().get("intents", {}).get("charge_power_mult", 1.5))
+	for e in ctx.get_living_enemies():
+		if e.get_meta("broken", false) or e.is_stunned:
+			continue
+		var a = ctx.intents.get(e, null)
+		if e.has_meta("charging"):
+			total += BattleFormulas.hit_damage(e, p, e.attack_power >= e.spell_power, 60.0) * charge / max(1, ctx.get_living_heroes().size())
+			continue
+		if not (a is BattleAction):
+			continue
+		if a.type == BattleAction.ActionType.ATTACK and a.targets.has(p):
+			total += BattleFormulas.hit_damage(e, p, true)
+		elif a.type == BattleAction.ActionType.SKILL and a.skill_data and a.skill_data.type in [Skill.SkillType.DAMAGE, Skill.SkillType.DRAIN] \
+				and (a.targets.has(p) or a.skill_data.target == Skill.TargetType.ALL_ENEMIES):
+			total += BattleFormulas.hit_damage(e, p, a.skill_data.ability_type == Skill.AbilityType.PHYSICAL, a.skill_data.power, a.skill_data.damage_type, a.skill_data)
+	return total
+
 ## The "reads the fight" layer on top of the basic policy:
 ##   Unison Strike when the gauge is full -> brace for a telegraphed big hit ->
 ##   break the enemy that is charging -> otherwise null (basic policy decides).
@@ -251,6 +311,29 @@ static func _smart_moves(p: CharacterData, ctx: BattleContext, living: Array, ru
 	if rules and rules.unison_ready():
 		var tgt = charging[0] if not charging.is_empty() else living.reduce(func(a, b): return a if a.current_hp > b.current_hp else b)
 		return BattleAction.unison(p, tgt)
+	# A wounded ally: heal them before they drop (party play)
+	var heroes = ctx.get_living_heroes()
+	if heroes.size() > 1:
+		var hurt = heroes.filter(func(h): return h != p and h.current_hp < h.max_hp * 0.35)
+		if not hurt.is_empty():
+			for sn in p.get_battle_skills():
+				var s: Skill = p.get_skill_instance(sn)
+				if s and s.type == Skill.SkillType.HEAL and s.target in [Skill.TargetType.ALLY, Skill.TargetType.ALL_ALLIES] \
+						and p.get_skill_cooldown(sn) == 0 and s.can_afford(p):
+					return BattleAction.skill(p, s, [hurt[0]] if s.target == Skill.TargetType.ALLY else heroes)
+	# Read the intents: a big hit coming at us is worth a Perfect Guard
+	# (a quarter of the damage, no Break pips, the attacker staggered)
+	if rules and rules.is_threatened(p) and BattleRules.cfg().get("guard", {}).get("enabled", true) and not ctx.get_meta("sim_no_guard", false):
+		var incoming = incoming_damage(p, ctx)
+		var weak_to_it = int(p.get_meta("break_meter", 0)) + 1 >= BattleRules.break_max(p, true)
+		# Guarding saves ~3/4 of the hit but costs an attack: worth it against a
+		# big or charged blow, a hit that would Break us, or one that would drop us
+		var charged = living.any(func(e): return e.has_meta("charging"))
+		if charged or incoming >= p.current_hp * 0.45 or (weak_to_it and incoming >= p.max_hp * 0.1):
+			# unless a quick kill removes the threat instead
+			var killable = living.filter(func(e): return e.current_hp <= BattleFormulas.hit_damage(p, e, p.attack_power >= p.spell_power) and ctx.intents.get(e, null) is BattleAction and ctx.intents[e].targets.has(p))
+			if killable.is_empty():
+				return BattleAction.defend(p)
 	# Something big is coming at us: heal up or brace
 	var threatened = not charging.is_empty() or living.any(func(e):
 		var a = ctx.intents.get(e, null)

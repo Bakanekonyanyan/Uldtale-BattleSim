@@ -35,6 +35,14 @@ func _ready():
 		var f3 = FileAccess.open("user://balance_%s.txt" % mode, FileAccess.WRITE)
 		f3.store_string("\n".join(out)); f3.close()
 		get_tree().quit(); return
+	if mode == "duel":
+		duel_report(args)
+		get_tree().quit()
+		return
+	if mode == "compare":
+		compare_report(args)
+		get_tree().quit()
+		return
 	if mode == "tool":
 		tool_report(args)
 		get_tree().quit(); return
@@ -210,6 +218,123 @@ func tool_report(args: Array) -> void:
 	EnemyFactory.force_archetype = ""
 	print("SIM DONE")
 
+## Decision value: every policy plays the SAME runs (paired seeds, reseeded
+## per wave so enemies match even after the battles diverge).
+##   tool: compare --policies=simple,naive,smart --classes=... --floor=3
+##         --runs=100 --party=0 [--potions=2]
+## Prints per class and overall: clear %, waves reached, HP left, and the
+## paired verdict (runs only policy A cleared vs only policy B).
+var pair_seed := 0
+func compare_report(args: Array) -> void:
+	var opts := {"classes": ",".join(CLASSES), "policies": "simple,naive,smart", "runs": "100", "floor": "3", "party": "0", "potions": "0"}
+	for a in args.slice(1):
+		var kv = String(a).trim_prefix("--").split("=", true, 1)
+		if kv.size() == 2:
+			opts[kv[0]] = kv[1]
+	var classes = Array(String(opts.classes).split(",", false))
+	var policies = Array(String(opts.policies).split(",", false))
+	var runs = int(opts.runs)
+	var floor_num = int(opts.floor)
+	sim_party = clamp(int(opts.party), 0, 2)
+	start_potions = int(opts.potions)
+	use_setup = true
+	var cleared := {}   # policy -> Array[bool] over (class, run)
+	var waves := {}
+	for pol in policies:
+		cleared[pol] = []
+		waves[pol] = 0.0
+	for cls in classes:
+		var row := {}
+		for pol in policies:
+			sim_policy = pol
+			var c := 0
+			for i in range(runs):
+				pair_seed = 1000 + i * 7919 + hash(cls) % 1000
+				_reseed(pair_seed)
+				MomentumSystem.reset_momentum()
+				var r = sim_run(cls, floor_num)
+				cleared[pol].append(r.cleared)
+				waves[pol] += float(r.wave)
+				if r.cleared: c += 1
+			row[pol] = int(round(100.0 * c / runs))
+		print("CMP ROW|%s|%s" % [cls, "|".join(policies.map(func(p): return "%s=%d" % [p, row[p]]))])
+	var n = float(classes.size() * runs)
+	var parts: Array = []
+	for pol in policies:
+		var c = cleared[pol].count(true)
+		parts.append("%s=%d%% (avg wave %.2f)" % [pol, int(round(100.0 * c / n)), waves[pol] / n])
+	print("CMP TOTAL|floor %d party %d|%s" % [floor_num, sim_party, "  ".join(parts)])
+	for i in range(policies.size() - 1):
+		var a = policies[i]
+		var b = policies[-1]
+		var only_a := 0
+		var only_b := 0
+		for k in range(cleared[a].size()):
+			if cleared[a][k] and not cleared[b][k]: only_a += 1
+			if cleared[b][k] and not cleared[a][k]: only_b += 1
+		print("CMP PAIRED|%s vs %s|only %s cleared: %d  only %s cleared: %d" % [b, a, b, only_b, a, only_a])
+	sim_policy = "smart"
+	sim_party = 0
+	start_potions = 0
+	print("SIM DONE")
+
+## Single fights, isolated: a hero levelled and geared for the floor faces one
+## wave (or the boss) from full health; every policy fights the identical
+## battle (same seed for hero, enemies and the fight). Reports win %, HP left
+## and turns per policy.  tool: duel --floor=5 --wave=3 --runs=60 --party=0
+func duel_report(args: Array) -> void:
+	var opts := {"classes": ",".join(CLASSES), "policies": "simple,naive,smart", "runs": "60", "floor": "5", "wave": "3", "party": "0", "level": "0", "setup": "on", "guard": "on"}
+	for a in args.slice(1):
+		var kv = String(a).trim_prefix("--").split("=", true, 1)
+		if kv.size() == 2:
+			opts[kv[0]] = kv[1]
+	var classes = Array(String(opts.classes).split(",", false))
+	var policies = Array(String(opts.policies).split(",", false))
+	var runs = int(opts.runs)
+	var fl = int(opts.floor)
+	var wave = int(opts.wave)
+	var lvl = int(opts.level) if int(opts.level) > 0 else max(1, fl * 2)
+	sim_party = clamp(int(opts.party), 0, 2)
+	var stats := {}
+	for pol in policies:
+		stats[pol] = {"won": 0, "hp": 0.0, "turns": 0.0, "n": 0}
+	for cls in classes:
+		var row: Array = []
+		for pol in policies:
+			var w := 0
+			for i in range(runs):
+				var sd = 50000 + i * 104729 + hash(cls) % 9973
+				_reseed(sd)
+				var p = AutoBattler.build_hero({"name": "Hero", "race": "Hume", "cls": cls, "level": lvl, "gear_floor": fl, "branch": i % 3})
+				p.is_player = true
+				var allies: Array[CharacterData] = []
+				for k in range(sim_party):
+					var a = AutoBattler.build_hero({"name": "Ally %d" % k, "race": "Hume", "cls": PARTY_CLASSES[(i + k) % PARTY_CLASSES.size()], "level": lvl, "gear_floor": fl, "branch": 0})
+					allies.append(a)
+				var enemies = make_enemies(fl, wave)
+				_reseed(sd + 1)
+				var r = AutoBattler.fight(p, enemies, fl, wave == 6, allies, {"potions": false, "setup": opts.setup == "on", "policy": pol, "guard": opts.guard == "on"})
+				var st = stats[pol]
+				st.n += 1
+				st.turns += r.turns
+				if r.won:
+					w += 1
+					st.won += 1
+					st.hp += r.hp_frac
+			row.append("%s=%d" % [pol, int(round(100.0 * w / runs))])
+		print("DUEL ROW|%s|%s" % [cls, "|".join(row)])
+	var parts: Array = []
+	for pol in policies:
+		var st = stats[pol]
+		parts.append("%s: win %d%%, HP left %d%% (when won), %.1f turns" % [pol, int(round(100.0 * st.won / st.n)), int(round(100.0 * st.hp / max(1, st.won))), st.turns / st.n])
+	print("DUEL TOTAL|floor %d wave %d level %d party %d|%s" % [fl, wave, lvl, sim_party, "  ".join(parts)])
+	sim_party = 0
+	print("SIM DONE")
+
+func _reseed(s: int) -> void:
+	RandomManager.seed = s
+	seed(s)
+
 func _clear_rate(cls: String, n: int, potions: int) -> int:
 	start_potions = potions
 	var clears := 0
@@ -289,6 +414,8 @@ func sim_run(cls: String, floor_num: int, p: CharacterData = null) -> Dictionary
 		MomentumSystem.reset_momentum()
 	var allies = make_allies(p, floor_num)
 	for wave in range(1, 7):
+		if pair_seed != 0:   # compare mode: identical waves for every policy
+			_reseed(pair_seed + wave * 31)
 		var enemies = make_enemies(floor_num, wave)
 		var xp := 0
 		for e in enemies: xp += e.level * 50 * floor_num

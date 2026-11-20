@@ -116,6 +116,15 @@ func plan_action(enemy: CharacterData) -> BattleAction:
 		push_error("EnemyTurnPlanner: AI for %s returned no action" % enemy.name)
 		return null
 
+	# Regular enemies sometimes wind up a heavy skill: a visible charge-up you
+	# can Perfect Guard, Break or race (combat.json intents.regular_charge_*)
+	var ic: Dictionary = BattleRules.cfg().get("intents", {})
+	if action.type == BattleAction.ActionType.SKILL and action.skill_data and not enemy.has_meta("charging") \
+			and action.skill_data.type in [Skill.SkillType.DAMAGE, Skill.SkillType.DRAIN] \
+			and float(action.skill_data.power) >= float(ic.get("regular_charge_min_power", 30)) \
+			and not enemy.character_class.begins_with("King") and not enemy.has_meta("boss_signature") \
+			and RandomManager.randf() < float(ic.get("regular_charge_chance", 0.0)):
+		return BattleAction.charge(enemy, action.skill_data.name)
 	# Offensive actions with no target fall back to the hero the AI chose
 	if action.type in [BattleAction.ActionType.ATTACK, BattleAction.ActionType.SKILL] and action.targets.is_empty():
 		if not (action.skill_data and action.skill_data.target == Skill.TargetType.ALL_ALLIES):
