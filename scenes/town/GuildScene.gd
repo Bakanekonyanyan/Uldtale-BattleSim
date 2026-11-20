@@ -63,6 +63,7 @@ func _build_ui() -> void:
 	details.size = Vector2(640, 416)
 	panel.add_child(details)
 
+	_button(ui, "Ledger", Vector2(1020, 72), func(): LedgerBoard.open(self, player_character), Vector2(148, 36))
 	primary_button = _button(ui, "Accept", Vector2(496, 526), _on_primary_pressed)
 	reroll_button = _button(ui, "Reroll Board", Vector2(660, 526), _on_reroll_pressed, Vector2(220, 40))
 

@@ -337,6 +337,7 @@ func _resolve_job(player: CharacterData, npc: Dictionary, day: int) -> void:
 	else:
 		won = RandomManager.randf() < job_success_chance(npc, fl)
 	npc.record.jobs = int(npc.record.jobs) + 1
+	LedgerManager.record_npc_job(npc, fl, won, kind == "boss")
 	if not stats.has(kind):
 		stats[kind] = [0, 0]
 	stats[kind][0] += 1

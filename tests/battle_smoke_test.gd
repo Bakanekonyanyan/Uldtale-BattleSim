@@ -1265,6 +1265,7 @@ func _phase0_checks() -> void:
 	_run_state_checks()
 	_bond_checks()
 	_town_life_checks()
+	_ledger_checks()
 	_guild_checks()
 
 # ------------------------------------------------------------------ momentum + gear drops
@@ -1463,6 +1464,38 @@ func _material_checks() -> void:
 	robe.set_upgrade_level(5)
 	check(BlacksmithManager.get_upgrade_cost(robe).materials.has("silk_cloth"), "higher cloth upgrades need Silk")
 	check(BlacksmithManager.get_salvage_preview(vest).ore_id == "rawhide", "salvaging leather armor gives hide")
+
+## The Guild Ledger: renown standings for you and every adventurer.
+func _ledger_checks() -> void:
+	var p = make_player()
+	AdventurerManager.state(p)
+	var st = LedgerManager.standings(p)
+	check(st.size() == AdventurerManager.active(p).size() + 1 and st.any(func(x): return x.is_player), "the Ledger lists you and every active adventurer (%d)" % st.size())
+	var sorted_ok := true
+	for i in range(st.size() - 1):
+		if st[i].renown < st[i + 1].renown:
+			sorted_ok = false
+	check(sorted_ok and int(st[0].pos) == 1, "standings are sorted by renown")
+	var r0 = LedgerManager.profile_player(p).renown
+	var keep = DungeonStateManager.active_player
+	DungeonStateManager.active_player = p
+	GameEvents.floor_cleared.emit("goblin_forest", 3)
+	DungeonStateManager.active_player = keep
+	p.unlock_floor("goblin_forest", 4)
+	var pr = LedgerManager.profile_player(p)
+	check(pr.bosses == 1 and pr.deepest == 3 and pr.renown > r0, "a boss kill and a deeper floor raise your renown (%d -> %d)" % [r0, pr.renown])
+	var npc = AdventurerManager.active(p)[0]
+	var nr = LedgerManager.profile_npc(npc).renown
+	LedgerManager.record_npc_job(npc, 9, true, true)
+	check(LedgerManager.profile_npc(npc).renown > nr and int(npc.deeds.deepest) >= 9, "NPC boss kills count the same way")
+	# weekly movers: snapshot at a new week, arrows after
+	LedgerManager._on_day(p, 1)
+	npc.points = int(npc.points) + 100000
+	var moved = LedgerManager.standings(p).filter(func(x): return x.key == "npc_%d" % int(npc.id))[0]
+	check(moved.pos == 1 and moved.move > 0, "climbers show their weekly movement (#%d, +%d)" % [moved.pos, moved.move])
+	LedgerManager._on_day(p, 8)
+	check(WorldClock.get_news(p, 20).any(func(n): return String(n.text).contains("tops the Guild Ledger")), "a new #1 makes the news")
+	check(LedgerManager.summary(p).begins_with("#"), "summary line: %s" % LedgerManager.summary(p))
 
 ## Commissions, rumours and nemesis rivals.
 func _town_life_checks() -> void:

@@ -151,6 +151,7 @@ func _refresh_news() -> void:
 	if not ev.is_empty():
 		var where = " in %s" % LocationManager.get_display_name(String(ev.location)) if String(ev.get("location", "")) != "" else ""
 		t += "[color=gold]%s%s[/color] [color=gray](until day %d)[/color]\n" % [ev.get("name", ev.id), where, int(ev.ends_day)]
+	t += "[color=#ffd166]%s[/color]\n" % LedgerManager.summary(c)
 	if inn_message != "":
 		t += "[color=lime]%s[/color]\n" % inn_message
 	t += "\n[b]Town news[/b]\n"

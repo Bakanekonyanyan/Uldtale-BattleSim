@@ -479,7 +479,7 @@ Concept sketch: a first-person illustrated view of the path ahead, with a minima
 
 **Pieces to build**
 
-1. **Guild Ledger:** renown for you and every NPC from rank, floors cleared, bosses, bounties, World Firsts and duels. A Guild screen with the standings, its movers and your gap to #1.
+1. **Guild Ledger (built):** renown for you and every active NPC by one formula (`data/ledger.json`): rank x120, Guild points x1, deepest floor cleared x25, bosses slain x15, level x10, World Firsts x150. Guild → **Ledger** shows the top 15 and you, weekly movement arrows, rivals in orange, and each adventurer's deeds and gap to you. The town news panel shows your place and the gap to the one above; weekly news reports a new #1, top-5 entries and your climb or slip. `LedgerManager.record_first()` is ready for World Firsts.
 2. **World Firsts:** first clears of key floors and named bosses are contested. NPCs claim them in the daily sim; news announces them; they're worth big renown.
 3. **Seeded world** (one seed per new game): which races hold which locations, location modifiers (e.g. Flooded Caves: more Water, Soaked enemies), named boss placement, starting roster.
 4. **Generated history:** a reigning Champion, two or three past feuds and a lost expedition per world. They seed the Vanguard, rivals, rumours and early news.
