@@ -463,3 +463,27 @@ Concept sketch: a first-person illustrated view of the path ahead, with a minima
 - Campfires replace Press On / Breather: Momentum builds until you rest.
 - Encounters (helpers, wounded, thieves, nemeses), rumours (marked tiles) and commission materials (gathering spots) happen on the map. Omens, boons, challenges and the Bestiary carry over unchanged.
 
+
+## 9. Endgame: become the top adventurer (design agreed, not built yet)
+
+**Goal:** be the Guild's Champion, in a world that lives and changes on its own, and is different every playthrough.
+
+**Decisions**
+
+| Topic | Decision |
+|---|---|
+| Finale | **Ascension Trial:** at S-rank and #1 on the Guild Ledger you unlock the Trial: duels against the Vanguard (the top NPC adventurers), then the deepest boss. Win to be crowned Champion |
+| Pace | **Yearly crowning:** at the end of each in-game year the Guild crowns whoever is #1 on the Ledger. If an NPC wins, they're the reigning Champion you must dethrone. Raises the stakes; never a game over |
+| Uniqueness | All four: **World Firsts race**, **seeded world**, **generated history**, **player origins** |
+| After the crown | **Defend + Legacy:** challengers rise and you defend the title; when you retire, a new world's Hall of Fame remembers you |
+
+**Pieces to build**
+
+1. **Guild Ledger:** renown for you and every NPC from rank, floors cleared, bosses, bounties, World Firsts and duels. A Guild screen with the standings, its movers and your gap to #1.
+2. **World Firsts:** first clears of key floors and named bosses are contested. NPCs claim them in the daily sim; news announces them; they're worth big renown.
+3. **Seeded world** (one seed per new game): which races hold which locations, location modifiers (e.g. Flooded Caves: more Water, Soaked enemies), named boss placement, starting roster.
+4. **Generated history:** a reigning Champion, two or three past feuds and a lost expedition per world. They seed the Vanguard, rivals, rumours and early news.
+5. **Player origins:** a background at creation (e.g. guild orphan, disgraced knight, foreign scholar) with a small perk and a personal rival or ally.
+6. **Yearly crowning:** an end-of-year event; an NPC Champion becomes the title-holder and the final Trial duel.
+7. **Ascension Trial:** a gauntlet of Vanguard duels (real battles using their builds) and the deepest boss.
+8. **Champion and Legacy:** challengers rise; on retiring, a Hall of Fame entry carries into new worlds (a small nod, not power).
