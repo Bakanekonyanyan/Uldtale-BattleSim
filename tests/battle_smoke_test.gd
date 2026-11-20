@@ -1482,8 +1482,21 @@ func _run_state_checks() -> void:
 	check(w.currency == int(round(w0.currency * 1.5)), "Omens boost wave gold (%d vs %d)" % [w.currency, w0.currency])
 	RunState.set_omens(["dim_sight"])
 	check(Bestiary.shown_weaknesses(foe) == ["???"], "Dim Sight hides every weakness")
+	RunState.clear()
+	# Boons: picked after bosses, also run-long
+	var offer = BoonPicker.offer()
+	check(offer.size() == int(RunState.boon_data().get("offer_count", 3)), "a boss offers %d boons" % offer.size())
+	RunState.add_boon("ruthless")
+	RunState.add_boon("steadfast")
+	check(not BoonPicker.offer(99).has("ruthless"), "boons you hold aren't offered again")
+	check(BattleRules.break_max(foe, false) == max(1, need - 1) and BattleRules.break_max(foe, true) == int(BattleRules.cfg().break.hero_hits) + 1, "Ruthless and Steadfast shift Break thresholds")
+	RunState.add_boon("keen_eye")
+	check(not Bestiary.shown_weaknesses(foe).has("???") or BattleRules.weaknesses(foe).is_empty(), "Keen Eye shows every weakness")
+	RunState.add_boon("plunder")
+	var wp = RewardsManager.roll_wave_rewards({"current_wave": 1, "current_floor": 1, "is_boss_fight": false, "enemies": [], "momentum_level": 0})
+	check(wp.currency == int(round(w0.currency * 1.25)), "Plunder: +25% wave gold")
 	GameEvents.expedition_ended.emit("the_dungeon", true)
-	check(RunState.omens.is_empty(), "Omens end with the expedition")
+	check(RunState.omens.is_empty() and RunState.boons.is_empty(), "Omens and boons end with the expedition")
 
 func _enchant_checks() -> void:
 	var p = make_player()

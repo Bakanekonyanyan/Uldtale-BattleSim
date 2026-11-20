@@ -94,6 +94,13 @@ func _handle_victory() -> void:
 			h.current_hp = max(1, int(h.max_hp * 0.1))
 			ui_controller.add_combat_log("%s gets back on their feet." % h.name, "orange")
 	await _wait(1.0)
+	if context.is_boss_battle and DungeonStateManager.dungeon_active:
+		var offer = BoonPicker.offer()
+		if not offer.is_empty():
+			ui_controller.hide_battle_ui()
+			var picker = BoonPicker.open(parent_node, offer)
+			var boon_id = await picker.chosen
+			ui_controller.add_combat_log("Boon gained: %s" % RunState.all_boons().get(boon_id, {}).get("name", boon_id), "lime")
 	_show_battle_complete_dialog(total_xp)
 
 func _handle_defeat() -> void:

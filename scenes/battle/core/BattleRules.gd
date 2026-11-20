@@ -30,7 +30,7 @@ func _init(p_ctx: BattleContext, p_queue: TurnQueue) -> void:
 	ctx.rules = self
 	for h in ctx.get_heroes():   # hero poise starts fresh every battle
 		clear_break(h)
-	ctx.link_gauge = min(link_max(), MomentumSystem.get_momentum() * int(_link().get("start_per_momentum", 10)))
+	ctx.link_gauge = min(link_max(), MomentumSystem.get_momentum() * int(_link().get("start_per_momentum", 10)) + int(RunState.add("start_link")))
 
 static func cfg() -> Dictionary:
 	var d = DataRegistry.get_data("combat")
@@ -192,7 +192,7 @@ func _perfect_guard(guard: CharacterData, attacker: CharacterData, charged: bool
 	out.append("[color=#90e0ef][b]PERFECT GUARD![/b] %s turns the blow aside.[/color]" % guard.name)
 	stats.guards += 1
 	if attacker.is_alive() and not attacker.get_meta("broken", false):
-		var meter = int(attacker.get_meta("break_meter", 0)) + int(g.get("attacker_pips", 1))
+		var meter = int(attacker.get_meta("break_meter", 0)) + int(g.get("attacker_pips", 1)) + int(RunState.add("guard_pips"))
 		attacker.set_meta("break_meter", meter)
 		if meter >= break_max(attacker, false):
 			out.append(break_unit(attacker))
@@ -215,6 +215,7 @@ static func break_max(e: CharacterData, hero := false) -> int:
 	elif e.has_meta("elite_affix") or e.has_meta("encounter"):
 		base = int(b.get("elite_hits", 3))
 	base += int(RunState.add("break_hits_delta"))   # Omen: Brittle
+	base += int(RunState.add("hero_break_delta" if hero else "enemy_break_delta"))   # boons: Steadfast, Ruthless
 	return max(1, base + int(e.get_meta("times_broken", 0)) * int(b.get("growth_per_break", 1)))
 
 func _is_boss(e: CharacterData) -> bool:
@@ -265,6 +266,11 @@ func break_unit(e: CharacterData) -> String:
 		stats.setbacks += 1
 	else:
 		stats.breaks += 1
+		var heal = RunState.add("break_heal")   # boon: Vigor
+		if heal > 0.0:
+			for h in ctx.get_living_heroes():
+				h.heal(int(round(h.max_hp * heal)))
+			extra += " [color=#7bd389]Vigor: your party recovers %d%% HP.[/color]" % int(round(heal * 100))
 	if not is_hero and Bestiary.tracks(ctx):
 		Bestiary.add_break(e)
 		var learned = Bestiary.study(e)

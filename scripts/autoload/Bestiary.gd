@@ -72,7 +72,7 @@ func shown_weaknesses(e: CharacterData) -> Array:
 	var all = BattleRules.weaknesses(e)
 	if RunState.flag("hide_weaknesses"):   # Omen: Dim Sight
 		return ["???"]
-	if not enabled() or _player() == null:
+	if not enabled() or _player() == null or RunState.flag("reveal_weaknesses"):   # boon: Keen Eye
 		return all
 	var en: Dictionary = book().get(String(e.race), {})
 	var known: Array = en.get("weak", [])

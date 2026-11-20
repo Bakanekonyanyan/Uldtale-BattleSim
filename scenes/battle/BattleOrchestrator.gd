@@ -190,6 +190,12 @@ func start_battle() -> void:
 func _start_challenge() -> void:
 	if rules == null or context.is_pvp_mode or not DungeonStateManager.dungeon_active:
 		return
+	var wave_heal = RunState.add("wave_heal")   # boon: Second Wind
+	if wave_heal > 0.0:
+		for h in context.get_living_heroes():
+			h.heal(int(round(h.max_hp * wave_heal)))
+			h.current_mp = min(h.max_mp, h.current_mp + int(round(h.max_mp * wave_heal)))
+		ui_controller.add_combat_log("Second Wind: your party recovers %d%% HP and MP." % int(round(wave_heal * 100)), "lime")
 	rules.challenge = WaveChallenges.pick(context.is_boss_battle, context.enemies.size(), context.get_heroes().size())
 	if not rules.challenge.is_empty():
 		ui_controller.add_combat_log("[b]Challenge - %s:[/b] %s (bonus loot if you win)" % [rules.challenge.name, rules.challenge.description], "yellow")

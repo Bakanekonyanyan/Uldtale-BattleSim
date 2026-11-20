@@ -53,6 +53,7 @@ func roll_wave_rewards(battle_data: Dictionary) -> Dictionary:
 	
 	# Materials: from the races of the enemies just defeated (data/loot/material_tables.json)
 	_merge_counts(rewards, roll_material_drops(battle_data))
+	rewards["currency"] = int(round(rewards["currency"] * RunState.mult("gold_mult")))   # boon: Plunder
 	# Omens: more gold and materials for a harder run
 	var omen = RunState.reward_bonus()
 	if omen > 0.0:
