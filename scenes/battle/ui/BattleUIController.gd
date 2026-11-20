@@ -24,6 +24,7 @@ var turn_queue: TurnQueue
 var battle_context: BattleContext
 var timeline_label: RichTextLabel
 var link_label: RichTextLabel
+var challenge_label: RichTextLabel
 
 # UI Components
 @onready var player_info: RichTextLabel = $PlayerInfo
@@ -85,11 +86,12 @@ func initialize_multi(p_player: CharacterData, p_enemies: Array[CharacterData], 
 
 ## Turn-order timeline (top) and the party Link gauge (by the XP line).
 func _create_rules_hud() -> void:
-	for n in [timeline_label, link_label]:
+	for n in [timeline_label, link_label, challenge_label]:
 		if n:
 			n.queue_free()
 	timeline_label = null
 	link_label = null
+	challenge_label = null
 	if rules == null:
 		return
 	timeline_label = RichTextLabel.new()
@@ -111,6 +113,15 @@ func _create_rules_hud() -> void:
 	link_label.add_theme_font_size_override("normal_font_size", 14)
 	link_label.tooltip_text = "Party Link gauge: fills from hits, combos and Breaks. Ultimates cost %d; Unison Strike at full." % int(BattleRules.cfg().get("link", {}).get("ultimate_cost", 50))
 	add_child(link_label)
+	challenge_label = RichTextLabel.new()
+	challenge_label.bbcode_enabled = true
+	challenge_label.scroll_active = false
+	challenge_label.position = Vector2(384, 78)   # under the timeline, clear of the enemy sprites
+	challenge_label.size = Vector2(340, 21)
+	challenge_label.add_theme_font_size_override("normal_font_size", 13)
+	challenge_label.add_theme_stylebox_override("normal", _slim_box())
+	challenge_label.visible = false
+	add_child(challenge_label)
 	# make room: turn label below the timeline, XP line below the Link bar
 	if turn_label:
 		turn_label.position.y = 76
@@ -140,6 +151,13 @@ func _update_rules_hud() -> void:
 			var col = "#7bd389" if heroes.has(c) else ("#ffd166" if c.get_meta("broken", false) else "#ff8c69")
 			parts.append("[color=%s]%s%s[/color]" % [col, "[b]" if parts.is_empty() else "", nm + ("[/b]" if parts.is_empty() else "")])
 		timeline_label.text = "Next: " + " › ".join(parts)
+	if challenge_label:
+		var ch: Dictionary = rules.challenge
+		challenge_label.visible = not ch.is_empty() and timeline_label and timeline_label.visible
+		if not ch.is_empty():
+			var st = rules.battle_stats()
+			var ok = WaveChallenges.met(ch, st)
+			challenge_label.text = "[color=%s]%s %s[/color]" % ["#7bd389" if ok else "#ffd166", "✔" if ok else "◎", WaveChallenges.progress(ch, st)]
 	if link_label and battle_context:
 		var g = battle_context.link_gauge
 		var full = rules.link_max()
@@ -794,7 +812,7 @@ func hide_battle_ui():
 	if floor_label: floor_label.hide()
 	if dungeon_description_label: dungeon_description_label.hide()
 	# built in code: party rows, turn timeline, Link gauge
-	for n in [party_strip, timeline_label, link_label]:
+	for n in [party_strip, timeline_label, link_label, challenge_label]:
 		if n:
 			n.hide()
 

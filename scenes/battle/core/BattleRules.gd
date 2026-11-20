@@ -18,6 +18,11 @@ var queue: TurnQueue
 ## Enemies spawned by rules (Splitting elites) waiting to join: the battle
 ## loop adds them (turn order, AI, UI) and clears this list.
 var pending_spawns: Array[CharacterData] = []
+## What happened this battle (wave challenges): breaks, combos, weak_hits,
+## guards, items, unison, setbacks (heroes Broken or knocked out).
+var stats: Dictionary = {"breaks": 0, "combos": 0, "weak_hits": 0, "guards": 0, "items": 0, "unison": 0, "setbacks": 0}
+## This wave's challenge (WaveChallenges.pick) or {}.
+var challenge: Dictionary = {}
 
 func _init(p_ctx: BattleContext, p_queue: TurnQueue) -> void:
 	ctx = p_ctx
@@ -96,6 +101,10 @@ func after_action(action: BattleAction, snap: Dictionary) -> Array[String]:
 		if dealt <= 0:
 			continue
 		hit_any = true
+		if not hero and not t.is_alive() and int(hp.get(t, 0)) > 0:
+			stats.setbacks += 1
+		if hero and _weak_hit(action, t):
+			stats.weak_hits += 1
 		if not hero and t.is_defending and t.get_meta("perfect_guard", false):
 			lines.append_array(_perfect_guard(t, actor, was_charged))
 			continue
@@ -120,6 +129,9 @@ func after_action(action: BattleAction, snap: Dictionary) -> Array[String]:
 		if hit_any:   # split across the party so the gauge fills at a similar pace
 			add_link(float(_link().get("gain_per_hit", 4)) / max(1, ctx.get_heroes().size()))
 		add_link(float(_link().get("gain_combo", 15)) * combo_targets.size())
+		stats.combos += combo_targets.size()
+		if action.type == BattleAction.ActionType.ITEM:
+			stats.items += 1
 	# --- Defend against an attack you can see coming: Perfect Guard
 	if hero and action.type == BattleAction.ActionType.DEFEND and _guard().get("enabled", true):
 		if is_threatened(actor):
@@ -148,6 +160,7 @@ func after_action(action: BattleAction, snap: Dictionary) -> Array[String]:
 					lines.append("%s is spurred forward!" % t.name)
 	elif action.type == BattleAction.ActionType.UNISON:
 		add_link(-int(_link().get("unison_cost", 100)))
+		stats.unison += 1
 	# --- elite affixes
 	for e in ctx.enemies.duplicate():
 		lines.append_array(_affix_checks(e, int(hp.get(e, e.current_hp))))
@@ -175,6 +188,7 @@ func _perfect_guard(guard: CharacterData, attacker: CharacterData, charged: bool
 	var out: Array[String] = []
 	var g = _guard()
 	out.append("[color=#90e0ef][b]PERFECT GUARD![/b] %s turns the blow aside.[/color]" % guard.name)
+	stats.guards += 1
 	if attacker.is_alive() and not attacker.get_meta("broken", false):
 		var meter = int(attacker.get_meta("break_meter", 0)) + int(g.get("attacker_pips", 1))
 		attacker.set_meta("break_meter", meter)
@@ -244,6 +258,10 @@ func break_unit(e: CharacterData) -> String:
 		e.set_meta("barrier", 0)
 		extra += " The barrier shatters!"
 	ctx.intents.erase(e)
+	if is_hero:
+		stats.setbacks += 1
+	else:
+		stats.breaks += 1
 	if not is_hero and Bestiary.tracks(ctx):
 		Bestiary.add_break(e)
 		var learned = Bestiary.study(e)
@@ -270,6 +288,12 @@ func _next_hero_after(actor: CharacterData) -> CharacterData:
 		if c != actor and ctx.is_hero(c) and c.is_alive():
 			return c
 	return null
+
+## Stats including rounds (from the turn queue), for challenge checks.
+func battle_stats() -> Dictionary:
+	var out = stats.duplicate()
+	out["rounds"] = queue.round_number if queue else 1
+	return out
 
 # ------------------------------------------------------------------ turn start
 

@@ -757,6 +757,25 @@ func _combat_rules_checks() -> void:
 		"a guarded weakness hit gives the hero no pips and staggers the attacker")
 	rules.on_turn_start(hero)
 	check(not hero.has_meta("perfect_guard"), "Perfect Guard ends at the hero's next turn")
+	# Wave challenges: BattleRules counts what happened
+	var st = rules.battle_stats()
+	check(st.breaks >= 1 and st.weak_hits >= 2 and st.guards >= 1 and st.setbacks >= 1, "battle stats count Breaks, weakness hits, guards and setbacks (%s)" % str(st))
+	var breaker = {"name": "Breaker", "description": "Break 2 enemies.", "stat": "breaks", "at_least": 2}
+	check(WaveChallenges.met(breaker, {"breaks": 2}) and not WaveChallenges.met(breaker, {"breaks": 1}), "at_least challenges need the count")
+	check(WaveChallenges.met({"stat": "items", "at_most": 0}, {"items": 0}) and not WaveChallenges.met({"stat": "items", "at_most": 0}, {"items": 1}), "at_most challenges fail when exceeded")
+	check(WaveChallenges.progress(breaker, {"breaks": 1}).ends_with("(1/2)"), "challenge progress text")
+	var creward = WaveChallenges.roll_reward(3, false, ctx.enemies)
+	check(int(creward.currency) == int(WaveChallenges.cfg().reward.gold_per_floor) * 3 and creward.size() > 2, "a met challenge rewards gold and materials (%s)" % str(creward.keys()))
+	var picked := 0
+	var bad := 0
+	for i in range(50):
+		var ch = WaveChallenges.pick(true, 1, 1)
+		if not ch.is_empty():
+			picked += 1
+			if ch.get("id", "") in ["breaker", "together"]:
+				bad += 1
+	check(bad == 0, "challenges respect min_enemies / min_party")
+	check(picked == 50, "boss waves always offer a challenge")
 	hero.reset_defense()
 	ctx.intents.clear()
 	hero.race = old_race

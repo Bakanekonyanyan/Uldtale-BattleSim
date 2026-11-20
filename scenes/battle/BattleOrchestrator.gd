@@ -179,8 +179,31 @@ func start_battle() -> void:
 	if enemy_planner:
 		enemy_planner.plan_all_intents()       # intents are visible from the first turn
 		ui_controller.update_all_character_info()
+	_start_challenge()
 
 	_run_battle_loop()
+
+# --- Wave challenges (WaveChallenges.gd) ---
+
+func _start_challenge() -> void:
+	if rules == null or context.is_pvp_mode or not DungeonStateManager.dungeon_active:
+		return
+	rules.challenge = WaveChallenges.pick(context.is_boss_battle, context.enemies.size(), context.get_heroes().size())
+	if not rules.challenge.is_empty():
+		ui_controller.add_combat_log("[b]Challenge - %s:[/b] %s (bonus loot if you win)" % [rules.challenge.name, rules.challenge.description], "yellow")
+	ui_controller.update_all_character_info()
+
+func _finish_challenge(won: bool) -> void:
+	if rules == null or rules.challenge.is_empty() or not won:
+		return
+	if WaveChallenges.met(rules.challenge, rules.battle_stats()):
+		var reward = WaveChallenges.roll_reward(context.current_floor, context.is_boss_battle, context.enemies)
+		MomentumSystem.bank_rewards(reward)
+		ui_controller.add_combat_log("[b]Challenge complete: %s![/b] +%d gold and materials banked with the wave's loot%s." % [
+			rules.challenge.name, reward.currency, " (and gear!)" if not reward.equipment_instances.is_empty() else ""], "lime")
+		GameEvents.challenge_completed.emit(String(rules.challenge.id))
+	else:
+		ui_controller.add_combat_log("Challenge failed: %s." % rules.challenge.name, "gray")
 
 func _validate_setup() -> bool:
 	if not context.player:
@@ -217,7 +240,9 @@ func _build_components() -> void:
 
 	outcome = BattleOutcomeHandler.new()
 	outcome.initialize(combat_engine, visual_manager, ui_controller, turn_queue, context, self, network_sync)
-	outcome.battle_ended.connect(func(won, xp): battle_completed.emit(won, xp))
+	outcome.battle_ended.connect(func(won, xp):
+		_finish_challenge(won)
+		battle_completed.emit(won, xp))
 
 func _initialize_resources() -> void:
 	for c in context.get_heroes() + context.enemies:
