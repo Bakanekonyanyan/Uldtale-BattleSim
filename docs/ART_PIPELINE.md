@@ -24,6 +24,9 @@ are placeholders.
 Export each layer group from Krita as its own PNG **keeping the full canvas**,
 so layers line up without manual placement.
 
+**Templates:** `art_templates/` has a layered Krita template (OpenRaster) for
+every asset type above, with guides and pre-named layers - see its README.
+
 ## Characters: the layered ("paper doll") system
 
 Goal: player characters, shopkeepers and **every generated NPC adventurer**
