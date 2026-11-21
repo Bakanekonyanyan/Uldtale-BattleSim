@@ -203,6 +203,8 @@ func tags(npc: Dictionary) -> Array:
 		out.append("Enemy")
 	if int(npc.get("rivalry", 0)) >= int(soc.get("rival_at", 3)):
 		out.append("Rival")
+	if int(npc.get("deeds", {}).get("crowns", 0)) > 0:
+		out.append("Champion x%d" % int(npc.deeds.crowns) if int(npc.deeds.crowns) > 1 else "Champion")
 	return out
 
 func status_text(player: CharacterData, npc: Dictionary) -> String:

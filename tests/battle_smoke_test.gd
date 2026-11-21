@@ -1501,6 +1501,24 @@ func _ledger_checks() -> void:
 	LedgerManager._on_day(p, 8)
 	check(WorldClock.get_news(p, 20).any(func(n): return String(n.text).contains("tops the Guild Ledger")), "a new #1 makes the news")
 	check(LedgerManager.summary(p).begins_with("#"), "summary line: %s" % LedgerManager.summary(p))
+	# the yearly crowning
+	var dpy = LedgerManager.days_per_year()
+	check(dpy == 112 and LedgerManager.year_of(1) == 1 and LedgerManager.year_of(113) == 2, "a year is %d days" % dpy)
+	LedgerManager._crowning_tick(p, 50)
+	check(LedgerManager.champion(p).is_empty() and LedgerManager.days_to_crowning(p) > 0, "no Champion before the first crowning")
+	var lead = LedgerManager.standings(p)[0]
+	LedgerManager._crowning_tick(p, 113)
+	var ch = LedgerManager.champion(p)
+	check(ch.get("key", "") == lead.key and int(ch.year) == 1 and WorldClock.get_news(p, 20).any(func(n): return String(n.text).contains("crowned Champion of Year 1")),
+		"at the turn of the year the Ledger's #1 is crowned (%s)" % ch.get("name", "?"))
+	check(not lead.is_player and "Champion" in AdventurerManager.tags(lead.npc) and LedgerManager.profile_npc(lead.npc).renown > int(lead.renown), "an NPC Champion gets the title and the crown's renown")
+	# the player at #1 takes the crown and its purse
+	GuildManager.state(p).points = 1000000
+	var gold0 = p.currency.copper
+	LedgerManager._crowning_tick(p, 113 + dpy)
+	check(LedgerManager.champion(p).get("is_player", false) and p.currency.copper > gold0 and int(LedgerManager.profile_player(p).crowns) == 1,
+		"you can take the crown (gold, Guild points, renown)")
+	check(WorldClock.get_news(p, 20).any(func(n): return String(n.text).contains("You are crowned Champion of Year 2")), "your crowning makes the news")
 
 ## Commissions, rumours and nemesis rivals.
 func _town_life_checks() -> void:

@@ -33,10 +33,18 @@ func _ready() -> void:
 	panel.add_child(title)
 	var sub = Label.new()
 	sub.text = LedgerManager.summary(player)
-	sub.position = Vector2(220, 20)
+	sub.position = Vector2(220, 8)
 	sub.add_theme_font_size_override("font_size", 15)
 	sub.add_theme_color_override("font_color", Color("ffd166"))
 	panel.add_child(sub)
+	var crown = Label.new()
+	var ch = LedgerManager.champion(player)
+	crown.text = ("Reigning Champion: %s (Year %d)" % [("you" if ch.is_player else String(ch.name)), int(ch.year)] if not ch.is_empty() else "No Champion crowned yet") \
+		+ "   -   The Crowning in %d day%s" % [LedgerManager.days_to_crowning(player), "" if LedgerManager.days_to_crowning(player) == 1 else "s"]
+	crown.position = Vector2(220, 30)
+	crown.add_theme_font_size_override("font_size", 13)
+	crown.add_theme_color_override("font_color", Color("c9b8ff"))
+	panel.add_child(crown)
 	list = Tree.new()
 	list.position = Vector2(20, 60)
 	list.size = Vector2(620, 506)
@@ -92,7 +100,8 @@ func _fill() -> void:
 		var p: Dictionary = rows[i]
 		var it = list.create_item(root)
 		var mv = "▲%d" % p.move if p.move > 0 else ("▼%d" % -p.move if p.move < 0 else "-")
-		var cells = [str(p.pos), p.name + (" (you)" if p.is_player else ""), String(p.rank), str(p.renown), str(p.deepest), str(p.bosses), mv]
+		var crowned = "♛ " if String(LedgerManager.champion(player).get("key", "")) == String(p.key) else ""
+		var cells = [str(p.pos), crowned + p.name + (" (you)" if p.is_player else ""), String(p.rank), str(p.renown), str(p.deepest), str(p.bosses), mv]
 		var col = Color("e6dccb")
 		if p.is_player:
 			col = Color("ffd166")
@@ -119,7 +128,7 @@ func _show(i: int) -> void:
 	var t = "[b][font_size=20]#%d  %s[/font_size][/b]\n" % [p.pos, p.name]
 	t += "%s   Level %d\n\n" % [RankManager.display(String(p.rank)), int(p.level)]
 	t += "[b]Renown:[/b] [color=#ffd166]%d[/color]\n" % int(p.renown)
-	t += "Guild points: %d\nDeepest floor cleared: %d\nBosses slain: %d\nWorld Firsts: %d\n" % [int(p.points), int(p.deepest), int(p.bosses), int(p.firsts)]
+	t += "Guild points: %d\nDeepest floor cleared: %d\nBosses slain: %d\nWorld Firsts: %d\nCrowns: %d\n" % [int(p.points), int(p.deepest), int(p.bosses), int(p.firsts), int(p.get("crowns", 0))]
 	if not p.is_player:
 		var n: Dictionary = p.npc
 		t += "\n%s\n" % AdventurerManager.title_line(n)

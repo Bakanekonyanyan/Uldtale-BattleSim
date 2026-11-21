@@ -19,6 +19,7 @@ signal item_upgraded(item: Equipment, new_level: int, success: bool)
 signal item_enchanted(item: Equipment, rarity: String, success: bool)
 signal challenge_completed(challenge_id: String)
 signal commission_completed(shop: String)
+signal champion_crowned(name: String, year: int, is_player: bool)
 ## World clock (WorldClock.gd): one per day passed, then one per advance.
 signal day_passed(player: CharacterData, day: int)
 signal days_advanced(player: CharacterData, from_day: int, to_day: int)

@@ -1,6 +1,8 @@
 {
 	"_comment": "The Guild Ledger (LedgerManager.gd): renown standings for you and every active adventurer, scored the same way for both. Renown = rank x per_rank + guild points x per_point + deepest floor cleared x per_floor + bosses slain x per_boss + level x per_level + world firsts x per_first. Movers are measured against the snapshot taken at the start of each week.",
-	"weights": { "per_rank": 120, "per_point": 1.0, "per_floor": 25, "per_boss": 15, "per_level": 10, "per_first": 150 },
+	"weights": { "per_rank": 120, "per_point": 1.0, "per_floor": 25, "per_boss": 15, "per_level": 10, "per_first": 150, "per_crown": 100 },
 	"show_top": 15,
-	"news_top": 5
+	"news_top": 5,
+	"_crowning": "At the turn of each in-game year the Guild crowns the Ledger's #1 as Champion. An NPC Champion holds the title until someone overtakes them at a crowning (and, later, the Ascension Trial). Crowns count toward renown (per_crown).",
+	"crowning": { "warning_days": 7, "per_crown": 100, "player_gold": 2000, "player_gold_per_floor": 150, "player_points": 50 }
 }

@@ -484,6 +484,6 @@ Concept sketch: a first-person illustrated view of the path ahead, with a minima
 3. **Seeded world** (one seed per new game): which races hold which locations, location modifiers (e.g. Flooded Caves: more Water, Soaked enemies), named boss placement, starting roster.
 4. **Generated history:** a reigning Champion, two or three past feuds and a lost expedition per world. They seed the Vanguard, rivals, rumours and early news.
 5. **Player origins:** a background at creation (e.g. guild orphan, disgraced knight, foreign scholar) with a small perk and a personal rival or ally.
-6. **Yearly crowning:** an end-of-year event; an NPC Champion becomes the title-holder and the final Trial duel.
+6. **Yearly crowning (built):** a year is 112 days. At the turn of each year the Ledger's #1 is crowned Champion (♛ on the Ledger, a Champion tag, +100 renown per crown). You get gold (2000 + 150 per floor cleared) and 50 Guild points; an NPC keeps the title until overtaken. News warns 7 days before, and the town panel counts down. Settings: `data/ledger.json` crowning.
 7. **Ascension Trial:** a gauntlet of Vanguard duels (real battles using their builds) and the deepest boss.
 8. **Champion and Legacy:** challengers rise; on retiring, a Hall of Fame entry carries into new worlds (a small nod, not power).
