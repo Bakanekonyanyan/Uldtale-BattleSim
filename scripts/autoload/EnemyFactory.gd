@@ -239,32 +239,18 @@ func get_difficulty_tier(floor: int) -> int:
 	else:
 		return 8  # Legendary
 
+## Enemy stat multiplier for a floor (data/progression.json enemy_floor_mult,
+## on top of the enemy's level); past the table the last step repeats.
 func get_base_multiplier(floor: int) -> float:
-	"""Returns stat multiplier based on floor with smooth progression"""
-	if floor <= 2:
-		# Floors 1-2: Easy introduction (1.0x - 1.1x)
-		return 1.0 + (floor - 1) * 0.05
-	elif floor <= 5:
-		# Floors 3-5: Gradual increase (1.15x - 1.45x)
-		return 1.1 + (floor - 2) * 0.15
-	elif floor <= 8:
-		# Floors 6-8: Moderate scaling (1.6x - 2.05x)
-		return 1.45 + (floor - 5) * 0.20
-	elif floor <= 11:
-		# Floors 9-11: Steeper curve (2.3x - 3.05x)
-		return 2.05 + (floor - 8) * 0.35
-	elif floor <= 14:
-		# Floors 12-14: (3.4x - 4.5x)
-		return 3.05 + (floor - 11) * 0.45
-	elif floor <= 17:
-		# Floors 15-17: (5.0x - 6.5x)
-		return 4.5 + (floor - 14) * 0.60
-	elif floor <= 20:
-		# Floors 18-20: (7.2x - 9.0x)
-		return 6.5 + (floor - 17) * 0.75
-	else:
-		# Floors 21-25: End game (9.9x - 13.5x)
-		return 9.0 + (floor - 20) * 0.90
+	var d = DataRegistry.get_data("progression")
+	var t: Array = d.get("enemy_floor_mult", []) if d is Dictionary else []
+	if t.is_empty():
+		return 1.0
+	var f = max(1, floor)
+	if f <= t.size():
+		return float(t[f - 1])
+	var step = float(t[-1]) - float(t[-2]) if t.size() > 1 else 0.0
+	return float(t[-1]) + step * (f - t.size())
 
 func get_available_equipment_slots(floor: int, is_boss: bool) -> Array:
 	"""Equipment slots scale better with floor progression"""

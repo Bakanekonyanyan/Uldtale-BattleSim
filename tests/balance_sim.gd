@@ -35,6 +35,10 @@ func _ready():
 		var f3 = FileAccess.open("user://balance_%s.txt" % mode, FileAccess.WRITE)
 		f3.store_string("\n".join(out)); f3.close()
 		get_tree().quit(); return
+	if mode == "career":
+		career_report(args)
+		get_tree().quit()
+		return
 	if mode == "duel":
 		duel_report(args)
 		get_tree().quit()
@@ -329,6 +333,64 @@ func duel_report(args: Array) -> void:
 		parts.append("%s: win %d%%, HP left %d%% (when won), %.1f turns" % [pol, int(round(100.0 * st.won / st.n)), int(round(100.0 * st.hp / max(1, st.won))), st.turns / st.n])
 	print("DUEL TOTAL|floor %d wave %d level %d party %d|%s" % [fl, wave, lvl, sim_party, "  ".join(parts)])
 	sim_party = 0
+	print("SIM DONE")
+
+## A career: start at level 1 on floor 1 and climb. Each floor the hero is
+## rebuilt at its current level with gear for that floor (a player who keeps
+## their gear current), then plays the real floor loop (6 waves, Breathers
+## below 50% HP, XP and level-ups). A failed floor is retried (up to `tries`).
+## Prints per floor: level on arrival, first-try clear %, average attempts,
+## share stuck.   tool: career --floors=15 --runs=20 --policy=smart --party=0
+func career_report(args: Array) -> void:
+	var opts := {"classes": ",".join(CLASSES), "floors": "15", "runs": "20", "tries": "4", "policy": "smart", "party": "0", "potions": "2"}
+	for a in args.slice(1):
+		var kv = String(a).trim_prefix("--").split("=", true, 1)
+		if kv.size() == 2:
+			opts[kv[0]] = kv[1]
+	var classes = Array(String(opts.classes).split(",", false))
+	var floors = int(opts.floors)
+	var runs = int(opts.runs)
+	var tries = int(opts.tries)
+	sim_policy = String(opts.policy)
+	sim_party = clamp(int(opts.party), 0, 2)
+	start_potions = int(opts.potions)
+	use_setup = true
+	var lv := {}; var first := {}; var att := {}; var reached := {}
+	for f in range(1, floors + 1):
+		lv[f] = 0.0; first[f] = 0; att[f] = 0.0; reached[f] = 0
+	var total := 0
+	for cls in classes:
+		for i in range(runs):
+			total += 1
+			_reseed(777 + i * 31337 + hash(cls) % 4999)
+			var level := 1
+			for f in range(1, floors + 1):
+				reached[f] += 1
+				lv[f] += level
+				var cleared := false
+				var n := 0
+				while n < tries and not cleared:
+					n += 1
+					var hero = AutoBattler.build_hero({"name": "Hero", "race": "Hume", "cls": cls, "level": level, "gear_floor": f, "branch": i % 3})
+					hero.is_player = true
+					if start_potions > 0:
+						hero.add_to_pack(ItemManager.get_item("health_potion"), start_potions)
+						hero.add_to_pack(ItemManager.get_item("mana_potion"), start_potions)
+					MomentumSystem.reset_momentum()
+					var r = sim_run(cls, f, hero)
+					level = max(level, hero.level)
+					cleared = r.cleared
+					if cleared and n == 1:
+						first[f] += 1
+				att[f] += n
+				if not cleared:
+					break
+	for f in range(1, floors + 1):
+		if reached[f] == 0:
+			break
+		print("CAREER|F%d|reached %d%%|level %.1f|first-try %d%%|attempts %.2f" % [f, int(100.0 * reached[f] / total), lv[f] / reached[f], int(100.0 * first[f] / reached[f]), att[f] / reached[f]])
+	sim_party = 0
+	start_potions = 0
 	print("SIM DONE")
 
 func _reseed(s: int) -> void:
