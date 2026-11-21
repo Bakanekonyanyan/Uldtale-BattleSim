@@ -13,3 +13,9 @@ export_presets.cfg
 .mono/
 data_*/
 mono_crash.*.json
+
+# Content manager (DevTools/) local files
+DevTools/content_manager_config.local.json
+DevTools/backups/
+DevTools/sim_history/
+__pycache__/

@@ -1,0 +1,46 @@
+{
+ "tab": "Materials",
+ "file": "data/items/materials.json",
+ "order": 23,
+ "sections": [
+  {
+   "kind": "collection",
+   "label": "Materials",
+   "key_style": "snake",
+   "name_field": "name",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "item_type",
+     "type": "enum",
+     "source": "gd:ItemType",
+     "default": "MATERIAL"
+    },
+    {
+     "name": "value",
+     "type": "int",
+     "min": 0,
+     "default": 10
+    },
+    {
+     "name": "stackable",
+     "type": "bool",
+     "default": true
+    },
+    {
+     "name": "max_stack",
+     "type": "int",
+     "min": 1,
+     "default": 999
+    }
+   ]
+  }
+ ]
+}

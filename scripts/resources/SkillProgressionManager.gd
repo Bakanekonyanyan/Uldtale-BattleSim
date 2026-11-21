@@ -5,7 +5,12 @@
 class_name SkillProgressionManager
 extends RefCounted
 
-var character: CharacterData
+## Weak back-reference: the character owns this manager, so a strong
+## reference here would be a cycle and neither would ever be freed.
+var _character_ref: WeakRef
+var character: CharacterData:
+	get: return _character_ref.get_ref() if _character_ref else null
+	set(value): _character_ref = weakref(value) if value else null
 var skill_levels: Dictionary = {}  # skill_name -> {level: int, uses: int}
 var skill_instances: Dictionary = {}  # skill_name -> Skill instance
 var skill_cooldowns: Dictionary = {}  # skill_name -> turns_remaining
@@ -27,8 +32,25 @@ func add_skills(skill_names: Array):
 			var instance = skill_data.duplicate()
 			instance.level = skill_levels[skill_name]["level"]
 			instance.uses = skill_levels[skill_name]["uses"]
+			_set_mods(instance)
 			instance.calculate_level_bonuses()
 			skill_instances[skill_name] = instance
+
+## Talent upgrades for a skill (power/cooldown/costs/duration), applied on top of
+## its level bonuses every time those are recalculated.
+func _set_mods(instance: Skill) -> void:
+	instance.talent_mods = character.talents.skill_mods(instance.name) if character and character.talents else {}
+
+func refresh_talent_mods() -> void:
+	for skill_name in skill_instances:
+		var inst: Skill = skill_instances[skill_name]
+		_set_mods(inst)
+		inst.calculate_level_bonuses()
+
+func remove_skill(skill_name: String) -> void:
+	skill_levels.erase(skill_name)
+	skill_instances.erase(skill_name)
+	skill_cooldowns.erase(skill_name)
 
 func get_skill_instance(skill_name: String) -> Skill:
 	"""Get the skill instance"""
@@ -39,10 +61,11 @@ func get_skill_instance(skill_name: String) -> Skill:
 	var skill_data = SkillManager.get_skill(skill_name)
 	if skill_data:
 		var instance = skill_data.duplicate()
+		_set_mods(instance)
 		if skill_levels.has(skill_name):
 			instance.level = skill_levels[skill_name]["level"]
 			instance.uses = skill_levels[skill_name]["uses"]
-			instance.calculate_level_bonuses()
+		instance.calculate_level_bonuses()
 		skill_instances[skill_name] = instance
 		return instance
 	
@@ -74,7 +97,7 @@ func set_cooldown(skill_name: String, turns: int):
 	"""Set a skill on cooldown"""
 	if turns > 0:
 		skill_cooldowns[skill_name] = turns
-		print("%s's %s on cooldown: %d turns" % [character.name, skill_name, turns])
+		Log.debug("skill_progression", "%s's %s on cooldown: %d turns" % [character.name, skill_name, turns])
 
 func is_skill_ready(skill_name: String) -> bool:
 	"""Check if skill is off cooldown"""
@@ -95,7 +118,7 @@ func reduce_cooldowns():
 			skill_cooldowns.erase(skill_name)
 	
 	if not ready_skills.is_empty():
-		print("%s: Skills ready: %s" % [character.name, ", ".join(ready_skills)])
+		Log.debug("skill_progression", "%s: Skills ready: %s" % [character.name, ", ".join(ready_skills)])
 
 func clear_cooldowns():
 	"""Remove all cooldowns"""
@@ -142,5 +165,6 @@ func load_save_data(data: Dictionary):
 			var instance = skill_data.duplicate()
 			instance.level = skill_levels[skill_name]["level"]
 			instance.uses = skill_levels[skill_name]["uses"]
+			_set_mods(instance)
 			instance.calculate_level_bonuses()
 			skill_instances[skill_name] = instance

@@ -5,7 +5,12 @@
 class_name BuffDebuffManager
 extends RefCounted
 
-var character: CharacterData
+## Weak back-reference: the character owns this manager, so a strong
+## reference here would be a cycle and neither would ever be freed.
+var _character_ref: WeakRef
+var character: CharacterData:
+	get: return _character_ref.get_ref() if _character_ref else null
+	set(value): _character_ref = weakref(value) if value else null
 var buffs: Dictionary = {}  # AttributeTarget -> {value: int, duration: int}
 var debuffs: Dictionary = {}
 
@@ -25,7 +30,7 @@ func apply_buff(attribute: Skill.AttributeTarget, value: int, duration: int):
 		elif value == buffs[attribute].value:
 			buffs[attribute].duration = max(buffs[attribute].duration, duration)
 	
-	print("%s received buff to %s: +%d for %d turns" % [
+	Log.debug("status", "%s received buff to %s: +%d for %d turns" % [
 		character.name,
 		Skill.AttributeTarget.keys()[attribute],
 		value,
@@ -45,7 +50,7 @@ func apply_debuff(attribute: Skill.AttributeTarget, value: int, duration: int):
 		elif value == debuffs[attribute].value:
 			debuffs[attribute].duration = max(debuffs[attribute].duration, duration)
 	
-	print("%s received debuff to %s: -%d for %d turns" % [
+	Log.debug("status", "%s received debuff to %s: -%d for %d turns" % [
 		character.name,
 		Skill.AttributeTarget.keys()[attribute],
 		value,
@@ -64,7 +69,7 @@ func update_buffs_and_debuffs():
 	for attribute in buffs.keys():
 		buffs[attribute].duration -= 1
 		if buffs[attribute].duration <= 0:
-			print("%s's buff to %s expired" % [
+			Log.debug("status", "%s's buff to %s expired" % [
 				character.name,
 				Skill.AttributeTarget.keys()[attribute]
 			])
@@ -75,7 +80,7 @@ func update_buffs_and_debuffs():
 	for attribute in debuffs.keys():
 		debuffs[attribute].duration -= 1
 		if debuffs[attribute].duration <= 0:
-			print("%s's debuff to %s expired" % [
+			Log.debug("status", "%s's debuff to %s expired" % [
 				character.name,
 				Skill.AttributeTarget.keys()[attribute]
 			])
@@ -114,6 +119,11 @@ func has_buffs() -> bool:
 
 func has_debuffs() -> bool:
 	return not debuffs.is_empty()
+
+func clear_debuffs():
+	"""Remove only debuffs (keeps buffs)"""
+	debuffs.clear()
+	character.calculate_secondary_attributes()
 
 func clear_all():
 	"""Remove all buffs and debuffs"""

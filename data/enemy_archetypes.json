@@ -1,0 +1,412 @@
+{
+  "_doc": "Enemy and boss archetypes (docs/design/GAME_ROADMAP.md section 2). An archetype is a role template: base stats come from classes.json non_playable[stats_class]; skills are drawn from hero-class pools plus monster-only skills; talents are spent in one hero branch as floors deepen; ai_role tunes EnemyAI. Bosses are an archetype plus a full branch to its ultimate, a race signature skill and HP-phase triggers.",
+  "settings": {
+    "talent_points_per_floor": 0.5,
+    "race_skill_chance": 0.5,
+    "damage_power_cap_base": 35,
+    "damage_power_cap_per_floor": 5,
+    "_doc": "Rolled DAMAGE skills above damage_power_cap_base + per_floor x floor are skipped, and skill_min_floor holds back strong buffs/debuffs, so floor-1 enemies don't open with a hero's finisher or a rage buff.",
+    "skill_min_floor": {
+      "Wolf's Frenzy": 3,
+      "Totemic Blessing": 2,
+      "Crippling Hex": 3
+    }
+  },
+  "archetypes": {
+    "Minion": {
+      "description": "Quick, dirty fighters: poison, bleeds and cheap shots.",
+      "stats_class": "Minion",
+      "ai_role": "skirmisher",
+      "skills_per_enemy": 3,
+      "skill_pools": {
+        "monster": [
+          "Bite",
+          "Scratch",
+          "Howl"
+        ],
+        "Myrmidon": [
+          "Poison Blade",
+          "Backstab",
+          "Twin Fangs"
+        ],
+        "Shinobi": [
+          "Lightning Kunai",
+          "Shuriken Storm"
+        ]
+      },
+      "pool_weights": {
+        "monster": 2,
+        "Myrmidon": 1,
+        "Shinobi": 1
+      },
+      "min_from": {
+        "monster": 1
+      },
+      "talents": {
+        "class": "Myrmidon",
+        "branch": "skirmisher"
+      }
+    },
+    "Brute": {
+      "description": "Big hitters. Two-handed swings and ground-shaking blows.",
+      "stats_class": "Brute",
+      "ai_role": "bruiser",
+      "skills_per_enemy": 3,
+      "skill_pools": {
+        "monster": [
+          "Smash",
+          "Roar",
+          "Stomp"
+        ],
+        "Berserker": [
+          "Cleave",
+          "Wolf's Frenzy",
+          "Whirlwind"
+        ],
+        "Monk": [
+          "Tiger Claw",
+          "Ox Kick"
+        ]
+      },
+      "pool_weights": {
+        "monster": 2,
+        "Berserker": 2,
+        "Monk": 1
+      },
+      "min_from": {
+        "monster": 1
+      },
+      "talents": {
+        "class": "Berserker",
+        "branch": "carnage"
+      }
+    },
+    "Shaman": {
+      "description": "Spirit-callers who keep the pack alive and enraged.",
+      "stats_class": "Shaman",
+      "ai_role": "healer",
+      "skills_per_enemy": 3,
+      "skill_pools": {
+        "monster": [
+          "Lightning Bolt",
+          "Healing Wave",
+          "Totemic Blessing"
+        ],
+        "Kannagi": [
+          "Ancestral Mending",
+          "Spirit Barrier",
+          "Wrath of the Ancients"
+        ],
+        "Druid": [
+          "Plague Strike",
+          "Wild Protection"
+        ]
+      },
+      "pool_weights": {
+        "monster": 2,
+        "Kannagi": 2,
+        "Druid": 1
+      },
+      "min_from": {
+        "monster": 1
+      },
+      "require_types": [
+        "HEAL"
+      ],
+      "talents": {
+        "class": "Kannagi",
+        "branch": "ancestral_spirits"
+      }
+    },
+    "Mage": {
+      "description": "Raw elemental casters. Fragile, but they hit hard.",
+      "stats_class": "Mage",
+      "ai_role": "caster",
+      "skills_per_enemy": 3,
+      "skill_pools": {
+        "monster": [
+          "Fireball",
+          "Frost Nova",
+          "Arcane Intellect"
+        ],
+        "Elementalist": [
+          "Blazing Ice Spear",
+          "Volcanic Thunder Storm",
+          "Arcane Clarity"
+        ],
+        "Necromancer": [
+          "Dark Bolt"
+        ]
+      },
+      "pool_weights": {
+        "monster": 2,
+        "Elementalist": 2,
+        "Necromancer": 1
+      },
+      "min_from": {
+        "monster": 1
+      },
+      "talents": {
+        "class": "Elementalist",
+        "branch": "conflux"
+      }
+    },
+    "Guard": {
+      "description": "Shield-bearers who soak hits and stagger you.",
+      "stats_class": "Guard",
+      "ai_role": "tank",
+      "skills_per_enemy": 3,
+      "skill_pools": {
+        "monster": [
+          "Smash",
+          "Roar"
+        ],
+        "Paladin": [
+          "Holy Strike",
+          "Divine Shield",
+          "Shield Bash"
+        ],
+        "Samurai": [
+          "Iaido",
+          "Bushido"
+        ]
+      },
+      "pool_weights": {
+        "monster": 1,
+        "Paladin": 2,
+        "Samurai": 1
+      },
+      "min_from": {},
+      "talents": {
+        "class": "Paladin",
+        "branch": "bulwark"
+      }
+    },
+    "Hexer": {
+      "description": "Curse-weavers who drain you and weaken your guard.",
+      "stats_class": "Hexer",
+      "ai_role": "controller",
+      "skills_per_enemy": 3,
+      "skill_pools": {
+        "monster": [
+          "Howl"
+        ],
+        "Necromancer": [
+          "Dark Bolt",
+          "Life Tap",
+          "Curse of Weakness",
+          "Crippling Hex"
+        ],
+        "Beastmaster": [
+          "Manticore Sting",
+          "Hunter's Mark"
+        ]
+      },
+      "pool_weights": {
+        "monster": 1,
+        "Necromancer": 3,
+        "Beastmaster": 1
+      },
+      "min_from": {},
+      "talents": {
+        "class": "Necromancer",
+        "branch": "curses"
+      }
+    }
+  },
+  "races": {
+    "Goblin": {
+      "archetype_weights": {
+        "Minion": 4,
+        "Hexer": 2,
+        "Shaman": 2,
+        "Brute": 1,
+        "Mage": 1,
+        "Guard": 1
+      },
+      "skills": {
+        "Myrmidon": [
+          "Poison Blade"
+        ],
+        "monster": [
+          "Scratch"
+        ]
+      }
+    },
+    "Orc": {
+      "archetype_weights": {
+        "Brute": 3,
+        "Guard": 3,
+        "Shaman": 2,
+        "Minion": 1,
+        "Mage": 1,
+        "Hexer": 1
+      },
+      "skills": {
+        "Berserker": [
+          "War Howl"
+        ],
+        "monster": [
+          "Roar"
+        ]
+      }
+    },
+    "Troll": {
+      "archetype_weights": {
+        "Brute": 4,
+        "Guard": 2,
+        "Shaman": 2,
+        "Minion": 1,
+        "Mage": 1,
+        "Hexer": 1
+      },
+      "skills": {
+        "monster": [
+          "Smash",
+          "Stomp"
+        ]
+      }
+    },
+    "Fairy": {
+      "archetype_weights": {
+        "Mage": 4,
+        "Hexer": 3,
+        "Shaman": 2,
+        "Minion": 1,
+        "Brute": 0,
+        "Guard": 0
+      },
+      "skills": {
+        "monster": [
+          "Howl"
+        ],
+        "Elementalist": [
+          "Tidal Wave"
+        ]
+      }
+    }
+  },
+  "ai_roles": {
+    "bruiser": {
+      "skill_chance": 0.85,
+      "consider_buffs": 0.4,
+      "debuff_chance": 0.4,
+      "combo_bias": 0.0,
+      "defend_below": 0.25,
+      "heal_ally_below": 0.0
+    },
+    "skirmisher": {
+      "skill_chance": 0.75,
+      "consider_buffs": 0.5,
+      "debuff_chance": 0.6,
+      "combo_bias": 0.25,
+      "defend_below": 0.3,
+      "heal_ally_below": 0.0
+    },
+    "healer": {
+      "skill_chance": 0.65,
+      "consider_buffs": 0.8,
+      "debuff_chance": 0.4,
+      "combo_bias": 0.0,
+      "defend_below": 0.35,
+      "heal_ally_below": 0.6
+    },
+    "caster": {
+      "skill_chance": 0.9,
+      "consider_buffs": 0.5,
+      "debuff_chance": 0.5,
+      "combo_bias": 0.1,
+      "defend_below": 0.3,
+      "heal_ally_below": 0.0
+    },
+    "tank": {
+      "skill_chance": 0.6,
+      "consider_buffs": 0.8,
+      "debuff_chance": 0.6,
+      "combo_bias": 0.0,
+      "defend_below": 0.45,
+      "heal_ally_below": 0.0
+    },
+    "controller": {
+      "skill_chance": 0.7,
+      "consider_buffs": 0.5,
+      "debuff_chance": 0.85,
+      "combo_bias": 0.1,
+      "defend_below": 0.3,
+      "heal_ally_below": 0.0
+    }
+  },
+  "boss": {
+    "_doc": "A boss is '<race> <archetype> King'. It spends talent_points_min + per_floor x floor in its archetype's branch (ultimate first once reachable); with grant_ultimate the branch's tier-5 skill is given even before it is reachable. It adds king_picks skills from king_pool plus its race signature. phases fire once each when HP drops below hp_below: 'ultimate' = the tier-5 skill, 'signature' = the race signature.",
+    "talent_points_min": 3,
+    "talent_points_per_floor": 1,
+    "extra_skills": 0,
+    "king_pool": [
+      "Royal Decree",
+      "Execution",
+      "Crown of Flames"
+    ],
+    "king_picks": 1,
+    "signatures": {
+      "Goblin": "Ambush Volley",
+      "Orc": "Warlord's Cleave",
+      "Troll": "Avalanche Slam",
+      "Fairy": "Fae Cyclone"
+    },
+    "phases": [
+      {
+        "hp_below": 0.6,
+        "use": "signature"
+      },
+      {
+        "hp_below": 0.35,
+        "use": "ultimate"
+      }
+    ],
+    "grant_ultimate": true
+  },
+  "named_bosses": {
+    "_doc": "Hand-authored bosses that override the generated one. Key: any id. Fields: location, floors (list), name, race, archetype, branch (optional), signature (optional), skills (extra, optional). Empty until the first named boss is designed."
+  },
+  "scaling": {
+    "_doc": "Enemy tuning (EnemyFactory). Regular enemies have this fraction of a hero's HP/damage for the same stats (the hero fights groups); bosses are full-HP long fights. wave_scaling: +stats per wave within a floor. boss_minion_stat_share: share of the archetype's base stats a boss inherits.",
+    "enemy_hp_mult": 0.5,
+    "enemy_damage_mult": 0.72,
+    "boss_hp_mult": 1.0,
+    "boss_damage_mult": 0.65,
+    "boss_stat_mult": 1.0,
+    "wave_scaling": 0.05,
+    "boss_minion_stat_share": 0.25
+  },
+  "ai_personality": {
+    "_doc": "Per-enemy random personality (EnemyAI/BossAI), rolled with RandomManager.",
+    "enemy": {
+      "aggression": [
+        0.3,
+        0.8
+      ],
+      "intelligence": [
+        0.4,
+        0.9
+      ],
+      "desperation": [
+        0.2,
+        0.35
+      ]
+    },
+    "boss": {
+      "aggression": [
+        0.6,
+        0.9
+      ],
+      "intelligence": [
+        0.7,
+        1.0
+      ],
+      "desperation": [
+        0.15,
+        0.25
+      ]
+    }
+  }
+}

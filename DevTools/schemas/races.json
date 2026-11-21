@@ -1,0 +1,153 @@
+{
+ "tab": "Races",
+ "file": "data/races.json",
+ "order": 11,
+ "description": "Races add to class base stats and set elemental affinities. Physical (slash/pierce/blunt) affinities live in Damage Types.",
+ "sections": [
+  {
+   "kind": "collection",
+   "label": "Races",
+   "key_style": "title",
+   "key_label": "Race name",
+   "levels": [
+    {
+     "name": "group",
+     "options": [
+      "playable",
+      "non_playable"
+     ]
+    }
+   ],
+   "fields": [
+    {
+     "name": "vit_mod",
+     "type": "int",
+     "label": "Vitality mod",
+     "min": -10,
+     "max": 10,
+     "default": 0
+    },
+    {
+     "name": "str_mod",
+     "type": "int",
+     "label": "Strength mod",
+     "min": -10,
+     "max": 10,
+     "default": 0
+    },
+    {
+     "name": "dex_mod",
+     "type": "int",
+     "label": "Dexterity mod",
+     "min": -10,
+     "max": 10,
+     "default": 0
+    },
+    {
+     "name": "int_mod",
+     "type": "int",
+     "label": "Intelligence mod",
+     "min": -10,
+     "max": 10,
+     "default": 0
+    },
+    {
+     "name": "fai_mod",
+     "type": "int",
+     "label": "Faith mod",
+     "min": -10,
+     "max": 10,
+     "default": 0
+    },
+    {
+     "name": "mnd_mod",
+     "type": "int",
+     "label": "Mind mod",
+     "min": -10,
+     "max": 10,
+     "default": 0
+    },
+    {
+     "name": "end_mod",
+     "type": "int",
+     "label": "Endurance mod",
+     "min": -10,
+     "max": 10,
+     "default": 0
+    },
+    {
+     "name": "arc_mod",
+     "type": "int",
+     "label": "Arcane mod",
+     "min": -10,
+     "max": 10,
+     "default": 0
+    },
+    {
+     "name": "agi_mod",
+     "type": "int",
+     "label": "Agility mod",
+     "min": -10,
+     "max": 10,
+     "default": 0
+    },
+    {
+     "name": "for_mod",
+     "type": "int",
+     "label": "Fortitude mod",
+     "min": -10,
+     "max": 10,
+     "default": 0
+    },
+    {
+     "name": "elemental_resistances",
+     "type": "map",
+     "key": {
+      "type": "enum",
+      "source": "gd:Element"
+     },
+     "value": {
+      "type": "float",
+      "min": 0,
+      "max": 1
+     },
+     "help": "Element -> fraction of damage ignored (0.2 = takes 20% less)."
+    },
+    {
+     "name": "elemental_weaknesses",
+     "type": "map",
+     "key": {
+      "type": "enum",
+      "source": "gd:Element",
+      "exclude": [
+       "NONE"
+      ]
+     },
+     "value": {
+      "type": "float",
+      "min": 0,
+      "max": 2
+     },
+     "help": "Element -> extra damage taken (0.25 = +25%)."
+    },
+    {
+     "name": "elemental_damage_bonuses",
+     "type": "map",
+     "key": {
+      "type": "enum",
+      "source": "gd:Element",
+      "exclude": [
+       "NONE"
+      ]
+     },
+     "value": {
+      "type": "float",
+      "min": 0,
+      "max": 2
+     },
+     "help": "Element -> bonus damage dealt with that element."
+    }
+   ]
+  }
+ ]
+}

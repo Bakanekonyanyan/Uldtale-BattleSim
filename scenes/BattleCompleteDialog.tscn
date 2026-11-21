@@ -56,7 +56,7 @@ grow_vertical = 2
 
 [node name="VictoryLabel" type="Label" parent="Panel/VBoxContainer"]
 layout_mode = 2
-theme_type_variation = &"HeaderLarge"
+theme_type_variation = &"ScreenTitle"
 text = "Victory!"
 horizontal_alignment = 1
 

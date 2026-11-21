@@ -1,0 +1,13 @@
+{
+	"_comment": "Omens (RunState.gd): optional run modifiers picked when you set out. Each makes the expedition harder and adds its reward bonus (gold and material counts from waves and Breathers). Effects: enemy_damage_mult, enemy_hp_mult, enemy_agility_mult (x), elite_chance_add (+), break_hits_delta (+/- hits to Break, everyone), gear_drop_mult (x), link_gain_mult (x), hide_weaknesses (true).",
+	"max_omens": 3,
+	"omens": {
+		"bloodmoon": { "name": "Bloodmoon", "description": "Enemies hit 20% harder.", "reward": 0.2, "effects": { "enemy_damage_mult": 1.2 } },
+		"ironhide": { "name": "Ironhide", "description": "Enemies have 25% more HP.", "reward": 0.2, "effects": { "enemy_hp_mult": 1.25 } },
+		"quickened": { "name": "Quickened", "description": "Enemies are 20% faster.", "reward": 0.15, "effects": { "enemy_agility_mult": 1.2 } },
+		"thin_veil": { "name": "Thin Veil", "description": "Elites appear far more often, and enemies drop more gear.", "reward": 0.15, "effects": { "elite_chance_add": 0.25, "gear_drop_mult": 1.5 } },
+		"brittle": { "name": "Brittle", "description": "Breaking takes one fewer hit - for you too.", "reward": 0.1, "effects": { "break_hits_delta": -1 } },
+		"discord": { "name": "Discord", "description": "The Link gauge fills half as fast.", "reward": 0.15, "effects": { "link_gain_mult": 0.5 } },
+		"dim_sight": { "name": "Dim Sight", "description": "Enemy weaknesses stay hidden, even ones you know.", "reward": 0.1, "effects": { "hide_weaknesses": true } }
+	}
+}

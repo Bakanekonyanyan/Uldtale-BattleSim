@@ -1,0 +1,97 @@
+{
+ "tab": "Material Drops",
+ "file": "data/loot/material_tables.json",
+ "order": 42,
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Drop settings",
+   "fields": [
+    {
+     "name": "per_wave_min",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "per_wave_max",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "boss_rolls",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "floor_bonus_every",
+     "type": "int",
+     "min": 1,
+     "help": "+1 roll every N floors."
+    },
+    {
+     "name": "uncommon_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "floor_materials",
+     "type": "table",
+     "columns": [
+      {
+       "name": "id",
+       "type": "ref",
+       "source": "materials"
+      },
+      {
+       "name": "min_floor",
+       "type": "int",
+       "min": 1
+      },
+      {
+       "name": "chance_per_wave",
+       "type": "float",
+       "min": 0,
+       "max": 1
+      }
+     ]
+    },
+    {
+     "name": "boss_drops",
+     "type": "map",
+     "key": {
+      "type": "ref",
+      "source": "materials"
+     },
+     "value": {
+      "type": "float",
+      "min": 0,
+      "max": 1
+     },
+     "help": "Material -> chance per boss kill."
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Race tables",
+   "path": [
+    "races"
+   ],
+   "key_style": "title",
+   "key_label": "Race",
+   "fields": [
+    {
+     "name": "common",
+     "type": "ref_list",
+     "source": "materials"
+    },
+    {
+     "name": "uncommon",
+     "type": "ref_list",
+     "source": "materials"
+    }
+   ]
+  }
+ ]
+}

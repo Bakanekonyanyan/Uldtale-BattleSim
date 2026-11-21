@@ -1,36 +1,40 @@
 {
 	"POISON": {
+		"element": "EARTH",
 		"damage_type": "hp_percent",
-		"damage_value": 0.15,
+		"damage_value": 0.06,
 		"message": "{name} took {damage} poison damage"
 	},
 	"BURN": {
+		"element": "FIRE",
 		"damage_type": "hp_percent",
-		"damage_value": 0.1,
+		"damage_value": 0.04,
 		"stat_modifiers": {
 			"strength": -3
 		},
 		"message": "{name} took {damage} burn damage"
 	},
 	"SHOCK": {
+		"element": "LIGHTNING",
 		"damage_type": "hp_percent",
-		"damage_value": 0.125,
-		"stun_chance": 0.3,
+		"damage_value": 0.05,
+		"stun_chance": 0.15,
 		"message": "{name} took {damage} shock damage"
 	},
 	"FREEZE": {
+		"element": "ICE",
 		"damage_type": "none",
 		"stat_modifiers": {
 			"dexterity": -3,
 			"agility": -3
 		},
-		"stun_chance": 0.25,
+		"stun_chance": 0.15,
 		"message": "{name} is frozen, reducing movement and precision"
 	},
 	"BLEED": {
 		"damage_type": "stackable_burst",
 		"max_stacks": 3,
-		"burst_damage_percent": 0.30,
+		"burst_damage_percent": 0.20,
 		"stat_modifiers": {
 			"vitality": -1,
 			"endurance": -1
@@ -89,5 +93,36 @@
 			"fortitude": 3
 		},
 		"message": "{name} has a damage reflection barrier (30%)"
+	},
+	"EVASIVE": {
+		"damage_type": "none",
+		"dodge_bonus": 0.25,
+		"message": "{name} moves like a shadow (+25% dodge)"
+	},
+	"SOAKED": {
+		"element": "WATER",
+		"damage_type": "none",
+		"stat_modifiers": { "agility": -2 },
+		"message": "{name} is soaked to the bone"
+	},
+	"SEALED": {
+		"damage_type": "none",
+		"stat_modifiers": {
+			"intelligence": -3,
+			"mind": -3
+		},
+		"message": "{name}'s spirit is sealed"
+	},
+	"MARKED": {
+		"damage_type": "none",
+		"message": "{name} is marked"
+	},
+	"STAGGERED": {
+		"damage_type": "none",
+		"stat_modifiers": {
+			"agility": -3
+		},
+		"dodge_reduction": 0.1,
+		"message": "{name} is staggered and off balance"
 	}
 }

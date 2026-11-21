@@ -1,0 +1,26 @@
+{
+	"_doc": "What happens when you lose a battle (DefeatManager.gd, docs/design/GAME_ROADMAP.md section 7). The Guild recovers you: you pay a fee, carry an injury for a few expeditions, and lose equipped gear to the Guild's Lost & Found, where you can buy it back before it expires.",
+	"gold_fee_fraction": 0.15,
+	"wake_hp_fraction": 0.5,
+	"items_lost": 1,
+	"items_lost_boss": 2,
+	"lost_found": {
+		"price_fraction": 0.6,
+		"level_step": 0.08,
+		"upgrade_step": 0.15,
+		"rarity_mult": { "common": 1.0, "uncommon": 1.5, "magic": 2.0, "rare": 3.0, "epic": 4.5, "legendary": 6.5 },
+		"expires_after_days": 10
+	},
+	"injury": {
+		"treatment_copper_per_level": 40,
+		"extra_days_boss": 2,
+		"days": 4
+	},
+	"injuries": {
+		"cracked_ribs": { "name": "Cracked Ribs", "description": "Every breath hurts.", "weight": 3, "stats": { "max_hp_pct": -0.15, "toughness": -3 } },
+		"sprained_wrist": { "name": "Sprained Wrist", "description": "Your grip is weak.", "weight": 3, "stats": { "attack_power": -6, "accuracy": -0.05 } },
+		"concussion": { "name": "Concussion", "description": "Your head is still ringing.", "weight": 2, "stats": { "spell_power": -6, "accuracy": -0.05, "mind": -2 } },
+		"twisted_ankle": { "name": "Twisted Ankle", "description": "You limp.", "weight": 3, "stats": { "dodge": -0.05, "agility": -3 } },
+		"deep_gash": { "name": "Deep Gash", "description": "Stitched, but it reopens.", "weight": 2, "stats": { "max_hp_pct": -0.1, "vitality": -2 } }
+	}
+}

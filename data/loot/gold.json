@@ -1,0 +1,6 @@
+{
+	"_comment": "The gold curve (RewardsManager.floor_scale). Wave gold = (wave_base + per_wave x wave) x floor_scale, x2 on boss waves; floor_scale = 1 + floor_growth x (floor - 1). Challenges, rumours and commissions scale by the same curve so every source keeps pace with gear costs (which grow with item value, not linearly with floor). Model it with tests/economy_sim.tscn.",
+	"wave_base": 40,
+	"per_wave": 6,
+	"floor_growth": 0.3
+}

@@ -1,0 +1,19 @@
+{
+ "tab": "Manual",
+ "file": "data/manual.json",
+ "order": 60,
+ "description": "The in-game Manual. BBCode text; placeholders {pct:file:path} {num:file:path} {x:file:path} {list:name} pull live values.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Manual",
+   "fields": [
+    {
+     "name": "topics",
+     "type": "json",
+     "help": "[{id, section, title, text}]"
+    }
+   ]
+  }
+ ]
+}

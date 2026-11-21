@@ -31,7 +31,7 @@ var materials_tab: Button
 func _ready():
 	player_character = CharacterManager.get_current_character()
 	if not player_character:
-		print("Whoops! No character loaded.")
+		Log.debug("stash", "Whoops! No character loaded.")
 		return
 	
 	#  ENABLE MULTI-SELECT
@@ -40,28 +40,55 @@ func _ready():
 	
 	setup_tabs()
 	setup_batch_buttons()  # NEW
+	_apply_chrome()
 	refresh_lists()
 	
-	move_to_stash_button.connect("pressed", Callable(self, "_on_move_to_stash_pressed"))
-	move_all_to_stash_button.connect("pressed", Callable(self, "_on_move_all_to_stash_pressed"))
-	move_to_inventory_button.connect("pressed", Callable(self, "_on_move_to_inventory_pressed"))
-	move_all_to_inventory_button.connect("pressed", Callable(self, "_on_move_all_to_inventory_pressed"))
-	back_button.connect("pressed", Callable(self, "_on_back_pressed"))
+	move_to_stash_button.pressed.connect(_on_move_to_stash_pressed)
+	move_all_to_stash_button.pressed.connect(_on_move_all_to_stash_pressed)
+	move_to_inventory_button.pressed.connect(_on_move_to_inventory_pressed)
+	move_all_to_inventory_button.pressed.connect(_on_move_all_to_inventory_pressed)
+	back_button.pressed.connect(_on_back_pressed)
 	
-	inventory_list.connect("item_clicked", Callable(self, "_on_inventory_item_clicked"))
-	stash_list.connect("item_clicked", Callable(self, "_on_stash_item_clicked"))
+	inventory_list.item_clicked.connect(_on_inventory_item_clicked)
+	stash_list.item_clicked.connect(_on_stash_item_clicked)
 	
-	print("StashScene ready - Multi-select enabled")
+	Log.debug("stash", "StashScene ready - Multi-select enabled")
+
+var chrome: ScreenChrome
+
+func _apply_chrome():
+	chrome = ScreenChrome.attach(self, "Stash", _on_back_pressed)
+	back_button.visible = false
+	ScreenChrome.tab_row(tab_container, Rect2(32, 72, 440, 36))
+	ScreenChrome.caption(self, "Pack", Vector2(32, 116))
+	ScreenChrome.caption(self, "Stash", Vector2(344, 116))
+	ScreenChrome.place(inventory_capacity_label, Rect2(120, 116, 200, 24))
+	ScreenChrome.place(stash_capacity_label, Rect2(432, 116, 200, 24))
+	inventory_capacity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	stash_capacity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	ScreenChrome.place(inventory_list, Rect2(32, 144, 288, 392))
+	ScreenChrome.place(stash_list, Rect2(344, 144, 288, 392))
+	ScreenChrome.place(move_to_stash_button, Rect2(32, 548, 288, 36))
+	ScreenChrome.place(move_all_to_stash_button, Rect2(32, 590, 288, 36))
+	ScreenChrome.place(move_to_inventory_button, Rect2(344, 548, 288, 36))
+	ScreenChrome.place(move_all_to_inventory_button, Rect2(344, 590, 288, 36))
+	ScreenChrome.place(item_info_label, Rect2(656, 72, 512, 552))
+	item_info_label.bbcode_enabled = true
+	chrome.set_info(ScreenChrome.money_text(player_character))
 
 # NEW: Setup batch operation buttons
 func setup_batch_buttons():
 	# Move Selected to Stash (replaces single move button functionality)
 	if move_to_stash_button:
-		move_to_stash_button.text = "Move Selected to Stash"
+		move_to_stash_button.text = "Selected to Stash  »"
 	
 	# Move Selected to Inventory (replaces single move button functionality)
 	if move_to_inventory_button:
-		move_to_inventory_button.text = "Move Selected to Inventory"
+		move_to_inventory_button.text = "«  Selected to Pack"
+	if move_all_to_stash_button:
+		move_all_to_stash_button.text = "Whole Stacks to Stash  »"
+	if move_all_to_inventory_button:
+		move_all_to_inventory_button.text = "«  Whole Stacks to Pack"
 
 func setup_tabs():
 	tab_container = HBoxContainer.new()
@@ -107,13 +134,7 @@ func _on_category_changed(category: ItemCategory):
 	refresh_lists()
 
 func _update_tab_visuals():
-	var tabs = [all_tab, consumables_tab, weapons_tab, armor_tab, materials_tab]
-	for i in range(tabs.size()):
-		if tabs[i]:
-			if i == current_category:
-				tabs[i].modulate = Color(1.2, 1.2, 0.8)
-			else:
-				tabs[i].modulate = Color(1, 1, 1)
+	ScreenChrome.set_active_tab([all_tab, consumables_tab, weapons_tab, armor_tab, materials_tab], current_category)
 
 func _matches_category(item: Item) -> bool:
 	match current_category:
@@ -142,28 +163,14 @@ func refresh_lists():
 		var item = inv_items[i]
 		var item_data = player_character.inventory.items[item.get("key")]
 		
-		if item_data.item is Equipment:
-			var equip = item_data.item
-			var display_name = "%s (x%d) [%s]" % [equip.display_name, item_data.quantity, equip.rarity.capitalize()]
-			inventory_list.add_item(display_name)
-			var rarity_color = Color(equip.get_rarity_color())
-			inventory_list.set_item_custom_fg_color(i, rarity_color)
-		else:
-			inventory_list.add_item("%s (x%d)" % [item_data.item.display_name, item_data.quantity])
+		ScreenChrome.add_item_row(inventory_list, item_data.item, item_data.quantity)
 	
 	var stash_items = _get_filtered_items_from(player_character.stash)
 	for i in range(stash_items.size()):
 		var item = stash_items[i]
 		var item_data = player_character.stash.items[item.get("key")]
 		
-		if item_data.item is Equipment:
-			var equip = item_data.item
-			var display_name = "%s (x%d) [%s]" % [equip.display_name, item_data.quantity, equip.rarity.capitalize()]
-			stash_list.add_item(display_name)
-			var rarity_color = Color(equip.get_rarity_color())
-			stash_list.set_item_custom_fg_color(i, rarity_color)
-		else:
-			stash_list.add_item("%s (x%d)" % [item_data.item.display_name, item_data.quantity])
+		ScreenChrome.add_item_row(stash_list, item_data.item, item_data.quantity)
 	
 	update_capacity_labels()
 
@@ -182,17 +189,17 @@ func update_capacity_labels():
 	if inventory_capacity_label:
 		var inv_size = player_character.inventory.items.size()
 		var inv_cap = player_character.inventory.capacity
-		inventory_capacity_label.text = "Inventory: %d/%d" % [inv_size, inv_cap]
+		inventory_capacity_label.text = "%d / %d slots" % [inv_size, inv_cap]
 	
 	if stash_capacity_label:
 		var stash_size = player_character.stash.items.size()
-		stash_capacity_label.text = "Stash: %d (Unlimited)" % stash_size
+		stash_capacity_label.text = "%d stored" % stash_size
 
 # NEW: Batch move selected items to stash
 func _on_move_to_stash_pressed():
 	var selected_items = inventory_list.get_selected_items()
 	if selected_items.is_empty():
-		print("No items selected")
+		Log.debug("stash", "No items selected")
 		return
 	
 	var filtered_items = _get_filtered_items_from(player_character.inventory)
@@ -209,12 +216,12 @@ func _on_move_to_stash_pressed():
 		player_character.stash.add_item(item, 1)
 	
 	refresh_lists()
-	print("Moved %d items to stash" % selected_items.size())
+	Log.debug("stash", "Moved %d items to stash" % selected_items.size())
 
 func _on_move_all_to_stash_pressed():
 	var selected_items = inventory_list.get_selected_items()
 	if selected_items.is_empty():
-		print("No items selected")
+		Log.debug("stash", "No items selected")
 		return
 	
 	var filtered_items = _get_filtered_items_from(player_character.inventory)
@@ -233,13 +240,13 @@ func _on_move_all_to_stash_pressed():
 		player_character.stash.add_item(item, quantity)
 	
 	refresh_lists()
-	print("Moved all quantities of %d items to stash" % selected_items.size())
+	Log.debug("stash", "Moved all quantities of %d items to stash" % selected_items.size())
 
 # NEW: Batch move selected items to inventory
 func _on_move_to_inventory_pressed():
 	var selected_items = stash_list.get_selected_items()
 	if selected_items.is_empty():
-		print("No items selected")
+		Log.debug("stash", "No items selected")
 		return
 	
 	var filtered_items = _get_filtered_items_from(player_character.stash)
@@ -252,16 +259,16 @@ func _on_move_to_inventory_pressed():
 		var item_id = filtered_items[item_index].get("key")
 		var item = player_character.stash.items[item_id].item
 		
-		player_character.stash.remove_item(item_id, 1)
-		player_character.inventory.add_item(item, 1)
+		if player_character.withdraw_from_stash(item_id, 1) == 0:
+			Log.debug("stash", "Can't carry more %s (limit %d)" % [item.display_name, player_character.carry_limit])
 	
 	refresh_lists()
-	print("Moved %d items to inventory" % selected_items.size())
+	Log.debug("stash", "Moved %d items to inventory" % selected_items.size())
 
 func _on_move_all_to_inventory_pressed():
 	var selected_items = stash_list.get_selected_items()
 	if selected_items.is_empty():
-		print("No items selected")
+		Log.debug("stash", "No items selected")
 		return
 	
 	var filtered_items = _get_filtered_items_from(player_character.stash)
@@ -276,18 +283,19 @@ func _on_move_all_to_inventory_pressed():
 		var item = item_data.item
 		var quantity = item_data.quantity
 		
-		player_character.stash.remove_item(item_id, quantity)
-		player_character.inventory.add_item(item, quantity)
+		var moved = player_character.withdraw_from_stash(item_id, quantity)
+		if moved < quantity:
+			Log.debug("stash", "Took %d of %d %s (carry limit %d)" % [moved, quantity, item.display_name, player_character.carry_limit])
 	
 	refresh_lists()
-	print("Moved all quantities of %d items to inventory" % selected_items.size())
+	Log.debug("stash", "Moved all quantities of %d items to inventory" % selected_items.size())
 
 func _on_back_pressed():
 	SaveManager.save_game(player_character)
 	SceneManager.change_to_town(player_character)
 
 func _on_inventory_item_clicked(index: int, _at_position: Vector2, _mouse_button_index: int):
-	print("Inventory item clicked at index: ", index)
+	Log.debug("stash", "Inventory item clicked at index: ", index)
 	
 	var filtered_items = _get_filtered_items_from(player_character.inventory)
 	if index >= 0 and index < filtered_items.size():
@@ -296,23 +304,23 @@ func _on_inventory_item_clicked(index: int, _at_position: Vector2, _mouse_button
 		display_item_info(item)
 
 func _on_stash_item_clicked(index: int, _at_position: Vector2, _mouse_button_index: int):
-	print("Stash item clicked at index: ", index)
+	Log.debug("stash", "Stash item clicked at index: ", index)
 	
 	var filtered_items = _get_filtered_items_from(player_character.stash)
-	print("Filtered stash items count: ", filtered_items.size())
+	Log.debug("stash", "Filtered stash items count: ", filtered_items.size())
 	
 	if index >= 0 and index < filtered_items.size():
 		var item_id = filtered_items[index].get("key")
-		print("Item ID: ", item_id)
+		Log.debug("stash", "Item ID: ", item_id)
 		
 		if player_character.stash.items.has(item_id):
 			var item = player_character.stash.items[item_id].item
-			print("Found item in stash: ", item.display_name)
+			Log.debug("stash", "Found item in stash: ", item.display_name)
 			display_item_info(item)
 		else:
-			print("ERROR: Item not found in stash!")
+			Log.debug("stash", "ERROR: Item not found in stash!")
 	else:
-		print("ERROR: Index out of range!")
+		Log.debug("stash", "ERROR: Index out of range!")
 
 func display_item_info(item: Item):
 	if not item_info_label:

@@ -1,0 +1,197 @@
+{
+	"_doc": "Set-up / payoff combos. If the target has the set-up status when a matching hit lands, the hit deals x multiplier and (if consume) removes the status. A hit matches if ANY payoff entry matches: one of its elements, its physical damage type (Slash/Pierce/Blunt), its ability type (PHYSICAL/MAGICAL), or its skill name. Basic attacks count too (physical, weapon damage type, no element). Only the best combo applies per hit. Heroes and enemies use the same combos. Code: scripts/resources/Combos.gd.",
+	"combos": {
+		"shatter": {
+			"name": "Shatter",
+			"description": "A crushing blow breaks a frozen target.",
+			"setup": "FREEZE",
+			"payoff": { "damage_types": ["BLUNT"], "elements": ["EARTH"] },
+			"multiplier": 1.5,
+			"consume": true
+		},
+		"thermal_shock": {
+			"name": "Thermal Shock",
+			"description": "Fire on frozen flesh cracks it open.",
+			"setup": "FREEZE",
+			"payoff": { "elements": ["FIRE"] },
+			"multiplier": 1.4,
+			"consume": true
+		},
+		"overload": {
+			"name": "Overload",
+			"description": "Lightning arcs through a target already crackling with shock.",
+			"setup": "SHOCK",
+			"payoff": { "elements": ["LIGHTNING"] },
+			"multiplier": 1.3,
+			"consume": true
+		},
+		"open_wound": {
+			"name": "Open Wound",
+			"description": "A blade finds the bleeding wound.",
+			"setup": "BLEED",
+			"payoff": { "damage_types": ["SLASH", "PIERCE"] },
+			"multiplier": 1.35,
+			"consume": true
+		},
+		"blight": {
+			"name": "Blight",
+			"description": "Dark magic feeds on the poison in the blood.",
+			"setup": "POISON",
+			"payoff": { "elements": ["DARK"] },
+			"multiplier": 1.4,
+			"consume": true
+		},
+		"judgement": {
+			"name": "Judgement",
+			"description": "Holy light strikes the blinded.",
+			"setup": "BLIND",
+			"payoff": { "elements": ["HOLY"] },
+			"multiplier": 1.35,
+			"consume": true
+		},
+		"conduction": {
+			"name": "Conduction",
+			"description": "Lightning races through a soaked target.",
+			"setup": "SOAKED",
+			"payoff": { "elements": ["LIGHTNING"] },
+			"multiplier": 1.5,
+			"consume": true
+		},
+		"flash_freeze": {
+			"name": "Flash Freeze",
+			"description": "Ice locks the water on a soaked target solid.",
+			"setup": "SOAKED",
+			"payoff": { "elements": ["ICE"] },
+			"multiplier": 1.35,
+			"consume": true
+		},
+		"sucker_punch": {
+			"name": "Sucker Punch",
+			"description": "A confused target never sees the hit coming.",
+			"setup": "CONFUSED",
+			"payoff": { "ability_types": ["PHYSICAL"] },
+			"multiplier": 1.25,
+			"consume": true
+		},
+		"dread": {
+			"name": "Dread",
+			"description": "Shadow takes the blinded.",
+			"setup": "BLIND",
+			"payoff": {
+				"elements": ["DARK"]
+			},
+			"multiplier": 1.3,
+			"consume": true
+		},
+		"manticores_venom": {
+			"name": "Manticore's Venom",
+			"description": "Claws rake through venom-weakened flesh.",
+			"setup": "POISON",
+			"payoff": {
+				"damage_types": ["SLASH"]
+			},
+			"multiplier": 1.35,
+			"consume": true
+		},
+		"steam_burst": {
+			"name": "Steam Burst",
+			"description": "Fire flashes the water on a soaked foe into scalding steam.",
+			"setup": "SOAKED",
+			"payoff": {
+				"elements": ["FIRE"]
+			},
+			"multiplier": 1.35,
+			"consume": true
+		},
+		"exorcism": {
+			"name": "Exorcism",
+			"description": "Magic tears a sealed spirit apart.",
+			"setup": "SEALED",
+			"payoff": {
+				"ability_types": ["MAGICAL"]
+			},
+			"multiplier": 1.35,
+			"consume": true
+		},
+		"purge": {
+			"name": "Purge",
+			"description": "Holy light purifies the burning.",
+			"setup": "BURN",
+			"payoff": {
+				"elements": ["HOLY"]
+			},
+			"multiplier": 1.3,
+			"consume": true
+		},
+		"bramble_burst": {
+			"name": "Bramble Burst",
+			"description": "Thorns burst through open wounds.",
+			"setup": "BLEED",
+			"payoff": {
+				"elements": ["EARTH"]
+			},
+			"multiplier": 1.3,
+			"consume": true
+		},
+		"bloodbath": {
+			"name": "Bloodbath",
+			"description": "Rampage tears a bleeding foe apart.",
+			"setup": "BLEED",
+			"payoff": {
+				"skills": ["Rampage", "Fenrisulfr's Maw"]
+			},
+			"multiplier": 1.5,
+			"consume": true
+		},
+		"assassinate": {
+			"name": "Assassinate",
+			"description": "A blade to the vital point of a marked target.",
+			"setup": "MARKED",
+			"payoff": {
+				"damage_types": ["PIERCE"]
+			},
+			"multiplier": 1.45,
+			"consume": true
+		},
+		"decisive_cut": {
+			"name": "Decisive Cut",
+			"description": "The cut you have been waiting for.",
+			"setup": "MARKED",
+			"payoff": {
+				"damage_types": ["SLASH"]
+			},
+			"multiplier": 1.4,
+			"consume": true
+		},
+		"exploit_opening": {
+			"name": "Exploit Opening",
+			"description": "A blade through the opening a staggered foe leaves.",
+			"setup": "STAGGERED",
+			"payoff": {
+				"damage_types": ["SLASH", "PIERCE"]
+			},
+			"multiplier": 1.3,
+			"consume": true
+		},
+		"pressure_break": {
+			"name": "Pressure Break",
+			"description": "A heavy blow on a staggered foe breaks its stance.",
+			"setup": "STAGGERED",
+			"payoff": {
+				"damage_types": ["BLUNT"]
+			},
+			"multiplier": 1.35,
+			"consume": true
+		},
+		"sanctified_strike": {
+			"name": "Sanctified Strike",
+			"description": "Holy light strikes a staggered foe.",
+			"setup": "STAGGERED",
+			"payoff": {
+				"elements": ["HOLY"]
+			},
+			"multiplier": 1.35,
+			"consume": true
+		}
+	}
+}

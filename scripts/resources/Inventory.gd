@@ -16,12 +16,12 @@ func add_item(item: Item, quantity: int = 1) -> bool:
 		
 		# Make sure we don't exceed capacity
 		if items.size() >= capacity:
-			print("❌ Inventory is full, can't add ", item.display_name)
+			Log.debug("inventory", "❌ Inventory is full, can't add ", item.display_name)
 			return false
 		
 		# Add as unique item with quantity 1
 		items[unique_key] = {"item": item, "quantity": 1}
-		print(" Added unique equipment: '%s' (rarity: %s, damage: %d, armor: %d, mods: %s) with key: %s" % [
+		Log.debug("inventory", " Added unique equipment: '%s' (rarity: %s, damage: %d, armor: %d, mods: %s) with key: %s" % [
 			item.display_name, 
 			item.rarity, 
 			item.damage, 
@@ -33,7 +33,7 @@ func add_item(item: Item, quantity: int = 1) -> bool:
 	
 	# Regular items can stack
 	if items.size() >= capacity and item.id not in items:
-		print("❌ Inventory is full, can't add ", item.display_name)
+		Log.debug("inventory", "❌ Inventory is full, can't add ", item.display_name)
 		return false
 	
 	if item.id in items:
@@ -41,19 +41,19 @@ func add_item(item: Item, quantity: int = 1) -> bool:
 	else:
 		items[item.id] = {"item": item, "quantity": quantity}
 	
-	print(" Added %dx %s to inventory" % [quantity, item.display_name])
+	Log.debug("inventory", " Added %dx %s to inventory" % [quantity, item.display_name])
 	return true
 
 func remove_item(item_id: String, quantity: int = 1) -> bool:
 	if item_id not in items or items[item_id].quantity < quantity:
-		print("❌ Failed to remove item from inventory: ", item_id)
+		Log.debug("inventory", "❌ Failed to remove item from inventory: ", item_id)
 		return false
 	
 	items[item_id].quantity -= quantity
 	if items[item_id].quantity == 0:
 		items.erase(item_id)
 	
-	print(" Successfully removed %d of item %s from inventory" % [quantity, item_id])
+	Log.debug("inventory", " Successfully removed %d of item %s from inventory" % [quantity, item_id])
 	return true
 
 func get_item(item_name: String) -> Item:

@@ -1,0 +1,51 @@
+{
+ "tab": "Gear Drops",
+ "file": "data/loot/gear_drops.json",
+ "order": 45,
+ "description": "Gear worn by defeated enemies (RewardsManager.roll_enemy_gear).",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Settings",
+   "fields": [
+    {
+     "name": "chance_by_rarity",
+     "type": "map",
+     "key": {
+      "type": "ref",
+      "source": "rarities"
+     },
+     "value": {
+      "type": "float",
+      "min": 0,
+      "max": 1
+     },
+     "help": "Chance per worn piece (x the momentum reward bonus)."
+    },
+    {
+     "name": "boss_bonus",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "max_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "max_per_enemy",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "boss_guaranteed",
+     "type": "int",
+     "min": 0,
+     "help": "Pieces a boss fight always yields."
+    }
+   ]
+  }
+ ]
+}

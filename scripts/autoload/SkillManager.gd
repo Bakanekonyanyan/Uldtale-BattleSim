@@ -7,8 +7,7 @@ func _ready():
 	load_skills()
 
 func load_skills():
-	var file = FileAccess.open("res://data/skills.json", FileAccess.READ)
-	var json = JSON.parse_string(file.get_as_text())
+	var json = DataRegistry.get_data("skills")
 	for skill_name in json.skills:
 		skills[skill_name] = Skill.create_from_dict(json.skills[skill_name])
 

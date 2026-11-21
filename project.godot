@@ -18,14 +18,21 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+Log="*res://scripts/autoload/Log.gd"
+DataRegistry="*res://scripts/autoload/DataRegistry.gd"
+GameEvents="*res://scripts/autoload/GameEvents.gd"
+LocationManager="*res://scripts/autoload/LocationManager.gd"
+AlchemyManager="*res://scripts/autoload/AlchemyManager.gd"
+BlacksmithManager="*res://scripts/autoload/BlacksmithManager.gd"
+EnchantManager="*res://scripts/autoload/EnchantManager.gd"
+Bestiary="*res://scripts/autoload/Bestiary.gd"
+RunState="*res://scripts/autoload/RunState.gd"
 SceneManager="*res://scripts/autoload/SceneManager.gd"
 EnemyFactory="*res://scripts/autoload/EnemyFactory.gd"
 SkillManager="*res://scripts/autoload/SkillManager.gd"
 ItemManager="*res://scripts/autoload/ItemManager.gd"
-BossFactory="*res://scripts/autoload/BossFactory.gd"
 CharacterManager="*res://scripts/autoload/CharacterManager.gd"
 SaveManager="*res://scripts/autoload/SaveManager.gd"
-LootManager="*res://scripts/autoload/LootManager.gd"
 LevelSystem="*res://scripts/LevelSystem.gd"
 RewardsManager="*res://scripts/autoload/RewardsManager.gd"
 MomentumSystem="*res://scripts/autoload/MomentumSystem.gd"
@@ -36,12 +43,27 @@ RandomManager="*res://scripts/autoload/RandomManager.gd"
 ArenaNetworkManager="*res://scripts/network/ArenaNetworkManager.gd"
 StatusEffects="*res://scripts/autoload/StatusEffects.gd"
 ClassEquipmentBias="*res://scripts/autoload/ClassEquipmentBias.gd"
+GuildManager="*res://scripts/autoload/GuildManager.gd"
+DefeatManager="*res://scripts/autoload/DefeatManager.gd"
+RankManager="*res://scripts/autoload/RankManager.gd"
+WorldClock="*res://scripts/autoload/WorldClock.gd"
+AdventurerManager="*res://scripts/autoload/AdventurerManager.gd"
+PartyManager="*res://scripts/autoload/PartyManager.gd"
+BondManager="*res://scripts/autoload/BondManager.gd"
+CommissionManager="*res://scripts/autoload/CommissionManager.gd"
+RumorManager="*res://scripts/autoload/RumorManager.gd"
+LedgerManager="*res://scripts/autoload/LedgerManager.gd"
+EncounterManager="*res://scripts/autoload/EncounterManager.gd"
 
 [display]
 
 window/size/viewport_width=1200
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
+
+[gui]
+
+theme/custom="res://ui/default_theme.tres"
 
 [rendering]
 

@@ -1,0 +1,138 @@
+{
+ "tab": "Blacksmith",
+ "file": "data/blacksmith.json",
+ "order": 43,
+ "description": "Upgrade and salvage tuning (docs/design/TOWN_SERVICES.md section 5).",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Blacksmith settings",
+   "fields": [
+    {
+     "name": "max_level",
+     "type": "map",
+     "key": {
+      "type": "ref",
+      "source": "rarities"
+     },
+     "value": {
+      "type": "int",
+      "min": 0,
+      "max": 20
+     },
+     "help": "Highest +N per rarity."
+    },
+    {
+     "name": "success_chance",
+     "type": "map",
+     "key": {
+      "type": "str"
+     },
+     "value": {
+      "type": "float",
+      "min": 0,
+      "max": 1
+     },
+     "help": "Target level -> base success (levels not listed = 100%)."
+    },
+    {
+     "name": "gold_per_level",
+     "type": "float",
+     "min": 0,
+     "help": "Gold = item value x this x target level."
+    },
+    {
+     "name": "min_gold",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "ore_by_target_level",
+     "type": "table",
+     "columns": [
+      {
+       "name": "max_level",
+       "type": "int",
+       "min": 1
+      },
+      {
+       "name": "ore",
+       "type": "ref",
+       "source": "materials"
+      }
+     ]
+    },
+    {
+     "name": "weapon_extra_materials",
+     "type": "map",
+     "key": {
+      "type": "ref",
+      "source": "materials"
+     },
+     "value": {
+      "type": "int",
+      "min": 0
+     }
+    },
+    {
+     "name": "core_from_level",
+     "type": "int",
+     "min": 1,
+     "help": "Monster core needed from this target level."
+    },
+    {
+     "name": "reinforce_step_cost",
+     "type": "float",
+     "min": 0,
+     "help": "+cost per reinforcement step (0.25 = +25%)."
+    },
+    {
+     "name": "reinforce_step_bonus",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "+success per step."
+    },
+    {
+     "name": "tempered_bonus",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "+success per consecutive failure."
+    },
+    {
+     "name": "downgrade_from_level",
+     "type": "int",
+     "min": 1,
+     "help": "Failing at this level or higher drops one level."
+    },
+    {
+     "name": "salvage",
+     "type": "json",
+     "help": "rarity -> {ore: [min, max], core_chance}."
+    },
+    {
+     "name": "salvage_ore_by_item_level",
+     "type": "table",
+     "columns": [
+      {
+       "name": "max_item_level",
+       "type": "int",
+       "min": 1
+      },
+      {
+       "name": "ore",
+       "type": "ref",
+       "source": "materials"
+      }
+     ]
+    },
+    {
+     "name": "armor_material_swap",
+     "type": "json",
+     "help": "armor type -> {ore id: material id}. Cloth and leather armor use cloth/hide in place of the listed ore (upgrades and salvage)."
+    }
+   ]
+  }
+ ]
+}

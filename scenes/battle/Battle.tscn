@@ -2,10 +2,10 @@
 
 [ext_resource type="Script" uid="uid://c3nk7wcu6mtgy" path="res://scenes/battle/BattleOrchestrator.gd" id="1_w6b63"]
 [ext_resource type="Texture2D" uid="uid://cpndw8q8cse38" path="res://assets/Images/backgrounds/WaveBackground.png" id="2_18p0q"]
-[ext_resource type="Script" uid="uid://dl6y0b4t8nfu0" path="res://scenes/battle/components/ui/BattleUIController.gd" id="2_emwda"]
-[ext_resource type="Script" uid="uid://bcptvq3l2acql" path="res://scenes/battle/InventoryMenu.gd" id="2_ng7cs"]
-[ext_resource type="PackedScene" uid="uid://bt415s868mear" path="res://scenes/battle/components/TargetSelector.tscn" id="5_target"]
-[ext_resource type="Script" uid="uid://dg5gj1bg1m3h1" path="res://scenes/battle/BattleVisualManager.gd" id="6_visual"]
+[ext_resource type="Script" uid="uid://dl6y0b4t8nfu0" path="res://scenes/battle/ui/BattleUIController.gd" id="2_emwda"]
+[ext_resource type="Script" uid="uid://bcptvq3l2acql" path="res://scenes/battle/ui/InventoryMenu.gd" id="2_ng7cs"]
+[ext_resource type="PackedScene" uid="uid://bt415s868mear" path="res://scenes/battle/ui/TargetSelector.tscn" id="5_target"]
+[ext_resource type="Script" uid="uid://dg5gj1bg1m3h1" path="res://scenes/battle/visuals/BattleVisualManager.gd" id="6_visual"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 3

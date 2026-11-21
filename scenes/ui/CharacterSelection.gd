@@ -16,19 +16,19 @@ func _ready():
 	setup_ui()
 	
 	# Connect signals
-	if create_new_button.is_connected("pressed", Callable(self, "_on_create_new_pressed")):
-		create_new_button.disconnect("pressed", Callable(self, "_on_create_new_pressed"))
-	if load_saved_game_button.is_connected("pressed", Callable(self, "_on_load_saved_game_pressed")):
-		load_saved_game_button.disconnect("pressed", Callable(self, "_on_load_saved_game_pressed"))
-	if start_new_game_button.is_connected("pressed", Callable(self, "_on_start_new_game_pressed")):
-		start_new_game_button.disconnect("pressed", Callable(self, "_on_start_new_game_pressed"))
-	if quit_button.is_connected("pressed", Callable(self, "_on_quit_button_pressed")):
-		quit_button.disconnect("pressed", Callable(self, "_on_quit_button_pressed"))
+	if create_new_button.pressed.is_connected(_on_create_new_pressed):
+		create_new_button.pressed.disconnect(_on_create_new_pressed)
+	if load_saved_game_button.pressed.is_connected(_on_load_saved_game_pressed):
+		load_saved_game_button.pressed.disconnect(_on_load_saved_game_pressed)
+	if start_new_game_button.pressed.is_connected(_on_start_new_game_pressed):
+		start_new_game_button.pressed.disconnect(_on_start_new_game_pressed)
+	if quit_button.pressed.is_connected(_on_quit_button_pressed):
+		quit_button.pressed.disconnect(_on_quit_button_pressed)
 	
-	create_new_button.connect("pressed", Callable(self, "_on_create_new_pressed"))
-	load_saved_game_button.connect("pressed", Callable(self, "_on_load_saved_game_pressed"))
-	start_new_game_button.connect("pressed", Callable(self, "_on_start_new_game_pressed"))
-	quit_button.connect("pressed", Callable(self, "_on_quit_button_pressed"))
+	create_new_button.pressed.connect(_on_create_new_pressed)
+	load_saved_game_button.pressed.connect(_on_load_saved_game_pressed)
+	start_new_game_button.pressed.connect(_on_start_new_game_pressed)
+	quit_button.pressed.connect(_on_quit_button_pressed)
 	
 	# Initially disable buttons
 	load_saved_game_button.disabled = true
@@ -45,7 +45,7 @@ func _on_quit_button_pressed():
 func _on_character_selected(character):
 	selected_character = character
 	CharacterManager.set_current_character(character)
-	print("Selected character: ", character.name)
+	Log.debug("character_selection", "Selected character: ", character.name)
 	
 	# Enable start new game button
 	start_new_game_button.disabled = false
@@ -176,7 +176,10 @@ func update_character_preview():
 	# === PROGRESS ===
 	if char.get("current_floor"):
 		preview_text += "[b][color=cyan]Progress:[/color][/b]\n"
-		preview_text += "Floor: %d | Max Cleared: %d\n" % [char.current_floor, char.max_floor_cleared]
+		preview_text += "Floor: %d | Deepest floor reached: %d\n" % [char.current_floor, char.max_floor_unlocked]
+		for location_id in LocationManager.get_ids():
+			if char.location_progress.has(location_id):
+				preview_text += "  %s: floor %d\n" % [LocationManager.get_display_name(location_id), char.get_max_floor(location_id)]
 		preview_text += "XP: %d / %d\n\n" % [char.xp, LevelSystem.calculate_xp_for_level(char.level)]
 	
 	# === CURRENCY ===
@@ -205,7 +208,7 @@ func _on_start_new_game_pressed():
 		else:
 			start_new_game()
 	else:
-		print("No character selected")
+		Log.debug("character_selection", "No character selected")
 
 func show_new_game_warning():
 	var dialog = ConfirmationDialog.new()
@@ -220,7 +223,7 @@ func show_new_game_warning():
 	dialog.canceled.connect(func(): dialog.queue_free())
 
 func start_new_game():
-	print("Starting new game with character: ", selected_character.name)
+	Log.debug("character_selection", "Starting new game with character: ", selected_character.name)
 	selected_character.reset_for_new_game()
 	SaveManager.save_game(selected_character)
 	SceneManager.change_to_town(selected_character)
@@ -230,16 +233,16 @@ func _on_load_saved_game_pressed():
 		var loaded_character = SaveManager.load_game(selected_character.name)
 		if loaded_character:
 			CharacterManager.set_current_character(loaded_character)
-			print("Loaded saved game for character: ", loaded_character.name)
+			Log.debug("character_selection", "Loaded saved game for character: ", loaded_character.name)
 			SceneManager.change_to_town(loaded_character)
 		else:
-			print("No saved game found for selected character.")
+			Log.debug("character_selection", "No saved game found for selected character.")
 	else:
-		print("No character selected.")
+		Log.debug("character_selection", "No character selected.")
 
 func _on_create_new_pressed():
-	print("Creating new character")
-	SceneManager.change_scene("res://scenes/ui/CharacterCreation.tscn")
+	Log.debug("character_selection", "Creating new character")
+	SceneManager.change_to_character_creation()
 
 func load_characters():
 	character_list = SaveManager.get_all_characters()
@@ -255,12 +258,12 @@ func setup_ui():
 		var select_button = Button.new()
 		select_button.text = "%s - Level %d %s %s" % [character.name, character.level, character.race, character.character_class]
 		select_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		select_button.connect("pressed", Callable(self, "_on_character_selected").bind(character))
+		select_button.pressed.connect(_on_character_selected.bind(character))
 		character_panel.add_child(select_button)
 		
 		var delete_button = Button.new()
 		delete_button.text = "Delete"
-		delete_button.connect("pressed", Callable(self, "_on_delete_pressed").bind(character))
+		delete_button.pressed.connect(_on_delete_pressed.bind(character))
 		character_panel.add_child(delete_button)
 		
 		character_container.add_child(character_panel)
@@ -268,7 +271,7 @@ func setup_ui():
 func _on_delete_pressed(character):
 	var dialog = ConfirmationDialog.new()
 	dialog.dialog_text = "Are you sure you want to delete %s?" % character.name
-	dialog.connect("confirmed", Callable(self, "_delete_character").bind(character))
+	dialog.confirmed.connect(_delete_character.bind(character))
 	add_child(dialog)
 	dialog.popup_centered()
 

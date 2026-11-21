@@ -1,0 +1,123 @@
+{
+ "tab": "Recipes",
+ "file": "data/recipes.json",
+ "order": 40,
+ "description": "Alchemist recipes. Ingredients come from the pack first, then the stash.",
+ "sections": [
+  {
+   "kind": "collection",
+   "label": "Recipes",
+   "path": [
+    "recipes"
+   ],
+   "key_style": "snake",
+   "summary": "{category}: {output} x{quantity}",
+   "fields": [
+    {
+     "name": "output",
+     "type": "ref",
+     "source": "consumables",
+     "help": "Consumable produced."
+    },
+    {
+     "name": "quantity",
+     "type": "int",
+     "min": 1,
+     "default": 1
+    },
+    {
+     "name": "ingredients",
+     "type": "map",
+     "key": {
+      "type": "ref",
+      "source": "materials"
+     },
+     "value": {
+      "type": "int",
+      "min": 1
+     },
+     "default": {}
+    },
+    {
+     "name": "fee",
+     "type": "int",
+     "min": 0,
+     "default": 10,
+     "help": "Copper paid per craft."
+    },
+    {
+     "name": "unlock",
+     "type": "object",
+     "fields": [
+      {
+       "name": "type",
+       "type": "enum",
+       "options": [
+        "default",
+        "purchase",
+        "floor_reached",
+        "bounty_reward",
+        "adventurer_rank",
+        "standing"
+       ]
+      },
+      {
+       "name": "price",
+       "type": "int",
+       "min": 0,
+       "optional": true,
+       "help": "purchase: recipe book price"
+      },
+      {
+       "name": "floor",
+       "type": "int",
+       "min": 1,
+       "optional": true,
+       "help": "floor_reached: unlock floor"
+      },
+      {
+       "name": "rank",
+       "type": "ref",
+       "source": "ranks",
+       "optional": true,
+       "help": "adventurer_rank: known from this rank on"
+      },
+      {
+       "name": "shop",
+       "type": "enum",
+       "options": [
+        "blacksmith",
+        "alchemist",
+        "enchanter"
+       ],
+       "optional": true,
+       "help": "standing: whose commissions"
+      },
+      {
+       "name": "tier",
+       "type": "int",
+       "min": 0,
+       "optional": true,
+       "help": "standing: tier index (0 = Known, 1 = Valued, 2 = Partner)"
+      }
+     ],
+     "default": {
+      "type": "default"
+     }
+    },
+    {
+     "name": "category",
+     "type": "enum",
+     "options": [
+      "Potions",
+      "Cures",
+      "Flasks",
+      "Elixirs"
+     ],
+     "allow_custom": true,
+     "default": "Potions"
+    }
+   ]
+  }
+ ]
+}

@@ -7,6 +7,7 @@ var weapons = {}
 var armors = {}
 var consumables = {}
 var materials = {}
+var craft_only_consumables: Array = []  # consumables with "craft_only": true
 var equipment_templates = {}  # Base templates (never modified)
 
 
@@ -16,32 +17,28 @@ func _ready():
 	load_weapons()
 	load_armors()
 	update_items()
-	print("Loaded items: ", items.keys())
-	print("Loaded consumables: ", consumables.keys())
-	print("Loaded materials: ", materials.keys())
-	print("Loaded weapons: ", weapons.keys())
-	print("Loaded armors: ", armors.keys())
+	Log.debug("items", "Loaded items: ", items.keys())
+	Log.debug("items", "Loaded consumables: ", consumables.keys())
+	Log.debug("items", "Loaded materials: ", materials.keys())
+	Log.debug("items", "Loaded weapons: ", weapons.keys())
+	Log.debug("items", "Loaded armors: ", armors.keys())
 
 func load_consumables():
-	var file = FileAccess.open("res://data/items/consumables.json", FileAccess.READ)
-	var json = JSON.parse_string(file.get_as_text())
-	file.close()
+	var json = DataRegistry.get_data("items/consumables")
 	
 	for item_id in json:
 		consumables[item_id] = Item.create_from_dict(item_id, json[item_id])
+		if json[item_id].get("craft_only", false):
+			craft_only_consumables.append(item_id)
 
 func load_materials():
-	var file = FileAccess.open("res://data/items/materials.json", FileAccess.READ)
-	var json = JSON.parse_string(file.get_as_text())
-	file.close()
+	var json = DataRegistry.get_data("items/materials")
 	
 	for item_id in json:
 		materials[item_id] = Item.create_from_dict(item_id, json[item_id])
 
 func load_weapons():
-	var file = FileAccess.open("res://data/items/weapons.json", FileAccess.READ)
-	var json = JSON.parse_string(file.get_as_text())
-	file.close()
+	var json = DataRegistry.get_data("items/weapons")
 	
 	for hand_type in json:
 		for weapon_category in json[hand_type]:
@@ -53,12 +50,10 @@ func load_weapons():
 						weapon_data["key"] = weapon_id  # NEW: Add proficiency key
 						equipment_templates[weapon_id] = weapon_data
 						weapons[weapon_id] = weapon_data
-						print("ItemManager: Loaded weapon '%s' with key '%s'" % [weapon_data.get("name", ""), weapon_id])
+						Log.debug("items", "ItemManager: Loaded weapon '%s' with key '%s'" % [weapon_data.get("name", ""), weapon_id])
 
 func load_armors():
-	var file = FileAccess.open("res://data/items/armors.json", FileAccess.READ)
-	var json = JSON.parse_string(file.get_as_text())
-	file.close()
+	var json = DataRegistry.get_data("items/armors")
 	
 	for armor_type in json:
 		for slot in json[armor_type]:
@@ -68,12 +63,12 @@ func load_armors():
 				armor_data["key"] = armor_id  # NEW: Add proficiency key
 				equipment_templates[armor_id] = armor_data
 				armors[armor_id] = armor_data
-				print("ItemManager: Loaded armor '%s' with key '%s'" % [armor_data.get("name", ""), armor_id])
+				Log.debug("items", "ItemManager: Loaded armor '%s' with key '%s'" % [armor_data.get("name", ""), armor_id])
 
 func create_equipment_instance(item_id: String) -> Equipment:
 	"""Creates a NEW equipment instance with fresh random rolls"""
 	if not equipment_templates.has(item_id):
-		print("ItemManager: Template not found for: ", item_id)
+		Log.debug("items", "ItemManager: Template not found for: ", item_id)
 		return null
 	
 	# Create NEW instance from template data
@@ -105,9 +100,11 @@ func update_items():
 func get_all_items() -> Dictionary:
 	return items
 
+## Random loot consumable. Craft-only items (Alchemist exclusives) never drop.
 func get_random_consumable() -> String:
-	if consumables.size() > 0:
-		return consumables.keys()[RandomManager.randi() % consumables.size()]
+	var pool = consumables.keys().filter(func(id): return id not in craft_only_consumables)
+	if pool.size() > 0:
+		return pool[RandomManager.randi() % pool.size()]
 	return ""
 
 func get_random_material() -> String:
@@ -151,10 +148,10 @@ func filter_array(arr: Array, condition: Callable) -> Array:
 	return result
 
 func print_consumables():
-	print("Available consumables: ", consumables.keys())
+	Log.debug("items", "Available consumables: ", consumables.keys())
 
 func print_materials():
-	print("Available materials: ", materials.keys())
+	Log.debug("items", "Available materials: ", materials.keys())
 
 #  FIXED: Make min_rarity_tier OPTIONAL with default value of 0
 func create_equipment_for_floor(item_id: String, floor: int, min_rarity_tier: int = 0) -> Equipment:
@@ -167,7 +164,7 @@ func create_equipment_for_floor(item_id: String, floor: int, min_rarity_tier: in
 	- min_rarity_tier: OPTIONAL minimum rarity tier (0 = no minimum, uses random roll)
 	"""
 	if not equipment_templates.has(item_id):
-		print("ItemManager: Template not found for: ", item_id)
+		Log.debug("items", "ItemManager: Template not found for: ", item_id)
 		return null
 	
 	var template_data = equipment_templates[item_id].duplicate(true)
@@ -182,14 +179,14 @@ func create_equipment_for_floor(item_id: String, floor: int, min_rarity_tier: in
 	# NEW: Add minimum rarity tier if specified
 	if min_rarity_tier > 0:
 		template_data["min_rarity_tier"] = min_rarity_tier
-		print("ItemManager: Creating equipment with min rarity tier %d" % min_rarity_tier)
+		Log.debug("items", "ItemManager: Creating equipment with min rarity tier %d" % min_rarity_tier)
 	
 	# Clear any pre-existing rarity data to force fresh generation
 	template_data.erase("rarity")
 	template_data.erase("rarity_applied")
 	template_data.erase("stat_modifiers")
 	
-	print("ItemManager: Creating equipment for floor %d: %s (key: %s)" % [floor, item_id, template_data["key"]])
+	Log.debug("items", "ItemManager: Creating equipment for floor %d: %s (key: %s)" % [floor, item_id, template_data["key"]])
 	
 	# This will trigger generation in Equipment._init()
 	return Equipment.new(template_data)
@@ -205,42 +202,41 @@ func get_item(item_id: String) -> Item:
 	
 	# Equipment - create NEW instance (defaults to floor 1)
 	if equipment_templates.has(item_id):
-		print("ItemManager: WARNING - get_item() called for equipment, defaulting to floor 1. Use create_equipment_for_floor() instead.")
+		Log.debug("items", "ItemManager: WARNING - get_item() called for equipment, defaulting to floor 1. Use create_equipment_for_floor() instead.")
 		return create_equipment_for_floor(item_id, 1)
 	
-	print("ItemManager: Item not found: ", item_id)
+	Log.debug("items", "ItemManager: Item not found: ", item_id)
 	return null
 	
-# ADD: Class-biased random weapon selection
+# Class-biased random weapon selection (ClassEquipmentBias builds its class
+# lists from the class_restriction arrays in the item JSON and falls back to a
+# plain random pick for unknown/empty classes).
 func get_random_weapon_biased(character_class: String = "") -> String:
 	"""Get random weapon with optional class bias"""
-	if character_class == "" or not ClassEquipmentBias.CLASS_EQUIPMENT_BIAS.has(character_class):
-		return get_random_weapon()  # Fallback to existing random
-	
-	return ClassEquipmentBias.get_biased_equipment_id(character_class, "weapons")
+	if character_class == "":
+		return get_random_weapon()
+	var id = ClassEquipmentBias.get_biased_equipment_id(character_class, "weapons")
+	return id if id != "" else get_random_weapon()
 
-# ADD: Class-biased random armor selection
+# Class-biased random armor selection
 func get_random_armor_biased(character_class: String = "", slot: String = "") -> String:
 	"""Get random armor with optional class bias and slot filter"""
-	if character_class == "" or not ClassEquipmentBias.CLASS_EQUIPMENT_BIAS.has(character_class):
-		return get_random_armor("", slot)  # Fallback to existing random
-	
+	if character_class == "":
+		return get_random_armor("", slot)
 	var armor_id = ClassEquipmentBias.get_biased_equipment_id(character_class, "armors")
+	if armor_id == "":
+		return get_random_armor("", slot)
 	
-	# Apply slot filter if specified
-	if slot != "" and armor_id != "":
-		var template = get_equipment_template(armor_id)
-		if template.get("slot", "") != slot:
-			# Re-roll with slot filter
-			var prefs = ClassEquipmentBias.CLASS_EQUIPMENT_BIAS[character_class]
-			var armor_types = prefs.get("armor_types", [])
-			var filtered = _get_armors_by_type_and_slot(armor_types, slot)
-			if not filtered.is_empty():
-				return filtered[RandomManager.randi() % filtered.size()]
+	# Apply slot filter if specified: re-roll among the class's armor types
+	if slot != "" and get_equipment_template(armor_id).get("slot", "") != slot:
+		var filtered = _get_armors_by_type_and_slot(ClassEquipmentBias.get_armor_types(character_class), slot)
+		if not filtered.is_empty():
+			return filtered[RandomManager.randi() % filtered.size()]
+		return get_random_armor("", slot)
 	
 	return armor_id
 
-# ADD: Helper for slot filtering
+# Helper for slot filtering
 func _get_armors_by_type_and_slot(armor_types: Array, slot: String) -> Array:
 	"""Get armor IDs matching both type and slot"""
 	var result = []
@@ -253,7 +249,7 @@ func _get_armors_by_type_and_slot(armor_types: Array, slot: String) -> Array:
 # ADD: Class-biased random equipment
 func get_random_equipment_biased(character_class: String = "") -> String:
 	"""Get random equipment (weapon or armor) with class bias"""
-	if character_class == "" or not ClassEquipmentBias.CLASS_EQUIPMENT_BIAS.has(character_class):
+	if character_class == "":
 		return get_random_equipment()
 	
 	# 50/50 weapon vs armor

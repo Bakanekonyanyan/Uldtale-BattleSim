@@ -1,0 +1,45 @@
+{
+  "_doc": "Combat rules shared by real battles and headless ones (BattleRules.gd). Intents: each enemy's next action is planned and shown ahead of time; bosses charge their signature/ultimate for a turn first. Break: weakness hits (and combos) fill an enemy's break meter; at its threshold the enemy is Broken - it loses its next turn, takes extra damage until then, and a charge is cancelled. Link: a party gauge that fills from hits, combos and breaks; ultimates spend it, LINK skills add to it and pull the next ally forward, Unison Strike spends a full gauge for an attack by the whole party.",
+  "intents": {
+    "boss_charge": true,
+    "charge_power_mult": 2.0,
+    "regular_charge_chance": 0.3,
+    "regular_charge_min_power": 30
+  },
+  "weakness_bonus": 0.3,
+  "_weakness_bonus": "Extra damage for a hit on a weakness (damage type or element), on top of the affinity itself.",
+  "break": {
+    "regular_hits": 2,
+    "elite_hits": 2,
+    "boss_hits": 3,
+    "hero_hits": 3,
+    "growth_per_break": 1,
+    "combo_bonus": 1,
+    "broken_damage_bonus": 0.3,
+    "link_gain": 25,
+    "_doc": "Break counts weakness hits (damage type or element the enemy is weak to): each is 1 point, a hit that also triggers a combo is 1 more. Neutral hits don't count. Heroes and companions have the same meter (hero_hits): enemies hitting their weaknesses (race, armor) break them too. At the enemy's threshold it is Broken; each break raises that enemy's threshold by growth_per_break."
+  },
+  "bestiary": {
+    "enabled": true,
+    "scholar_classes": ["Elementalist", "Necromancer", "Druid", "Kannagi"],
+    "scholar_traits": ["scholarly"],
+    "_doc": "Enemy weaknesses show ??? until found: a weakness hit reveals it for that race, a Break reveals all. Inspect reveals all when a party member is a scholar class or has a scholar trait."
+  },
+  "guard": {
+    "enabled": true,
+    "damage_mult": 0.5,
+    "attacker_pips": 1,
+    "counter_mult": 0.75,
+    "_doc": "Perfect Guard: a hero who Defends while an enemy's shown intent targets them (or a boss is charging) takes damage_mult of the already-halved damage, gains no Break pips, gives the attacker attacker_pips, and counters a charged strike for counter_mult of a basic hit."
+  },
+  "link": {
+    "max": 100,
+    "start_per_momentum": 10,
+    "gain_per_hit": 4,
+    "gain_combo": 15,
+    "gain_link_skill": 15,
+    "ultimate_cost": 50,
+    "unison_cost": 100,
+    "unison_mult": 1.4
+  }
+}

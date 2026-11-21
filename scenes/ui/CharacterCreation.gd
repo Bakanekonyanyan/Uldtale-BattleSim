@@ -18,10 +18,8 @@ func _ready():
 	setup_ui()
 
 func load_data():
-	var file = FileAccess.open("res://data/races.json", FileAccess.READ)
-	races = JSON.parse_string(file.get_as_text())
-	file = FileAccess.open("res://data/classes.json", FileAccess.READ)
-	classes = JSON.parse_string(file.get_as_text())
+	races = DataRegistry.get_data("races")
+	classes = DataRegistry.get_data("classes")
 
 func setup_ui():
 	for race in races["playable"].keys():
@@ -29,15 +27,15 @@ func setup_ui():
 	for character_class in classes["playable"].keys():
 		class_option.add_item(character_class)
 	
-	race_option.connect("item_selected", Callable(self, "_on_race_selected"))
-	class_option.connect("item_selected", Callable(self, "_on_class_selected"))
-	create_button.connect("pressed", Callable(self, "_on_create_pressed"))
-	cancel_button.connect("pressed", Callable(self, "_on_cancel_pressed"))
+	race_option.item_selected.connect(_on_race_selected)
+	class_option.item_selected.connect(_on_class_selected)
+	create_button.pressed.connect(_on_create_pressed)
+	cancel_button.pressed.connect(_on_cancel_pressed)
 	
 	update_info_display()
 
 func _on_cancel_pressed():
-	SceneManager.change_scene("res://scenes/ui/CharacterSelection.tscn")
+	SceneManager.change_to_character_selection()
 
 func _on_race_selected(_index):
 	update_info_display()
@@ -169,7 +167,7 @@ func update_info_display():
 
 func _on_create_pressed():
 	if name_input.text.strip_edges().is_empty():
-		print("Please enter a character name")
+		Log.debug("character_creation", "Please enter a character name")
 		return
 	
 	var char_name = name_input.text.strip_edges()
@@ -178,17 +176,17 @@ func _on_create_pressed():
 	
 	# Use CharacterFactory for creation
 	var new_character = CharacterFactory.create_character(char_name, race_name, p_class_name, true)
-	new_character.max_floor_cleared = 1
+	new_character.max_floor_unlocked = 1
 	
 	# Starting gold
 	new_character.currency.copper = STARTING_GOLD
-	print("New character starting with %d copper (%s)" % [STARTING_GOLD, new_character.currency.get_formatted()])
+	Log.debug("character_creation", "New character starting with %d copper (%s)" % [STARTING_GOLD, new_character.currency.get_formatted()])
 	
 	# Save the character
 	SaveManager.save_game(new_character)
-	print("Character created: %s (Level %d %s %s)" % [
+	Log.debug("character_creation", "Character created: %s (Level %d %s %s)" % [
 		new_character.name, new_character.level, race_name, p_class_name
 	])
 	
 	# Transition to character selection
-	SceneManager.change_scene("res://scenes/ui/CharacterSelection.tscn")
+	SceneManager.change_to_character_selection()

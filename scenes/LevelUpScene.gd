@@ -12,8 +12,8 @@ var attribute_labels = {}
 @onready var done_button = $MainContainer/DoneButton
 
 func _ready():
-	print("LevelUpScene: _ready called")
-	done_button.connect("pressed", Callable(self, "_on_done_pressed"))
+	Log.debug("level_up", "LevelUpScene: _ready called")
+	done_button.pressed.connect(_on_done_pressed)
 
 func setup(char1: CharacterData):
 	character = char1
@@ -83,7 +83,7 @@ func setup_attribute_buttons():
 		minus_button.add_theme_stylebox_override("hover", style_hover)
 		
 		
-		minus_button.connect("pressed", Callable(self, "_on_attribute_changed").bind(attr, -1))
+		minus_button.pressed.connect(_on_attribute_changed.bind(attr, -1))
 		hbox.add_child(minus_button)
 		
 		var plus_button = Button.new()
@@ -101,7 +101,7 @@ func setup_attribute_buttons():
 		style_hover.bg_color = Color("4e6c48") # A darker blue for pressed state
 		plus_button.add_theme_stylebox_override("hover", style_hover)
 		
-		plus_button.connect("pressed", Callable(self, "_on_attribute_changed").bind(attr, 1))
+		plus_button.pressed.connect(_on_attribute_changed.bind(attr, 1))
 		hbox.add_child(plus_button)
 		
 		attribute_grid.add_child(hbox)
@@ -116,6 +116,6 @@ func _on_attribute_changed(attr: String, change: int):
 	update_ui()
 
 func _on_done_pressed():
-	print("Level up scene done")
-	emit_signal("level_up_complete")
+	Log.debug("level_up", "Level up scene done")
+	level_up_complete.emit()
 	queue_free()

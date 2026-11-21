@@ -1,0 +1,105 @@
+{
+ "tab": "Enchanting",
+ "file": "data/enchanting.json",
+ "order": 44,
+ "description": "Enchanter (EnchantManager.gd): raise an item one rarity tier and add an enchantment. The material picks the effect.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Settings",
+   "fields": [
+    {
+     "name": "max_rarity",
+     "type": "ref",
+     "source": "rarities",
+     "help": "Highest rarity enchanting can reach (Legendary only drops)."
+    },
+    {
+     "name": "fail_bonus",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "+success per earlier failure on the item (Attuned)."
+    },
+    {
+     "name": "gold_per_value",
+     "type": "float",
+     "min": 0,
+     "help": "Gold = item value x this x target tier (Uncommon 1 ... Epic 4)."
+    },
+    {
+     "name": "min_gold",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "cost_by_target",
+     "type": "json",
+     "help": "target rarity -> {materials, cores, chance}."
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Enchantments",
+   "path": [
+    "enchants"
+   ],
+   "key_style": "snake",
+   "name_field": "name",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "material",
+     "type": "ref",
+     "source": "materials",
+     "help": "Material the enchant costs."
+    },
+    {
+     "name": "stat",
+     "type": "enum",
+     "options": [
+      "VITALITY",
+      "STRENGTH",
+      "DEXTERITY",
+      "INTELLIGENCE",
+      "FAITH",
+      "MIND",
+      "ENDURANCE",
+      "ARCANE",
+      "AGILITY",
+      "FORTITUDE"
+     ],
+     "help": "Attribute bonus (rolled in the item level's range)."
+    },
+    {
+     "name": "weapon_status",
+     "type": "enum",
+     "options": [
+      "",
+      "POISON",
+      "BURN",
+      "FREEZE",
+      "BLEED",
+      "SHOCK",
+      "CONFUSED",
+      "BLIND",
+      "SLEEP",
+      "SOAKED",
+      "STAGGERED",
+      "MARKED",
+      "SEALED"
+     ],
+     "help": "On weapons with no on-hit effect: chance to inflict this. Empty = none."
+    }
+   ]
+  }
+ ]
+}

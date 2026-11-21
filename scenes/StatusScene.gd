@@ -1,368 +1,341 @@
-# StatusScene.gd - ENHANCED UX/UI
+# res://scenes/StatusScene.gd
+# Character sheet. Built in code on the ScreenChrome grid:
+#   left   Vitals (HP/MP/SP/XP bars) + Attributes (with what each one feeds)
+#   right  Combat stats + tabs: Skills / Equipment / Elements / Proficiencies
+# The old .tscn labels are hidden; only the background art is reused.
 extends Control
 
-var current_character: CharacterData
+enum Tab { SKILLS, EQUIPMENT, ELEMENTS, PROFICIENCIES }
+const TAB_NAMES := ["Skills", "Equipment", "Resistances", "Proficiencies"]
 
-@onready var name_label = $NameLabel if has_node("NameLabel") else null
-@onready var class_label = $ClassLabel if has_node("ClassLabel") else null
-@onready var level_label = $LevelLabel if has_node("LevelLabel") else null
-@onready var race_label = $RaceLabel if has_node("RaceLabel") else null
-@onready var primary_attributes = $PrimaryAttributes if has_node("PrimaryAttributes") else null
-@onready var secondary_attributes = $SecondaryAttributes if has_node("SecondaryAttributes") else null
-@onready var elemental_info = $ElementalInfo if has_node("ElementalInfo") else null
-@onready var equipment_info = $EquipmentInfo if has_node("EquipmentInfo") else null
-@onready var skills_info = $SkillsInfo if has_node("SkillsInfo") else null
-@onready var prof_info = $ProficiencyInfo if has_node("ProficiencyInfo") else null
-@onready var exit_button = $ExitButton if has_node("ExitButton") else null
-@onready var xp_label = $XPLabel
+const ATTRIBUTES := ["vitality", "strength", "dexterity", "intelligence", "faith",
+	"mind", "endurance", "arcane", "agility", "fortitude"]
+## What each attribute feeds (mirrors CharacterData.calculate_secondary_attributes).
+const ATTRIBUTE_HINTS := {
+	"vitality": "HP, phys. defense",
+	"strength": "HP, phys. defense",
+	"dexterity": "accuracy, crit, dodge",
+	"intelligence": "MP, crit",
+	"faith": "magic defense",
+	"mind": "MP, magic def., accuracy",
+	"endurance": "SP, phys. defense",
+	"arcane": "magic defense",
+	"agility": "SP, dodge, crit",
+	"fortitude": "defenses, dodge, crit",
+}
+const BAR_COLORS := {"HP": Color("c0443c"), "MP": Color("4a6fd0"), "SP": Color("d0a03a"), "XP": Color("6fae4a")}
+
+const GOOD := "#8fd46a"
+const BAD := "#e07a5f"
+const MUTED := "#a99f90"
+const ACCENT := "#e5c34a"
+
+var current_character: CharacterData
+var chrome: ScreenChrome
+var tab: Tab = Tab.SKILLS
+
+var bars := {}               # "HP" -> {bar: ProgressBar, value: Label}
+var attributes_text: RichTextLabel
+var combat_text: RichTextLabel
+var tab_buttons: Array[Button] = []
+var tab_text: RichTextLabel
 
 func _ready():
-	print("StatusScene: _ready called")
 	current_character = CharacterManager.get_current_character()
 	if not current_character:
-		print("Error: No character loaded")
+		push_error("StatusScene: no character loaded")
 		return
+	_build_ui()
 	update_status()
-	
-	if exit_button:
-		exit_button.connect("pressed", Callable(self, "_on_exit_pressed"))
 
 func set_player(character: CharacterData):
 	current_character = character
-	update_status()
+	if is_node_ready() and chrome:
+		update_status()
+
+# === UI CONSTRUCTION ===
+
+func _build_ui() -> void:
+	chrome = ScreenChrome.attach(self, "Status", _on_exit_pressed)
+	# Hide the old scene-file labels; everything is rebuilt below.
+	for child in get_children():
+		if (child is Label or child is RichTextLabel or child is Button) and child != chrome:
+			child.visible = false
+
+	var ui := CanvasLayer.new()
+	ui.name = "StatusUI"
+	add_child(ui)
+
+	# Vitals
+	var vitals = _card(ui, "Vitals", Rect2(32, 72, 440, 168))
+	for i in range(4):
+		var key = ["HP", "MP", "SP", "XP"][i]
+		bars[key] = _bar(vitals, key, 40 + i * 30)
+
+	# Attributes
+	var attrs = _card(ui, "Attributes", Rect2(32, 252, 440, 372))
+	attributes_text = _rich(attrs, Rect2(10, 36, 420, 330))
+
+	# Combat
+	var combat = _card(ui, "Combat", Rect2(496, 72, 672, 204))
+	combat_text = _rich(combat, Rect2(10, 34, 652, 166))
+	combat_text.scroll_active = false
+
+	# Tabs
+	for i in range(TAB_NAMES.size()):
+		var b := Button.new()
+		b.text = TAB_NAMES[i]
+		b.position = Vector2(496 + i * 142, 288)
+		b.size = Vector2(134, 36)
+		b.toggle_mode = true
+		b.pressed.connect(func(): _set_tab(i))
+		ui.add_child(b)
+		tab_buttons.append(b)
+	var panel = _card(ui, "", Rect2(496, 332, 672, 292))
+	tab_text = _rich(panel, Rect2(10, 8, 652, 276))
+	tab_text.scroll_active = true
+
+func _card(parent: Node, title: String, rect: Rect2) -> Panel:
+	var p := Panel.new()
+	p.position = rect.position
+	p.size = rect.size
+	parent.add_child(p)
+	if title != "":
+		var l := Label.new()
+		l.text = title.to_upper()
+		l.position = Vector2(14, 8)
+		l.add_theme_color_override("font_color", Color(ACCENT))
+		l.add_theme_font_size_override("font_size", 14)
+		p.add_child(l)
+	return p
+
+func _rich(parent: Node, rect: Rect2) -> RichTextLabel:
+	var r := RichTextLabel.new()
+	r.bbcode_enabled = true
+	r.position = rect.position
+	r.size = rect.size
+	r.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	r.add_theme_constant_override("table_h_separation", 18)
+	r.add_theme_constant_override("line_separation", 3)
+	parent.add_child(r)
+	return r
+
+func _bar(parent: Node, key: String, y: int) -> Dictionary:
+	var name_label := Label.new()
+	name_label.text = key
+	name_label.position = Vector2(14, y)
+	name_label.size = Vector2(36, 24)
+	parent.add_child(name_label)
+
+	var bar := ProgressBar.new()
+	bar.show_percentage = false
+	bar.position = Vector2(54, y + 3)
+	bar.size = Vector2(250, 18)
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = BAR_COLORS[key]
+	fill.set_corner_radius_all(2)
+	bar.add_theme_stylebox_override("fill", fill)
+	parent.add_child(bar)
+
+	var value := Label.new()
+	value.position = Vector2(314, y)
+	value.size = Vector2(116, 24)
+	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	parent.add_child(value)
+	return {"bar": bar, "value": value}
+
+# === REFRESH ===
+
+func _set_tab(new_tab: int) -> void:
+	tab = new_tab as Tab
+	_refresh_tab()
 
 func update_status():
-	print("StatusScene: update_status called")
-	if not current_character:
-		print("Error: No character data available")
+	if not current_character or not chrome:
 		return
-	
-	# Enhanced header display
-	set_label_text(name_label, "[b][color=#FFD700]%s[/color][/b]" % str(current_character.name))
-	set_label_text(race_label, "[color=#CCCCCC]%s[/color]" % str(current_character.race))
-	set_label_text(class_label, "[color=#88DDFF]%s[/color]" % str(current_character.character_class))
-	set_label_text(level_label, "[color=#FFAA44]Level %d[/color]" % current_character.level)
-	
-	# Enhanced XP display with progress bar
-	if xp_label:
-		var current_xp = current_character.xp
-		var needed_xp = LevelSystem.calculate_xp_for_level(current_character.level)
-		var xp_percent = (float(current_xp) / float(needed_xp)) * 100.0
-		
-		var xp_color = "#88FF88"
-		if xp_percent >= 75:
-			xp_color = "#FFD700"  # Gold when close to leveling
-		
-		xp_label.text = "[color=%s]XP: %d / %d  (%.1f%%)[/color]" % [
-			xp_color, current_xp, needed_xp, xp_percent
-		]
-	
-	# Combined attributes and elemental info
-	if elemental_info and current_character.get("elemental_resistances") != null:
-		var info_text = ""
-		
-		# === PRIMARY ATTRIBUTES ===
-		info_text += "[center][b][color=#00DDFF]═══ PRIMARY ATTRIBUTES ═══[/color][/b][/center]\n\n"
-		
-		# Row 1: Physical stats
-		info_text += "[color=#FF8888]⚔ Vitality:[/color] %s  " % current_character.get_attribute_display_compact("vitality")
-		info_text += "[color=#FFAA44]💪 Strength:[/color] %s  " % current_character.get_attribute_display_compact("strength")
-		info_text += "[color=#88FF88]🎯 Dexterity:[/color] %s\n" % current_character.get_attribute_display_compact("dexterity")
-		
-		# Row 2: Mental stats
-		info_text += "[color=#88AAFF]🧠 Intelligence:[/color] %s  " % current_character.get_attribute_display_compact("intelligence")
-		info_text += "[color=#FFDD88]✨ Faith:[/color] %s  " % current_character.get_attribute_display_compact("faith")
-		info_text += "[color=#AA88FF]🔮 Mind:[/color] %s\n" % current_character.get_attribute_display_compact("mind")
-		
-		# Row 3: Defensive stats
-		info_text += "[color=#66DDFF]🛡 Endurance:[/color] %s  " % current_character.get_attribute_display_compact("endurance")
-		info_text += "[color=#DD88FF]🌟 Arcane:[/color] %s\n" % current_character.get_attribute_display_compact("arcane")
-		
-		# Row 4: Utility stats
-		info_text += "[color=#AAFF88]⚡ Agility:[/color] %s  " % current_character.get_attribute_display_compact("agility")
-		info_text += "[color=#FFAA88]🏔 Fortitude:[/color] %s\n\n" % current_character.get_attribute_display_compact("fortitude")
-		
-		# === SECONDARY ATTRIBUTES ===
-		info_text += "[center][b][color=#00DDFF]═══ SECONDARY ATTRIBUTES ═══[/color][/b][/center]\n\n"
-		
-		# Resource pools with color coding
-		var hp_percent = float(current_character.current_hp) / float(current_character.max_hp)
-		var hp_color = "#FF4444" if hp_percent < 0.3 else "#FFAA44" if hp_percent < 0.7 else "#66FF66"
-		
-		var mp_percent = float(current_character.current_mp) / float(current_character.max_mp)
-		var mp_color = "#4444FF" if mp_percent < 0.3 else "#6666FF" if mp_percent < 0.7 else "#88AAFF"
-		
-		var sp_percent = float(current_character.current_sp) / float(current_character.max_sp)
-		var sp_color = "#FFAA00" if sp_percent < 0.3 else "#FFCC44" if sp_percent < 0.7 else "#FFDD88"
-		
-		info_text += "[color=%s]❤ HP:[/color] %d / %d  " % [hp_color, current_character.current_hp, current_character.max_hp]
-		info_text += "[color=%s]✦ MP:[/color] %d / %d  " % [mp_color, current_character.current_mp, current_character.max_mp]
-		info_text += "[color=%s]⚡ SP:[/color] %d / %d\n\n" % [sp_color, current_character.current_sp, current_character.max_sp]
-		
-		# Offensive stats
-		info_text += "[color=#FF6666]⚔ Attack Power:[/color] %d  " % current_character.get_attack_power()
-		info_text += "[color=#8888FF]🔮 Spell Power:[/color] %d\n" % current_character.spell_power
-		
-		# Defensive stats
-		info_text += "[color=#6666FF]🛡 Defense:[/color] %d  " % current_character.get_defense()
-		info_text += "[color=#AAAA88]🏔 Toughness:[/color] %.2f\n" % current_character.toughness
-		
-		# Evasion stats
-		info_text += "[color=#88FFAA]💨 Dodge:[/color] %.1f%%  " % (current_character.dodge * 100)
-		info_text += "[color=#AA88FF]✨ Spell Ward:[/color] %.2f\n" % current_character.spell_ward
-		
-		# Accuracy stats
-		info_text += "[color=#FFAA66]🎯 Accuracy:[/color] %.1f%%  " % (current_character.accuracy * 100)
-		info_text += "[color=#FFDD44]💥 Crit Rate:[/color] %.1f%%\n\n" % (current_character.critical_hit_rate * 100)
-		
-		# === ELEMENTAL AFFINITIES ===
-		info_text += "[center][b][color=#FF8844]═══ ELEMENTAL AFFINITIES ═══[/color][/b][/center]\n\n"
-		
-		# Show ALL elements with their values
-		for element in ElementalDamage.Element.values():
-			if element == ElementalDamage.Element.NONE:
-				continue
-			
-			var element_name = ElementalDamage.get_element_name(element)
-			var color = ElementalDamage.get_element_color(element)
-			var resist = current_character.get_elemental_resistance(element)
-			var weak = current_character.get_elemental_weakness(element)
-			var bonus = current_character.get_elemental_damage_bonus(element)
-			
-			# Element icon mapping
-			var icon = "○"
-			match element:
-				ElementalDamage.Element.FIRE: icon = "🔥"
-				ElementalDamage.Element.ICE: icon = "❄"
-				ElementalDamage.Element.LIGHTNING: icon = "⚡"
-				ElementalDamage.Element.EARTH: icon = "🌍"
-				ElementalDamage.Element.WIND: icon = "💨"
-				ElementalDamage.Element.HOLY: icon = "✨"
-				ElementalDamage.Element.DARK: icon = "🌑"
-			
-			# Build element line with icon
-			var line = "[color=%s]%s %s:[/color]" % [color, icon, element_name]
-			
-			var stats = []
-			if resist > 0.0:
-				stats.append("[color=#66DDFF]-%d%% dmg taken[/color]" % int(resist * 100))
-			if weak > 0.0:
-				stats.append("[color=#FF8844]+%d%% dmg taken[/color]" % int(weak * 100))
-			if bonus > 0.0:
-				stats.append("[color=#88FF66]+%d%% dmg dealt[/color]" % int(bonus * 100))
-			
-			if stats.is_empty():
-				line += " [color=#888888]Normal[/color]"
-			else:
-				line += " " + ", ".join(stats)
-			
-			info_text += line + "\n"
-		
-		if elemental_info is RichTextLabel:
-			elemental_info.bbcode_enabled = true
-			elemental_info.text = info_text
-		else:
-			elemental_info.text = info_text
-	elif elemental_info:
-		# For old characters without elemental system
-		var info_text = _generate_fallback_attributes()
-		
-		if elemental_info is RichTextLabel:
-			elemental_info.bbcode_enabled = true
-			elemental_info.text = info_text
-		else:
-			elemental_info.text = info_text
-	
-	# Enhanced Equipment display
-	if equipment_info:
-		var equipment_text = "[center][b][color=#00DDFF]═══ EQUIPMENT ═══[/color][/b][/center]\n\n"
-		
-		var slot_icons = {
-			"main_hand": "⚔",
-			"off_hand": "🛡",
-			"head": "⛑",
-			"chest": "🎽",
-			"hands": "🧤",
-			"legs": "👖",
-			"feet": "👢"
-		}
-		
-		for slot in current_character.equipment:
-			var item = current_character.equipment[slot]
-			var slot_name = slot.capitalize().replace("_", " ")
-			var icon = slot_icons.get(slot, "○")
-			
-			if item:
-				var color = item.get_rarity_color()
-				var item_text = "%s [b]%s:[/b] [color=%s]%s[/color] [%s]" % [
-					icon, slot_name, color, item.display_name, item.rarity.capitalize()
-				]
-				
-				# Show key stats inline
-				var stats = []
-				if item.damage > 0:
-					stats.append("[color=#FF6666]%d dmg[/color]" % item.damage)
-				if item.armor_value > 0:
-					stats.append("[color=#6666FF]%d armor[/color]" % item.armor_value)
-				
-				if stats.size() > 0:
-					item_text += " (%s)" % ", ".join(stats)
-				
-				equipment_text += item_text + "\n"
-			else:
-				equipment_text += "%s [b]%s:[/b] [color=#666666]Empty[/color]\n" % [icon, slot_name]
-		
-		if equipment_info is RichTextLabel:
-			equipment_info.bbcode_enabled = true
-			equipment_info.text = equipment_text
-		else:
-			equipment_info.text = equipment_text
-	
-	# Enhanced Skills display
-	if skills_info:
-		var skills_text = "[center][b][color=#00DDFF]═══ SKILLS ═══[/color][/b][/center]\n\n"
-		
-		for skill_name in current_character.skills:
-			var skill = current_character.get_skill_instance(skill_name)
-			if skill:
-				var level_str = skill.get_level_string()
-				var progress_text = ""
-				
-				# Progress bar for skills not at max level
-				if skill.level < 6:
-					var next_threshold = skill.LEVEL_THRESHOLDS[skill.level - 1]
-					var progress_percent = (float(skill.uses) / float(next_threshold)) * 100.0
-					progress_text = " [color=#FFAA44](%d/%d uses - %.0f%%)[/color]" % [
-						skill.uses, next_threshold, progress_percent
-					]
-				else:
-					progress_text = " [color=#FFD700](MAX)[/color]"
-				
-				skills_text += "[b][color=#88DDFF]%s[/color][/b] - Level %s%s\n" % [
-					skill.name, level_str, progress_text
-				]
-				skills_text += "  [color=#AAAAAA][i]%s[/i][/color]\n" % skill.description
-				
-				# Show skill stats in a compact format
-				var stat_parts = []
-				
-				if skill.type in [Skill.SkillType.DAMAGE, Skill.SkillType.HEAL, Skill.SkillType.RESTORE]:
-					stat_parts.append("[color=#FF8888]Power: %d[/color]" % skill.power)
-				
-				if skill.type in [Skill.SkillType.BUFF, Skill.SkillType.DEBUFF, Skill.SkillType.INFLICT_STATUS]:
-					if skill.duration > 0:
-						stat_parts.append("[color=#FFAA88]Duration: %d turns[/color]" % skill.duration)
-				
-				if skill.mp_cost > 0:
-					stat_parts.append("[color=#8888FF]MP: %d[/color]" % skill.mp_cost)
-				if skill.sp_cost > 0:
-					stat_parts.append("[color=#FFAA44]SP: %d[/color]" % skill.sp_cost)
-				if skill.cooldown > 0:
-					stat_parts.append("[color=#AAAA88]CD: %d[/color]" % skill.cooldown)
-				
-				if stat_parts.size() > 0:
-					skills_text += "  " + " | ".join(stat_parts) + "\n"
-				
-				skills_text += "\n"
-		
-		if skills_info is RichTextLabel:
-			skills_info.bbcode_enabled = true
-			skills_info.text = skills_text
-		else:
-			skills_info.text = skills_text
-	
-	# Enhanced Proficiencies display
-	if prof_info and current_character.proficiency_manager:
-		var prof_text = "[center][b][color=#00DDFF]═══ PROFICIENCIES ═══[/color][/b][/center]\n\n"
-		
-		var prof_mgr = current_character.proficiency_manager
-		
-		# Get available weapon types
-		var available_weapons = prof_mgr.get_available_weapon_types()
-		
-		prof_text += "[b][color=#FFAA44]⚔ Weapons & Off-Hand:[/color][/b]\n"
-		if available_weapons.is_empty():
-			prof_text += "  [color=#888888]No weapons available[/color]\n"
-		else:
-			available_weapons.sort()
-			for weapon_key in available_weapons:
-				var prof_str = prof_mgr.get_weapon_proficiency_string(weapon_key)
-				prof_text += "  " + prof_str + "\n"
-		
-		# Get available armor types
-		var available_armors = prof_mgr.get_available_armor_types()
-		
-		prof_text += "\n[b][color=#6666FF]🛡 Armor:[/color][/b]\n"
-		if available_armors.is_empty():
-			prof_text += "  [color=#888888]No armor available[/color]\n"
-		else:
-			available_armors.sort()
-			for armor_type in available_armors:
-				var prof_str = prof_mgr.get_armor_proficiency_string(armor_type)
-				prof_text += "  " + prof_str + "\n"
-		
-		if prof_info is RichTextLabel:
-			prof_info.bbcode_enabled = true
-			prof_info.text = prof_text
-		else:
-			prof_info.text = prof_text
-	
-	print("StatusScene: update_status completed")
+	var c = current_character
+	chrome.set_title(str(c.name))
+	chrome.set_info("Level %d  %s %s  -  %s" % [c.level, c.race, c.character_class, RankManager.display(RankManager.get_rank(c))])
 
-func _generate_fallback_attributes() -> String:
-	"""Generate attributes display for characters without elemental system"""
-	var info_text = ""
-	
-	info_text += "[center][b][color=#00DDFF]═══ PRIMARY ATTRIBUTES ═══[/color][/b][/center]\n\n"
-	info_text += "Vitality: %s | Strength: %s | Dexterity: %s\n" % [
-		current_character.get_attribute_display_compact("vitality"),
-		current_character.get_attribute_display_compact("strength"),
-		current_character.get_attribute_display_compact("dexterity")
-	]
-	info_text += "Intelligence: %s | Faith: %s | Mind: %s\n" % [
-		current_character.get_attribute_display_compact("intelligence"),
-		current_character.get_attribute_display_compact("faith"),
-		current_character.get_attribute_display_compact("mind")
-	]
-	info_text += "Endurance: %s | Arcane: %s\n" % [
-		current_character.get_attribute_display_compact("endurance"),
-		current_character.get_attribute_display_compact("arcane")
-	]
-	info_text += "Agility: %s | Fortitude: %s\n\n" % [
-		current_character.get_attribute_display_compact("agility"),
-		current_character.get_attribute_display_compact("fortitude")
-	]
-	
-	info_text += "[center][b][color=#00DDFF]═══ SECONDARY ATTRIBUTES ═══[/color][/b][/center]\n\n"
-	info_text += "HP: %d / %d | MP: %d / %d | SP: %d / %d\n" % [
-		current_character.current_hp, current_character.max_hp,
-		current_character.current_mp, current_character.max_mp,
-		current_character.current_sp, current_character.max_sp
-	]
-	info_text += "Attack Power: %d | Spell Power: %d\n" % [
-		current_character.get_attack_power(), current_character.spell_power
-	]
-	info_text += "Defense: %d | Toughness: %.2f\n" % [
-		current_character.get_defense(), current_character.toughness
-	]
-	info_text += "Dodge: %.1f%% | Spell Ward: %.2f\n" % [
-		current_character.dodge * 100, current_character.spell_ward
-	]
-	info_text += "Accuracy: %.1f%% | Crit Rate: %.1f%%\n\n" % [
-		current_character.accuracy * 100, current_character.critical_hit_rate * 100
-	]
-	
-	info_text += "[color=#888888][i]Elemental system not initialized for this character[/i][/color]"
-	
-	return info_text
+	_set_bar("HP", c.current_hp, c.max_hp)
+	_set_bar("MP", c.current_mp, c.max_mp)
+	_set_bar("SP", c.current_sp, c.max_sp)
+	var needed = LevelSystem.calculate_xp_for_level(c.level)
+	_set_bar("XP", c.xp, needed)
 
-func set_label_text(label, text: String):
-	if label:
-		if label is RichTextLabel:
-			label.bbcode_enabled = true
-		label.text = text
-	else:
-		print("Warning: Attempted to set text on a null label")
+	attributes_text.text = _attributes_text()
+	combat_text.text = _combat_text()
+	_refresh_tab()
+
+func _set_bar(key: String, value: float, max_value: float) -> void:
+	bars[key].bar.max_value = max(1.0, max_value)
+	bars[key].bar.value = value
+	bars[key].value.text = "%d / %d" % [value, max_value]
+
+func _refresh_tab() -> void:
+	for i in range(tab_buttons.size()):
+		tab_buttons[i].set_pressed_no_signal(i == tab)
+	match tab:
+		Tab.SKILLS: tab_text.text = _skills_text()
+		Tab.EQUIPMENT: tab_text.text = _equipment_text()
+		Tab.ELEMENTS: tab_text.text = _elements_text()
+		Tab.PROFICIENCIES: tab_text.text = _proficiency_text()
+	tab_text.scroll_to_line(0)
+
+# === SECTION TEXT ===
+
+func _attributes_text() -> String:
+	var c = current_character
+	var t := "[table=3]"
+	for stat in ATTRIBUTES:
+		var b = c.get_attribute_breakdown(stat) if c.has_method("get_attribute_breakdown") else {"total": c.get(stat), "equipment": 0, "buffs": 0}
+		var bonus = int(b.get("equipment", 0)) + int(b.get("buffs", 0))
+		var value = "[b]%d[/b]" % int(b.get("total", c.get(stat)))
+		if bonus != 0:
+			value += " [color=%s](%+d)[/color]" % [GOOD if bonus > 0 else BAD, bonus]
+		var hint = ATTRIBUTE_HINTS[stat]
+		if c.get("attack_power_type") == stat:
+			hint = "[color=%s]attack[/color], " % ACCENT + hint
+		t += "[cell]%s[/cell][cell]%s[/cell][cell][color=%s]%s[/color][/cell]" % [stat.capitalize(), value, MUTED, hint]
+	return t + "[/table]"
+
+func _combat_text() -> String:
+	var c = current_character
+	var phys_def = BattleFormulas.physical_defense(c)
+	var mag_def = BattleFormulas.magical_defense(c)
+	var rows = [
+		["Physical attack", "%d" % int(BattleFormulas.physical_offense(c)), "attack power + weapon"],
+		["Spell power", "%d" % int(BattleFormulas.magical_offense(c)), "magic damage and healing"],
+		["Physical defense", "%d" % int(round(phys_def)), "you take %d%% of physical damage" % int(round(BattleFormulas.mitigation(phys_def) * 100))],
+		["Magic defense", "%d" % int(round(mag_def)), "you take %d%% of magic damage" % int(round(BattleFormulas.mitigation(mag_def) * 100))],
+		["Accuracy / Dodge", "%d%% / %d%%" % [int(round(c.accuracy * 100)), int(round(maxf(c.dodge, 0.0) * 100))], "chance to hit / to evade"],
+		["Critical hit", "%d%%" % int(round(c.critical_hit_rate * 100)), "x1.5 to x2 damage"],
+	]
+	var pen = BattleFormulas.get_armor_penetration(c)
+	if pen > 0.0:  # the card fits six rows, so share the crit row
+		rows[5] = ["Crit / Armor pen.", "%d%% / %d%%" % [int(round(c.critical_hit_rate * 100)), int(round(pen * 100))], "x1.5-2 damage / ignores that much physical defense"]
+	var t := "[table=3]"
+	for r in rows:
+		t += "[cell]%s[/cell][cell][b]%s[/b][/cell][cell][color=%s]%s[/color][/cell]" % [r[0], r[1], MUTED, r[2]]
+	return t + "[/table]"
+
+func _skills_text() -> String:
+	var c = current_character
+	if c.skills.is_empty():
+		return "[color=%s][i]No skills learned.[/i][/color]" % MUTED
+	var t := ""
+	for skill_name in c.skills:
+		var s = c.get_skill_instance(skill_name)
+		if s == null:
+			continue
+		var level = "Lv %s" % s.get_level_string()
+		if s.level < 6:
+			level += "  [color=%s]%d / %d uses to next[/color]" % [MUTED, s.uses, s.get_uses_for_next_level()]
+		t += "[b][color=%s]%s[/color][/b]   %s\n" % [ACCENT, s.name, level]
+		var parts: Array = []
+		if s.mp_cost > 0: parts.append("%d MP" % s.mp_cost)
+		if s.sp_cost > 0: parts.append("%d SP" % s.sp_cost)
+		if s.cooldown > 0: parts.append("%d turn cooldown" % s.cooldown)
+		if s.type in [Skill.SkillType.DAMAGE, Skill.SkillType.HEAL, Skill.SkillType.RESTORE, Skill.SkillType.DRAIN]:
+			parts.append("power %d" % s.power)
+		if s.duration > 0 and s.type in [Skill.SkillType.BUFF, Skill.SkillType.DEBUFF, Skill.SkillType.INFLICT_STATUS]:
+			parts.append("%d turns" % s.duration)
+		if not parts.is_empty():
+			t += "[color=%s]%s[/color]\n" % [MUTED, "  ·  ".join(parts)]
+		if s.description != "":
+			t += "%s\n" % s.description
+		if s.weapon_bonus_text() != "":
+			t += "[color=%s]Weapon bonus: %s[/color]\n" % [ACCENT, s.weapon_bonus_text()]
+		t += "\n"
+	return t
+
+func _equipment_text() -> String:
+	var c = current_character
+	var t := "[table=3]"
+	for slot in c.equipment:
+		var item = c.equipment[slot]
+		var name_cell = "[color=%s]-[/color]" % MUTED
+		var stat_cell = ""
+		if item:
+			name_cell = "[color=#%s]%s[/color]" % [ScreenChrome.rarity_color(item).to_html(false), item.display_name]
+			if item.damage > 0: stat_cell = "%d damage" % item.damage
+			elif item.armor_value > 0: stat_cell = "%d armor" % item.armor_value
+		t += "[cell][color=%s]%s[/color][/cell][cell]%s[/cell][cell][color=%s]%s[/color][/cell]" % [MUTED, ScreenChrome.slot_name(slot), name_cell, MUTED, stat_cell]
+	t += "[/table]\n\n[color=%s][i]Change gear from Town > Equipment.[/i][/color]" % MUTED
+	return t
+
+func _elements_text() -> String:
+	var c = current_character
+	if c.get("elemental_resistances") == null:
+		return "[color=%s][i]Elemental data not set up for this character.[/i][/color]" % MUTED
+	var t := _physical_text() + "\n[b]Elements[/b]\n"
+	t += "[table=3][cell][color=%s]Element[/color][/cell][cell][color=%s]Damage taken[/color][/cell][cell][color=%s]Damage dealt[/color][/cell]" % [MUTED, MUTED, MUTED]
+	for element in ElementalDamage.Element.values():
+		if element == ElementalDamage.Element.NONE:
+			continue
+		var taken = 1.0 - c.get_elemental_resistance(element) + c.get_elemental_weakness(element)
+		var bonus = c.get_elemental_damage_bonus(element)
+		var taken_text = "normal"
+		if taken < 0.999:
+			taken_text = "[color=%s]%d%% (resist)[/color]" % [GOOD, int(round(taken * 100))]
+		elif taken > 1.001:
+			taken_text = "[color=%s]%d%% (weak)[/color]" % [BAD, int(round(taken * 100))]
+		var dealt_text = "[color=%s]+%d%%[/color]" % [GOOD, int(round(bonus * 100))] if bonus > 0.0 else "normal"
+		t += "[cell][color=%s]%s[/color][/cell][cell]%s[/cell][cell]%s[/cell]" % [
+			ElementalDamage.get_element_color(element), ElementalDamage.get_element_name(element), taken_text, dealt_text]
+	return t + "[/table]"
+
+## Physical damage types: what you deal, and what you take (race + armor).
+func _physical_text() -> String:
+	var c = current_character
+	var dealt = DamageTypes.attack_type(c)
+	var weapon = c.equipment.get("main_hand")
+	var dealt_name = DamageTypes.type_name(dealt) if dealt >= 0 else "untyped"
+	var t := "[b]Physical[/b]   [color=%s]your attacks deal [/color][color=%s]%s[/color][color=%s] (%s)[/color]\n" % [
+		MUTED, ACCENT, dealt_name, MUTED, weapon.display_name if weapon else "unarmed"]
+	t += "[table=4][cell][color=%s]Type[/color][/cell][cell][color=%s]Damage taken[/color][/cell][cell][color=%s]Race[/color][/cell][cell][color=%s]Armor[/color][/cell]" % [MUTED, MUTED, MUTED, MUTED]
+	for i in DamageTypes.Type.size():
+		var mult = DamageTypes.multiplier(c, i)
+		var taken = "normal"
+		if mult < 0.999:
+			taken = "[color=%s]%d%% (resist)[/color]" % [GOOD, int(round(mult * 100))]
+		elif mult > 1.001:
+			taken = "[color=%s]%d%% (weak)[/color]" % [BAD, int(round(mult * 100))]
+		t += "[cell]%s[/cell][cell]%s[/cell][cell]%s[/cell][cell]%s[/cell]" % [
+			DamageTypes.type_name(i), taken, _pct(DamageTypes.race_affinity(String(c.race), i)), _pct(DamageTypes.armor_affinity(c, i))]
+	return t + "[/table]\n"
+
+func _pct(v: float) -> String:
+	if abs(v) < 0.005:
+		return "[color=%s]-[/color]" % MUTED
+	return "[color=%s]%+d%%[/color]" % [BAD if v > 0 else GOOD, int(round(v * 100))]
+
+func _proficiency_text() -> String:
+	var pm = current_character.proficiency_manager
+	if pm == null:
+		return ""
+	var t := "[color=%s]Using a weapon or armor type levels it up (max level %d).[/color]\n\n" % [MUTED, pm.MAX_LEVEL]
+	t += "[b]Weapons & off-hands[/b]\n" + _prof_table(pm, pm.get_available_weapon_types(), true)
+	t += "\n[b]Armor[/b]\n" + _prof_table(pm, pm.get_available_armor_types(), false)
+	return t
+
+func _prof_table(pm, keys: Array, weapons: bool) -> String:
+	if keys.is_empty():
+		return "[color=%s]None[/color]\n" % MUTED
+	keys = keys.duplicate()
+	keys.sort()
+	var t := "[table=4]"
+	for key in keys:
+		var level = pm.get_weapon_proficiency_level(key) if weapons else pm.get_armor_proficiency_level(key)
+		var uses = pm.get_weapon_proficiency_uses(key) if weapons else pm.get_armor_proficiency_uses(key)
+		var bonus = (pm.WEAPON_DAMAGE_BONUS if weapons else pm.ARMOR_EFFECTIVENESS_BONUS).get(level, 0.0)
+		var label = pm._format_weapon_name(key) if weapons else String(key).capitalize()
+		var progress = "[color=%s]max[/color]" % ACCENT
+		if level < pm.MAX_LEVEL:
+			progress = "[color=%s]%d / %d uses[/color]" % [MUTED, uses, pm.LEVEL_THRESHOLDS[level - 1]]
+		t += "[cell]%s[/cell][cell]Lv %d[/cell][cell]+%d%% %s[/cell][cell]%s[/cell]" % [
+			label, level, int(round(bonus * 100)), "damage" if weapons else "armor", progress]
+	return t + "[/table]\n"
 
 func _on_exit_pressed():
 	SceneManager.change_to_town(current_character)

@@ -17,7 +17,7 @@ func _build_class_caches():
 	if _cache_built:
 		return
 	
-	print("[ClassEquipmentBias] Building dynamic class caches from equipment data...")
+	Log.debug("items", "[ClassEquipmentBias] Building dynamic class caches from equipment data...")
 	
 	# Get all equipment templates
 	var all_weapons = ItemManager.weapons
@@ -92,23 +92,7 @@ func _add_armor_to_all_classes(armor_id: String, armor_type: String):
 func _get_all_class_names() -> Array:
 	# Get all class names from classes.json
 	var classes = []
-	var file_path = "res://data/classes.json"
-	
-	if not FileAccess.file_exists(file_path):
-		print("[ClassEquipmentBias] ERROR: classes.json not found!")
-		return classes
-	
-	var file = FileAccess.open(file_path, FileAccess.READ)
-	var json_text = file.get_as_text()
-	file.close()
-	
-	var json = JSON.new()
-	var error = json.parse(json_text)
-	if error != OK:
-		print("[ClassEquipmentBias] ERROR: Failed to parse classes.json")
-		return classes
-	
-	var data = json.data
+	var data = DataRegistry.get_data("classes")
 	
 	# Extract all class names from playable, non_playable, and boss sections
 	for category in ["playable", "non_playable", "boss"]:
@@ -120,14 +104,14 @@ func _get_all_class_names() -> Array:
 
 func _print_cache_summary():
 	# Debug output
-	print("[ClassEquipmentBias] Cache built successfully!")
-	print("  Classes with weapon data: %d" % _class_weapon_cache.size())
-	print("  Classes with armor data: %d" % _class_armor_cache.size())
+	Log.debug("items", "[ClassEquipmentBias] Cache built successfully!")
+	Log.debug("items", "  Classes with weapon data: %d" % _class_weapon_cache.size())
+	Log.debug("items", "  Classes with armor data: %d" % _class_armor_cache.size())
 	
 	# Sample output for first class
 	if not _class_weapon_cache.is_empty():
 		var sample_class = _class_weapon_cache.keys()[0]
-		print("  Sample: %s can use %d main_hand, %d off_hand weapons" % [
+		Log.debug("items", "  Sample: %s can use %d main_hand, %d off_hand weapons" % [
 			sample_class,
 			_class_weapon_cache[sample_class]["main_hand"].size(),
 			_class_weapon_cache[sample_class]["off_hand"].size()
@@ -156,6 +140,12 @@ func get_biased_equipment_id(character_class: String, slot_category: String) -> 
 			return _roll_biased_armor(character_class)
 	
 	return ""
+
+## Armor types (cloth, leather, ...) this class can wear; [] if unknown.
+func get_armor_types(character_class: String) -> Array:
+	if not _cache_built:
+		_build_class_caches()
+	return _class_armor_cache.get(character_class, {}).keys()
 
 func _has_class_data(character_class: String) -> bool:
 	# Check if we have cached data for this class
@@ -187,13 +177,36 @@ func _roll_biased_weapon(character_class: String, slot_filter: String) -> String
 		return cannot_use[RandomManager.randi() % cannot_use.size()]
 	
 	if cannot_use.is_empty():
-		return can_use[RandomManager.randi() % can_use.size()]
+		return _prefer(character_class, can_use)
 	
-	# 65% chance for preferred, 35% for other
+	# 65% chance for something the class can use, 35% for other
 	if RandomManager.randf() < BIAS_WEIGHT:
-		return can_use[RandomManager.randi() % can_use.size()]
+		return _prefer(character_class, can_use)
 	else:
 		return cannot_use[RandomManager.randi() % cannot_use.size()]
+
+## Within usable weapons, lean toward the class's style (classes.json
+## "preferred_weapons", ids or types: Paladin sword-and-board, Berserker two-handers).
+const PREFERRED_WEIGHT = 0.75
+var _preferred_cache: Dictionary = {}
+
+func get_preferred_weapons(character_class: String) -> Array:
+	if _preferred_cache.is_empty():
+		var data = DataRegistry.get_data("classes")
+		for group in (data if data is Dictionary else {}):
+			for cls in data[group]:
+				_preferred_cache[cls] = data[group][cls].get("preferred_weapons", [])
+	return _preferred_cache.get(character_class, [])
+
+func _prefer(character_class: String, can_use: Array) -> String:
+	var pref = get_preferred_weapons(character_class)
+	if not pref.is_empty() and RandomManager.randf() < PREFERRED_WEIGHT:
+		var matches = can_use.filter(func(id):
+			var t = ItemManager.get_equipment_template(id)
+			return id in pref or String(t.get("type", "")) in pref)
+		if not matches.is_empty():
+			return matches[RandomManager.randi() % matches.size()]
+	return can_use[RandomManager.randi() % can_use.size()]
 
 func _roll_biased_armor(character_class: String) -> String:
 	# Roll armor with bias toward class restrictions

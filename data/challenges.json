@@ -1,0 +1,17 @@
+{
+	"_comment": "Wave challenges (WaveChallenges.gd): an optional goal shown at the start of a wave. Meet it and win to bank a bonus (gold, material rolls, a chance at gear) with the wave's loot - kept at a Breather, lost if you fall. stat is counted by BattleRules.stats; a challenge needs at_least and/or at_most.",
+	"chance": 0.6,
+	"boss_chance": 1.0,
+	"reward": { "gold_base": 60, "boss_mult": 2.0, "material_rolls": 2, "gear_chance": 0.25 },
+	"challenges": {
+		"breaker": { "name": "Breaker", "description": "Break 2 enemies.", "stat": "breaks", "at_least": 2, "min_enemies": 2, "weight": 1.0 },
+		"shatter": { "name": "Shatter", "description": "Break an enemy.", "stat": "breaks", "at_least": 1, "weight": 1.0 },
+		"frugal": { "name": "Frugal", "description": "Win without using an item.", "stat": "items", "at_most": 0, "weight": 1.0 },
+		"combo_artist": { "name": "Combo Artist", "description": "Land 2 combos.", "stat": "combos", "at_least": 2, "weight": 0.8 },
+		"read_the_room": { "name": "Read the Room", "description": "Land a Perfect Guard.", "stat": "guards", "at_least": 1, "weight": 0.8 },
+		"swift": { "name": "Swift", "description": "Win within 3 rounds.", "stat": "rounds", "at_most": 3, "weight": 1.0 },
+		"unbroken": { "name": "Unbroken", "description": "Win with no hero Broken or knocked out.", "stat": "setbacks", "at_most": 0, "weight": 1.0 },
+		"exploit": { "name": "Exploit", "description": "Hit 4 weaknesses.", "stat": "weak_hits", "at_least": 4, "weight": 1.0 },
+		"together": { "name": "Together", "description": "Use a Unison Strike.", "stat": "unison", "at_least": 1, "min_party": 2, "weight": 0.6 }
+	}
+}

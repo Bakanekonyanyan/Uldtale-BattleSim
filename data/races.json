@@ -195,7 +195,8 @@
 		"LIGHTNING": 0.15
 	  },
 	  "elemental_weaknesses": {
-		"EARTH": 0.15
+		"EARTH": 0.15,
+		"WATER": 0.2
 	  },
 	  "elemental_damage_bonuses": {
 		"LIGHTNING": 0.2

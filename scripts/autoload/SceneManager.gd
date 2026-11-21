@@ -22,7 +22,15 @@ enum ScenePath {
 	ARENA_LOBBY,
 	DUNGEON,
 	BATTLE,
-	REWARDS
+	REWARDS,
+	ALCHEMIST,
+	BLACKSMITH,
+	ENCHANTER,
+	GUILD,
+	TALENTS,
+	DEFEAT,
+	TAVERN,
+	CHARACTER_CREATION
 }
 
 # Scene path lookup
@@ -38,7 +46,15 @@ const SCENE_PATHS = {
 	ScenePath.ARENA_LOBBY: "res://scenes/arena/ArenaLobby.tscn",
 	ScenePath.DUNGEON: "res://scenes/DungeonScene.tscn",
 	ScenePath.BATTLE: "res://scenes/battle/Battle.tscn",
-	ScenePath.REWARDS: "res://scenes/RewardScene.tscn"
+	ScenePath.REWARDS: "res://scenes/RewardScene.tscn",
+	ScenePath.ALCHEMIST: "res://scenes/town/AlchemistScene.tscn",
+	ScenePath.BLACKSMITH: "res://scenes/town/BlacksmithScene.tscn",
+	ScenePath.ENCHANTER: "res://scenes/town/EnchanterScene.tscn",
+	ScenePath.GUILD: "res://scenes/town/GuildScene.tscn",
+	ScenePath.TALENTS: "res://scenes/town/TalentScene.tscn",
+	ScenePath.DEFEAT: "res://scenes/town/DefeatScene.tscn",
+	ScenePath.TAVERN: "res://scenes/town/TavernScene.tscn",
+	ScenePath.CHARACTER_CREATION: "res://scenes/ui/CharacterCreation.tscn"
 }
 
 # ===== STATE =====
@@ -49,7 +65,7 @@ var scene_stack: Array[Dictionary] = []
 func _ready() -> void:
 	var root = get_tree().root
 	current_scene = root.get_child(root.get_child_count() - 1)
-	print("SceneManager: Initialized with scene: %s" % current_scene.name)
+	Log.debug("scenes", "SceneManager: Initialized with scene: %s" % current_scene.name)
 
 # ===== CORE NAVIGATION API =====
 
@@ -78,7 +94,9 @@ func navigate(scene: ScenePath, transition: TransitionType = TransitionType.REPL
 # ===== INTERNAL TRANSITION LOGIC =====
 
 func _navigate_replace(path: String, character: CharacterData, data: Dictionary) -> void:
-	"""Replace current scene"""
+	"""Replace current scene. The back-stack only tracks PUSH/POP pairs, so a
+	REPLACE starts it over (screens left via change_to_town used to pile up)."""
+	scene_stack.clear()
 	if character:
 		SaveManager.save_game(character)
 	
@@ -97,7 +115,7 @@ func _navigate_push(path: String, character: CharacterData, data: Dictionary) ->
 	}
 	
 	scene_stack.push_back(state)
-	print("SceneManager: Pushed to stack (depth: %d)" % scene_stack.size())
+	Log.debug("scenes", "SceneManager: Pushed to stack (depth: %d)" % scene_stack.size())
 	
 	call_deferred("_deferred_load", path, character, data)
 
@@ -108,7 +126,7 @@ func _navigate_pop() -> void:
 		return
 	
 	var state = scene_stack.pop_back()
-	print("SceneManager: Popped from stack (depth: %d)" % scene_stack.size())
+	Log.debug("scenes", "SceneManager: Popped from stack (depth: %d)" % scene_stack.size())
 	
 	var path = state.get("path", "")
 	var character = state.get("character", null)
@@ -120,7 +138,7 @@ func _navigate_pop() -> void:
 
 func _deferred_load(path: String, character: CharacterData, data: Dictionary) -> void:
 	"""Load and instantiate scene"""
-	print("SceneManager: Loading scene: %s" % path)
+	Log.debug("scenes", "SceneManager: Loading scene: %s" % path)
 	
 	# Cleanup current
 	if current_scene:
@@ -148,7 +166,7 @@ func _deferred_load(path: String, character: CharacterData, data: Dictionary) ->
 	if not data.is_empty():
 		_apply_data_to_scene(data)
 	
-	print("SceneManager: Scene loaded successfully")
+	Log.debug("scenes", "SceneManager: Scene loaded successfully")
 
 func _apply_character_to_scene(character: CharacterData) -> void:
 	"""Set character on scene if it has the method"""
@@ -167,12 +185,30 @@ func _apply_data_to_scene(data: Dictionary) -> void:
 
 func change_to_town(character: CharacterData) -> void:
 	MomentumSystem.reset_momentum()
-	DungeonStateManager.end_dungeon()
+	DungeonStateManager.end_dungeon(true)
 	RewardsManager.clear_saved_state()  # Managed by RewardsManager now
 	navigate(ScenePath.TOWN, TransitionType.REPLACE, character)
 
 func change_to_shop(character: CharacterData) -> void:
 	navigate(ScenePath.SHOP, TransitionType.PUSH, character)
+
+func change_to_alchemist(character: CharacterData) -> void:
+	navigate(ScenePath.ALCHEMIST, TransitionType.PUSH, character)
+
+func change_to_blacksmith(character: CharacterData) -> void:
+	navigate(ScenePath.BLACKSMITH, TransitionType.PUSH, character)
+
+func change_to_enchanter(character: CharacterData) -> void:
+	navigate(ScenePath.ENCHANTER, TransitionType.PUSH, character)
+
+func change_to_guild(character: CharacterData) -> void:
+	navigate(ScenePath.GUILD, TransitionType.PUSH, character)
+
+func change_to_tavern(character: CharacterData) -> void:
+	navigate(ScenePath.TAVERN, TransitionType.PUSH, character)
+
+func change_to_talents(character: CharacterData) -> void:
+	navigate(ScenePath.TALENTS, TransitionType.PUSH, character)
 
 func change_to_equipment(character: CharacterData) -> void:
 	navigate(ScenePath.EQUIPMENT, TransitionType.PUSH, character)
@@ -191,19 +227,23 @@ func change_to_arena(character: CharacterData) -> void:
 
 func change_to_main_menu() -> void:
 	MomentumSystem.reset_momentum()
-	DungeonStateManager.end_dungeon()
+	DungeonStateManager.end_dungeon(true)
 	navigate(ScenePath.MAIN_MENU, TransitionType.REPLACE)
 
 func change_to_character_selection() -> void:
 	navigate(ScenePath.CHARACTER_SELECT, TransitionType.REPLACE)
+
+func change_to_character_creation() -> void:
+	navigate(ScenePath.CHARACTER_CREATION, TransitionType.REPLACE)
 
 func return_to_previous_scene() -> void:
 	navigate(ScenePath.MAIN_MENU, TransitionType.POP)  # Enum ignored for POP
 
 # ===== DUNGEON FLOW =====
 
-func start_dungeon_from_floor(player: CharacterData, floor: int) -> void:
-	"""Initialize dungeon and transition to dungeon scene"""
+func start_dungeon_from_floor(player: CharacterData, floor: int, location_id: String = "the_dungeon") -> void:
+	"""Start an expedition at a location/floor and transition to the dungeon scene"""
+	floor = clamp(floor, 1, RankManager.start_floor_limit(player, location_id))
 	# Reset player state
 	player.current_hp = player.max_hp
 	player.current_mp = player.max_mp
@@ -212,7 +252,7 @@ func start_dungeon_from_floor(player: CharacterData, floor: int) -> void:
 	player.skill_manager.clear_cooldowns()
 	
 	# Initialize dungeon
-	DungeonStateManager.start_dungeon(player, floor)
+	DungeonStateManager.start_dungeon(player, floor, location_id)
 	
 	# Navigate
 	navigate(ScenePath.DUNGEON, TransitionType.REPLACE, player)
@@ -226,7 +266,7 @@ func start_dungeon_from_floor(player: CharacterData, floor: int) -> void:
 
 func start_battle(battle_data: Dictionary) -> void:
 	"""Transition to battle with data"""
-	print("SceneManager: Starting battle - Floor %d, Wave %d" % [
+	Log.debug("scenes", "SceneManager: Starting battle - Floor %d, Wave %d" % [
 		battle_data["current_floor"],
 		battle_data["current_wave"]
 	])
@@ -257,6 +297,13 @@ func _setup_battle_scene(battle_data: Dictionary) -> void:
 		push_error("SceneManager: No enemies in battle_data!")
 		return
 	
+	# Your party fights beside you
+	if current_scene.has_method("set_allies"):
+		current_scene.set_allies(PartyManager.battle_allies())
+	# Something may happen on the way to this wave (EncounterManager)
+	if current_scene.has_method("set_encounter"):
+		current_scene.set_encounter(EncounterManager.roll(battle_data))
+	
 	# Set dungeon info
 	current_scene.set_dungeon_info(
 		battle_data["is_boss_fight"],
@@ -267,32 +314,53 @@ func _setup_battle_scene(battle_data: Dictionary) -> void:
 	)
 	
 	# Connect battle completion
-	if not current_scene.is_connected("battle_completed", _on_battle_completed):
+	if not current_scene.battle_completed.is_connected(_on_battle_completed):
 		current_scene.battle_completed.connect(_on_battle_completed)
 
 
 # ===== BATTLE COMPLETION =====
 
 func _on_battle_completed(player_won: bool, xp_gained: int) -> void:
-	print("SceneManager: Battle completed - Won: %s, XP: %d" % [player_won, xp_gained])
+	Log.debug("scenes", "SceneManager: Battle completed - Won: %s, XP: %d" % [player_won, xp_gained])
 	
 	if not player_won:
 		MomentumSystem.reset_momentum()
-		DungeonStateManager.end_dungeon()
-		change_to_character_selection()
+		MomentumSystem.clear_accumulated_loot()  # banked Press-On rewards are lost
+		var fallen = DungeonStateManager.active_player
+		var boss = DungeonStateManager.is_boss_fight
+		DungeonStateManager.end_dungeon(false)
+		if fallen == null:
+			change_to_character_selection()
+			return
+		# The Guild recovers you: fee, injury, gear to Lost & Found (DefeatManager)
+		var summary = DefeatManager.apply_defeat(fallen, boss)
+		fallen.set_meta("last_defeat", summary)
+		SaveManager.save_game(fallen)
+		navigate(ScenePath.DEFEAT, TransitionType.REPLACE, fallen)
 		return
 	
-	# Update max floor if boss
+	var location_id = DungeonStateManager.current_location
+	GameEvents.battle_won.emit(location_id, DungeonStateManager.current_floor,
+		DungeonStateManager.current_wave, DungeonStateManager.is_boss_fight)
+	
+	# Boss down: unlock the next floor at THIS location
 	if DungeonStateManager.is_boss_fight:
 		var cleared_floor = DungeonStateManager.current_floor
 		var player = DungeonStateManager.active_player
+		GameEvents.floor_cleared.emit(location_id, cleared_floor)
 		
-		if cleared_floor >= player.max_floor_cleared:
-			player.max_floor_cleared = cleared_floor + 1
+		if cleared_floor + 1 > player.get_max_floor(location_id):
+			player.unlock_floor(location_id, cleared_floor + 1)
 			SaveManager.save_game(player)
 	
+	# Companions react to how you play (BondManager opinions)
+	var you = DungeonStateManager.active_player
+	if DungeonStateManager.is_boss_fight:
+		BondManager.react_to_news(you, "boss_win")
+	BondManager.react_to_news(you, "press_on" if xp_gained == -1 else "breather")
 	# Press on (-1) or take breather (xp)
 	if xp_gained == -1:
+		RewardsManager.bank_wave_rewards(DungeonStateManager.get_battle_data())
 		_continue_with_momentum()
 	else:
 		_show_rewards(xp_gained)
@@ -324,7 +392,11 @@ func _show_rewards(xp_gained: int) -> void:
 	var battle_data = DungeonStateManager.get_battle_data()
 	battle_data["xp_gained"] = xp_gained
 	
+	# Momentum is still the streak's value here; the payout bonus needs it,
+	# so only reset AFTER rewards are calculated (it used to be reset first,
+	# which meant the bonus never applied).
 	var rewards = RewardsManager.calculate_battle_rewards(battle_data)
+	MomentumSystem.reset_momentum()
 	
 	var reward_data = {
 		"rewards": rewards,
@@ -374,20 +446,7 @@ func _show_rewards(xp_gained: int) -> void:
 	# NOW trigger display
 	if current_scene.has_method("initialize_display"):
 		current_scene.initialize_display()
-		print("SceneManager: Reward scene display initialized")
+		Log.debug("scenes", "SceneManager: Reward scene display initialized")
 	else:
 		push_warning("SceneManager: Reward scene missing initialize_display() - display may not work")
 
-# ===== LEGACY METHODS (DEPRECATED) =====
-
-func change_scene(path: String) -> void:
-	push_warning("SceneManager.change_scene() is deprecated - use navigate()")
-	call_deferred("_deferred_load", path, null, {})
-
-func push_scene(path: String, character: CharacterData = null) -> void:
-	push_warning("SceneManager.push_scene() is deprecated - use navigate()")
-	_navigate_push(path, character, {})
-
-func pop_scene() -> void:
-	push_warning("SceneManager.pop_scene() is deprecated - use navigate()")
-	_navigate_pop()

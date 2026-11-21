@@ -55,14 +55,39 @@ var spell_power_type: String = "intelligence"
 
 # === COMBAT STATE ===
 var is_defending: bool = false
+## Scales max HP. Regular enemies use < 1.0 so a lone hero can beat a group
+## (set by EnemyFactory; players and PvP opponents keep 1.0).
+var hp_multiplier: float = 1.0
+## Scales damage this character deals (see BattleFormulas.hit_damage).
+## Set by EnemyFactory; players and PvP opponents keep 1.0.
+var damage_multiplier: float = 1.0
 var is_stunned: bool = false
-var last_attacker: CharacterData = null
+## Weak: two fighters hitting each other would otherwise form a reference cycle.
+var _last_attacker_ref: WeakRef
+var last_attacker: CharacterData:
+	get: return _last_attacker_ref.get_ref() if _last_attacker_ref else null
+	set(value): _last_attacker_ref = weakref(value) if value else null
 
 # === PROGRESSION ===
 @export var xp: int = 0
 @export var attribute_points: int = 0
 @export var current_floor: int = 0
-@export var max_floor_cleared: int = 0
+## Highest floor unlocked in ANY location (kept for display / old saves).
+## Real progress is per location: see location_progress.
+## Highest floor unlocked in any location (= reached). It was called
+## max_floor_cleared, but a floor unlocks when the one before is cleared, so
+## the deepest CLEARED floor is one lower: deepest_floor_cleared().
+@export var max_floor_unlocked: int = 0
+## location_id -> highest floor unlocked there (floors start unlocked at 1)
+@export var location_progress: Dictionary = {}
+@export var last_location: String = "the_dungeon"
+## Max copies of each consumable carried in the pack; the rest goes to the stash.
+## Raised later by purchases / Adventurer rank in steps of CARRY_LIMIT_STEP.
+@export var carry_limit: int = 5
+## Saved town-service state ({"alchemy": {...}, "blacksmith": {...}, "guild": {...}})
+@export var town_state: Dictionary = {}
+const CARRY_LIMIT_STEP := 5
+const CARRY_LIMIT_MAX := 20
 
 # === EQUIPMENT BONUSES (separate from base attributes) ===
 var equipment_bonuses: Dictionary = {}
@@ -109,6 +134,7 @@ func _init(p_name: String = "", p_race: String = "", p_class: String = ""):
 	skill_manager = SkillProgressionManager.new(self)
 	proficiency_manager = ProficiencyManager.new(self)
 	elemental_resistances = ElementalResistanceManager.new(self)
+	talents = TalentManager.new(self)
 
 func initialize_racial_elementals(load_from_race_data: bool = true):
 	if not load_from_race_data or race.is_empty():
@@ -119,14 +145,65 @@ func initialize_racial_elementals(load_from_race_data: bool = true):
 		return
 	
 	RaceElementalData.apply_to_character(self, race, is_player)
-	print("[ELEMENTAL] Initialized racial elementals for %s (%s)" % [name, race])
+	Log.debug("character", "[ELEMENTAL] Initialized racial elementals for %s (%s)" % [name, race])
+
+## Flat bonuses from everything currently equipped (Equipment.get_flat_bonuses):
+## primary attributes (intelligence...) and secondary stats (dodge, spell_ward...).
+## Talent trees (data/talents.json) and the battle loadout (max 6 equipped skills).
+var talents: TalentManager
+var equipped_skills: Array = []
+
+## Equipment + talent flat bonuses ({stat: amount}); attributes, secondary stats
+## (dodge, spell_power...) and "max_hp_pct" are all read by calculate_secondary_attributes.
+func get_all_flat_bonuses() -> Dictionary:
+	var total = get_equipment_flat_bonuses()
+	if talents:
+		var t = talents.stat_bonuses()
+		for stat in t:
+			total[stat] = total.get(stat, 0.0) + t[stat]
+	# Injuries from defeats (DefeatManager, data/defeat.json) are negative bonuses
+	if is_player and town_state.has("injuries"):
+		var inj = DefeatManager.injury_stats(self)
+		for stat in inj:
+			total[stat] = total.get(stat, 0.0) + inj[stat]
+	return total
+
+## Skills usable in battle: the equipped loadout (or the first N known if none chosen).
+func get_battle_skills() -> Array:
+	var known = skills
+	var picked = equipped_skills.filter(func(s): return s in known)
+	if picked.is_empty():
+		picked = known.slice(0, TalentManager.loadout_size())
+	return picked
+
+func set_equipped_skills(names: Array) -> void:
+	equipped_skills = names.filter(func(s): return s in skills).slice(0, TalentManager.loadout_size())
+
+func remove_skill(skill_name: String) -> void:
+	if skill_manager:
+		skill_manager.remove_skill(skill_name)
+
+func refresh_talent_skill_mods() -> void:
+	if skill_manager:
+		skill_manager.refresh_talent_mods()
+
+func get_equipment_flat_bonuses() -> Dictionary:
+	var total := {}
+	for slot in equipment:
+		var item = equipment[slot]
+		if item is Equipment:
+			var b = item.get_flat_bonuses()
+			for stat in b:
+				total[stat] = total.get(stat, 0.0) + b[stat]
+	return total
 
 func calculate_secondary_attributes():
-	# Calculate effective attributes: base + equipment + buffs/debuffs
+	# Calculate effective attributes: base + equipment + talents + buffs/debuffs
+	var flat = get_all_flat_bonuses()
 	var eff = {}
 	for stat in ["vitality", "strength", "dexterity", "intelligence", "faith", "mind", "endurance", "arcane", "agility", "fortitude"]:
 		var base_value = get(stat)
-		var equipment_bonus = equipment_bonuses.get(stat, 0)
+		var equipment_bonus = equipment_bonuses.get(stat, 0) + int(round(flat.get(stat, 0.0)))
 		var enum_val = Skill.AttributeTarget[stat.to_upper()]
 		
 		# Get buff/debuff modifier (this should NOT include equipment)
@@ -142,7 +219,7 @@ func calculate_secondary_attributes():
 	var old_max_sp = max_sp
 	
 	# Resource pools - use BASE attributes only (no equipment/buffs)
-	max_hp = vitality * 8 + strength * 3
+	max_hp = int((vitality * 8 + strength * 3) * hp_multiplier * (1.0 + flat.get("max_hp_pct", 0.0)))
 	max_mp = mind * 5 + intelligence * 3
 	max_sp = endurance * 5 + agility * 3
 	
@@ -163,13 +240,32 @@ func calculate_secondary_attributes():
 		current_sp = max_sp
 	
 	# Defensive
-	toughness = (eff.vitality * 0.45 + eff.strength * 0.25 + eff.endurance * 0.15 + eff.fortitude * 0.15) / 10.0
+	# Defense ratings feed BattleFormulas.mitigation(): 100 defense = half damage.
+	# (Toughness used to be divided by 10, making it ~1 at level 1 - i.e. useless.
+	# Spell ward was a product of two stats, so it grew quadratically.)
+	toughness = eff.vitality * 0.45 + eff.strength * 0.25 + eff.endurance * 0.15 + eff.fortitude * 0.15
 	dodge = 0.05 + (eff.agility * 0.55 + eff.dexterity * 0.35 + eff.fortitude * 0.10) / 200.0
-	spell_ward = (eff.fortitude * 0.5) * (0.6 * eff.arcane + 0.3 * eff.mind + 0.1 * eff.faith) / 10.0
+	spell_ward = eff.mind * 0.45 + eff.faith * 0.25 + eff.arcane * 0.15 + eff.fortitude * 0.15
 	
 	# Offensive
-	accuracy = 0.75 + (eff.dexterity * 0.35 + eff.agility * 0.25 + eff.mind * 0.25 + eff.fortitude * 0.15) / 200.0
+	# Base 85%: at 75% a third of attacks missed once dodge was factored in
+	accuracy = 0.85 + (eff.dexterity * 0.35 + eff.agility * 0.25 + eff.mind * 0.25 + eff.fortitude * 0.15) / 200.0
+	# Status effects: Blind/Confused accuracy & dodge penalties, Evasive bonus
+	if status_manager:
+		var mods = status_manager.get_combat_modifiers()
+		accuracy *= mods.accuracy_mult
+		dodge = clamp(dodge * mods.dodge_mult + mods.dodge_bonus, 0.0, 0.75)
+	
 	critical_hit_rate = 0.05 + (eff.dexterity * 0.4 + eff.agility * 0.25 + eff.intelligence * 0.2 + eff.fortitude * 0.15) / 200.0
+	
+	# Armor penetration only comes from gear: reset, then add (so it never stacks
+	# across recalculations). Used by BattleFormulas.hit_damage on physical hits.
+	armor_penetration = 0.0
+	
+	# Equipment bonuses to secondary stats (e.g. Talisman dodge, source spell_ward)
+	for stat in ["toughness", "dodge", "spell_ward", "accuracy", "critical_hit_rate", "armor_penetration"]:
+		if flat.has(stat):
+			set(stat, get(stat) + flat[stat])
 	
 	# Attack power
 	match attack_power_type:
@@ -177,15 +273,31 @@ func calculate_secondary_attributes():
 			attack_power = eff.strength * 2 + eff.dexterity * 0.5 + eff.vitality * 0.5
 		"dexterity":
 			attack_power = eff.dexterity * 2 + eff.strength * 0.5 + eff.agility * 0.5
+		"arcane":  # Druid - previously unhandled, so attack_power stayed 0
+			attack_power = eff.arcane * 2 + eff.strength * 0.5 + eff.dexterity * 0.5
+		_:
+			push_warning("%s: unknown attack_power_type '%s'" % [name, attack_power_type])
+			attack_power = eff.strength * 2 + eff.dexterity * 0.5 + eff.vitality * 0.5
 	
-	# Spell power
+	# Spell power - same shape as attack power: primary x2 + two secondaries x0.5
+	# (the old formulas weighted 4 stats vs attack power's 3, so magic out-scaled physical)
 	match spell_power_type:
 		"balanced":
-			spell_power = (eff.intelligence * 1.5 + eff.faith * 1.5 + eff.arcane * 1.5) / 2
+			spell_power = eff.intelligence + eff.faith + eff.arcane
 		"intelligence":
-			spell_power = eff.intelligence * 2 + eff.faith + eff.arcane
+			spell_power = eff.intelligence * 2 + eff.faith * 0.5 + eff.arcane * 0.5
 		"arcane":
-			spell_power = eff.arcane * 2 + eff.intelligence + eff.faith
+			spell_power = eff.arcane * 2 + eff.intelligence * 0.5 + eff.faith * 0.5
+		"faith":  # Paladin/Cleric/Druid/Shaman - previously unhandled, so spell_power stayed 0
+			spell_power = eff.faith * 2 + eff.intelligence * 0.5 + eff.arcane * 0.5
+		_:
+			push_warning("%s: unknown spell_power_type '%s'" % [name, spell_power_type])
+			spell_power = eff.intelligence + eff.faith + eff.arcane
+	
+	# Flat gear bonuses to the powers (e.g. cloth armor "spell_power": 1). These are
+	# computed after the loop above, so they must be added here or they are lost.
+	attack_power += flat.get("attack_power", 0.0)
+	spell_power += flat.get("spell_power", 0.0)
 
 # === RESOURCE MANAGEMENT (delegates to static utility) ===
 func heal(amount: int) -> int:
@@ -196,7 +308,7 @@ func heal(amount: int) -> int:
 	current_hp += actual_heal
 	current_hp = min(current_hp, max_hp)
 	
-	print("[HEAL] %s: %d → %d (+%d)" % [name, hp_before, current_hp, actual_heal])
+	Log.debug("character", "[HEAL] %s: %d → %d (+%d)" % [name, hp_before, current_hp, actual_heal])
 	return actual_heal
 
 func restore_mp(amount: int) -> int:
@@ -204,7 +316,7 @@ func restore_mp(amount: int) -> int:
 	var actual = min(amount, max_mp - current_mp)
 	current_mp += actual
 	current_mp = min(current_mp, max_mp)
-	print("[MP] %s: %d → %d (+%d)" % [name, mp_before, current_mp, actual])
+	Log.debug("character", "[MP] %s: %d → %d (+%d)" % [name, mp_before, current_mp, actual])
 	return actual
 
 func restore_sp(amount: int) -> int:
@@ -212,7 +324,7 @@ func restore_sp(amount: int) -> int:
 	var actual = min(amount, max_sp - current_sp)
 	current_sp += actual
 	current_sp = min(current_sp, max_sp)
-	print("[SP] %s: %d → %d (+%d)" % [name, sp_before, current_sp, actual])
+	Log.debug("character", "[SP] %s: %d → %d (+%d)" % [name, sp_before, current_sp, actual])
 	return actual
 
 # === COMBAT ===
@@ -235,47 +347,6 @@ func get_attack_power() -> float:
 func get_spell_power() -> float:
 	return spell_power
 
-func attack(target: CharacterData) -> String:
-	# Use CombatActions if available, otherwise inline
-	if ClassDB.class_exists("CombatActions"):
-		return CombatActions.execute_basic_attack(self, target)
-	else:
-		# Fallback inline implementation
-		return _basic_attack_inline(target)
-
-func _basic_attack_inline(target: CharacterData) -> String:
-	var momentum_mult = MomentumSystem.get_damage_multiplier()
-	var base_damage = get_attack_power() * 0.5 * momentum_mult
-	var resistance = target.get_defense()
-	
-	if RandomManager.randf() >= accuracy:
-		return "%s's attack missed!" % name
-	if RandomManager.randf() < target.dodge:
-		return "%s dodged the attack!" % target.name
-	
-	var is_crit = RandomManager.randf() < critical_hit_rate
-	var damage = max(1, base_damage - resistance)
-	
-	if is_crit:
-		damage *= 1.5 + RandomManager.randf() * 0.5
-	
-	damage = round(damage)
-	target.take_damage(damage, self)
-	
-	var mp_restore = int(max_mp * 0.08)
-	var sp_restore = int(max_sp * 0.08)
-	restore_mp(mp_restore)
-	restore_sp(sp_restore)
-	
-	var result = "%s attacks %s for %d damage and restores %d MP, %d SP" % [
-		name, target.name, damage, mp_restore, sp_restore
-	]
-	
-	if is_crit:
-		result = "Critical hit! " + result
-	
-	return result
-
 func take_damage(amount: float, attacker: CharacterData = null):
 	if current_hp <= 0:
 		current_hp = 0
@@ -289,24 +360,38 @@ func take_damage(amount: float, attacker: CharacterData = null):
 	
 	if is_defending:
 		amount *= 0.5
+		if get_meta("perfect_guard", false):   # BattleRules: Defend against a shown intent
+			amount *= float(BattleRules.cfg().get("guard", {}).get("damage_mult", 0.5))
 	
-	# Reflection
-	if last_attacker and last_attacker != self:
+	# Elite barrier (Shielded) soaks damage first
+	var barrier = int(get_meta("barrier", 0))
+	if barrier > 0 and amount > 0:
+		var soaked = min(barrier, int(amount))
+		set_meta("barrier", barrier - soaked)
+		amount -= soaked
+	
+	# Reflection - the ONLY place reflected damage is applied.
+	# Only reflect when a live attacker hit us directly; status ticks, confusion
+	# self-harm and reflected damage itself pass no attacker. (Previously this used
+	# the stale `last_attacker`, so e.g. poison damage was reflected too.)
+	if attacker and attacker != self:
 		var reflection = status_manager.get_total_reflection() if status_manager else 0.0
+		if get_meta("elite_affix", "") == "thorns":
+			reflection += float(EliteAffixes.affix("thorns").get("reflect", 0.2))
 		if reflection > 0.0:
 			var reflected = int(amount * reflection)
 			if reflected > 0:
-				print("%s reflected %d damage back to %s!" % [name, reflected, last_attacker.name])
-				last_attacker.take_damage(reflected, null)
+				Log.debug("character", "%s reflected %d damage back to %s!" % [name, reflected, attacker.name])
+				attacker.take_damage(reflected, null)
 	
 	current_hp -= int(amount)
 	current_hp = clamp(current_hp, 0, max_hp)
-	print("[DAMAGE] %s took %d damage. HP: %d/%d" % [name, int(amount), current_hp, max_hp])
+	Log.debug("character", "[DAMAGE] %s took %d damage. HP: %d/%d" % [name, int(amount), current_hp, max_hp])
 
 # === EQUIPMENT ===
 func equip_item(item: Equipment) -> Equipment:
 	if not item.can_equip(self):
-		print("Cannot equip %s - class restriction" % item.display_name)
+		Log.debug("character", "Cannot equip %s - class restriction" % item.display_name)
 		return null
 	
 	var target_slot = item.slot
@@ -343,7 +428,7 @@ func equip_item(item: Equipment) -> Equipment:
 		var main_hand = equipment["main_hand"]
 		if main_hand.blocks_offhand:
 			if not main_hand.allows_offhand(self, item):
-				print("Cannot equip %s: blocked by %s" % [item.display_name, main_hand.display_name])
+				Log.debug("character", "Cannot equip %s: blocked by %s" % [item.display_name, main_hand.display_name])
 				return null
 	
 	var old_item = equipment[target_slot]
@@ -547,7 +632,7 @@ func get_attribute_breakdown(attribute_name: String) -> Dictionary:
 	Returns: {base: int, equipment: int, buffs: int, total: int}
 	"""
 	var base = get(attribute_name)
-	var equipment_bonus = equipment_bonuses.get(attribute_name, 0)
+	var equipment_bonus = equipment_bonuses.get(attribute_name, 0) + int(round(get_all_flat_bonuses().get(attribute_name, 0.0)))
 	
 	var buff_modifier = 0
 	if buff_manager and attribute_name.to_upper() in Skill.AttributeTarget:
@@ -565,7 +650,7 @@ func get_attribute_breakdown(attribute_name: String) -> Dictionary:
 # === PROGRESSION (keep existing implementation) ===
 func gain_xp(amount: int):
 	xp += amount
-	print("[XP] %s gained %d XP. Total: %d/%d" % [name, amount, xp, LevelSystem.calculate_xp_for_level(level)])
+	Log.debug("character", "[XP] %s gained %d XP. Total: %d/%d" % [name, amount, xp, LevelSystem.calculate_xp_for_level(level)])
 	check_level_up()
 
 func check_level_up():
@@ -618,10 +703,94 @@ func spend_attribute_point(attribute: String) -> bool:
 		return true
 	return false
 
-func update_max_floor_cleared(floor: int):
-	if floor > max_floor_cleared:
-		max_floor_cleared = floor
-		print("New max floor: %d" % max_floor_cleared)
+func update_max_floor_unlocked(floor: int):
+	if floor > max_floor_unlocked:
+		max_floor_unlocked = floor
+		Log.debug("character", "New max floor: %d" % max_floor_unlocked)
+
+## The deepest floor whose boss you've beaten, in any location (0 = none).
+func deepest_floor_cleared() -> int:
+	var best = max(0, max_floor_unlocked - 1)
+	for loc in location_progress:
+		best = max(best, int(location_progress[loc]) - 1)
+	return best
+
+# === CARRY LIMIT (pack vs stash) ===
+## Consumables are limited to `carry_limit` copies of each in the pack.
+func is_carry_limited(item: Item) -> bool:
+	return item != null and not (item is Equipment) and item.item_type == Item.ItemType.CONSUMABLE
+
+## How many more of this item fit in the pack (huge for unlimited items).
+func pack_room_for(item: Item) -> int:
+	if not is_carry_limited(item):
+		return 1 << 30
+	return max(0, carry_limit - inventory.get_quantity(item.id))
+
+## Add items to the pack; anything over the carry limit goes to the stash.
+## Returns {"pack": n, "stash": m}.
+func add_to_pack(item: Item, quantity: int = 1) -> Dictionary:
+	var to_pack = min(quantity, pack_room_for(item))
+	var to_stash = quantity - to_pack
+	if to_pack > 0 and not inventory.add_item(item, to_pack):
+		to_stash += to_pack  # pack full (capacity) -> stash
+		to_pack = 0
+	if to_stash > 0:
+		stash.add_item(item, to_stash)
+		Log.debug("character", "%d x %s sent to stash (carry limit %d)" % [to_stash, item.display_name, carry_limit])
+	return {"pack": to_pack, "stash": to_stash}
+
+## Move up to `quantity` of a stash entry into the pack, respecting the carry
+## limit. Returns how many were moved.
+func withdraw_from_stash(stash_key: String, quantity: int = 1) -> int:
+	if not stash.items.has(stash_key):
+		return 0
+	var item: Item = stash.items[stash_key].item
+	var amount = min(quantity, stash.items[stash_key].quantity, pack_room_for(item))
+	if amount <= 0:
+		return 0
+	stash.remove_item(stash_key, amount)
+	if not inventory.add_item(item, amount):
+		stash.add_item(item, amount)  # pack full: put it back
+		return 0
+	return amount
+
+## Move any consumables above the carry limit from the pack to the stash
+## (save migration, or after carry_limit changes). Returns the number moved.
+func enforce_carry_limit() -> int:
+	var moved := 0
+	for key in inventory.items.keys():
+		var entry = inventory.items[key]
+		var item: Item = entry.item
+		if is_carry_limited(item) and entry.quantity > carry_limit:
+			var excess = entry.quantity - carry_limit
+			inventory.remove_item(key, excess)
+			stash.add_item(item, excess)
+			moved += excess
+	return moved
+
+## Quantity owned across pack + stash (town crafting/upgrading can use both).
+func count_owned(item_id: String) -> int:
+	return inventory.get_quantity(item_id) + stash.get_quantity(item_id)
+
+## Remove `amount` of an item, pack first then stash. Caller checks count_owned first.
+func take_owned(item_id: String, amount: int) -> void:
+	var from_pack = min(amount, inventory.get_quantity(item_id))
+	if from_pack > 0:
+		inventory.remove_item(item_id, from_pack)
+	if amount - from_pack > 0:
+		stash.remove_item(item_id, amount - from_pack)
+
+# === LOCATION PROGRESS ===
+## Highest floor the player may start from at this location (at least 1).
+func get_max_floor(location_id: String) -> int:
+	return max(1, int(location_progress.get(location_id, 1)))
+
+## Unlock floors up to `floor_num` at a location (never lowers progress).
+func unlock_floor(location_id: String, floor_num: int) -> void:
+	if floor_num > get_max_floor(location_id):
+		location_progress[location_id] = floor_num
+		Log.debug("character", "%s: unlocked floor %d" % [location_id, floor_num])
+	update_max_floor_unlocked(floor_num)
 
 # === PROFICIENCY ===
 func track_weapon_proficiency():
@@ -645,18 +814,18 @@ func track_armor_proficiency():
 
 func debug_proficiency_status():
 	if not proficiency_manager:
-		print("[PROFICIENCY] ERROR: No proficiency manager!")
+		Log.debug("character", "[PROFICIENCY] ERROR: No proficiency manager!")
 		return
-	print("=== PROFICIENCY DEBUG ===")
+	Log.debug("character", "=== PROFICIENCY DEBUG ===")
 	if equipment["main_hand"]:
 		var weapon = equipment["main_hand"]
-		print("Main Hand: %s" % weapon.name)
+		Log.debug("character", "Main Hand: %s" % weapon.name)
 		if weapon is Equipment and weapon.key != "":
 			var uses = proficiency_manager.get_weapon_proficiency_uses(weapon.key)
 			var level = proficiency_manager.get_weapon_proficiency_level(weapon.key)
 			var next = proficiency_manager.get_uses_for_next_level(level)
-			print("  Proficiency: Level %d (%d/%d uses)" % [level, uses, next])
-	print("========================")
+			Log.debug("character", "  Proficiency: Level %d (%d/%d uses)" % [level, uses, next])
+	Log.debug("character", "========================")
 
 # === ELEMENTAL DELEGATES ===
 func get_elemental_resistance(element: ElementalDamage.Element) -> float:

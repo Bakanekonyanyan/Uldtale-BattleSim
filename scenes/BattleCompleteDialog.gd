@@ -17,8 +17,8 @@ var xp_gained: int = 0
 var player_character: CharacterData
 
 func _ready():
-	press_on_button.connect("pressed", Callable(self, "_on_press_on"))
-	breather_button.connect("pressed", Callable(self, "_on_breather"))
+	press_on_button.pressed.connect(_on_press_on)
+	breather_button.pressed.connect(_on_breather)
 	
 	# Hide by default
 	hide()
@@ -34,6 +34,20 @@ func show_dialog(character: CharacterData, xp: int):
 	var momentum_level = MomentumSystem.get_momentum()
 	var momentum_text = MomentumSystem.get_momentum_status()
 	momentum_label.text = momentum_text
+	
+	# Spell out what each choice does
+	var next_level = mini(momentum_level + 1, MomentumSystem.MAX_MOMENTUM)
+	var banked_gold = int(MomentumSystem.momentum_loot_accumulated.currency)
+	var banked_items = MomentumSystem.momentum_loot_accumulated.equipment_instances.size() + MomentumSystem.momentum_loot_accumulated.items.size()
+	press_on_button.text = "Press On\nMomentum x%d: +%d%% damage, next Breather pays +%d%%. No rest - and banked loot is lost if you fall." % [
+		next_level, int(round(next_level * MomentumSystem.DAMAGE_BONUS_PER_LEVEL * 100)), int(round(MomentumSystem.get_reward_bonus(next_level) * 100))]
+	var payout = "this wave"
+	if banked_gold > 0 or banked_items > 0:
+		payout = "this wave + %s and %d item stack%s banked" % [Currency.format_copper(banked_gold), banked_items, "" if banked_items == 1 else "s"]
+	breather_button.text = "Take a Breather\nCollect %s%s. Rest and recover; momentum resets." % [
+		payout, " (+%d%% bonus)" % int(round(MomentumSystem.get_reward_bonus() * 100)) if MomentumSystem.has_momentum_bonus() else ""]
+	for b in [press_on_button, breather_button]:
+		b.autowrap_mode = TextServer.AUTOWRAP_WORD
 	
 	# Show status warnings
 	var warnings = []
@@ -53,10 +67,11 @@ func show_dialog(character: CharacterData, xp: int):
 		status_label.text = "Current Status:"
 		warning_label.text = "\n".join(warnings)
 	
-	# Show bonus notification for momentum 3
+	# Notify once when the reward bonus hits its cap
 	if MomentumSystem.should_show_bonus_notification():
 		var bonus_popup = AcceptDialog.new()
-		bonus_popup.dialog_text = "Momentum Bonus Unlocked!\n\nYou've reached Momentum x3!\nIncreased drop rates and rarity chances are now active."
+		bonus_popup.dialog_text = "Maximum Momentum Bonus!\n\nMomentum x%d: your next Breather pays out everything you've banked with +%d%% rewards.\nPressing on still raises your damage - and the danger." % [
+			MomentumSystem.get_momentum(), int(MomentumSystem.MAX_REWARD_BONUS * 100)]
 		bonus_popup.title = "Momentum Bonus!"
 		add_child(bonus_popup)
 		bonus_popup.popup_centered()
@@ -65,10 +80,10 @@ func show_dialog(character: CharacterData, xp: int):
 
 func _on_press_on():
 	# Player gains momentum, no reward screen, no recovery
-	emit_signal("press_on_selected")
+	press_on_selected.emit()
 	queue_free()
 
 func _on_breather():
 	# Reset momentum, show rewards, full recovery
-	emit_signal("take_breather_selected")
+	take_breather_selected.emit()
 	queue_free()

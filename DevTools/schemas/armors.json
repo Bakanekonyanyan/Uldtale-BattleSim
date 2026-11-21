@@ -1,0 +1,116 @@
+{
+ "tab": "Armors",
+ "file": "data/items/armors.json",
+ "order": 20,
+ "description": "Armor bases by type and slot. Damage-type affinities per armor type are in Damage Types.",
+ "sections": [
+  {
+   "kind": "collection",
+   "label": "Armors",
+   "key_style": "snake",
+   "name_field": "name",
+   "levels": [
+    {
+     "name": "armor type",
+     "options": [
+      "cloth",
+      "leather",
+      "mail",
+      "plate"
+     ],
+     "sets": [
+      "type"
+     ]
+    },
+    {
+     "name": "slot",
+     "options": [
+      "head",
+      "chest",
+      "hands",
+      "legs",
+      "feet"
+     ],
+     "sets": [
+      "slot"
+     ]
+    }
+   ],
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "armor_value",
+     "type": "int",
+     "min": 0,
+     "default": 4
+    },
+    {
+     "name": "value",
+     "type": "int",
+     "min": 0,
+     "default": 100,
+     "help": "Base price in copper (shop sells for this, buys for half)."
+    },
+    {
+     "name": "attribute_target",
+     "type": "enum_multi",
+     "source": "item_stats",
+     "help": "Stat(s) raised while equipped (pairs with attribute_increase)."
+    },
+    {
+     "name": "attribute_increase",
+     "type": "json",
+     "help": "Number, or a list matching attribute_target, e.g. [3, 5]."
+    },
+    {
+     "name": "class_restriction",
+     "type": "ref_list",
+     "source": "classes",
+     "help": "Classes that can equip it (heroes and enemies)."
+    },
+    {
+     "name": "effects",
+     "type": "map",
+     "key": {
+      "type": "enum",
+      "source": "item_stats",
+      "allow_custom": true
+     },
+     "value": {
+      "type": "float"
+     },
+     "help": "Flat secondary bonuses, e.g. dodge -0.04, spell_power 2, armor_penetration 0.2."
+    },
+    {
+     "name": "rarity",
+     "type": "str",
+     "help": "Leave empty: rarity is rolled when the item drops."
+    },
+    {
+     "name": "type",
+     "type": "enum",
+     "source": "armor_types",
+     "help": "Must match the armor-type group."
+    },
+    {
+     "name": "slot",
+     "type": "enum",
+     "options": [
+      "head",
+      "chest",
+      "hands",
+      "legs",
+      "feet"
+     ]
+    }
+   ]
+  }
+ ]
+}

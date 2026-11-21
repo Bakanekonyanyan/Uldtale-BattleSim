@@ -1,0 +1,123 @@
+{
+	"_comment": "Bonds and companion opinions (BondManager.gd). Bonds: as a companion's rapport crosses each tier, a short scene plays the next time you visit the Tavern; the last tier unlocks a duo tech (a Link skill you use when that companion fights beside you). Opinions: companions in your party react to your choices by trait (rapport changes).",
+	"tiers": [
+		{ "rapport": 25, "name": "Acquainted" },
+		{ "rapport": 50, "name": "Trusted" },
+		{ "rapport": 75, "name": "Bonded" }
+	],
+	"_opinions": "event -> {trait: rapport change}. Events: press_on, breather, omens (per Omen taken), boss_win, help_wounded, refuse_wounded, confront_thief, let_thief_go, challenge_done.",
+	"opinions": {
+		"press_on": { "reckless": 2, "ambitious": 1, "cautious": -1, "cowardly": -2, "lazy": -1 },
+		"breather": { "cautious": 1, "lazy": 2, "cowardly": 1, "reckless": -1, "ambitious": -1 },
+		"omens": { "reckless": 2, "ambitious": 2, "boastful": 1, "cautious": -2, "cowardly": -3 },
+		"boss_win": { "ambitious": 2, "boastful": 2, "cheerful": 1, "loyal": 1 },
+		"help_wounded": { "kind": 3, "honorable": 2, "devout": 2, "loyal": 1, "cruel": -2, "greedy": -1 },
+		"refuse_wounded": { "kind": -3, "honorable": -2, "devout": -1, "cruel": 1, "greedy": 1 },
+		"confront_thief": { "honorable": 2, "reckless": 1, "ambitious": 1, "cowardly": -2, "kind": -1 },
+		"let_thief_go": { "kind": 1, "lazy": 1, "honorable": -1, "greedy": -2, "boastful": -1 },
+		"challenge_done": { "ambitious": 1, "boastful": 1, "scholarly": 1 }
+	},
+	"opinion_lines": {
+		"up": "{name} approves.",
+		"down": "{name} disapproves."
+	},
+	"_scenes": "trait -> one line per tier ({name} = the companion). A scene uses the companion's first trait that has lines, else the default.",
+	"scenes": {
+		"default": [
+			"{name} lingers after the others leave. \"You fight like someone with something to prove. I like that.\"",
+			"Over a late meal {name} tells you about the village they left, and why they can't go back.",
+			"\"Whatever's down there,\" {name} says, \"we face it together.\" You clasp hands. Something has changed between you."
+		],
+		"reckless": [
+			"{name} shows you a scar from a fight they \"definitely won\". You're not sure they did.",
+			"{name} admits charging in is easier than waiting: waiting is when the fear catches up.",
+			"\"Next time I run at something huge,\" {name} grins, \"you're right behind me. Deal?\""
+		],
+		"cautious": [
+			"{name} has mapped every floor you've cleared together, in tiny careful handwriting.",
+			"{name} lost a party once, to one bad call. They've checked every corner twice since.",
+			"\"I trust your calls,\" {name} says quietly. From them, that's everything."
+		],
+		"ambitious": [
+			"{name} wants their name on the Guild's wall. They ask how high you plan to climb.",
+			"{name} confesses the rank matters less than proving a sneering old mentor wrong.",
+			"\"When they carve our names,\" {name} says, \"they'll carve them side by side.\""
+		],
+		"greedy": [
+			"{name} counts their share twice, then grudgingly buys the next round.",
+			"{name} sends half of every purse home to a family that doesn't know where it comes from.",
+			"{name} slides a coin across the table. \"Lucky coin. Keep it. Don't tell anyone I'm sentimental.\""
+		],
+		"loyal": [
+			"{name} stood guard all night without being asked. \"Habit,\" they shrug.",
+			"{name} once served a lord who left them to die. They swore never to follow anyone unworthy again.",
+			"\"I've chosen,\" {name} says simply. \"Where you go, I go.\""
+		],
+		"honorable": [
+			"{name} returns a coin purse you dropped, untouched, with a lecture about carelessness.",
+			"{name} tells of an oath broken by their order. They left rather than share the shame.",
+			"\"You keep your word,\" {name} says. \"So will I - to you, whatever comes.\""
+		],
+		"cowardly": [
+			"{name} jumps at every shadow, but they haven't left yet. That counts for something.",
+			"{name} admits they joined the Guild on a dare and never found the nerve to quit.",
+			"\"I'm still scared,\" {name} says, \"but less, when it's you beside me.\""
+		],
+		"kind": [
+			"{name} spends their wages on bread for the street children by the Guild hall.",
+			"{name} was a healer's apprentice who couldn't save someone. They fight so fewer people need saving.",
+			"\"You're a good person,\" {name} says. \"Don't let this work change that. I'll remind you.\""
+		],
+		"cruel": [
+			"{name} laughs at a fallen goblin. You wonder what made them like this.",
+			"{name} grew up in the fighting pits. Mercy was a thing that got you killed.",
+			"\"I don't do friends,\" {name} mutters - then stays by your side all night anyway."
+		],
+		"lazy": [
+			"{name} is asleep in the corner. Somehow they still beat you at cards later.",
+			"{name} admits they're tired because they never stop worrying. Sleep is just... easier than thinking.",
+			"\"For you,\" {name} yawns, \"I might even get up early.\" High praise."
+		],
+		"cheerful": [
+			"{name} has a song for every floor. Most of them are terrible. You hum along anyway.",
+			"{name} smiles because the alternative is remembering too much. They tell you a little of it.",
+			"\"You made me laugh for real,\" {name} says. \"Not the act. Thank you.\""
+		],
+		"aloof": [
+			"{name} answers with one word. Then, unprompted, a second. Progress.",
+			"{name} tells you about the stars their people navigate by, and which one is theirs.",
+			"{name} sits beside you without being asked. For them, that's a speech."
+		],
+		"devout": [
+			"{name} prays before every descent. They pray for you too, you notice.",
+			"{name} lost their faith once, in the dark below. It was a stranger's kindness that brought it back.",
+			"\"The gods sent me to you,\" {name} says, without a trace of doubt."
+		],
+		"scholarly": [
+			"{name} is cataloguing monster weaknesses in a battered notebook. They let you peek.",
+			"{name} was expelled from the academy for a theory everyone laughed at. The dungeon is proving it right.",
+			"\"Co-authors,\" {name} says, writing your name beside theirs on the notebook's cover."
+		],
+		"boastful": [
+			"{name} tells the tavern about \"their\" boss kill. You were there. It went differently.",
+			"{name} admits the bragging started because nobody noticed them as a child.",
+			"\"Fine,\" {name} sighs, \"it was OUR boss kill. You can have half the song.\""
+		]
+	},
+	"_duo_techs": "Duo tech by the companion's class: a Link skill (costs link_cost) you use while that Bonded companion fights beside you. It hits like a skill and pulls the companion forward to act next. Fields are skill fields.",
+	"link_cost": 50,
+	"duo_techs": {
+		"Paladin": { "name": "Oathbound Strike", "description": "You strike as your Paladin raises a sacred ward.", "ability_type": "PHYSICAL", "type": "DAMAGE", "target": "ENEMY", "element": "HOLY", "status_effect": "STAGGERED", "power": 70, "duration": 2 },
+		"Cleric": { "name": "Benediction Blade", "description": "Holy light runs along your weapon.", "ability_type": "MAGICAL", "type": "DAMAGE", "target": "ENEMY", "element": "HOLY", "status_effect": "BLIND", "power": 65, "duration": 2 },
+		"Necromancer": { "name": "Grave Pact", "description": "Shadows rise to hold the foe for your blow.", "ability_type": "MAGICAL", "type": "DAMAGE", "target": "ENEMY", "element": "DARK", "status_effect": "SLEEP", "power": 65, "duration": 1 },
+		"Elementalist": { "name": "Prismatic Burst", "description": "Every element at once, guided by your strike.", "ability_type": "MAGICAL", "type": "DAMAGE", "target": "ALL_ENEMIES", "element": "FIRE", "status_effect": "BURN", "power": 45, "duration": 2 },
+		"Druid": { "name": "Thornbound", "description": "Roots seize the foe as you strike.", "ability_type": "MAGICAL", "type": "DAMAGE", "target": "ENEMY", "element": "EARTH", "status_effect": "POISON", "power": 65, "duration": 3 },
+		"Myrmidon": { "name": "Phalanx Rush", "description": "Shoulder to shoulder, you drive through the line.", "ability_type": "PHYSICAL", "type": "DAMAGE", "target": "ALL_ENEMIES", "damage_type": "PIERCE", "status_effect": "STAGGERED", "power": 45, "duration": 2 },
+		"Samurai": { "name": "Twin Moon Cut", "description": "Two blades, one breath.", "ability_type": "PHYSICAL", "type": "DAMAGE", "target": "ENEMY", "damage_type": "SLASH", "status_effect": "BLEED", "power": 75, "duration": 2 },
+		"Monk": { "name": "Thousand Palms", "description": "A storm of blows, perfectly in rhythm.", "ability_type": "PHYSICAL", "type": "DAMAGE", "target": "ENEMY", "damage_type": "BLUNT", "status_effect": "STAGGERED", "power": 70, "duration": 2 },
+		"Beastmaster": { "name": "Pack Hunt", "description": "Beast, companion and you strike as one pack.", "ability_type": "PHYSICAL", "type": "DAMAGE", "target": "ENEMY", "damage_type": "SLASH", "status_effect": "MARKED", "power": 70, "duration": 2 },
+		"Kannagi": { "name": "Spirit Binding Rite", "description": "A seal of light pins the foe for your blow.", "ability_type": "MAGICAL", "type": "DAMAGE", "target": "ENEMY", "element": "HOLY", "status_effect": "SEALED", "power": 65, "duration": 2 },
+		"Shinobi": { "name": "Shadow Crossing", "description": "Two shadows cross; the foe never sees either.", "ability_type": "PHYSICAL", "type": "DAMAGE", "target": "ENEMY", "damage_type": "PIERCE", "status_effect": "POISON", "power": 70, "duration": 3 },
+		"Berserker": { "name": "Blood Frenzy", "description": "Fury shared is fury doubled.", "ability_type": "PHYSICAL", "type": "DAMAGE", "target": "ALL_ENEMIES", "damage_type": "SLASH", "status_effect": "BLEED", "power": 50, "duration": 2 }
+	}
+}

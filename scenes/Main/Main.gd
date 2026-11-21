@@ -2,4 +2,4 @@
 extends Node
 
 func _ready():
-	SceneManager.change_scene("res://scenes/ui/MainMenu.tscn")
+	SceneManager.change_to_main_menu()
