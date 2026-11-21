@@ -1271,6 +1271,7 @@ func _phase0_checks() -> void:
 	_bond_checks()
 	_town_life_checks()
 	_ledger_checks()
+	_journal_checks()
 	_guild_checks()
 
 # ------------------------------------------------------------------ momentum + gear drops
@@ -1469,6 +1470,22 @@ func _material_checks() -> void:
 	robe.set_upgrade_level(5)
 	check(BlacksmithManager.get_upgrade_cost(robe).materials.has("silk_cloth"), "higher cloth upgrades need Silk")
 	check(BlacksmithManager.get_salvage_preview(vest).ore_id == "rawhide", "salvaging leather armor gives hide")
+
+## The Journal reads every system's open objectives.
+func _journal_checks() -> void:
+	var p = make_player()
+	AdventurerManager.state(p)
+	var empty = JournalScreen.build_text(p)
+	check(empty.contains("Standing") and empty.contains("None accepted") and empty.contains("Recovery"), "the Journal shows every section, with empty states")
+	CommissionManager.refresh(p)
+	RumorManager.refresh(p, true)
+	DefeatManager.get_injuries(p).append({"id": "cracked_ribs", "remaining": 2})
+	RumorManager.list(p)[0].expires = WorldClock.day(p) + 1
+	var t = JournalScreen.build_text(p)
+	var a = CommissionManager.active(p, "blacksmith")
+	check(t.contains(ItemManager.get_item(String(a.item)).display_name) and t.contains(RumorManager.text(RumorManager.list(p)[0])), "commissions and rumours appear in the Journal")
+	check(t.contains("heals in 2 days") and t.contains("due soon"), "injuries show, and anything due within 2 days is flagged")
+	check(t.contains("The Crowning in"), "the Crowning countdown is in the Journal")
 
 ## The Guild Ledger: renown standings for you and every adventurer.
 func _ledger_checks() -> void:
