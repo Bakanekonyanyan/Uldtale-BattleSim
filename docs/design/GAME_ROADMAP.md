@@ -487,3 +487,8 @@ Concept sketch: a first-person illustrated view of the path ahead, with a minima
 6. **Yearly crowning (built):** a year is 112 days. At the turn of each year the Ledger's #1 is crowned Champion (♛ on the Ledger, a Champion tag, +100 renown per crown). You get gold (2000 + 150 per floor cleared) and 50 Guild points; an NPC keeps the title until overtaken. News warns 7 days before, and the town panel counts down. Settings: `data/ledger.json` crowning.
 7. **Ascension Trial:** a gauntlet of Vanguard duels (real battles using their builds) and the deepest boss.
 8. **Champion and Legacy:** challengers rise; on retiring, a Hall of Fame entry carries into new worlds (a small nod, not power).
+
+## 10. Character illustrations (planned, not built)
+
+Hand-drawn layered characters (`docs/ART_PIPELINE.md`): class and shopkeeper base poses per gender, race parts, 3-4 hairstyles, recolourable skin / hair / eyes / clothes. A **character compositor** will assemble them at runtime so player characters, shopkeepers and every generated NPC adventurer get a unique illustration - part of the living-world feel. Build it once the first real layers exist.
+
