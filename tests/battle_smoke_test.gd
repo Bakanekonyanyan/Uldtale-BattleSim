@@ -1272,6 +1272,7 @@ func _phase0_checks() -> void:
 	_town_life_checks()
 	_ledger_checks()
 	_journal_checks()
+	_manual_checks()
 	_guild_checks()
 
 # ------------------------------------------------------------------ momentum + gear drops
@@ -1470,6 +1471,22 @@ func _material_checks() -> void:
 	robe.set_upgrade_level(5)
 	check(BlacksmithManager.get_upgrade_cost(robe).materials.has("silk_cloth"), "higher cloth upgrades need Silk")
 	check(BlacksmithManager.get_salvage_preview(vest).ore_id == "rawhide", "salvaging leather armor gives hide")
+
+## Every Manual topic renders with live values and no broken placeholders.
+func _manual_checks() -> void:
+	var topics = ManualScreen.all_topics()
+	check(topics.size() >= 15, "the Manual has %d topics" % topics.size())
+	var bad: Array = []
+	for t in topics:
+		var txt = ManualScreen.render(String(t.text))
+		if txt.contains("{") or txt.contains("?") and not txt.contains("??? until") and txt.find(" ?") >= 0:
+			bad.append(String(t.id))
+	check(bad.is_empty(), "every placeholder resolves (%s)" % ", ".join(bad))
+	var g = ManualScreen.render("{x:combat:intents.charge_power_mult} {pct:combat:weakness_bonus} {num:combat:break.hero_hits}")
+	check(g == "×%s %d%% %d" % [ManualScreen._fmt(float(BattleRules.cfg().intents.charge_power_mult)), int(round(float(BattleRules.cfg().weakness_bonus) * 100)), int(BattleRules.cfg().break.hero_hits)], "placeholders read live data (%s)" % g)
+	var st = ManualScreen.render("{list:status_effects}")
+	check(st.contains("Burn") and st.contains("4% of max HP") and st.contains("Marked"), "status effects are described from their data")
+	check(ManualScreen.render("{list:classes}").contains("Wardens") and ManualScreen.render("{list:ranks}").contains("Wayfarer"), "classes and ranks lists are generated")
 
 ## The Journal reads every system's open objectives.
 func _journal_checks() -> void:

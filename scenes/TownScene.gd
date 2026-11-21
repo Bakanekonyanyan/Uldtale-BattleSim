@@ -88,6 +88,14 @@ func _ready():
 	bestiary_button.size = Vector2(180, 60)
 	bestiary_button.pressed.connect(func(): BestiaryGuide.open(self))
 	$UI.add_child(bestiary_button)
+	# Manual: every system explained (ManualScreen, data/manual.json)
+	var manual_button := Button.new()
+	manual_button.name = "ManualButton"
+	manual_button.text = "Manual"
+	manual_button.position = Vector2(472, 528)
+	manual_button.size = Vector2(180, 60)
+	manual_button.pressed.connect(func(): ManualScreen.open(self))
+	$UI.add_child(manual_button)
 	# Journal: everything you're working on (JournalScreen)
 	var journal_button := Button.new()
 	journal_button.name = "JournalButton"
