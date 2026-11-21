@@ -1,11 +1,11 @@
-# res://scenes/ui/ManualScreen.gd
-# The Manual: every system explained (data/manual.json). Text is BBCode with
-# placeholders that read live values, so the manual stays true when the game
+# res://scenes/ui/CompendiumScreen.gd
+# The Compendium: every system explained (data/compendium.json). Text is BBCode with
+# placeholders that read live values, so the Compendium stays true when the game
 # is retuned:
 #   {pct:file:path}  percent      {num:file:path}  number     {x:file:path}  x-multiplier
 #   {list:name}      a block generated from the data (see _list)
-# Open with ManualScreen.open(parent[, topic_id]).
-class_name ManualScreen
+# Open with CompendiumScreen.open(parent[, topic_id]).
+class_name CompendiumScreen
 extends CanvasLayer
 
 const SCHOOLS := {
@@ -19,14 +19,14 @@ var topics: Array = []
 var list: Tree
 var page: RichTextLabel
 
-static func open(parent: Node, topic_id := "") -> ManualScreen:
-	var m = ManualScreen.new()
+static func open(parent: Node, topic_id := "") -> CompendiumScreen:
+	var m = CompendiumScreen.new()
 	m.start_topic = topic_id
 	parent.add_child(m)
 	return m
 
 static func all_topics() -> Array:
-	var d = DataRegistry.get_data("manual")
+	var d = DataRegistry.get_data("compendium")
 	return d.get("topics", []) if d is Dictionary else []
 
 func _ready() -> void:
@@ -41,7 +41,7 @@ func _ready() -> void:
 	panel.size = Vector2(1120, 660)
 	add_child(panel)
 	var title = Label.new()
-	title.text = "Manual"
+	title.text = "Compendium"
 	title.position = Vector2(24, 12)
 	title.add_theme_font_size_override("font_size", 24)
 	panel.add_child(title)
@@ -159,6 +159,8 @@ static func _list(name: String) -> String:
 		"enchants": return _enchants()
 		"enchant_cap": return String(EnchantManager.cfg().get("max_rarity", "epic")).capitalize()
 		"damage_types": return _damage_types()
+		"gear_stats": return _gear_stats()
+		"item_names": return _item_names()
 	return "?"
 
 static func _entries(d: Dictionary, extra_key := "", extra_fmt := "") -> String:
@@ -279,6 +281,58 @@ static func _enchants() -> String:
 		var st = String(e.get("weapon_status", ""))
 		t += "• [b]%s[/b] (%s): %s%s\n" % [e.get("name", id), mat.display_name if mat else e.get("material", "?"), String(e.get("stat", "")).capitalize(), (", " + st.capitalize()) if st != "" else ""]
 	return t.strip_edges()
+
+static func _gear_stats() -> String:
+	var up = int(round(Equipment.UPGRADE_STEP * 100))
+	var t := "Hover or inspect an item to see its numbers. What they mean:\n\n"
+	t += "[b]Base stats[/b]\n"
+	t += "• [b]Damage[/b] (weapons): added to your attack power for physical hits.\n"
+	t += "• [b]Damage type[/b] (weapons): Slash, Pierce or Blunt - meets the target's affinities (see Weaknesses and Break).\n"
+	t += "• [b]Armor[/b]: each point adds %s physical defense (half that against magic).\n" % _fmt(BattleFormulas.ARMOR_SCALE)
+	t += "• [b]Armor type[/b] (cloth, leather, mail, plate): changes which damage types hurt you - a full set gives the whole effect.\n"
+	t += "• [b]Attribute bonus[/b]: a flat bonus to an attribute (e.g. +2 Strength).\n"
+	t += "• [b]Item level[/b]: how strong the item is for its floor; higher item levels scale every number up.\n\n"
+	t += "[b]Special properties[/b]\n"
+	t += "• [b]Dodge[/b]: chance to avoid hits entirely.\n"
+	t += "• [b]Critical hit rate[/b]: chance to crit (x%.1f-x%.1f damage).\n" % [BattleFormulas.CRIT_MULT_MIN, BattleFormulas.CRIT_MULT_MAX]
+	t += "• [b]Armor penetration[/b]: your physical hits ignore this share of the target's defense (up to %d%%).\n" % int(round(BattleFormulas.MAX_ARMOR_PENETRATION * 100))
+	t += "• [b]Spell power[/b] (tomes, talismans, cloth): added to your spell power.\n"
+	t += "• [b]Spell ward[/b]: magical defense.\n"
+	t += "• [b]On-hit effect[/b] (weapons): a chance to inflict a status (Burn, Freeze, Bleed...) when you hit.\n"
+	t += "• [b]Bonus damage[/b] (Legendary weapons): extra damage on every hit.\n\n"
+	t += "[b]Rarity[/b]\n"
+	t += "• Common, Uncommon, Magic, Rare, Epic, Legendary. Higher rarities roll more attribute bonuses, better base numbers and higher item levels; Rare and better can carry an on-hit effect.\n\n"
+	t += "[b]Improvements[/b]\n"
+	t += "• [b]+N[/b] (Blacksmith upgrades): +%d%% damage and armor per level (and attribute bonuses on caster gear). The cap depends on rarity.\n" % up
+	t += "• [b]Tempered[/b]: a failed upgrade gives the next try a bonus.\n"
+	t += "• [b]Enchanted[/b]: the Enchanter raised its rarity and added an attribute bonus (and maybe an on-hit effect).\n\n"
+	t += "[b]Who can use it[/b]\n"
+	t += "• [b]Class restriction[/b]: only the listed classes can equip it.\n"
+	t += "• [b]Dual wield[/b]: some one-handed weapons can go in the off hand for some classes; two-handed weapons block the off hand."
+	return t
+
+## How generated item names read (EquipmentNamer's word tables).
+static func _item_names() -> String:
+	var t := "Magic and better gear gets a generated name: [b][On-hit word] [Main stat word] [Second stat word] Item [of ...][/b]. "
+	t += "Example: a [i]Toxic Brilliant Rapid Staff of Growth[/i] poisons on hit, mostly raises Intelligence, also Agility, and was blessed by Elandria.\n\n"
+	t += "[b]1. On-hit word[/b] (weapons that can inflict a status)\n"
+	for st in EquipmentNamer.STATUS_DESCRIPTORS:
+		t += "• %s → [b]%s[/b] on hit\n" % [", ".join(EquipmentNamer.STATUS_DESCRIPTORS[st]), Skill.StatusEffect.keys()[st].capitalize()]
+	t += "\n[b]2. Main stat word[/b] - the item's biggest attribute bonus\n"
+	for a in EquipmentNamer.STAT_PREFIXES:
+		t += "• %s → [b]%s[/b]\n" % [", ".join(EquipmentNamer.STAT_PREFIXES[a]), Skill.AttributeTarget.keys()[a].capitalize()]
+	t += "\n[b]3. Second stat word[/b] (Epic and Legendary) - the second-biggest bonus\n"
+	for a in EquipmentNamer.SECONDARY_PREFIXES:
+		t += "• %s → [b]%s[/b]\n" % [", ".join(EquipmentNamer.SECONDARY_PREFIXES[a]), Skill.AttributeTarget.keys()[a].capitalize()]
+	t += "\n[b]4. \"of ...\"[/b] (Rare and up) - the god who blessed it. On an on-hit weapon it matches the status; otherwise it's flavour.\n"
+	var by_status := {}
+	for st in EquipmentNamer.STATUS_PANTHEON_MAP:
+		by_status[EquipmentNamer.STATUS_PANTHEON_MAP[st]] = Skill.StatusEffect.keys()[st].capitalize()
+	for g in EquipmentNamer.PANTHEON_NAMES:
+		var pd: Dictionary = EquipmentNamer.PANTHEON_NAMES[g]
+		t += "• of %s → [b]%s[/b], god of %s%s\n" % [" / ".join(pd.verbs), g, pd.domain, (" (%s weapons)" % by_status[g]) if by_status.has(g) else ""]
+	t += "\nCommon gear keeps its plain name. Enchanting doesn't rename an item - check its \"Enchanted:\" line, and note Bleed, Confuse and Blind on-hit effects (from enchanting) have no name word yet."
+	return t
 
 static func _damage_types() -> String:
 	var armor: Dictionary = DamageTypes.cfg().get("armor", {})
