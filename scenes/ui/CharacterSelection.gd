@@ -176,7 +176,7 @@ func update_character_preview():
 	# === PROGRESS ===
 	if char.get("current_floor"):
 		preview_text += "[b][color=cyan]Progress:[/color][/b]\n"
-		preview_text += "Floor: %d | Best floor reached: %d\n" % [char.current_floor, char.max_floor_cleared]
+		preview_text += "Floor: %d | Deepest floor reached: %d\n" % [char.current_floor, char.max_floor_unlocked]
 		for location_id in LocationManager.get_ids():
 			if char.location_progress.has(location_id):
 				preview_text += "  %s: floor %d\n" % [LocationManager.get_display_name(location_id), char.get_max_floor(location_id)]

@@ -176,7 +176,7 @@ func _on_create_pressed():
 	
 	# Use CharacterFactory for creation
 	var new_character = CharacterFactory.create_character(char_name, race_name, p_class_name, true)
-	new_character.max_floor_cleared = 1
+	new_character.max_floor_unlocked = 1
 	
 	# Starting gold
 	new_character.currency.copper = STARTING_GOLD

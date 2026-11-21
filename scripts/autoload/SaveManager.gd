@@ -54,7 +54,7 @@ func save_game(player: CharacterData):
 		"equipment": {},
 		"xp": player.xp,
 		"attribute_points": player.attribute_points,
-		"max_floor_cleared": player.max_floor_cleared,
+		"max_floor_unlocked": player.max_floor_unlocked,
 		"location_progress": player.location_progress,
 		"last_location": player.last_location,
 		"carry_limit": player.carry_limit,
@@ -244,7 +244,7 @@ func load_game(character_name: String) -> CharacterData:
 	player.spell_power_type = save_data.get("spell_power_type", "intelligence")
 	player.xp = save_data.get("xp", 0)
 	player.attribute_points = save_data.get("attribute_points", 0)
-	player.max_floor_cleared = save_data.get("max_floor_cleared", 0)
+	player.max_floor_unlocked = int(save_data.get("max_floor_unlocked", save_data.get("max_floor_cleared", 0)))   # old saves: same value, old name
 	_migrate(save_data)
 	player.location_progress = save_data.get("location_progress", {})
 	player.last_location = save_data.get("last_location", "the_dungeon")

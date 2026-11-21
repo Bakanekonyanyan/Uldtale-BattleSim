@@ -59,10 +59,7 @@ func record_first(player: CharacterData, npc: Dictionary = {}) -> void:
 ## Everyone in the same shape: {key, name, is_player, rank, points, level,
 ## deepest, bosses, firsts, renown, npc}
 func profile_player(player: CharacterData) -> Dictionary:
-	# max_floor_cleared / location_progress hold the highest UNLOCKED floor
-	var deepest = max(0, player.max_floor_cleared - 1)
-	for loc in player.location_progress:
-		deepest = max(deepest, int(player.location_progress[loc]) - 1)
+	var deepest = player.deepest_floor_cleared()
 	var s = _state(player)
 	var p := {"key": "you", "name": player.name, "is_player": true, "rank": RankManager.get_rank(player),
 		"points": GuildManager.get_points(player), "level": player.level, "deepest": deepest,

@@ -65,8 +65,8 @@ func refresh(player: CharacterData) -> void:
 
 func _new_request(player: CharacterData, shop: String, today: int) -> Dictionary:
 	var mats: Dictionary = shops()[shop].get("materials", {})
-	var deepest = player.max_floor_cleared
-	var pool = mats.keys().filter(func(id): return deepest + 1 >= int(mats[id].get("min_floor", 1)))
+	var reached = max(1, player.max_floor_unlocked)
+	var pool = mats.keys().filter(func(id): return reached >= int(mats[id].get("min_floor", 1)))
 	if pool.is_empty():
 		return {}
 	var id = String(pool[RandomManager.randi() % pool.size()])
@@ -74,7 +74,7 @@ func _new_request(player: CharacterData, shop: String, today: int) -> Dictionary
 	var qty = RandomManager.randi_range(int(q[0]), int(q[1]))
 	var item = ItemManager.get_item(id)
 	var value = int(item.value) if item else 10
-	var reward = int(round(max(float(cfg().get("min_reward", 60)), value * qty * float(cfg().get("reward_per_value", 2.5))) * RewardsManager.floor_scale(deepest + 1)))
+	var reward = int(round(max(float(cfg().get("min_reward", 60)), value * qty * float(cfg().get("reward_per_value", 2.5))) * RewardsManager.floor_scale(reached)))
 	return {"item": id, "qty": qty, "due": today + int(cfg().get("deadline_days", 7)), "reward": reward}
 
 func active(player: CharacterData, shop: String) -> Dictionary:

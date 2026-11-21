@@ -43,7 +43,7 @@ func is_known(player: CharacterData, recipe_id: String) -> bool:
 		"default":
 			return true
 		"floor_reached":
-			return player.max_floor_cleared >= int(unlock.get("floor", 1)) or recipe_id in _state(player).known_recipes
+			return player.max_floor_unlocked >= int(unlock.get("floor", 1)) or recipe_id in _state(player).known_recipes
 		"adventurer_rank":
 			return RankManager.get_rank_index(player) >= RankManager.rank_index(String(unlock.get("rank", "S"))) \
 				or recipe_id in _state(player).known_recipes

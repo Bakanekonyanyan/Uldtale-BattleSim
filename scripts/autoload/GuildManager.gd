@@ -112,7 +112,7 @@ func refresh_board(player: CharacterData) -> void:
 	state(player)["board_day"] = WorldClock.day(player)
 
 func get_reroll_fee(player: CharacterData) -> int:
-	return int(settings.get("reroll_fee_per_floor", 50)) * max(1, player.max_floor_cleared)
+	return int(settings.get("reroll_fee_per_floor", 50)) * max(1, player.max_floor_unlocked)
 
 func reroll_board(player: CharacterData) -> Dictionary:
 	var fee = get_reroll_fee(player)
@@ -294,7 +294,7 @@ func _pick_template(player: CharacterData, used: Dictionary) -> String:
 	var pool: Array = []
 	var total := 0
 	for tid in templates:
-		if used.has(tid) or max(1, player.max_floor_cleared) < int(templates[tid].get("min_floor", 1)):
+		if used.has(tid) or max(1, player.max_floor_unlocked) < int(templates[tid].get("min_floor", 1)):
 			continue
 		if RankManager.get_rank_index(player) < RankManager.rank_index(String(templates[tid].get("min_rank", "F"))):
 			continue
@@ -312,7 +312,7 @@ func _pick_template(player: CharacterData, used: Dictionary) -> String:
 func _instantiate(tid: String, player: CharacterData) -> Dictionary:
 	var t: Dictionary = templates[tid]
 	var obj: Dictionary = t.objective
-	var ref = max(1, player.max_floor_cleared)
+	var ref = max(1, player.max_floor_unlocked)
 	var ctx := {}
 
 	# Target: resolve placeholders

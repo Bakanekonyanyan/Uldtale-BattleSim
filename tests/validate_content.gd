@@ -115,7 +115,7 @@ func _locations() -> void:
 
 func _bounties() -> void:
 	var p = CharacterFactory.create_character("T", "Hume", "Paladin", true)
-	p.max_floor_cleared = 10
+	p.max_floor_unlocked = 10
 	for i in 40:
 		GuildManager.refresh_board(p)
 		for b in GuildManager.get_board(p):

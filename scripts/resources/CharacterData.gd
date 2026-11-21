@@ -74,7 +74,10 @@ var last_attacker: CharacterData:
 @export var current_floor: int = 0
 ## Highest floor unlocked in ANY location (kept for display / old saves).
 ## Real progress is per location: see location_progress.
-@export var max_floor_cleared: int = 0
+## Highest floor unlocked in any location (= reached). It was called
+## max_floor_cleared, but a floor unlocks when the one before is cleared, so
+## the deepest CLEARED floor is one lower: deepest_floor_cleared().
+@export var max_floor_unlocked: int = 0
 ## location_id -> highest floor unlocked there (floors start unlocked at 1)
 @export var location_progress: Dictionary = {}
 @export var last_location: String = "the_dungeon"
@@ -700,10 +703,17 @@ func spend_attribute_point(attribute: String) -> bool:
 		return true
 	return false
 
-func update_max_floor_cleared(floor: int):
-	if floor > max_floor_cleared:
-		max_floor_cleared = floor
-		Log.debug("character", "New max floor: %d" % max_floor_cleared)
+func update_max_floor_unlocked(floor: int):
+	if floor > max_floor_unlocked:
+		max_floor_unlocked = floor
+		Log.debug("character", "New max floor: %d" % max_floor_unlocked)
+
+## The deepest floor whose boss you've beaten, in any location (0 = none).
+func deepest_floor_cleared() -> int:
+	var best = max(0, max_floor_unlocked - 1)
+	for loc in location_progress:
+		best = max(best, int(location_progress[loc]) - 1)
+	return best
 
 # === CARRY LIMIT (pack vs stash) ===
 ## Consumables are limited to `carry_limit` copies of each in the pack.
@@ -780,7 +790,7 @@ func unlock_floor(location_id: String, floor_num: int) -> void:
 	if floor_num > get_max_floor(location_id):
 		location_progress[location_id] = floor_num
 		Log.debug("character", "%s: unlocked floor %d" % [location_id, floor_num])
-	update_max_floor_cleared(floor_num)
+	update_max_floor_unlocked(floor_num)
 
 # === PROFICIENCY ===
 func track_weapon_proficiency():

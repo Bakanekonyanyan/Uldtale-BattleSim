@@ -1207,8 +1207,13 @@ func _phase0_checks() -> void:
 	check(p.get_max_floor("orc_plains") == 1, "new location starts at floor 1")
 	p.unlock_floor("orc_plains", 4)
 	p.unlock_floor("orc_plains", 2)  # never lowers
-	check(p.get_max_floor("orc_plains") == 4 and p.get_max_floor("troll_caves") == 1 and p.max_floor_cleared >= 4,
+	check(p.get_max_floor("orc_plains") == 4 and p.get_max_floor("troll_caves") == 1 and p.max_floor_unlocked >= 4,
 		"floor progress is tracked per location")
+	check(p.deepest_floor_cleared() == 3, "deepest floor cleared = highest unlocked - 1 (%d)" % p.deepest_floor_cleared())
+	var old_save := {"max_floor_cleared": 6}
+	var p_old = make_player()
+	p_old.max_floor_unlocked = int(old_save.get("max_floor_unlocked", old_save.get("max_floor_cleared", 0)))
+	check(p_old.max_floor_unlocked == 6, "old saves' max_floor_cleared loads as max_floor_unlocked")
 	
 	# v1 save migration
 	var v1 := {"max_floor_cleared": 7}
@@ -1388,7 +1393,7 @@ func _alchemy_checks() -> void:
 	r = AlchemyManager.buy_recipe(p, "flame_flask")
 	check(r.ok and AlchemyManager.is_known(p, "flame_flask") and p.currency.copper == 0, "buy Flame Flask recipe for 300")
 	check(not AlchemyManager.buy_recipe(p, "flame_flask").ok, "can't buy a known recipe twice")
-	p.max_floor_cleared = 5
+	p.max_floor_unlocked = 5
 	check(AlchemyManager.is_known(p, "ether"), "floor-gated recipe unlocks at floor 5")
 	p.name = "ZZ_SmokeTest_Alchemy"
 	SaveManager.save_game(p)
@@ -1838,7 +1843,7 @@ func _bounty(p: CharacterData, tid: String, type: String, target: Dictionary, co
 func _guild_checks() -> void:
 	var p = make_player()
 	p.name = "ZZ_SmokeTest_Guild"
-	p.max_floor_cleared = 3
+	p.max_floor_unlocked = 3
 	DungeonStateManager.active_player = p
 	var messages: Array = []
 	var on_msg = func(t): messages.append(t)
