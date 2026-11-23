@@ -75,11 +75,38 @@ story moment: big affinity/rapport, a Chronicle entry, maybe a storylet.
   warm to you; Kara's rival cools.
 - Recruiting someone into your party counts as "ran a job together" for you.
 
-### Open questions (A)
-1. **Romance** between NPCs (and later with you)? It deepens grief and
-   loyalty stories but needs care and writing.
-2. Should NPC parties be **able to recruit you** (they invite you to a job)?
-3. Should feuds be able to turn **lethal** (an NPC kills another off-screen)?
+### Decided (A): all four - NPC parties, romance, lethal feuds, invitations
+
+**Romance**
+- Two adventurers who are sworn companions (affinity ≥ 70) and neither in a
+  romance may become **partners**: a weekly 10% chance, x2 with a compatible
+  trait pair, x0 if either is Aloof (unless both are). No restrictions by race
+  or gender.
+- Partners: +50% chance to job together, shared grief is doubled (the grief
+  outcome is picked twice and both apply), and a partner's death is always a
+  core memory and a Chronicle entry.
+- A partner who ends up in a feud with the other (affinity ≤ -40) **separates**
+  (news, Chronicle).
+- With you (later): the same rules on your rapport, at the Tavern, opt-in.
+
+**Lethal feuds**
+- A feud (affinity ≤ -70) has a weekly chance of a **confrontation**: 5%, x2 if
+  either is Cruel, x0.5 if either is Honorable or Kind.
+- A confrontation is an off-screen duel (the AutoBattler, real builds). The
+  loser is injured; if either is Cruel or the gap in level is 5+, there's a
+  25% chance it's **lethal**. Witnesses' friends gain memories of the killer
+  (`killed_my_friend`, core) - a killer can become a pariah, or someone's
+  vengeance target.
+- The Guild reacts: a killer gets 3 demerits and drops 1 rank (if
+  "honourable conduct" world setting is on - default on).
+
+**Parties invite you**
+- An NPC party with a friend of yours (rapport ≥ 40) may **invite you** to its
+  next job (news + a Journal entry, valid 3 days).
+- Accept: you join their expedition (they fight beside you; you share loot by
+  their split), and every member gains `shared_victory` or `shared_hardship`
+  memories of you. Decline: no penalty, unless you decline the same party
+  three times (a small cool-down).
 
 ---
 
@@ -128,10 +155,15 @@ The Tavern details panel shows what someone remembers about you ("Kara
 remembers you left her in the Troll Caves - day 34"), and what they've heard
 ("Dao heard from Kara that you…").
 
-### Open questions (B)
-1. Show memories **fully** (transparent), or only **hints** ("Kara seems cold
-   towards you")?
-2. Should the **player** have memories too (e.g. a journal of people who
+### Decided (B): hints first, full once you're friends
+- Below rapport 40: the Tavern shows only a **mood** from their opinion of you
+  ("warm", "wary", "cold", "hostile") and one hint line ("Kara won't meet your
+  eye").
+- From rapport 40 (Friend): the full list - what they remember about you and
+  what they've heard (with who told them).
+
+### Still open (B)
+1. Should the **player** have memories too (e.g. a journal of people who
    wronged you, used by storylets)?
 
 ---
@@ -194,13 +226,48 @@ offense branches, Cautious → defense), so every Guild Paladin is different and
 the Ledger's top adventurers have recognisable builds - and a nemesis can
 re-spec against you (rule B3).
 
-### Open questions (D)
-1. Which layers, and in what order? (Choice nodes and augments add depth
-   fast; a subclass multiplies variety but also balance work.)
-2. How free is **respec**: cheap and frequent (experiment) or costly
-   (commitment)?
-3. How many viable builds per class are we aiming for - 3 (one per branch),
-   or "many hybrids"?
+### Decided (D): first layers 1, 2, 4 and 5; respec cheap, rising with level
+
+**1. Choice nodes**
+- Tiers 2 and 4 of every branch get a **pair** of mutually exclusive nodes
+  (`"choice": "<group id>"` in talents.json); learning one locks the other
+  until a respec. 12 classes x 3 branches x 2 tiers = 72 pairs to write.
+- Rule of thumb for each pair: one option deepens the branch's identity, the
+  other bends it toward another play style (offense <-> defense, single <->
+  area, self <-> party).
+
+**2. Skill augments**
+- Skills already level with use. Augment slots open at skill level 3, 6 and 9.
+- An augment is data: `{id, name, applies_to: [skill names or tags],
+  effects: [...]}` using the same effect kinds as talents plus skill-shape
+  changes: `extra_targets`, `add_status`, `cooldown_delta`, `cost_delta`,
+  `power_mult`, `element`, `turn_delay`.
+- Sources: boss and elite drops, Guild bounties, and **trainers** (a class
+  trainer NPC per school in town, later).
+- Swapping augments is free in town.
+
+**4. Weapon arts**
+- Weapon proficiency (already tracked) unlocks a weapon art at proficiency
+  levels 3 and 6 for each weapon family (sword, katana, bow, staff, tome...):
+  `{family, level, skill}`. They join the skill pool and the 6-slot loadout.
+- So a Samurai with a bow and one with a katana really play differently.
+
+**5. Attribute thresholds**
+- Passives at raw (base + gear) attribute thresholds: 40 / 80 / 120. Two per
+  attribute to start (e.g. Agility 40: *Fleetfoot* - act first in the opening
+  round; Faith 80: *Grace* - heals +15%; Fortitude 80: *Unshaken* - one free
+  Break pip each fight).
+- Data-driven; shown on the Status screen with progress.
+
+**Respec**
+- Talents and choice nodes: gold = level x 20 (cheap early, a commitment
+  late). Attribute points: not refundable (thresholds stay meaningful).
+- Augments: free to swap in town.
+
+**Later layers:** secondary discipline, mastery, saved loadouts.
+
+**NPC builds:** generated NPCs pick branches, choice nodes and augments by
+traits, so the Ledger's top adventurers have recognisable builds.
 
 ---
 
