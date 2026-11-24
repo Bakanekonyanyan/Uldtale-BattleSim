@@ -127,7 +127,7 @@
     {
      "name": "events",
      "type": "json",
-     "help": "Affinity changes: job_success, job_fail, job_fail_blame, rescued, rescuer, generous, ledger_rivalry_week, passed_over."
+     "help": "Affinity changes: job_success, job_fail, job_fail_blame, rescued, rescuer, generous, ledger_rivalry_week (two Ambitious within 3 places), ledger_neighbour_week (anyone within 2 places), passed_over."
     },
     {
      "name": "blame_traits",
@@ -214,6 +214,12 @@
      "type": "int",
      "min": 0,
      "help": "Each week every relation moves this much back toward 0 (bonds need tending); at 0 it's forgotten."
+    },
+    {
+     "name": "clash_mult",
+     "type": "int",
+     "min": 0,
+     "help": "Affinity lost per clashing trait pair at each town meeting."
     }
    ]
   },
@@ -247,7 +253,7 @@
     {
      "name": "grief",
      "type": "json",
-     "help": "days [min,max]; job_chance_mult while grieving; outcomes {vengeance, withdraws, hardens, carries_on: {base, traits: {trait: mult}}}; harden_traits; vengeance_job_chance, vengeance_days, vengeance_feud, avenged_rapport."
+     "help": "min_affinity (who grieves: relations at or above it); days [min,max]; job_chance_mult while grieving; outcomes {vengeance, withdraws, hardens, carries_on: {base, traits: {trait: mult}}}; harden_traits; vengeance_job_chance, vengeance_days, vengeance_feud, avenged_rapport."
     },
     {
      "name": "feuds",

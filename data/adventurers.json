@@ -18,7 +18,12 @@
       3
     ],
     "history_max": 10,
-    "departed_keep": 30
+    "departed_keep": 30,
+    "career": {
+      "_doc": "Careers end: past prime_years with the Guild, each week retire_per_week x (years past prime) chance to retire (not while in your party or on a job).",
+      "prime_years": 4,
+      "retire_per_week": 0.01
+    }
   },
   "jobs": {
     "take_chance": 0.45,
@@ -31,7 +36,7 @@
     "success_base": 0.84,
     "success_per_power": 0.06,
     "success_min": 0.15,
-    "success_max": 0.97,
+    "success_max": 0.93,
     "points_per_floor": 4,
     "points_base": 6,
     "xp_per_floor": 180,

@@ -269,6 +269,8 @@ func simulate_day(player: CharacterData, day: int) -> void:
 			"idle":
 				if int(npc.get("back_day", -1)) != day:
 					_maybe_start(player, npc, day)
+	if day % 7 == 0:
+		_career_week(player, day)
 	_prune_departed(player)
 	RelationsManager.prune(player)
 	RelationsManager.town_day(player, day)
@@ -281,6 +283,22 @@ func simulate_day(player: CharacterData, day: int) -> void:
 		npc.joined_day = day
 		_history(npc, day, "Signed up with the Guild.")
 		_news(player, "A new adventurer joined the Guild: %s, a %s %s." % [npc.name, npc.race, npc.cls])
+
+## Careers end: veterans past their prime may retire each week.
+func _career_week(player: CharacterData, day: int) -> void:
+	var c: Dictionary = _s("settings").get("career", {})
+	var per_year = LedgerManager.days_per_year()
+	for npc in active(player).duplicate():
+		if String(npc.status) in ["party", "job"]:
+			continue
+		var years = (day - int(npc.get("joined_day", 1))) / float(per_year)
+		var past = years - float(c.get("prime_years", 4))
+		if past > 0.0 and RandomManager.randf() < float(c.get("retire_per_week", 0.01)) * past * trait_mult(npc, "retire"):
+			npc.status = "retired"
+			_history(npc, day, "Retired after %d years with the Guild." % int(years))
+			var big = RankManager.rank_index(String(npc.rank)) >= RankManager.rank_ids().size() - 2
+			_news(player, "%s (%s-Rank %s) has retired after %d years with the Guild.%s" % [npc.name, npc.rank, npc.cls, int(years), " A legend steps down." if big else ""], "adventurer")
+			DramaManager.on_retire(player, npc, day)
 
 ## Keep only the most recent fallen/retired adventurers in the save.
 func _prune_departed(player: CharacterData) -> void:

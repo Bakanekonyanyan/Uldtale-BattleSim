@@ -56,6 +56,11 @@
      "type": "int",
      "min": 0,
      "help": "Fallen/retired adventurers kept in the save (oldest dropped)."
+    },
+    {
+     "name": "career",
+     "type": "json",
+     "help": "{prime_years, retire_per_week}: past prime_years with the Guild, each week a retire_per_week x (years past prime) chance to retire (traits' retire multiplier applies; not while in your party or on a job)."
     }
    ]
   },

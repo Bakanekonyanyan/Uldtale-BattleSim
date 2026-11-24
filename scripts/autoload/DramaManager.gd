@@ -310,7 +310,8 @@ func on_death(player: CharacterData, dead: Dictionary, day: int, killer: Diction
 	if not killer.is_empty():
 		dead["died_at"] = {"by": int(killer.id)}
 	var g = _c("grief")
-	for m in RelationsManager.friends(player, dead):
+	var close = RelationsManager.relations_of(player, dead).filter(func(r): return int(r.aff) >= int(g.get("min_affinity", 40)) and AdventurerManager.is_active(r.npc)).map(func(r): return r.npc)
+	for m in close:
 		MemoryManager.add(m, "lost_companion", MemoryManager.key_npc(dead), day)
 		AdventurerManager._history(m, day, "Lost %s." % dead.name)
 		if not killer.is_empty() and m != killer:
@@ -330,6 +331,23 @@ func on_death(player: CharacterData, dead: Dictionary, day: int, killer: Diction
 			MemoryManager.add(player, "killed_my_friend", MemoryManager.key_npc(killer), day)
 	if dead.has("company"):
 		_leave_company(player, dead, day)
+
+## Someone retired: leave their company and partner (the partner may follow them out).
+func on_retire(player: CharacterData, npc: Dictionary, day: int) -> void:
+	if npc.has("company"):
+		_leave_company(player, npc, day)
+	var p = partner_of(player, npc)
+	if not p.is_empty():
+		npc.erase("partner")
+		p.erase("partner")
+		if String(p.status) == "idle" and RandomManager.randf() < 0.5:
+			p.status = "retired"
+			AdventurerManager._history(p, day, "Retired alongside %s." % npc.name)
+			WorldClock.add_news(player, "%s retired alongside %s." % [p.name, npc.name], "adventurer")
+			if p.has("company"):
+				_leave_company(player, p, day)
+		else:
+			AdventurerManager._history(p, day, "Stayed on when %s retired." % npc.name)
 
 func is_grieving(npc: Dictionary) -> bool:
 	return npc.has("grief")

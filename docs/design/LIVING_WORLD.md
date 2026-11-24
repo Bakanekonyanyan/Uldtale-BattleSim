@@ -139,6 +139,14 @@ story moment: big affinity/rapport, a Chronicle entry, maybe a storylet.
   5-6 romances, 10-15 feuds, 1-6 brawls (0-1 lethal), 2-4 vengeance oaths
   (most fulfilled), 1-2 grieving retirements.
 
+**Built (Phase 4): long-run tuning.** `tests/world_sim.tscn` runs the Guild
+for years; see `docs/balance/WORLD_SIM.md`. Careers now end (veterans retire
+after ~4 years), veterans can still fail (success cap 93%), clashing traits
+and Ledger neighbours create friction, and anyone at affinity 30+ grieves.
+Ten-year runs show steady turnover, a different temperament per world, and
+rare but real grief, vengeance and killings, at ~30 ms per simulated day and
+a ~80 KB world state.
+
 **Romance**
 - Two adventurers who are sworn companions (affinity ≥ 70) and neither in a
   romance may become **partners**: a weekly 10% chance, x2 with a compatible

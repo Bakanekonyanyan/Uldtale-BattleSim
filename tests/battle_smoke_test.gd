@@ -1825,6 +1825,17 @@ func _drama_checks() -> void:
 	yan.rapport = 10
 	DramaManager._jealousy_week(p, 560)
 	check(yan.get("broken", false) and int(yan.rivalry) >= 5, "let their devotion sour and they break: a nemesis")
+	# careers end; clashing traits grate harder than a single point
+	var vet = mk.call(["kind"])
+	vet.joined_day = 1
+	var pm = mk.call(["kind"])
+	pm.joined_day = 1
+	pm.status = "party"
+	for j in range(200):
+		AdventurerManager._career_week(p, LedgerManager.days_per_year() * 8 + j * 7)
+	check(String(vet.status) == "retired" and String(pm.status) == "party", "veterans retire in time (never from your party)")
+	var hon = mk.call(["honorable"])
+	check(RelationsManager.meeting(hon, k) < RelationsManager.chemistry(hon, k), "clashes grate harder in town meetings (%d)" % RelationsManager.meeting(hon, k))
 	CharacterManager.current_character_resource.set_meta("current_character", prev_cur)
 
 ## Personalities: archetypes, drives, flaws, quirks, voices, arcs, your voice.

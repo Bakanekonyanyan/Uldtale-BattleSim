@@ -241,7 +241,8 @@
 			"rescuer": 5,
 			"generous": 1,
 			"ledger_rivalry_week": -3,
-			"passed_over": -5
+			"passed_over": -5,
+			"ledger_neighbour_week": -1
 		},
 		"blame_traits": [
 			"boastful",
@@ -268,7 +269,8 @@
 		"familiar_share": 0.5,
 		"acquainted_at": 15,
 		"pair_with_acquaintance": 0.15,
-		"weekly_drift": 1
+		"weekly_drift": 1,
+		"clash_mult": 2
 	},
 	"drama": {
 		"_doc": "Phase 3 drama (DramaManager.gd; LIVING_WORLD.md A, F): companies, invitations, romance, grief, lethal feuds, jealousy.",
@@ -372,7 +374,8 @@
 			"vengeance_job_chance": 0.6,
 			"vengeance_days": 120,
 			"vengeance_feud": -80,
-			"avenged_rapport": 25
+			"avenged_rapport": 25,
+			"min_affinity": 30
 		},
 		"feuds": {
 			"weekly_chance": 0.08,

@@ -135,13 +135,20 @@ func _pair_has(x: Dictionary, y: Dictionary, a: String, b: String) -> bool:
 
 ## Trait chemistry between two adventurers (+1 per compatible pair, -1 per clash).
 func chemistry(x: Dictionary, y: Dictionary) -> int:
+	return _chem(x, y, 1, 1)
+
+## A town meeting: compatible pairs x chemistry_mult, clashes x clash_mult.
+func meeting(x: Dictionary, y: Dictionary) -> int:
+	return _chem(x, y, int(cfg().get("chemistry_mult", 1)), int(cfg().get("clash_mult", 1)))
+
+func _chem(x: Dictionary, y: Dictionary, good: int, bad: int) -> int:
 	var c := 0
 	for pr in cfg().get("compatible", []):
 		if _pair_has(x, y, String(pr[0]), String(pr[1])):
-			c += 1
+			c += good
 	for pr in cfg().get("clashing", []):
 		if _pair_has(x, y, String(pr[0]), String(pr[1])):
-			c -= 1
+			c -= bad
 	return c
 
 ## Adventurers in town spend time together: chemistry, and the generous buy rounds.
@@ -160,7 +167,7 @@ func town_day(player: CharacterData, day: int) -> void:
 				y = known[RandomManager.randi() % known.size()].npc
 		if x == y:
 			continue
-		var d = chemistry(x, y) * int(cfg().get("chemistry_mult", 1))
+		var d = meeting(x, y)
 		if x.get("traits", []).any(func(t): return t in gen) or y.get("traits", []).any(func(t): return t in gen):
 			d += _ev("generous")
 		if d != 0:
@@ -182,6 +189,8 @@ func town_day(player: CharacterData, day: int) -> void:
 				var b: Dictionary = st[j].npc
 				if "ambitious" in a.get("traits", []) and "ambitious" in b.get("traits", []):
 					change(player, a, b, _ev("ledger_rivalry_week"), day)
+				elif j <= i + 2:   # close neighbours on the Ledger grate a little
+					change(player, a, b, _ev("ledger_neighbour_week"), day)
 
 ## Someone was promoted: the ambitious and boastful they just left behind
 ## (one rank below, the rank they shared) resent it.
