@@ -386,13 +386,41 @@ mythic voice, kept across playthroughs.
 
 ---
 
-## Open questions (F-H)
-1. **Yandere**: include as an optional world setting, or leave out?
-2. **Writing**: I draft archetype voices, storylets and legend templates; you
-   edit. Or do you want to write some yourself?
-3. **The player's own voice**: is your character silent (choices only), or
-   do you pick your own archetype so your lines and choices have a voice?
-4. **Relics**: flavour-only, or modestly powerful heirlooms?
+## Decided (F-H)
+
+**Yandere: always possible** (like any archetype), with limits so it's drama,
+not griefing:
+- Rolls rarely (weight 0.3 vs 1.0 for most archetypes).
+- Their jealousy targets **your bonds**, not you: when your rapport with
+  someone else rises above theirs, they gain a `jealous_of` memory; past a
+  threshold they spread bad gossip about that person, then may sabotage them
+  (an ambush on *that NPC*, off-screen, injury only).
+- Lethal only through the normal lethal-feud rules, never directly.
+- Their arc: Infatuation → Jealousy → either **Let go** (you keep their
+  rapport high and stay honest in a confrontation storylet) or **Break**
+  (they become a nemesis).
+
+**Writing: I draft, you edit.** Voices, storylets and legend templates are
+data files (Content Manager tabs) with my first drafts for you to revise.
+
+**Your voice: defined by your choices.**
+- You start **neutral** (plain lines).
+- Choices carry archetype tags: confronting the thief (+Hot-blooded,
+  +Battle Maniac), sparing a nemesis (+Big Sibling, +Gap), sharing loot
+  (+Genki, +Big Sibling), refusing help (+Kuudere, +Stoic), taking every
+  Omen (+Chuunibyou, +Battle Maniac), naming your party something grand
+  (+Chuunibyou)...
+- Once your top archetype has 10+ points and leads the next by 3, your lines
+  and barks use its voice; it can still drift if you change how you play.
+- NPC archetypes react to yours (a Hot-blooded Rival seeks out a fellow
+  hot-blood; a Kuudere respects a quiet one; a Tsundere clashes with a Genki).
+- The Status screen shows how you're seen ("The Guild thinks you're a
+  hot-blooded fighter").
+
+**Relics: modest heirlooms.** A past legend's signature item, found as a named
+relic: about an Epic of its level plus one small unique property tied to the
+story (e.g. *Mira's Prayer Beads: +10% healing received when below half HP*).
+At most one relic per past legend per world.
 
 ## E. How it fits together
 
