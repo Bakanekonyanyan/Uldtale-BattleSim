@@ -191,13 +191,18 @@ func _update_details() -> void:
 	t += "[color=gray]%s[/color]\n\n" % AdventurerManager.status_text(p, n)
 	var tg = AdventurerManager.tags(n)
 	t += "[b]Rapport:[/b] %s%s\n" % [_rapport_bar(int(n.rapport)), ("   " + ", ".join(tg)) if not tg.is_empty() else ""]
+	t += PersonalityManager.describe(n)
+	if AdventurerManager.in_town(n) and tab == Tab.ROSTER:
+		var hi = PersonalityManager.say(n, "greeting")
+		if hi != "":
+			t += "[i]%s[/i]\n" % hi
 	var bond = BondManager.tier_name(n)
 	if bond != "":
 		t += "[b]Bond:[/b] [color=#ffd166]%s[/color]%s\n" % [bond, ("   Duo tech: %s" % BondManager.duo_data(n).get("name", "")) if BondManager.is_bonded(n) else ""]
 	var known: Array = []
 	for tr in n.traits:
 		known.append(String(AdventurerManager.trait_data(tr).get("name", tr)) if tr in n.known_traits else "???")
-	t += "[b]Personality:[/b] %s\n" % ", ".join(known)
+	t += "[b]Traits:[/b] %s\n" % ", ".join(known)
 	for tr in n.known_traits:
 		t += "   [color=gray]%s: %s[/color]\n" % [AdventurerManager.trait_data(tr).get("name", tr), AdventurerManager.trait_data(tr).get("description", "")]
 	t += "[b]Nature:[/b] %s\n" % (AdventurerManager.alignment_label(n) if AdventurerManager.alignment_known(n) else "[color=gray]Talk with them more to find out.[/color]")

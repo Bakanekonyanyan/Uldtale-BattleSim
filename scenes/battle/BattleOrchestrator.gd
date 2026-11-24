@@ -187,8 +187,52 @@ func start_battle() -> void:
 
 # --- Wave challenges (WaveChallenges.gd) ---
 
+## Companions in this battle: [[hero, npc dict], ...] (PersonalityManager voices).
+func _companions() -> Array:
+	var out: Array = []
+	for h in context.get_heroes():
+		if h != context.player:
+			var n = PartyManager.npc_of(h, context.player)
+			if not n.is_empty():
+				out.append([h, n])
+	return out
+
+func _bark(hero: CharacterData, npc: Dictionary, ctx_name: String) -> void:
+	var l = PersonalityManager.line(npc, ctx_name)
+	if l != "":
+		ui_controller.add_combat_log("%s: \"%s\"" % [hero.name.get_slice(" ", 0), l], "#c9b8ff")
+
+## Low HP and fallen-ally barks, once each per battle.
+func _companion_barks() -> void:
+	var comps = _companions()
+	for c in comps:
+		var h: CharacterData = c[0]
+		if h.is_alive() and h.current_hp < h.max_hp * 0.3 and not h.get_meta("barked_low", false):
+			h.set_meta("barked_low", true)
+			_bark(h, c[1], "low_hp")
+	for hero in context.get_heroes():
+		if not hero.is_alive() and not hero.get_meta("mourned", false):
+			hero.set_meta("mourned", true)
+			var others = comps.filter(func(c): return c[0] != hero and c[0].is_alive())
+			if not others.is_empty():
+				var o = others[RandomManager.randi() % others.size()]
+				_bark(o[0], o[1], "ally_down")
+
 func _start_challenge() -> void:
-	if rules == null or context.is_pvp_mode or not DungeonStateManager.dungeon_active:
+	if rules == null or context.is_pvp_mode:
+		return
+	var comps = _companions()
+	for c in comps:   # personality: a Genki companion lifts the party's Link
+		c[0].remove_meta("barked_low")
+		c[0].remove_meta("mourned")
+		var lk = PersonalityManager.mods_sum(c[1], "start_link")
+		if lk > 0:
+			rules.add_link(lk)
+	context.player.remove_meta("mourned")
+	if not comps.is_empty() and RandomManager.randf() < 0.6:
+		var c = comps[RandomManager.randi() % comps.size()]
+		_bark(c[0], c[1], "battle_start")
+	if not DungeonStateManager.dungeon_active:
 		return
 	var wave_heal = RunState.add("wave_heal")   # boon: Second Wind
 	if wave_heal > 0.0:
@@ -202,6 +246,11 @@ func _start_challenge() -> void:
 	ui_controller.update_all_character_info()
 
 func _finish_challenge(won: bool) -> void:
+	if won:
+		var comps = _companions().filter(func(c): return c[0].is_alive())
+		if not comps.is_empty():
+			var c = comps[RandomManager.randi() % comps.size()]
+			_bark(c[0], c[1], "victory")
 	if won and DungeonStateManager.dungeon_active:   # a rumoured Elite was beaten
 		for e in context.enemies:
 			if e.has_meta("rumour_id"):
@@ -442,6 +491,7 @@ func _after_turn(actor: CharacterData) -> void:
 	if not spawned.is_empty():
 		ui_controller._create_enemy_panels()
 	enemy_planner.plan_all_intents()
+	_companion_barks()
 	ui_controller.update_all_character_info()
 
 # --- Expedition encounters ---

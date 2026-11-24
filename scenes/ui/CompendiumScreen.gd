@@ -161,6 +161,7 @@ static func _list(name: String) -> String:
 		"damage_types": return _damage_types()
 		"gear_stats": return _gear_stats()
 		"item_names": return _item_names()
+		"archetypes": return _archetypes()
 	return "?"
 
 static func _entries(d: Dictionary, extra_key := "", extra_fmt := "") -> String:
@@ -310,6 +311,15 @@ static func _gear_stats() -> String:
 	t += "• [b]Class restriction[/b]: only the listed classes can equip it.\n"
 	t += "• [b]Dual wield[/b]: some one-handed weapons can go in the off hand for some classes; two-handed weapons block the off hand."
 	return t
+
+static func _archetypes() -> String:
+	var t := ""
+	var a: Dictionary = PersonalityManager.archetypes()
+	for id in a:
+		var arc: Array = a[id].get("arc", [])
+		var stages = " → ".join(arc.map(func(s): return String(s.get("name", "")))) if arc.size() > 1 else ""
+		t += "• [b]%s[/b] - %s%s\n" % [a[id].get("name", id), a[id].get("summary", ""), ("\n   [color=gray]Arc: %s[/color]" % stages) if stages != "" else ""]
+	return t.strip_edges()
 
 ## How generated item names read (EquipmentNamer's word tables).
 static func _item_names() -> String:

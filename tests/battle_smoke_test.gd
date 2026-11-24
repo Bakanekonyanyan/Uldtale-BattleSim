@@ -1269,6 +1269,7 @@ func _phase0_checks() -> void:
 	_enchant_checks()
 	_run_state_checks()
 	_bond_checks()
+	_personality_checks()
 	_town_life_checks()
 	_ledger_checks()
 	_journal_checks()
@@ -1555,6 +1556,52 @@ func _ledger_checks() -> void:
 	check(LedgerManager.champion(p).get("is_player", false) and p.currency.copper > gold0 and int(LedgerManager.profile_player(p).crowns) == 1,
 		"you can take the crown (gold, Guild points, renown)")
 	check(WorldClock.get_news(p, 20).any(func(n): return String(n.text).contains("You are crowned Champion of Year 2")), "your crowning makes the news")
+
+## Personalities: archetypes, drives, flaws, quirks, voices, arcs, your voice.
+func _personality_checks() -> void:
+	var p = make_player()
+	AdventurerManager.state(p)
+	var roster = AdventurerManager.active(p)
+	check(roster.all(func(n): return n.has("personality") and PersonalityManager.archetypes().has(String(n.personality.archetype))), "every adventurer has an archetype")
+	var seen := {}
+	for i in range(60):
+		seen[String(AdventurerManager.generate(p).personality.archetype)] = true
+	check(seen.size() >= 8, "archetypes vary (%d kinds in 60)" % seen.size())
+	var lazy = AdventurerManager.generate(p)
+	lazy.traits = ["lazy"]
+	lazy.personality.archetype = "lazy_genius"
+	lazy.personality.drive = "family_name"
+	lazy.personality.flaw = "greed"
+	check(AdventurerManager.trait_sum(lazy, "success") >= 0.1 and AdventurerManager.trait_sum(lazy, "job_chance") < 0.0, "archetype mods feed the simulation (Lazy Genius: fewer jobs, better odds)")
+	var ts = AdventurerManager._add(p, AdventurerManager.generate(p))
+	ts.personality.archetype = "tsundere"
+	ts.personality.stage = 0
+	ts.rapport = 50
+	check(PersonalityManager.mood(ts) == "friendly", "a Tsundere seems colder than they are (%s at rapport 50)" % PersonalityManager.mood(ts))
+	var l = PersonalityManager.line(ts, "greeting")
+	check(l != "" and not l.contains("{"), "voice lines fill in ({you} -> name): %s" % l)
+	AdventurerManager._set_rapport(ts, 25)
+	check(String(PersonalityManager.stage_data(ts).id) == "honest" and PersonalityManager.mood(ts) == "devoted", "rapport moves them along their arc (Tsundere: honest at 70+)")
+	ts.chats = 0
+	ts.rapport = 0
+	check(not PersonalityManager.drive_known(ts) and not PersonalityManager.flaw_known(ts), "drives and flaws start hidden")
+	ts.chats = 5
+	ts.rapport = 55
+	check(PersonalityManager.drive_known(ts) and PersonalityManager.flaw_known(ts) and PersonalityManager.describe(ts).contains("Drive:"), "they reveal with chats and rapport")
+	var ph = AdventurerManager.generate(p)
+	ph.personality.flaw = "phobia"
+	check(PersonalityManager.avoids(ph, String(ph.personality.place)) and not PersonalityManager.avoids(ph, "nowhere"), "a phobia makes them avoid one place")
+	var av = AdventurerManager._add(p, AdventurerManager.generate(p))
+	av.personality.drive = "avenge"
+	av.personality.drive_done = false
+	PersonalityManager.on_boss(p, av, String(av.personality.place))
+	check(av.personality.drive_done, "an avenger's drive is fulfilled by a boss at that place")
+	# your voice drifts with your choices
+	p.town_state.erase("voice")
+	check(PersonalityManager.player_archetype(p) == "", "your reputation starts neutral")
+	for i in range(6):
+		PersonalityManager.player_event(p, "help_wounded")
+	check(PersonalityManager.player_archetype(p) == "big_sibling" and PersonalityManager.player_reputation(p).contains("Big Sibling"), "helping the wounded makes the Guild see you as a Big Sibling")
 
 ## Commissions, rumours and nemesis rivals.
 func _town_life_checks() -> void:

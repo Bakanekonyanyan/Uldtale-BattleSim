@@ -267,7 +267,9 @@ traits, so the Ledger's top adventurers have recognisable builds.
 
 ---
 
-## F. Personality depth: archetypes, drives and arcs
+## F. Personality depth: archetypes, drives and arcs (built - first pass)
+
+Built: `PersonalityManager` + `data/personalities.json` (tab Personalities). 18 archetypes with voices (10 contexts) and arcs, 12 drives, 8 flaws, 20 quirks; mods feed the existing trait helpers; Tavern shows personality, mood, arc, quirks, drive/flaw reveals and a greeting; voice lines in chat, gifts, joining/refusing and companion battle barks; arcs advance with rapport (news); drives fulfilled by the sim (avenge, S-rank, Champion); phobias steer job choice; your reputation (archetype from your choices) in the Journal. Not yet: event-triggered arc stages and storylets, Yandere jealousy (needs relationships), drive-specific job logic beyond avenge.
 
 Traits alone (Reckless, Kind, Greedy...) make NPCs act differently; they don't
 make them feel like *characters*. Each adventurer gets five layers, so two

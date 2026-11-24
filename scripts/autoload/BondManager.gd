@@ -106,6 +106,7 @@ func react(player: CharacterData, event: String, times: int = 1) -> Array:
 	var lines: Array = []
 	if player == null or times <= 0:
 		return lines
+	PersonalityManager.player_event(player, event, times)   # your choices shape how you're seen
 	var table: Dictionary = cfg().get("opinions", {}).get(event, {})
 	if table.is_empty():
 		return lines

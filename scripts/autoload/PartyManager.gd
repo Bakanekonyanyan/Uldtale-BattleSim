@@ -72,7 +72,9 @@ func why_not_recruit(player: CharacterData, id: int) -> String:
 func recruit(player: CharacterData, id: int) -> Dictionary:
 	var why = why_not_recruit(player, id)
 	if why != "":
-		return {"ok": false, "reason": why}
+		var who = AdventurerManager.get_npc(player, id)
+		var no = PersonalityManager.say(who, "refuse") if not who.is_empty() and int(who.get("rapport", 0)) < 20 else ""
+		return {"ok": false, "reason": why + (("\n" + no) if no != "" else "")}
 	var n = AdventurerManager.get_npc(player, id)
 	n.status = "party"
 	party_ids(player).append(id)
@@ -80,7 +82,8 @@ func recruit(player: CharacterData, id: int) -> Dictionary:
 	var day = WorldClock.day(player)
 	AdventurerManager._history(n, day, "Joined %s's party." % player.name)
 	WorldClock.add_news(player, "%s joined %s's party." % [n.name, player.name], "adventurer")
-	return {"ok": true, "reason": "%s joins your party! They'll take %d%% of the gold." % [n.name, int(round(share(n) * 100))]}
+	var yes = PersonalityManager.say(n, "join")
+	return {"ok": true, "reason": "%s joins your party! They'll take %d%% of the gold.%s" % [n.name, int(round(share(n) * 100)), ("\n" + yes) if yes != "" else ""]}
 
 func dismiss(player: CharacterData, id: int, reason := "") -> Dictionary:
 	if not is_member(player, id):

@@ -47,7 +47,12 @@ func state(player: CharacterData) -> Dictionary:
 	if not player.town_state.has("adventurers"):
 		player.town_state["adventurers"] = {"list": [], "next_id": 1}
 		_generate_roster(player)
-	return player.town_state["adventurers"]
+	var st: Dictionary = player.town_state["adventurers"]
+	if not st.get("personalities", false):   # older saves: give everyone a personality
+		for n in st.list:
+			PersonalityManager.assign(n)
+		st["personalities"] = true
+	return st
 
 func all_adventurers(player: CharacterData) -> Array:
 	return state(player).list
@@ -109,6 +114,8 @@ func generate(player: CharacterData, level_range = [1, 3], rival := false) -> Di
 		"record": {"jobs": 0, "wins": 0, "fails": 0}, "history": [],
 		"drank_day": 0, "chat_day": 0, "gift_day": 0, "joined_day": 1
 	}
+	PersonalityManager.assign(npc)
+	PersonalityManager.apply_start(npc)
 	return npc
 
 func _rank_for_level(level: int) -> String:
@@ -158,17 +165,18 @@ func _pick(a: Array):
 	return a[RandomManager.randi() % a.size()] if not a.is_empty() else ""
 
 ## Product of a trait multiplier (default 1) or sum of an additive field.
+## (Traits plus the personality's archetype / drive / flaw mods.)
 func trait_mult(npc: Dictionary, key: String) -> float:
 	var m := 1.0
 	for t in npc.get("traits", []):
 		m *= float(trait_data(t).get(key, 1.0))
-	return m
+	return m * PersonalityManager.mods_mult(npc, key)
 
 func trait_sum(npc: Dictionary, key: String) -> float:
 	var s := 0.0
 	for t in npc.get("traits", []):
 		s += float(trait_data(t).get(key, 0.0))
-	return s
+	return s + PersonalityManager.mods_sum(npc, key)
 
 func has_trait_flag(npc: Dictionary, key: String) -> bool:
 	for t in npc.get("traits", []):
@@ -288,8 +296,13 @@ func _maybe_start(player: CharacterData, npc: Dictionary, day: int) -> void:
 		return
 	if RandomManager.randf() >= float(jobs.get("take_chance", 0.45)) + trait_sum(npc, "job_chance"):
 		return
-	var ids = LocationManager.get_ids()
+	var ids = LocationManager.get_ids().filter(func(l): return not PersonalityManager.avoids(npc, String(l)))
+	if ids.is_empty():
+		ids = LocationManager.get_ids()
 	var loc: String = ids[RandomManager.randi() % ids.size()]
+	var target = PersonalityManager.drive_place(npc)   # an avenger keeps going back
+	if target != "" and RandomManager.randf() < 0.4:
+		loc = target
 	var cap = int(RankManager.info(String(npc.rank)).get("floor_cap", 0))
 	var fl = max(1, int(round(int(npc.level) * 0.5)) + int(trait_sum(npc, "floor_bias")) + RandomManager.randi_range(-1, 0))
 	if cap > 0:
@@ -357,6 +370,7 @@ func _resolve_job(player: CharacterData, npc: Dictionary, day: int) -> void:
 				_promote(player, npc, day)
 			"boss":
 				_history(npc, day, "Slew the boss of %s floor %d." % [where, fl])
+				PersonalityManager.on_boss(player, npc, String(j.location))
 				if fl >= 5 or npc.get("rival", false) or not tags(npc).is_empty():
 					_news(player, "%s (%s) slew the boss of %s floor %d." % [npc.name, npc.rank, where, fl])
 			_:
@@ -380,6 +394,7 @@ func _promote(player: CharacterData, npc: Dictionary, day: int) -> void:
 		return
 	npc.rank = nxt
 	_history(npc, day, "Promoted to %s." % RankManager.display(nxt))
+	PersonalityManager.on_rank(player, npc, nxt)
 	var ahead = RankManager.rank_index(nxt) > RankManager.get_rank_index(player)
 	if npc.get("rival", false) or "Rival" in tags(npc):
 		if ahead and not npc.get("ahead_of_player", false):
@@ -444,6 +459,8 @@ func _gain(npc: Dictionary, base: float, key: String) -> int:
 
 func _set_rapport(npc: Dictionary, delta: int) -> void:
 	npc.rapport = clamp(int(npc.rapport) + delta, -100, 100)
+	if delta > 0:
+		PersonalityManager.check_arc(npc)
 
 ## Reveal one unknown trait. Returns its name, or "".
 func _reveal(npc: Dictionary) -> String:
@@ -466,6 +483,10 @@ func chat(player: CharacterData, id: int) -> Dictionary:
 	var g = _gain(npc, _rangef(_s("social").get("chat_rapport", [1, 3])), "chat")
 	_set_rapport(npc, g)
 	var r = "You trade stories with %s (+%d rapport)." % [npc.name, g]
+	var said = PersonalityManager.say(npc, "chat")
+	if said != "":
+		r += "\n" + said
+	PersonalityManager.player_event(player, "chat")
 	var t = _reveal(npc)
 	if t != "":
 		r += " You learn they are %s." % t
@@ -488,6 +509,7 @@ func drink(player: CharacterData, id: int) -> Dictionary:
 	var g = _gain(npc, _rangef(_s("social").get("drink_rapport", [3, 7])), "drink")
 	_set_rapport(npc, g)
 	var r = "You buy %s a drink (%s, +%d rapport)." % [npc.name, Currency.format_copper(cost), g]
+	PersonalityManager.player_event(player, "drink")
 	if RandomManager.randf() < 0.3:
 		var t = _reveal(npc)
 		if t != "":
@@ -510,6 +532,7 @@ func gift(player: CharacterData, id: int, inventory_key: String) -> Dictionary:
 	var likes := 1.0
 	for t in npc.traits:
 		likes *= float(trait_data(t).get("likes", {}).get(category, 1.0))
+	likes *= PersonalityManager.likes_mult(npc, category)
 	var g = min(float(soc.get("gift_rapport_max", 15)), max(1.0, item.value * float(soc.get("gift_rapport_per_copper", 0.08)))) * likes * trait_mult(npc, "gift")
 	g = max(1, int(round(g)))
 	if player.equipment.values().has(item):
@@ -519,4 +542,6 @@ func gift(player: CharacterData, id: int, inventory_key: String) -> Dictionary:
 	_set_rapport(npc, g)
 	_history(npc, day, "Received %s from %s." % [item.display_name, player.name])
 	var react = "They love it!" if likes > 1.2 else ("They seem pleased." if likes >= 1.0 else "They accept it politely.")
-	return {"ok": true, "reason": "You give %s to %s. %s (+%d rapport)" % [item.display_name, npc.name, react, g]}
+	PersonalityManager.player_event(player, "gift")
+	var said = PersonalityManager.say(npc, "gift_liked" if likes >= 1.0 else "gift_meh")
+	return {"ok": true, "reason": "You give %s to %s. %s (+%d rapport)%s" % [item.display_name, npc.name, react, g, ("\n" + said) if said != "" else ""]}

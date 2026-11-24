@@ -81,6 +81,7 @@ static func build_text(p: CharacterData) -> String:
 	var ch = LedgerManager.champion(p)
 	st.append("The Crowning in %d days%s" % [LedgerManager.days_to_crowning(p),
 		(" - reigning Champion: %s" % ("you" if ch.get("is_player", false) else String(ch.name))) if not ch.is_empty() else ""])
+	st.append(PersonalityManager.player_reputation(p))
 	var pr = RankManager.promotion_status(p)
 	match String(pr.get("trial_state", "")):
 		"top":
