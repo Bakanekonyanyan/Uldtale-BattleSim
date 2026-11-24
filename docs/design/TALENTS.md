@@ -428,3 +428,143 @@ Engine: `scripts/resources/TalentManager.gd`. Lore: `docs/lore/CLASS_PHILOSOPHIE
 
 ## Costs (update)
 Skills now charge every cost they list (MP **and** SP; plus HP for blood magic). When a skill listed both, its secondary cost (SP on spells, MP on physical skills) was halved, since it had never been charged before. Sim afterwards: every class 20-38%, within run-to-run noise of the snapshot above.
+
+## Forks: skill mutations, passive choices, ultimate mutations
+
+Every branch has three forks of two options (`choice` in talents.json). Learning one locks the other until a respec.
+Rule of thumb: one option deepens the branch's identity, the other bends it (single <-> area, offence <-> defence, self <-> party).
+NPC builds pick by temperament (`AutoBattler.fork_pick`): bold traits favour raw power, careful traits favour protection and the party.
+Mutation effects (`mutate`): target, power_mult, add_status / set_status, add_element, turn_delay, hp_cost, after_use {heal_pct, mp_pct, sp_pct, self_status}.
+
+### Paladin
+
+| Branch | Skill mutation (T3) | Passive (T4) | Ultimate mutation (T5) |
+|---|---|---|---|
+| Bulwark | **Concussive Rim**: Drive the rim into the jaw: the foe reels longer. / **Rebuke**: The bash becomes a guard: blows rebound off your shield. | **Unbreakable**: When the line is about to break, you hold. / **Retribution**: Every blow you absorb sharpens your reply. | **Dawn Bulwark**: The aegis spreads over everyone you protect. / **Unyielding Dawn**: Solara's light holds longer and closes your wounds as it rises. |
+| Crusader | **Focused Radiance**: Gather the arc into a single burning line. / **Searing Arc**: The light trails holy fire. | **Sanctified Blows**: Strike the reeling and the blinded with judgement. / **Zealot's Charge**: A two-handed blade swung in Solara's name. | **Verdict of Many**: Judgement falls on every foe at once. / **Final Judgement**: The guilty and the broken are judged hardest. |
+| Devotion | **Mass Benediction**: Open your hands to the whole line. / **Lingering Grace**: The touch keeps mending after you lift your hand. | **Radiant Aura**: Light lingers around you. / **Martyr's Vow**: Your strength flows outward, not inward. | **Dawnbreak**: The dawn breaks over every ally. / **Second Dawn**: The embrace becomes a ward that turns blows back. |
+
+### Samurai
+
+| Branch | Skill mutation (T3) | Passive (T4) | Ultimate mutation (T5) |
+|---|---|---|---|
+| Iai | **Sheathed Thunder**: Wait longer; cut once, perfectly. / **Crescent Draw**: The draw becomes a sweeping crescent. | **Killing Intent**: A wounded foe is a finished foe. / **Zanshin**: Remaining aware after the cut: you are never caught open. | **Single Petal**: A thousand cuts folded into one. / **Scattering Blossoms**: Foes stagger back from the storm of steel. |
+| Bushido | **Spirit Shout**: The shout steadies your own breath. / **Piercing Kiai**: Focus the shout on one foe until it breaks. | **Code of Honor**: The creed burns longer. / **Way of the Blade**: Discipline poured into every stroke. | **Founder's Lesson**: Amakiri's spirit lifts the whole party. / **Final Stance**: The founder's spirit lingers and steadies you. |
+| Kenjutsu | **Mirror Stance**: While you read them, they cannot read you. / **Exposed Opening**: The opening you find throws them off balance. | **Decisive Strike**: When the opening comes, end it. / **Patient Blade**: Breathe; the moment will come. | **Heaven and Earth**: The studied foe is split clean. / **Sky-Rending Arc**: The cut keeps going, through every foe. |
+
+### Berserker
+
+| Branch | Skill mutation (T3) | Passive (T4) | Ultimate mutation (T5) |
+|---|---|---|---|
+| Carnage | **Maelstrom**: Spin harder than your body can bear. / **Bloody Spin**: The spin opens wounds and you drink from them. | **Cleave Mastery**: Wider, deeper cleaves. / **Splitter**: Armour is just something to cut through. | **Red Mist**: The rage burns away your wounds. / **Howling Rage**: Your fury spreads to the war band. |
+| Bloodlust | **Gorge**: Feed on every blow. / **Frenzied Flurry**: Lighter, faster, again and again. | **Feast of Wolves**: Blood Feast tears deeper. / **Blood Scent**: You smell weakness. | **Wild Father's Hunger**: The jaws close on one foe and do not let go. / **Pack Feast**: The bites keep bleeding. |
+| War Wolf | **Terrifying Howl**: Foes flinch and fall back. / **Pack Howl**: The howl wakes the wolf in you. | **Last Stand**: Hardest to kill when nearly dead. / **Wolf's Blood**: Your wounds close as you fight. | **Unkillable**: Rise, and make them regret every blow. / **Rally the Pack**: Your roar lifts the whole war band. |
+
+### Monk
+
+| Branch | Skill mutation (T3) | Passive (T4) | Ultimate mutation (T5) |
+|---|---|---|---|
+| Tiger | **Ox Stomp**: Stamp the ground; every foe stumbles. / **Bone Breaker**: Kick through the bone. | **Rending Claws**: Tiger Claw tears deeper. / **Tiger Stance**: Low and coiled, ready to pounce. | **Sixth Animal**: The dragon: the staggered do not get up. / **Stampede**: Five animals, every foe. |
+| Crane | **Riverbend**: After the sweep, you are already elsewhere. / **Crane Beak**: Fold the wings into a single striking beak. | **Counterflow**: Punish the off-balance. / **Still Water**: Blows slide off a calm surface. | **Flock**: Lift your companions with you. / **Endless Sky**: Stay aloft longer, return sooner. |
+| Verdant Heart | **Root and Branch**: Draw strength from the earth as you strike. / **Rippling Palm**: Nimue's water runs through the strike. | **Balance**: Mantis Strike lands truer. / **Fenrisulfr's Breath**: The Wild Father's breath fills your lungs. | **Spring Tide**: The tide washes over every ally. / **Deep Current**: The tide refills spirit and stamina too. |
+
+### Myrmidon
+
+| Branch | Skill mutation (T3) | Passive (T4) | Ultimate mutation (T5) |
+|---|---|---|---|
+| Arms Master | **Disarm and Seize**: Take their weapon - and their momentum. / **Break Guard**: Knock the guard aside and mark the gap. | **Opportunist**: Never waste an opening. / **Drillmaster**: Iron Gauntlet drills, ten thousand times. | **Iron Tempest**: A heavier storm that knocks them off their feet. / **Duelist's Storm**: Every blade in the storm finds the same foe. |
+| Skirmisher | **Fang Volley**: Spread the thrusts across the line. / **Venom Fangs**: Coat both blades. | **Backstab Mastery**: From the shadows, deeper. / **Light Step**: Never where they swing. | **Thousand Paths**: The torrent flows through every foe. / **Final Blade**: The last of the hundred ends it. |
+| Mercenary | **Nail Down**: Pin them deeper, for longer. / **Poisoned Tip**: A professional's little extra. | **Contract Killer**: The mark never escapes. / **Blood Money**: Every wound you deal pays you back. | **Iron Company**: The guild's creed carries the whole company. / **Veteran's Resolve**: Old wounds close when the creed is spoken. |
+
+### Shinobi
+
+| Branch | Skill mutation (T3) | Passive (T4) | Ultimate mutation (T5) |
+|---|---|---|---|
+| Kage | **Veil**: Mark them and vanish. / **Death Mark**: Tsukuyomi's shadow blinds the marked. | **Assassin**: The marked die quickly. / **Ghost Step**: Your feet make no sound and leave no trace. | **New Moon**: The marked never see the blade. / **Night of Knives**: In the dark, every throat is in reach. |
+| Ninjutsu | **Phoenix Bloom**: One great flower instead of many. / **Water Release**: Change the seal: a drenching spray instead of fire. | **Conductor**: Water and lightning, perfected. / **Chakra Control**: Not a drop wasted. | **Raijin's Spear**: The storm god's strike falls on one foe. / **Thunder Cloud**: The thunder leaves them stunned and slow. |
+| Shinobi Tools | **Caltrops**: Scatter spikes as you throw. / **Blinding Powder**: Each star carries a puff of powder. | **Poisoned Tools**: Everything you throw carries something nasty. / **Smoke and Mirrors**: Always a little harder to hit than they think. | **Clone Assault**: The clones strike too. / **Body Replacement**: A log takes the blow; you were never there. |
+
+### Druid
+
+| Branch | Skill mutation (T3) | Passive (T4) | Ultimate mutation (T5) |
+|---|---|---|---|
+| Bear Form | **Den Mother**: The bear licks its wounds. / **Rabid Bear**: Fenrisulfr's wildness in Elandria's bear. | **Thick Fur**: Blows sink into fur. / **Ursine Fury**: Claws and weight behind every blow. | **Ancient Roar**: The elder bear's roar sends every foe back. / **Mauling Charge**: Crash into one foe and maul it. |
+| Alraune | **Pollen Cloud**: A cloud of healing pollen. / **Thorned Kiss**: The blossom grows thorns around its friend. | **Strangling Roots**: Poisoned prey wither faster. / **Bloom**: Everything you tend grows stronger. | **Eternal Garden**: The garden grows around everyone. / **Living Garden**: The garden lasts and feeds you in return. |
+| Wildcaller | **Bramble Field**: The brambles burst from the ground everywhere. / **Strangling Briar**: The briar wraps, poisons and holds. | **Arctic Mastery**: Arctic Blast bites harder. / **Thunder Kin**: Lightning answers you as kin. | **Eye of the Blizzard**: The wind drives every foe back. / **Avalanche**: Bring the mountain down on one foe. |
+
+### Cleric
+
+| Branch | Skill mutation (T3) | Passive (T4) | Ultimate mutation (T5) |
+|---|---|---|---|
+| Battle Priest | **Ringing Blow**: The hammer rings; the foe staggers back. / **Blessed Hammer**: Each blessed blow mends the one who strikes it. | **Smite Mastery**: Smite strikes harder. / **Mail of Faith**: Faith and chainmail, both well kept. | **Hammerfall**: The hammer comes down on every foe. / **Anvil of Dawn**: The staggered are struck as on an anvil. |
+| Restoration | **Choir**: The blessing is sung over everyone. / **Sanctified**: The blessed turn blows back. | **Blessed Light**: Healing Light shines brighter. / **Grace**: The Dawn refills you as you pray. | **Mass Miracle**: A miracle for every soul in the party. / **Lasting Miracle**: The miracle keeps working long after. |
+| Inquisitor | **Pyre**: Purge them all. / **Branding**: The flame brands the heretic for judgement. | **Heretic Bane**: The burning heretic falls. / **Zealotry**: Your prayers burn. | **Burning Dawn**: The first light sets them alight. / **Sun's Eye**: The whole dawn focused on one heretic. |
+
+### Kannagi
+
+| Branch | Skill mutation (T3) | Passive (T4) | Ultimate mutation (T5) |
+|---|---|---|---|
+| Barrier Arts | **Binding Circle**: Lay a circle of ofuda around every foe. / **Ward Exchange**: What the seal binds, it turns back on them. | **Sanctuary**: Sacred ground beneath you. / **Spirit Ward**: The Ancient Ones mend you quietly. | **Thousand Torii**: A gate over every ally. / **Eternal Gate**: The gate stands for a long time. |
+| Ancestral Spirits | **Spirit Siphon**: Draw deeper. / **Shared Breath**: What you draw from them, the ancestors give to you. | **Mending Mastery**: Ancestral Mending heals more. / **Ancestors' Watch**: The ancestors guide your healing hands. | **Great Communion**: The Ancient Ones flood everyone with life. / **Ancestral Shelter**: They also stand guard over the one you heal. |
+| Kotodama | **Spirit Volley**: Speak the word many times. / **Binding Word**: The lance carries a word that binds. | **Wrath Mastery**: Wrath of the Ancients grows. / **Word of Power**: Every word you speak carries weight. | **Unspoken Word**: The silence after the word pushes them back. / **Name of Nyxara**: Speak her true name - to one foe. |
+
+### Elementalist
+
+| Branch | Skill mutation (T3) | Passive (T4) | Ultimate mutation (T5) |
+|---|---|---|---|
+| Conflux | **Permafrost**: The ice does not melt. / **Frostburn**: Fire under the ice: thermal shock. | **Spear Mastery**: Blazing Ice Spear grows. / **Searing Focus**: Fire and ice, studied to their roots. | **Comet**: Pull the star down on one foe. / **Ice Meteor**: A frozen star: it burns and freezes. |
+| Stormcalling | **Riptide**: The wave drags them back. / **Charged Rain**: Lightning rides the water. | **Storm Mastery**: Volcanic Thunder Storm grows. / **Storm Caller**: Water and lightning heed you. | **Eye of the Tempest**: The storm narrows to one foe. / **Monsoon**: The tempest drenches as it strikes. |
+| The Fifth Element | **Prismatic Split**: Split the bolt into its colours. / **Unstable Core**: Pack more in. Much more. | **Eccentric Genius**: Brilliant, chaotic, effective. / **Aether Tap**: A thread to the fifth element. | **Singularity**: Collapse the nova onto one point. / **Afterglow**: The Aether flows back into you. |
+
+### Beastmaster
+
+| Branch | Skill mutation (T3) | Passive (T4) | Ultimate mutation (T5) |
+|---|---|---|---|
+| Predator | **Pack Hunt**: The pack marks every prey. / **Bleeding Mark**: The mark is a bite. | **Manticore Fury**: Manticore Sting, deeper. / **Alpha**: Lead the hunt from the front. | **Fenrisulfr's Chosen**: The whole pack on one prey. / **Endless Pack**: Wolves keep coming; foes keep falling back. |
+| Behemoth | **Stampede**: The Behemoth charges through the whole line. / **Gore**: Horns first. | **Hide Mastery**: Behemoth Hide grows thicker. / **Behemoth's Patience**: Unmoved, unhurried, unhurt. | **Fault Line**: The ground splits beneath them. / **Behemoth's Wrath**: One stamp, one foe, nothing left. |
+| Roc | **Talons**: The talons hold the prey for the sky to see. / **Sweeping Dive**: Skim the whole line. | **Sky Hunter**: Marked prey can't escape the sky. / **Updraft**: The Roc's wind at your back. | **Eye of the Roc**: Every feather finds one foe. / **Gale Force**: The wings blow them back. |
+
+### Necromancer
+
+| Branch | Skill mutation (T3) | Passive (T4) | Ultimate mutation (T5) |
+|---|---|---|---|
+| Curses | **Plague Hex**: The curse spreads. / **Rotting Hex**: The curse rots as it weakens. | **Blight Mastery**: Poison and shadow, perfected. / **Hexweaver**: Your curses find a way in. | **Hel's Shroud**: The decree also takes their sight. / **Final Decree**: The whole of Hel's will on one soul. |
+| Life Drinker | **Sanguine Pact**: Pay more; get more. / **Blood Return**: The blood comes back to you. | **Undying**: Death keeps letting you go. / **Death's Bargain**: Every wound you deal is a coin in your purse. | **Exsanguinate**: Drain them all. / **Perfect Vessel**: What you take keeps you whole. |
+| Gravecaller | **Bone Volley**: A hail of bone. / **Marrowfreeze**: The cold of the grave in every splinter. | **Reaper**: Finish the dying. / **Bone Armor**: Ribs of the dead around you. | **Grand Danse**: The dance drives them back. / **Death's Partner**: Death dances with one partner only. |
+
+## Attribute passives
+
+Heroes only; raw attribute = base + gear (not buffs). Data: `data/thresholds.json`.
+
+| Attribute | At | Passive |
+|---|---|---|
+| Agility | 40 | **Fleetfoot**: Light on your feet. |
+| Agility | 80 | **Wind Step**: Gone before the blow lands. |
+| Agility | 120 | **Blur**: They swing at where you were. |
+| Arcane | 40 | **Attuned**: Magic hums under your skin. |
+| Arcane | 80 | **Leyline**: You draw from the ground you stand on. |
+| Arcane | 120 | **Arcanist**: The elements bend further for you. |
+| Dexterity | 40 | **Steady Hand**: You hit what you aim at. |
+| Dexterity | 80 | **Precision**: You find the gaps. |
+| Dexterity | 120 | **Surgeon's Eye**: Weak spots are all you see. |
+| Endurance | 40 | **Second Breath**: You never quite run out. |
+| Endurance | 80 | **Tireless**: Hours of fighting feel like minutes. |
+| Endurance | 120 | **Unyielding**: The worse it gets, the harder you are. |
+| Faith | 40 | **Blessed**: Your prayers are heard. |
+| Faith | 80 | **Grace of the Faithful**: The gods refill your cup. |
+| Faith | 120 | **Sainthood**: Something holy walks with you. |
+| Fortitude | 40 | **Steadfast**: Hard to move. |
+| Fortitude | 80 | **Unshaken**: Blows that should stagger you don't. |
+| Fortitude | 120 | **Bulwark Soul**: Body and spirit both hold. |
+| Intelligence | 40 | **Quick Study**: Your spells find their way in. |
+| Intelligence | 80 | **Arcane Insight**: Theory made deadly. |
+| Intelligence | 120 | **Mind Over Matter**: Thought shapes the world. |
+| Mind | 40 | **Focus**: Your reserves refill as you think. |
+| Mind | 80 | **Clear Mind**: Spells slide off a mind at peace. |
+| Mind | 120 | **Unbreakable Will**: Magic cannot move you. |
+| Strength | 40 | **Heavy Blows**: Every swing lands with weight. |
+| Strength | 80 | **Crushing Force**: Armour buckles under your blows. |
+| Strength | 120 | **Earthshaking Might**: The staggered are flattened. |
+| Vitality | 40 | **Hardy**: You shrug off what would floor others. |
+| Vitality | 80 | **Iron Constitution**: Wounds close on their own. |
+| Vitality | 120 | **Titan's Heart**: A heart that will not stop. |

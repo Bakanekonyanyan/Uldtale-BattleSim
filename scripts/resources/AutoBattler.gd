@@ -14,7 +14,7 @@ static func build_hero(npc: Dictionary) -> CharacterData:
 		p.level_up()
 	while p.attribute_points > 0:
 		_spend_point(p)
-	_spend_talents(p, int(npc.get("branch", 0)))
+	_spend_talents(p, int(npc.get("branch", 0)), npc)
 	var floor_num = max(1, int(npc.get("gear_floor", 1)))
 	for attempt in range(6):   # a rolled weapon may not suit the class: reroll
 		var main = ClassEquipmentBias.get_biased_equipment_id(p.character_class, "main_hand")
@@ -30,6 +30,41 @@ static func build_hero(npc: Dictionary) -> CharacterData:
 	p.reset_for_new_battle()
 	return p
 
+const _BOLD_TRAITS := ["reckless", "ambitious", "cruel", "boastful", "greedy"]
+const _CAREFUL_TRAITS := ["kind", "loyal", "cautious", "devout", "cowardly", "honorable"]
+
+## Which option of fork `choice` an adventurer takes: the bold favour raw
+## power (focused or harder hits), the careful favour protection and the party.
+## Ties fall to a stable per-adventurer coin, so builds vary.
+static func fork_pick(nodes: Array, choice: String, npc: Dictionary) -> String:
+	var opts = nodes.filter(func(n): return String(n.get("choice", "")) == choice)
+	if opts.is_empty():
+		return ""
+	var tr: Array = npc.get("traits", [])
+	var lean = tr.filter(func(t): return t in _BOLD_TRAITS).size() - tr.filter(func(t): return t in _CAREFUL_TRAITS).size()
+	var best: Dictionary = opts[abs(hash("%s|%s" % [npc.get("id", npc.get("name", "")), choice])) % opts.size()]
+	if lean != 0:
+		var best_score = -INF
+		for o in opts:
+			var sc = _fork_score(o) * sign(lean)
+			if sc > best_score:
+				best_score = sc
+				best = o
+	return String(best.key)
+
+## + for offence, - for protection (party reach, healing, defence, sustain).
+static func _fork_score(n: Dictionary) -> float:
+	var s := 0.0
+	for e in n.get("effects", []):
+		match String(e.get("type", "")):
+			"damage", "lifesteal": s += 1.0
+			"defense", "heal_bonus", "regen": s -= 1.0
+			"mutate":
+				if String(e.get("target", "")) == "ALL_ALLIES": s -= 1.5
+				if float(e.get("power_mult", 1.0)) > 1.0: s += 1.0
+				if e.get("after_use", {}).has("heal_pct") or e.get("after_use", {}).has("self_status"): s -= 0.5
+	return s
+
 static func _equip(p: CharacterData, id: String, floor_num: int) -> void:
 	var item = ItemManager.create_equipment_for_floor(id, floor_num)
 	if item and item.can_equip(p):
@@ -42,13 +77,16 @@ static func _spend_point(p: CharacterData) -> void:
 		main = p.spell_power_type if p.spell_power_type in ["intelligence", "arcane", "faith"] else "intelligence"
 	p.spend_attribute_point(main if p.attribute_points % 3 != 0 else "vitality")
 
-static func _spend_talents(p: CharacterData, start_branch: int) -> void:
+static func _spend_talents(p: CharacterData, start_branch: int, npc: Dictionary = {}) -> void:
 	var branches = TalentManager.branches_for(p.character_class)
 	if branches.is_empty():
 		return
 	for i in range(branches.size()):
 		var b = branches[(start_branch + i) % branches.size()]
-		for nd in TalentManager.nodes_for(p.character_class, b.id):
+		var nodes = TalentManager.nodes_for(p.character_class, b.id)
+		for nd in nodes:
+			if nd.has("choice") and nd.key != fork_pick(nodes, String(nd.choice), npc):
+				continue   # their temperament picked the other option
 			while p.talents.can_learn(nd.key):
 				p.talents.learn(nd.key)
 			if p.talents.available_points() <= 0:

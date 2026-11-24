@@ -145,9 +145,21 @@ static func _value(kind: String, spec: String) -> String:
 
 # ------------------------------------------------------------------ generated blocks
 
+## Attribute passives (data/thresholds.json), grouped by attribute.
+static func _thresholds() -> String:
+	var t := ""
+	var cur := ""
+	for p in TalentManager.threshold_passives():
+		if String(p.attribute) != cur:
+			cur = String(p.attribute)
+			t += "\n[b]%s[/b]\n" % cur.capitalize()
+		t += "  %d  [color=#e5c34a]%s[/color] - %s\n" % [int(p.at), p.name, "; ".join(TalentManager.describe_effects(p, 1))]
+	return t
+
 static func _list(name: String) -> String:
 	match name:
 		"attributes": return _attributes()
+		"thresholds": return _thresholds()
 		"formulas": return _formulas()
 		"classes": return _classes()
 		"status_effects": return _status_effects()

@@ -51,19 +51,15 @@ func _build_ui() -> void:
 	branch_desc.autowrap_mode = TextServer.AUTOWRAP_WORD
 	ScreenChrome.place(branch_desc, Rect2(32, 112, 440, 40))
 	ui.add_child(branch_desc)
-	for i in 5:
+	# up to 12 nodes per branch, laid out in rows by _refresh (forks side by side)
+	for i in 12:
 		var nb := Button.new()
 		nb.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		nb.clip_text = true
-		ScreenChrome.place(nb, Rect2(32, 156 + i * 92, 440, 80))
+		nb.add_theme_font_size_override("font_size", 14)
 		nb.pressed.connect(func(): _select(i))
 		ui.add_child(nb)
 		node_buttons.append(nb)
-		if i < 4:
-			var link := ColorRect.new()
-			link.color = Color(0.29, 0.26, 0.31)
-			ScreenChrome.place(link, Rect2(250, 236 + i * 92, 4, 12))
-			ui.add_child(link)
 	
 	var panel := Panel.new()
 	ScreenChrome.place(panel, Rect2(496, 72, 672, 330))
@@ -95,8 +91,13 @@ func _build_ui() -> void:
 	ScreenChrome.place(respec_button, Rect2(32, 640, 260, 48))
 	respec_button.pressed.connect(_on_respec)
 	ui.add_child(respec_button)
+	var thr := Button.new()
+	thr.text = "Attribute passives"
+	ScreenChrome.place(thr, Rect2(968, 640, 200, 48))
+	thr.pressed.connect(_on_thresholds)
+	ui.add_child(thr)
 	status_label = Label.new()
-	ScreenChrome.place(status_label, Rect2(308, 648, 680, 32))
+	ScreenChrome.place(status_label, Rect2(308, 648, 650, 32))
 	ui.add_child(status_label)
 
 # === REFRESH ===
@@ -132,6 +133,26 @@ func _refresh() -> void:
 	var br = branches[clamp(branch_index, 0, branches.size() - 1)]
 	branch_desc.text = br.get("description", "")
 	var nodes = TalentManager.nodes_for(player_character.character_class, br.id)
+	# rows: each plain node on its own row, each fork's options side by side
+	var rows: Array = []
+	var fork_rows := {}
+	for n in nodes:
+		if n.has("choice"):
+			if not fork_rows.has(n.choice):
+				fork_rows[n.choice] = []
+				rows.append(fork_rows[n.choice])
+			fork_rows[n.choice].append(n)
+		else:
+			rows.append([n])
+	nodes = []
+	var rects: Array = []
+	var row_h = min(80, int(480 / max(1, rows.size())))
+	for ri in range(rows.size()):
+		var row: Array = rows[ri]
+		var w = int((440 - 8 * (row.size() - 1)) / row.size())
+		for ci in range(row.size()):
+			nodes.append(row[ci])
+			rects.append(Rect2(32 + ci * (w + 8), 156 + ri * row_h, w, row_h - 6))
 	node_keys = nodes.map(func(n): return n.key)
 	if selected_key == "" and not nodes.is_empty():
 		selected_key = nodes[0].key
@@ -141,12 +162,14 @@ func _refresh() -> void:
 		if i >= nodes.size():
 			continue
 		var n = nodes[i]
+		ScreenChrome.place(nb, rects[i])
 		var r = t.rank(n.key)
-		var kind = "Skill" if n.has("skill") else "Passive"
-		if n.has("skill") and int(n.tier) == 5:
-			kind = "Ultimate"
-		nb.text = "  Tier %d  -  %s\n  %s   %d / %d" % [n.tier, n.name, kind, r, int(n.max_rank)]
+		var kind = _kind(n)
+		var locked = t.locked_by(n.key) != ""
+		nb.text = "  T%d  %s\n  %s   %s" % [n.tier, n.name, kind, "locked" if locked else "%d / %d" % [r, int(n.max_rank)]]
 		var color = Color(ACCENT) if r > 0 else (Color("e6dccb") if t.can_learn(n.key) else Color(MUTED))
+		if locked:
+			color = Color(0.45, 0.4, 0.42)
 		nb.add_theme_color_override("font_color", color)
 		nb.add_theme_color_override("font_hover_color", color)
 		nb.set_pressed_no_signal(false)
@@ -156,6 +179,15 @@ func _refresh() -> void:
 	_update_loadout()
 	respec_button.text = "Respec (%s)" % Currency.format_copper(t.respec_cost())
 	respec_button.disabled = t.spent_points() == 0
+
+static func _kind(n: Dictionary) -> String:
+	if String(n.get("choice", "")) in ["mut2", "mut5"]:
+		return "Mutation (choose 1)"
+	if n.has("choice"):
+		return "Passive (choose 1)"
+	if n.has("skill"):
+		return "Ultimate" if int(n.tier) == 5 else "Skill"
+	return "Passive"
 
 func _update_details() -> void:
 	var t: TalentManager = player_character.talents
@@ -167,6 +199,9 @@ func _update_details() -> void:
 	var r = t.rank(selected_key)
 	var txt = "[b][font_size=20]%s[/font_size][/b]   [color=%s]Tier %d  -  rank %d / %d[/color]\n" % [n.name, MUTED, n.tier, r, int(n.max_rank)]
 	txt += "[i]%s[/i]\n\n" % n.get("description", "")
+	if n.has("choice"):
+		var mates = TalentManager.nodes_for(player_character.character_class, n.branch).filter(func(o): return o.get("choice", "") == n.choice and o.key != n.key).map(func(o): return o.name)
+		txt += "[color=%s]A fork: choose this or %s. The other locks until you respec.[/color]\n" % [GOOD, " / ".join(mates)]
 	if n.has("skill"):
 		var s = SkillManager.get_skill(n.skill)
 		if s:
@@ -243,6 +278,31 @@ func _on_respec() -> void:
 		status_label.text = "Respec costs %s - not enough money." % Currency.format_copper(t.respec_cost())
 	selected_key = ""
 	_refresh()
+
+## Attribute thresholds (data/thresholds.json): what's on, and how far to the next.
+func _on_thresholds() -> void:
+	var t: TalentManager = player_character.talents
+	t.refresh_thresholds()
+	var txt := "[color=%s]Raw attribute = base + gear (buffs don't count). Passives switch on at the threshold and stay on while you're above it.[/color]\n\n" % MUTED
+	var cur := ""
+	for p in TalentManager.threshold_passives():
+		if String(p.attribute) != cur:
+			cur = String(p.attribute)
+			txt += "[b]%s[/b]  [color=%s](%d)[/color]\n" % [cur.capitalize(), ACCENT, t.raw_attribute(cur)]
+		var on = String(p.id) in t.thresholds_on
+		txt += "  [color=%s]%s %d  %s[/color] - %s\n" % [GOOD if on else MUTED, "●" if on else "○", int(p.at), p.name,
+			"; ".join(TalentManager.describe_effects(p, 1))]
+	var d = AcceptDialog.new()
+	d.title = "Attribute passives"
+	var label = RichTextLabel.new()
+	label.bbcode_enabled = true
+	label.custom_minimum_size = Vector2(760, 520)
+	label.text = txt
+	d.add_child(label)
+	add_child(d)
+	d.popup_centered(Vector2i(800, 0))
+	d.confirmed.connect(d.queue_free)
+	d.canceled.connect(d.queue_free)
 
 func _on_back_pressed() -> void:
 	SaveManager.save_game(player_character)

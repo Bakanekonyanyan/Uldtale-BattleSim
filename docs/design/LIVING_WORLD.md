@@ -330,6 +330,15 @@ re-spec against you (rule B3).
   late). Attribute points: not refundable (thresholds stay meaningful).
 - Augments: free to swap in town.
 
+**Built (class depth, first pass):** every branch has three forks of two
+options - a tier-3 mutation of the branch's skill, a tier-4 passive choice and
+a tier-5 mutation of the ultimate (180 new nodes; catalogue in
+`docs/design/TALENTS.md`). Mutations are talent forks rather than loot
+(decided): always available, swapped by a respec. 30 attribute passives at
+40 / 80 / 120 (`data/thresholds.json`, heroes only). NPC builds pick forks by
+temperament. Healing skills now also apply their listed statuses (they never
+did - e.g. Dawn's Embrace's Regeneration). Not yet: weapon arts.
+
 **Later layers:** secondary discipline, mastery, saved loadouts.
 
 **NPC builds:** generated NPCs pick branches, choice nodes and augments by

@@ -40,6 +40,8 @@ func add_skills(skill_names: Array):
 ## its level bonuses every time those are recalculated.
 func _set_mods(instance: Skill) -> void:
 	instance.talent_mods = character.talents.skill_mods(instance.name) if character and character.talents else {}
+	instance.mutation = character.talents.mutation(instance.name) if character and character.talents else {}
+	instance.apply_mutation(SkillManager.get_skill(instance.name))
 
 func refresh_talent_mods() -> void:
 	for skill_name in skill_instances:

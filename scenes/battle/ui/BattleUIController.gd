@@ -583,6 +583,8 @@ func _create_skill_button(skill: Skill, cooldown: int, can_use: bool) -> HBoxCon
 		btn.text += "  [Link %d]" % rules.link_cost(skill)
 		if not rules.link_ok(player, skill):
 			btn.tooltip_text = "Ultimate: needs %d Link (you have %d). Hits, combos and Breaks fill it." % [rules.link_cost(skill), battle_context.link_gauge]
+	if not skill.mutation_names().is_empty():
+		btn.tooltip_text += ("\n" if btn.tooltip_text != "" else "") + "Mutated: %s" % ", ".join(skill.mutation_names())
 	if skill.turn_delay > 0:
 		btn.tooltip_text += ("\n" if btn.tooltip_text != "" else "") + "Knocks the target back %d place(s) in the turn order." % skill.turn_delay
 	elif skill.turn_delay < 0:

@@ -931,6 +931,79 @@ func _talent_checks() -> void:
 					print("  missing skill ", n.skill)
 	check(ok, "12 classes x 3 branches, every talent skill exists")
 
+## Class depth: forks (choose one of two), skill/ultimate mutations, attribute thresholds.
+func _class_depth_checks() -> void:
+	# every branch: a tier-3 skill mutation pair, a tier-4 passive pair, an ultimate mutation pair
+	var shape_ok := true
+	for cls in TalentManager.data().get("nodes", {}):
+		for b in TalentManager.branches_for(cls):
+			var nodes = TalentManager.nodes_for(cls, b.id)
+			for ch in ["mut2", "t4", "mut5"]:
+				if nodes.filter(func(n): return n.get("choice", "") == ch).size() != 2:
+					shape_ok = false
+					print("  bad fork ", cls, "/", b.id, " ", ch)
+	check(shape_ok, "every branch has three forks of two options (skill mutation, passive, ultimate mutation)")
+	# a fork locks the other option; respec frees it
+	var sam = CharacterFactory.create_character("S", "Hume", "Samurai", true)
+	sam.level = 20
+	sam.currency.copper = 100000
+	for k in ["iai/swift_draw", "iai/swift_draw", "iai/swift_draw", "iai/flash_draw"]:
+		sam.talents.learn(k)
+	var fd0: Skill = sam.get_skill_instance("Flash Draw")
+	var p0 = fd0.power
+	check(fd0.target == Skill.TargetType.ENEMY, "Flash Draw starts single-target")
+	check(sam.talents.learn("iai/crescent_draw"), "learn the Crescent Draw mutation")
+	var fd: Skill = sam.get_skill_instance("Flash Draw")
+	check(fd.target == Skill.TargetType.ALL_ENEMIES and fd.power < p0 and "Crescent Draw" in fd.mutation_names(),
+		"Crescent Draw: Flash Draw hits every foe at reduced power (%d -> %d)" % [p0, fd.power])
+	check(sam.talents.why_not("iai/sheathed_thunder").begins_with("Locked"), "the other mutation is locked: %s" % sam.talents.why_not("iai/sheathed_thunder"))
+	sam.talents.respec()
+	check(sam.talents.locked_by("iai/sheathed_thunder") == "" and not "Flash Draw" in sam.skills, "respec frees the fork")
+	for k in ["iai/swift_draw", "iai/swift_draw", "iai/swift_draw", "iai/flash_draw", "iai/sheathed_thunder"]:
+		sam.talents.learn(k)
+	fd = sam.get_skill_instance("Flash Draw")
+	check(fd.target == Skill.TargetType.ENEMY and fd.power > p0, "Sheathed Thunder: one heavier cut instead (%d -> %d)" % [p0, fd.power])
+	# after-use: Rebuke gives the Paladin Reflect after a Shield Bash
+	var pal = CharacterFactory.create_character("P", "Hume", "Paladin", true)
+	pal.level = 20
+	for k in ["bulwark/shield_discipline", "bulwark/shield_discipline", "bulwark/shield_discipline", "bulwark/shield_bash", "bulwark/rebuke"]:
+		pal.talents.learn(k)
+	var foe = make_player()
+	foe.is_player = false
+	pal.get_skill_instance("Shield Bash").use(pal, [foe])
+	check(pal.status_manager.has_effect(Skill.StatusEffect.REFLECT), "Rebuke: Shield Bash leaves the Paladin reflecting blows")
+	# requires: a mutation needs its skill
+	var pal2 = CharacterFactory.create_character("P", "Hume", "Paladin", true)
+	pal2.level = 20
+	check(pal2.talents.why_not("bulwark/rebuke") != "", "mutations need their skill and the branch's points")
+	# heals now apply their listed statuses (Dawn's Embrace: Regeneration)
+	var ally = make_player()
+	ally.current_hp = 1
+	SkillManager.get_skill("Dawn's Embrace").duplicate().use(pal, [ally])
+	check(ally.status_manager.has_effect(Skill.StatusEffect.REGENERATION), "healing skills apply their statuses (Dawn's Embrace regenerates)")
+	# NPC builds follow temperament
+	var nodes = TalentManager.nodes_for("Paladin", "bulwark")
+	var bold = AutoBattler.fork_pick(nodes, "mut5", {"id": 1, "traits": ["reckless", "ambitious"]})
+	var careful = AutoBattler.fork_pick(nodes, "mut5", {"id": 1, "traits": ["kind", "loyal"]})
+	check(bold.ends_with("unyielding_dawn") and careful.ends_with("dawn_bulwark"), "the bold keep the Aegis; the careful spread it to the party (%s / %s)" % [bold, careful])
+	var hero = AutoBattler.build_hero({"name": "N", "race": "Hume", "cls": "Paladin", "level": 40, "branch": 0, "gear_floor": 5, "traits": ["kind"]})
+	var forks_taken = hero.talents.ranks.keys().filter(func(k): return hero.talents.node(k).has("choice"))
+	check(forks_taken.size() >= 3 and forks_taken.all(func(k): return hero.talents.locked_by(k) == ""), "NPC builds take one option per fork (%d forks)" % forks_taken.size())
+	# attribute thresholds
+	var agi = CharacterFactory.create_character("A", "Hume", "Shinobi", true)
+	var d0 = agi.dodge
+	agi.agility = 40
+	agi.calculate_secondary_attributes()
+	check("fleetfoot" in agi.talents.thresholds_on and agi.dodge > d0, "Agility 40: Fleetfoot switches on (dodge %.3f -> %.3f)" % [d0, agi.dodge])
+	agi.agility = 10
+	agi.calculate_secondary_attributes()
+	check(not "fleetfoot" in agi.talents.thresholds_on, "and off again below the threshold")
+	var enemy = CharacterFactory.create_character("E", "Hume", "Shinobi", true)
+	enemy.is_player = false
+	enemy.agility = 200
+	enemy.calculate_secondary_attributes()
+	check(enemy.talents == null or enemy.talents.thresholds_on.is_empty(), "enemies don't get attribute passives")
+
 ## Classes follow their philosophies (docs/lore/CLASS_PHILOSOPHIES.md)
 func _philosophy_checks() -> void:
 	var monk = CharacterFactory.create_character("M", "Hume", "Monk", true)
@@ -1103,6 +1176,7 @@ func _phase0_checks() -> void:
 	_combo_checks()
 	_element_and_class_checks()
 	_philosophy_checks()
+	_class_depth_checks()
 	_talent_checks()
 	_defeat_checks()
 	_archetype_checks()

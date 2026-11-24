@@ -18,6 +18,13 @@
 #   {"type": "combo", "combo": "open_wound", "bonus": 0.1} combo multiplier +0.1
 #   {"type": "status_chance", "chance": 0.05}             damage-skill status riders +5%
 #   {"type": "regen", "hp": 0.01, "mp": 0.02, "sp": 0.02} per turn, fraction of max
+#   {"type": "mutate", "skill": "Shield Bash", ...}       change how a skill works:
+#       target ("ALL_ENEMIES", "ALL_ALLIES", "ENEMY", "ALLY", "SELF"), power_mult,
+#       add_status [..], set_status [..], add_element, turn_delay (delta), hp_cost,
+#       after_use {heal_pct, mp_pct, sp_pct, self_status, self_turns}
+# Forks: nodes with the same "choice" id in a branch are mutually exclusive
+#   (learning one locks the others until a respec). "requires": a node id in the
+#   same branch that must be learned first (mutations need their skill).
 # Conditions (all optional, all must hold):
 #   with (weapon id/type in main or off hand), element / elements (any), damage_type,
 #   ability (PHYSICAL/MAGICAL), skill, category (BASIC/ADVANCED/ULTIMATE...),
@@ -39,6 +46,8 @@ var _fx: Dictionary = {}            # aggregated effects, rebuilt on change
 ## Enemies spend points in a hero class's tree (EnemyArchetypes): tree_class
 ## names that class, points_override replaces the per-level point count.
 var tree_class: String = ""
+## Attribute-threshold passives currently on (data/thresholds.json), by id.
+var thresholds_on: Array = []
 var points_override: int = -1
 
 func _init(owner_character: CharacterData):
@@ -78,7 +87,13 @@ static func nodes_for(cls: String, branch: String) -> Array:
 		e["key"] = "%s/%s" % [branch, id]
 		e["branch"] = branch
 		out.append(e)
-	out.sort_custom(func(a, b): return int(a.get("tier", 1)) < int(b.get("tier", 1)))
+	# by tier; on a tier, plain nodes before forks (a mutation needs its skill first)
+	out.sort_custom(func(a, b):
+		var ta = int(a.get("tier", 1)) * 2 + (1 if a.has("choice") and not a.has("fork_alt") and String(a.get("choice")) != "t4" else 0)
+		var tb = int(b.get("tier", 1)) * 2 + (1 if b.has("choice") and not b.has("fork_alt") and String(b.get("choice")) != "t4" else 0)
+		if ta != tb:
+			return ta < tb
+		return String(a.id) < String(b.id))
 	return out
 
 func tree() -> String:
@@ -137,11 +152,27 @@ func why_not(key: String) -> String:
 		return "Already at max rank."
 	if available_points() <= 0:
 		return "No talent points left (1 per level)."
+	var lock = locked_by(key)
+	if lock != "":
+		return "Locked: you chose %s (respec to change)." % lock
+	if n.has("requires") and rank("%s/%s" % [n.branch, n.requires]) <= 0:
+		var req = node("%s/%s" % [n.branch, n.requires])
+		return "Needs %s first." % req.get("name", n.requires)
 	var need = tier_requirement(int(n.get("tier", 1)))
 	var have = spent_in_branch(n.branch)
 	# points spent in this node itself don't count toward its own tier
 	if have - rank(key) < need:
 		return "Needs %d points in this branch (has %d)." % [need, have - rank(key)]
+	return ""
+
+## The name of the node in the same fork that was chosen instead ("" if none).
+func locked_by(key: String) -> String:
+	var n = node(key)
+	if n.is_empty() or not n.has("choice"):
+		return ""
+	for o in nodes_for(tree(), n.branch):
+		if o.key != key and String(o.get("choice", "")) == String(n.choice) and rank(o.key) > 0:
+			return String(o.name)
 	return ""
 
 func can_learn(key: String) -> bool:
@@ -214,8 +245,14 @@ func load_save_data(saved: Dictionary) -> void:
 
 func _rebuild() -> void:
 	_fx = {"stats": {}, "damage": [], "defense": [], "heal_bonus": 0.0, "lifesteal": [],
-		"skill": {}, "combo": {}, "status_chance": 0.0, "regen": {"hp": 0.0, "mp": 0.0, "sp": 0.0}}
-	if character == null or tree() == "":
+		"skill": {}, "combo": {}, "status_chance": 0.0, "regen": {"hp": 0.0, "mp": 0.0, "sp": 0.0}, "mutate": {}}
+	if character == null:
+		return
+	for p in threshold_passives():
+		if String(p.id) in thresholds_on:
+			for e in p.get("effects", []):
+				_add_effect(e, 1)
+	if tree() == "":
 		return
 	for key in ranks:
 		var r = int(ranks[key])
@@ -255,6 +292,59 @@ func _add_effect(e: Dictionary, r: int) -> void:
 		"regen":
 			for p in ["hp", "mp", "sp"]:
 				_fx.regen[p] += float(e.get(p, 0.0)) * r
+		"mutate":
+			var sname = String(e.get("skill", ""))
+			var m: Dictionary = _fx.mutate.get(sname, {"power_mult": 1.0, "add_status": [], "turn_delay": 0, "after_use": {}, "names": []})
+			if e.has("target"): m["target"] = String(e.target)
+			if e.has("set_status"): m["set_status"] = e.set_status
+			if e.has("add_element"): m["add_element"] = String(e.add_element)
+			if e.has("hp_cost"): m["hp_cost"] = float(e.hp_cost)
+			m.power_mult = float(m.power_mult) * float(e.get("power_mult", 1.0))
+			m.add_status = m.add_status + e.get("add_status", [])
+			m.turn_delay = int(m.turn_delay) + int(e.get("turn_delay", 0))
+			for k in e.get("after_use", {}):
+				m.after_use[k] = e.after_use[k]
+			if e.has("name"): m.names.append(String(e.name))
+			_fx.mutate[sname] = m
+
+# ------------------------------------------------------------------ attribute thresholds
+
+## [{id, attribute, at, name, description, effects}] sorted by attribute, then threshold.
+static func threshold_passives() -> Array:
+	var d = DataRegistry.get_data("thresholds")
+	var src: Dictionary = d.get("passives", {}) if d is Dictionary else {}
+	var out: Array = []
+	for id in src:
+		var e = src[id].duplicate()
+		e["id"] = id
+		out.append(e)
+	out.sort_custom(func(a, b): return [String(a.attribute), int(a.at)] < [String(b.attribute), int(b.at)])
+	return out
+
+## Raw attribute for thresholds: base + gear (not talents or buffs, so passives
+## can't switch each other on).
+func raw_attribute(attr: String) -> int:
+	if character == null:
+		return 0
+	var v = int(character.get(attr))
+	v += int(character.equipment_bonuses.get(attr, 0))
+	v += int(round(float(character.get_equipment_flat_bonuses().get(attr, 0.0))))
+	return v
+
+## Re-check thresholds (called before stats are recalculated). Heroes only.
+func refresh_thresholds() -> void:
+	if character == null or not character.is_player:
+		if not thresholds_on.is_empty():
+			thresholds_on = []
+			_rebuild()
+		return
+	var on: Array = []
+	for p in threshold_passives():
+		if raw_attribute(String(p.attribute)) >= int(p.at):
+			on.append(String(p.id))
+	if on != thresholds_on:
+		thresholds_on = on
+		_rebuild()
 
 ## Push changes to stats and skill instances.
 func _apply() -> void:
@@ -266,6 +356,10 @@ func stat_bonuses() -> Dictionary:
 
 func skill_mods(skill_name: String) -> Dictionary:
 	return _fx.get("skill", {}).get(skill_name, {})
+
+## How talents reshape `skill_name` ({} if not at all).
+func mutation(skill_name: String) -> Dictionary:
+	return _fx.get("mutate", {}).get(skill_name, {})
 
 func combo_bonus(combo_id: String) -> float:
 	return float(_fx.get("combo", {}).get(combo_id, 0.0))
@@ -405,7 +499,31 @@ static func describe_effects(n: Dictionary, r: int) -> Array:
 					if float(e.get(p, 0)) > 0:
 						bits.append("%d%% %s" % [int(round(float(e[p]) * r * 100)), p.to_upper()])
 				out.append("regenerate %s each turn" % ", ".join(bits))
+			"mutate":
+				out.append_array(describe_mutation(e))
 	return out
+
+const _TARGET_TEXT := {"ALL_ENEMIES": "hits every foe", "ALL_ALLIES": "reaches every ally", "ENEMY": "focuses on one foe", "ALLY": "targets one ally", "SELF": "affects only you"}
+
+## Plain lines for a mutate effect ("Shield Bash: hits every foe at 70% power").
+static func describe_mutation(e: Dictionary) -> Array:
+	var bits: Array = []
+	if e.has("target"): bits.append(_TARGET_TEXT.get(String(e.target), String(e.target)))
+	var pm = float(e.get("power_mult", 1.0))
+	if abs(pm - 1.0) > 0.001: bits.append("%d%% power" % int(round(pm * 100)))
+	if e.has("set_status"): bits.append("inflicts %s instead" % "/".join(e.set_status.map(func(x): return String(x).capitalize())))
+	if not e.get("add_status", []).is_empty(): bits.append("also %s" % "/".join(e.add_status.map(func(x): return String(x).capitalize())))
+	if e.has("add_element"): bits.append("becomes %s" % String(e.add_element).capitalize())
+	var td = int(e.get("turn_delay", 0))
+	if td > 0: bits.append("knocks back %d more" % td)
+	elif td < 0: bits.append("knocks back %d less" % -td)
+	if e.has("hp_cost"): bits.append("costs %d%% HP" % int(round(float(e.hp_cost) * 100)))
+	var au: Dictionary = e.get("after_use", {})
+	if au.has("heal_pct"): bits.append("heals you %d%%" % int(round(float(au.heal_pct) * 100)))
+	if au.has("mp_pct"): bits.append("restores %d%% MP" % int(round(float(au.mp_pct) * 100)))
+	if au.has("sp_pct"): bits.append("restores %d%% SP" % int(round(float(au.sp_pct) * 100)))
+	if au.has("self_status"): bits.append("gives you %s (%d turns)" % [String(au.self_status).capitalize(), int(au.get("self_turns", 2))])
+	return ["%s: %s" % [e.get("skill", "?"), ", ".join(bits)]] if not bits.is_empty() else []
 
 static func _describe_conditions(e: Dictionary) -> String:
 	var c: Array = []

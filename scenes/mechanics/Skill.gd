@@ -83,6 +83,8 @@ enum ElementType {
 @export var hp_cost: float = 0.0
 ## Talent upgrades {power, cooldown, duration, mp_cost, sp_cost} (set by SkillProgressionManager)
 var talent_mods: Dictionary = {}
+## Talent mutation (TalentManager "mutate"): shape changes, power_mult, after_use.
+var mutation: Dictionary = {}
 
 @export var power: int
 @export var duration: int
@@ -281,6 +283,62 @@ func calculate_level_bonuses():
 			mp_cost = max(1, mp_cost + int(talent_mods.get("mp_cost", 0)))
 		if sp_cost > 0:
 			sp_cost = max(1, sp_cost + int(talent_mods.get("sp_cost", 0)))
+	if not mutation.is_empty() and abs(float(mutation.get("power_mult", 1.0)) - 1.0) > 0.001:
+		power = max(1, int(round(power * float(mutation.power_mult))))
+
+## Reset the shape to `base` (the skill as defined in data) and apply this
+## instance's talent mutation on top. Power changes apply in calculate_level_bonuses.
+func apply_mutation(base: Skill) -> void:
+	if base:
+		target = base.target
+		status_effects = base.status_effects.duplicate()
+		elements = base.elements.duplicate()
+		turn_delay = base.turn_delay
+		hp_cost = base.hp_cost
+	if mutation.is_empty():
+		return
+	if mutation.has("target") and TargetType.has(String(mutation.target)):
+		target = TargetType[String(mutation.target)]
+	if mutation.has("set_status"):
+		status_effects = []
+		for s in mutation.set_status:
+			if StatusEffect.has(String(s)):
+				status_effects.append(StatusEffect[String(s)])
+	for s in mutation.get("add_status", []):
+		if StatusEffect.has(String(s)) and not StatusEffect[String(s)] in status_effects:
+			status_effects.erase(StatusEffect.NONE)
+			status_effects.append(StatusEffect[String(s)])
+	if mutation.has("add_element") and ElementType.has(String(mutation.add_element)):
+		var el = ElementType[String(mutation.add_element)]
+		if not el in elements:
+			elements.append(el)
+	turn_delay = turn_delay + int(mutation.get("turn_delay", 0))
+	if mutation.has("hp_cost"):
+		hp_cost = float(mutation.hp_cost)
+
+## Mutation names on this skill (for tooltips), e.g. ["Concussive Rim"].
+func mutation_names() -> Array:
+	return mutation.get("names", [])
+
+## After-use effects of a mutation: heal / restore / a status on the user.
+func _after_use(user: CharacterData) -> String:
+	var au: Dictionary = mutation.get("after_use", {})
+	if au.is_empty() or user == null or not user.is_alive():
+		return ""
+	var bits: Array = []
+	if au.has("heal_pct"):
+		var h = user.heal(int(round(user.max_hp * float(au.heal_pct))))
+		if h > 0: bits.append("%d HP" % h)
+	if au.has("mp_pct"):
+		var m = user.restore_mp(int(round(user.max_mp * float(au.mp_pct))))
+		if m > 0: bits.append("%d MP" % m)
+	if au.has("sp_pct"):
+		var s = user.restore_sp(int(round(user.max_sp * float(au.sp_pct))))
+		if s > 0: bits.append("%d SP" % s)
+	if au.has("self_status") and StatusEffect.has(String(au.self_status)):
+		user.apply_status_effect(StatusEffect[String(au.self_status)], int(au.get("self_turns", 2)))
+		bits.append(String(au.self_status).capitalize())
+	return (" %s gains %s." % [user.name, ", ".join(bits)]) if not bits.is_empty() else ""
 
 func on_skill_used():
 	uses += 1
@@ -289,6 +347,13 @@ func on_skill_used():
 	return ""
 
 func use(user: CharacterData, targets: Array) -> Dictionary:
+	var r = _use(user, targets)
+	var extra = _after_use(user)
+	if extra != "" and r is Dictionary:
+		r["message"] = String(r.get("message", "")) + extra
+	return r
+
+func _use(user: CharacterData, targets: Array) -> Dictionary:
 	"""
 	Returns a dictionary with:
 	- message: String (display text)
@@ -487,6 +552,10 @@ func heal(user: CharacterData, targets: Array) -> Dictionary:
 	for t in targets:
 		var heal_amount = BattleFormulas.heal_amount(user, power)
 		total_heal += t.heal(heal_amount)  # count actual HP restored, not overheal
+		# listed statuses (Regeneration, Reflect...) land on the healed
+		for effect in status_effects:
+			if effect != StatusEffect.NONE and t.is_alive():
+				t.apply_status_effect(effect, max(1, duration))
 	
 	return {
 		"message": "%s healed %d HP to %d target(s)" % [name, total_heal, targets.size()],

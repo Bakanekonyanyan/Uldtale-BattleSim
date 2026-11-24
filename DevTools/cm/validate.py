@@ -276,7 +276,9 @@ class Validator:
                 add("warning", "Combos", ref, "payoff", f"same set-up and payoff as '{seen[key]}' - only the stronger one ever applies")
             seen.setdefault(key, ref.key)
 
-    EFFECT_TYPES = {"stats", "damage", "defense", "heal_bonus", "lifesteal", "skill", "combo", "status_chance", "regen"}
+    EFFECT_TYPES = {"stats", "damage", "defense", "heal_bonus", "lifesteal", "skill", "combo", "status_chance", "regen", "mutate"}
+    TARGETS = {"SELF", "ALLY", "ENEMY", "ALL_ALLIES", "ALL_ENEMIES"}
+    MUTATE_KEYS = {"type", "skill", "name", "target", "power_mult", "add_status", "set_status", "add_element", "turn_delay", "hp_cost", "after_use"}
     CONDITIONS = {"with", "element", "elements", "damage_type", "ability", "skill", "category", "target_status",
                   "user_hp_below", "target_hp_below", "weak_spot"}
 
@@ -301,14 +303,29 @@ class Validator:
                 add("error", "Talents", ref, "", f"branch '{branch}' is not listed under Branches for {cls}")
             if n.get("skill") and n["skill"] not in skills:
                 add("error", "Talents", ref, "skill", f"skill '{n['skill']}' does not exist")
+            if n.get("requires") and n["requires"] not in ((p.data["Talents"].get("nodes") or {}).get(cls, {}).get(branch, {})):
+                add("error", "Talents", ref, "requires", f"requires '{n['requires']}', which is not a node in this branch")
+            if n.get("choice"):
+                mates = [k for k, v in ((p.data["Talents"].get("nodes") or {}).get(cls, {}).get(branch, {})).items() if v.get("choice") == n["choice"]]
+                if len(mates) < 2:
+                    add("warning", "Talents", ref, "choice", f"fork '{n['choice']}' has only one option")
             for i, e in enumerate(n.get("effects", []) or []):
                 t = e.get("type") if isinstance(e, dict) else None
                 where = f"effects[{i + 1}]"
                 if t not in self.EFFECT_TYPES:
                     add("error", "Talents", ref, where, f"unknown effect type '{t}'")
                     continue
-                if t == "skill" and e.get("skill") not in skills:
+                if t in ("skill", "mutate") and e.get("skill") not in skills:
                     add("error", "Talents", ref, where, f"upgrades unknown skill '{e.get('skill')}'")
+                if t == "mutate":
+                    extra = set(e) - self.MUTATE_KEYS
+                    if extra:
+                        add("warning", "Talents", ref, where, f"unknown mutate field(s): {', '.join(sorted(extra))}")
+                    if e.get("target") and e["target"] not in self.TARGETS:
+                        add("error", "Talents", ref, where, f"unknown target '{e['target']}'")
+                    for st in (e.get("add_status") or []) + (e.get("set_status") or []) + ([e["after_use"]["self_status"]] if (e.get("after_use") or {}).get("self_status") else []):
+                        if st not in statuses:
+                            add("error", "Talents", ref, where, f"unknown status '{st}'")
                 if t == "combo" and e.get("combo") not in combos:
                     add("error", "Talents", ref, where, f"unknown combo '{e.get('combo')}'")
                 if e.get("target_status") and e["target_status"] not in statuses:

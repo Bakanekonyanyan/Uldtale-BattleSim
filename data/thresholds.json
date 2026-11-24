@@ -1,0 +1,431 @@
+{
+	"_doc": "Attribute thresholds (TalentManager.gd): passives that switch on while a hero's raw attribute (base + gear, not buffs) is at or above 'at'. Effects use the talent effect types. Heroes only.",
+	"passives": {
+		"hardy": {
+			"attribute": "vitality",
+			"at": 40,
+			"name": "Hardy",
+			"description": "You shrug off what would floor others.",
+			"effects": [
+				{
+					"type": "stats",
+					"stats": {
+						"max_hp_pct": 0.05
+					}
+				}
+			]
+		},
+		"iron_constitution": {
+			"attribute": "vitality",
+			"at": 80,
+			"name": "Iron Constitution",
+			"description": "Wounds close on their own.",
+			"effects": [
+				{
+					"type": "regen",
+					"hp": 0.01
+				}
+			]
+		},
+		"titans_heart": {
+			"attribute": "vitality",
+			"at": 120,
+			"name": "Titan's Heart",
+			"description": "A heart that will not stop.",
+			"effects": [
+				{
+					"type": "stats",
+					"stats": {
+						"max_hp_pct": 0.1
+					}
+				},
+				{
+					"type": "defense",
+					"reduce": 0.03
+				}
+			]
+		},
+		"heavy_blows": {
+			"attribute": "strength",
+			"at": 40,
+			"name": "Heavy Blows",
+			"description": "Every swing lands with weight.",
+			"effects": [
+				{
+					"type": "damage",
+					"mult": 0.04,
+					"ability": "PHYSICAL"
+				}
+			]
+		},
+		"crushing_force": {
+			"attribute": "strength",
+			"at": 80,
+			"name": "Crushing Force",
+			"description": "Armour buckles under your blows.",
+			"effects": [
+				{
+					"type": "stats",
+					"stats": {
+						"armor_penetration": 0.05
+					}
+				}
+			]
+		},
+		"earthshaking_might": {
+			"attribute": "strength",
+			"at": 120,
+			"name": "Earthshaking Might",
+			"description": "The staggered are flattened.",
+			"effects": [
+				{
+					"type": "damage",
+					"mult": 0.08,
+					"target_status": "STAGGERED"
+				}
+			]
+		},
+		"steady_hand": {
+			"attribute": "dexterity",
+			"at": 40,
+			"name": "Steady Hand",
+			"description": "You hit what you aim at.",
+			"effects": [
+				{
+					"type": "stats",
+					"stats": {
+						"accuracy": 0.04
+					}
+				}
+			]
+		},
+		"precision": {
+			"attribute": "dexterity",
+			"at": 80,
+			"name": "Precision",
+			"description": "You find the gaps.",
+			"effects": [
+				{
+					"type": "stats",
+					"stats": {
+						"critical_hit_rate": 0.04
+					}
+				}
+			]
+		},
+		"surgeons_eye": {
+			"attribute": "dexterity",
+			"at": 120,
+			"name": "Surgeon's Eye",
+			"description": "Weak spots are all you see.",
+			"effects": [
+				{
+					"type": "damage",
+					"mult": 0.08,
+					"weak_spot": true
+				}
+			]
+		},
+		"quick_study": {
+			"attribute": "intelligence",
+			"at": 40,
+			"name": "Quick Study",
+			"description": "Your spells find their way in.",
+			"effects": [
+				{
+					"type": "status_chance",
+					"chance": 0.04
+				}
+			]
+		},
+		"arcane_insight": {
+			"attribute": "intelligence",
+			"at": 80,
+			"name": "Arcane Insight",
+			"description": "Theory made deadly.",
+			"effects": [
+				{
+					"type": "damage",
+					"mult": 0.05,
+					"ability": "MAGICAL"
+				}
+			]
+		},
+		"mind_over_matter": {
+			"attribute": "intelligence",
+			"at": 120,
+			"name": "Mind Over Matter",
+			"description": "Thought shapes the world.",
+			"effects": [
+				{
+					"type": "stats",
+					"stats": {
+						"spell_power": 10
+					}
+				}
+			]
+		},
+		"blessed": {
+			"attribute": "faith",
+			"at": 40,
+			"name": "Blessed",
+			"description": "Your prayers are heard.",
+			"effects": [
+				{
+					"type": "heal_bonus",
+					"mult": 0.05
+				}
+			]
+		},
+		"grace_of_the_faithful": {
+			"attribute": "faith",
+			"at": 80,
+			"name": "Grace of the Faithful",
+			"description": "The gods refill your cup.",
+			"effects": [
+				{
+					"type": "heal_bonus",
+					"mult": 0.05
+				},
+				{
+					"type": "regen",
+					"mp": 0.01
+				}
+			]
+		},
+		"sainthood": {
+			"attribute": "faith",
+			"at": 120,
+			"name": "Sainthood",
+			"description": "Something holy walks with you.",
+			"effects": [
+				{
+					"type": "heal_bonus",
+					"mult": 0.07
+				},
+				{
+					"type": "defense",
+					"reduce": 0.05
+				}
+			]
+		},
+		"focus": {
+			"attribute": "mind",
+			"at": 40,
+			"name": "Focus",
+			"description": "Your reserves refill as you think.",
+			"effects": [
+				{
+					"type": "regen",
+					"mp": 0.015
+				}
+			]
+		},
+		"clear_mind": {
+			"attribute": "mind",
+			"at": 80,
+			"name": "Clear Mind",
+			"description": "Spells slide off a mind at peace.",
+			"effects": [
+				{
+					"type": "stats",
+					"stats": {
+						"spell_ward": 8
+					}
+				}
+			]
+		},
+		"unbreakable_will": {
+			"attribute": "mind",
+			"at": 120,
+			"name": "Unbreakable Will",
+			"description": "Magic cannot move you.",
+			"effects": [
+				{
+					"type": "defense",
+					"reduce": 0.06,
+					"ability": "MAGICAL"
+				}
+			]
+		},
+		"second_breath": {
+			"attribute": "endurance",
+			"at": 40,
+			"name": "Second Breath",
+			"description": "You never quite run out.",
+			"effects": [
+				{
+					"type": "regen",
+					"sp": 0.015
+				}
+			]
+		},
+		"tireless": {
+			"attribute": "endurance",
+			"at": 80,
+			"name": "Tireless",
+			"description": "Hours of fighting feel like minutes.",
+			"effects": [
+				{
+					"type": "regen",
+					"sp": 0.02
+				}
+			]
+		},
+		"unyielding": {
+			"attribute": "endurance",
+			"at": 120,
+			"name": "Unyielding",
+			"description": "The worse it gets, the harder you are.",
+			"effects": [
+				{
+					"type": "defense",
+					"reduce": 0.08,
+					"user_hp_below": 0.5
+				}
+			]
+		},
+		"attuned": {
+			"attribute": "arcane",
+			"at": 40,
+			"name": "Attuned",
+			"description": "Magic hums under your skin.",
+			"effects": [
+				{
+					"type": "status_chance",
+					"chance": 0.03
+				},
+				{
+					"type": "damage",
+					"mult": 0.03,
+					"ability": "MAGICAL"
+				}
+			]
+		},
+		"leyline": {
+			"attribute": "arcane",
+			"at": 80,
+			"name": "Leyline",
+			"description": "You draw from the ground you stand on.",
+			"effects": [
+				{
+					"type": "regen",
+					"mp": 0.02
+				}
+			]
+		},
+		"arcanist": {
+			"attribute": "arcane",
+			"at": 120,
+			"name": "Arcanist",
+			"description": "The elements bend further for you.",
+			"effects": [
+				{
+					"type": "damage",
+					"mult": 0.06,
+					"elements": [
+						"FIRE",
+						"ICE",
+						"LIGHTNING",
+						"WATER",
+						"WIND",
+						"EARTH",
+						"HOLY",
+						"DARK"
+					]
+				}
+			]
+		},
+		"fleetfoot": {
+			"attribute": "agility",
+			"at": 40,
+			"name": "Fleetfoot",
+			"description": "Light on your feet.",
+			"effects": [
+				{
+					"type": "stats",
+					"stats": {
+						"dodge": 0.02
+					}
+				}
+			]
+		},
+		"wind_step": {
+			"attribute": "agility",
+			"at": 80,
+			"name": "Wind Step",
+			"description": "Gone before the blow lands.",
+			"effects": [
+				{
+					"type": "stats",
+					"stats": {
+						"dodge": 0.03,
+						"critical_hit_rate": 0.02
+					}
+				}
+			]
+		},
+		"blur": {
+			"attribute": "agility",
+			"at": 120,
+			"name": "Blur",
+			"description": "They swing at where you were.",
+			"effects": [
+				{
+					"type": "stats",
+					"stats": {
+						"dodge": 0.04
+					}
+				},
+				{
+					"type": "defense",
+					"reduce": 0.03
+				}
+			]
+		},
+		"steadfast": {
+			"attribute": "fortitude",
+			"at": 40,
+			"name": "Steadfast",
+			"description": "Hard to move.",
+			"effects": [
+				{
+					"type": "stats",
+					"stats": {
+						"toughness": 5
+					}
+				}
+			]
+		},
+		"unshaken": {
+			"attribute": "fortitude",
+			"at": 80,
+			"name": "Unshaken",
+			"description": "Blows that should stagger you don't.",
+			"effects": [
+				{
+					"type": "defense",
+					"reduce": 0.04
+				}
+			]
+		},
+		"bulwark_soul": {
+			"attribute": "fortitude",
+			"at": 120,
+			"name": "Bulwark Soul",
+			"description": "Body and spirit both hold.",
+			"effects": [
+				{
+					"type": "defense",
+					"reduce": 0.04
+				},
+				{
+					"type": "stats",
+					"stats": {
+						"spell_ward": 8
+					}
+				}
+			]
+		}
+	}
+}

@@ -123,7 +123,25 @@
      "name": "effects",
      "type": "json",
      "optional": true,
-     "help": "List of effects per rank, e.g. [{\"type\": \"stats\", \"stats\": {\"toughness\": 3}}, {\"type\": \"damage\", \"mult\": 0.05, \"with\": \"two_handed\"}]. Types: stats, damage, defense, heal_bonus, lifesteal, skill, combo, status_chance, regen. See TalentManager.gd."
+     "help": "List of effects per rank, e.g. [{\"type\": \"stats\", \"stats\": {\"toughness\": 3}}, {\"type\": \"damage\", \"mult\": 0.05, \"with\": \"two_handed\"}]. Types: stats, damage, defense, heal_bonus, lifesteal, skill, combo, status_chance, regen, mutate (change a skill: target, power_mult, add_status, set_status, add_element, turn_delay, hp_cost, after_use {heal_pct, mp_pct, sp_pct, self_status, self_turns}). See TalentManager.gd."
+    },
+    {
+     "name": "choice",
+     "type": "str",
+     "optional": true,
+     "help": "Fork id: nodes in a branch with the same choice are mutually exclusive (mut2 = tier-2 skill mutation, t4 = tier-4 passive, mut5 = ultimate mutation)."
+    },
+    {
+     "name": "requires",
+     "type": "str",
+     "optional": true,
+     "help": "Node id in this branch that must be learned first (a mutation needs its skill)."
+    },
+    {
+     "name": "fork_alt",
+     "type": "bool",
+     "optional": true,
+     "help": "Marks the added second option of the tier-4 fork."
     }
    ]
   }

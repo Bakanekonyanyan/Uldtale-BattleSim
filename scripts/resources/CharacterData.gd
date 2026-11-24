@@ -198,6 +198,8 @@ func get_equipment_flat_bonuses() -> Dictionary:
 	return total
 
 func calculate_secondary_attributes():
+	if talents:
+		talents.refresh_thresholds()   # attribute-threshold passives (data/thresholds.json)
 	# Calculate effective attributes: base + equipment + talents + buffs/debuffs
 	var flat = get_all_flat_bonuses()
 	var eff = {}
