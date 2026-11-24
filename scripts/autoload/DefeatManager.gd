@@ -25,6 +25,19 @@ func apply_defeat(player: CharacterData, is_boss: bool = false) -> Dictionary:
 	var summary := {"gold_lost": 0, "injury": {}, "items": []}
 	if player == null:
 		return summary
+	# someone who owes you carries you home: no fee, no lost gear (MemoryManager debts)
+	var saver = MemoryManager.call_in_debt(player)
+	if not saver.is_empty():
+		summary["rescued_by"] = String(saver.name)
+		WorldClock.add_news(player, "%s carried %s home from the depths, repaying an old debt." % [saver.name, player.name], "adventurer")
+		AdventurerManager._history(saver, WorldClock.day(player), "Carried %s home, repaying a debt." % player.name)
+		summary.injury = add_random_injury(player, is_boss)
+		player.status_manager.clear_all_effects() if player.status_manager else null
+		player.current_hp = max(1, int(player.max_hp * float(cfg.get("wake_hp_fraction", 0.5))))
+		player.current_mp = player.max_mp
+		player.current_sp = player.max_sp
+		player.calculate_secondary_attributes()
+		return summary
 	# gold fee
 	var fee = int(floor(player.currency.copper * float(cfg.get("gold_fee_fraction", 0.15))))
 	if fee > 0:

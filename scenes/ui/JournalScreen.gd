@@ -128,6 +128,16 @@ static func build_text(p: CharacterData) -> String:
 		var tier = BondManager.tier_name(n)
 		bonds.append("%s is in your party%s" % [n.name, (" (%s)" % tier) if tier != "" else ""])
 	t += _section("Companions", bonds, "Nobody's travelling with you.")
+	# --- people (your memories, who owes you)
+	var ppl: Array = []
+	for n in AdventurerManager.active(p):
+		if MemoryManager.owes_you(n):
+			ppl.append("[color=#7bd389]%s owes you a favour[/color] - they'll help you when it counts" % n.name)
+	var mine = MemoryManager.list(p).duplicate()
+	mine.sort_custom(func(a, b): return abs(float(a.w)) > abs(float(b.w)))
+	for m in mine.slice(0, 8):
+		ppl.append("[color=%s]%s[/color]" % ["#9fd8ff" if float(m.w) > 0 else "#ff9f6b", MemoryManager.text(m, p, true)])
+	t += _section("People", ppl, "No one has left a mark on you yet.")
 	# --- recovery
 	var rec: Array = []
 	for inj in DefeatManager.get_injuries(p):

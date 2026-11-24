@@ -317,6 +317,7 @@ func _maybe_start(player: CharacterData, npc: Dictionary, day: int) -> void:
 		var b = board.pop_at(RandomManager.randi() % board.size())
 		npc.job["bounty"] = String(b.title)
 		npc.rivalry = int(npc.get("rivalry", 0)) + 1
+		MemoryManager.add(player, "took_my_bounty", MemoryManager.key_npc(npc), day)
 		_history(npc, day, "Took the bounty \"%s\"." % b.title)
 		_news(player, "%s took the bounty \"%s\" off the board." % [npc.name, b.title], "guild")
 	else:
@@ -543,5 +544,6 @@ func gift(player: CharacterData, id: int, inventory_key: String) -> Dictionary:
 	_history(npc, day, "Received %s from %s." % [item.display_name, player.name])
 	var react = "They love it!" if likes > 1.2 else ("They seem pleased." if likes >= 1.0 else "They accept it politely.")
 	PersonalityManager.player_event(player, "gift")
+	MemoryManager.add(npc, "gifted_me", "you", day)
 	var said = PersonalityManager.say(npc, "gift_liked" if likes >= 1.0 else "gift_meh")
 	return {"ok": true, "reason": "You give %s to %s. %s (+%d rapport)%s" % [item.display_name, npc.name, react, g, ("\n" + said) if said != "" else ""]}

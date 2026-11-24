@@ -54,8 +54,10 @@ func candidates(player: CharacterData, type: String) -> Array:
 		var rival = "Rival" in AdventurerManager.tags(n)
 		match type:
 			"helper":
-				if r >= int(c.get("min_rapport", 20)):
+				if r >= int(c.get("min_rapport", 20)) or MemoryManager.owes_you(n):
 					out.append(n)
+					if MemoryManager.owes_you(n):
+						out.append(n)   # a debt makes them twice as likely to turn up
 			"wounded":
 				out.append(n)
 			"rival_theft":
@@ -68,7 +70,7 @@ func candidates(player: CharacterData, type: String) -> Array:
 				if n.get("nemesis", false) or int(n.get("rivalry", 0)) >= int(_t("nemesis").get("min_rivalry", 5)):
 					continue   # nemeses come as nemeses
 				var schemer = n.traits.any(func(t): return t in c.get("traits_any", []))
-				if schemer and (r <= int(c.get("max_rapport", -10)) or (c.get("rival_counts", true) and rival)):
+				if (schemer and (r <= int(c.get("max_rapport", -10)) or (c.get("rival_counts", true) and rival))) or not MemoryManager.grudge(n).is_empty():
 					out.append(n)
 	return out
 
@@ -162,6 +164,7 @@ func begin(enc: Dictionary, player: CharacterData, parent: Node) -> Dictionary:
 				AdventurerManager._set_rapport(npc, int(c.get("give_rapport", 10)))
 				AdventurerManager._history(npc, day, "%s shared a potion when they were bleeding out." % player.name)
 				out.log.append("%s thanks you warmly (+%d rapport)." % [npc.name, int(c.get("give_rapport", 10))])
+				MemoryManager.add(npc, "saved_me", "you", day)
 				out.log.append_array(BondManager.react(player, "help_wounded"))
 			else:
 				var d = int(c.get("refuse_rapport", -4)) if has else 0
@@ -169,10 +172,12 @@ func begin(enc: Dictionary, player: CharacterData, parent: Node) -> Dictionary:
 				out.log.append("You leave %s behind.%s" % [npc.name, " (%d rapport)" % d if d != 0 else ""])
 				if has:
 					out.log.append_array(BondManager.react(player, "refuse_wounded"))
+					MemoryManager.add(npc, "abandoned_me", "you", day)
 		"rival_theft":
 			var banked: Dictionary = MomentumSystem.momentum_loot_accumulated
 			var frac = RandomManager.randf_range(float(c.get("steal_fraction", [0.3, 0.5])[0]), float(c.get("steal_fraction", [0.3, 0.5])[1]))
 			var stolen = int(int(banked.get("currency", 0)) * frac)
+			MemoryManager.add(player, "robbed_me", MemoryManager.key_npc(npc))
 			banked.currency = int(banked.get("currency", 0)) - stolen
 			var pick = await choice(parent, "Thief!", _fmt(String(c.get("text", "")), npc) + "\n\n(%s of your banked loot is gone.)" % Currency.format_copper(stolen),
 				[["confront", "Confront them (fight after this wave)"], ["let_go", "Let it go"]])
@@ -197,6 +202,8 @@ func begin(enc: Dictionary, player: CharacterData, parent: Node) -> Dictionary:
 					line = String(grudges[t])
 					break
 			out.log.append("[color=#ff6b6b][b]Nemesis![/b] %s[/color]" % _fmt(line, npc))
+			if foe.get_meta("studied_you", false):
+				out.log.append("[color=#ff9f6b]%s has studied how you fight - their armor is made to resist you.[/color]" % npc.name)
 			if String(enc.get("mode", "after")) == "after":
 				out.pending.append({"side": "enemy", "chars": [foe], "trigger": "victory", "text": _fmt(String(c.get("text_after", "")), npc)})
 			else:
@@ -204,6 +211,7 @@ func begin(enc: Dictionary, player: CharacterData, parent: Node) -> Dictionary:
 		"saboteur":
 			var foe = build_combatant(player, npc, true)
 			foe.set_meta("encounter", "saboteur")
+			MemoryManager.add(player, "ambushed_me", MemoryManager.key_npc(npc))
 			if RandomManager.randf() < float(c.get("warning_chance", 0.4)):
 				out.log.append(_fmt(String(c.get("warning", "")), npc))
 			if String(enc.get("mode", "mid")) == "after":
@@ -222,6 +230,12 @@ func build_nemesis(player: CharacterData, npc: Dictionary) -> CharacterData:
 	foe.set_meta("npc_id", int(npc.id))
 	foe.set_meta("encounter", "nemesis")
 	foe.name = "%s (Nemesis)" % npc.name
+	# a nemesis who has lost to you before has studied your fighting style
+	if MemoryManager.losses_to_you(npc) >= int(MemoryManager.cfg().get("memory", {}).get("nemesis_learns_after", 2)):
+		var t = DamageTypes.attack_type(player)
+		if t >= 0:
+			foe.set_meta("affinity_bonus", {DamageTypes.Type.keys()[t]: -float(MemoryManager.cfg().get("memory", {}).get("nemesis_resist", 0.3))})
+			foe.set_meta("studied_you", true)
 	foe.hp_multiplier = float(c.get("hp_mult", 1.4))
 	foe.damage_multiplier = float(c.get("damage_mult", 0.9))
 	foe.calculate_secondary_attributes()
@@ -252,6 +266,8 @@ func finish(enc: Dictionary, player: CharacterData, won: bool, joined: Array) ->
 			if joined.is_empty():
 				return lines
 			AdventurerManager._set_rapport(npc, int(c.get("rapport_after", 3)))
+			MemoryManager.add(npc, "fought_beside", "you", day)
+			MemoryManager.add(player, "helped_me", MemoryManager.key_npc(npc), day)
 			AdventurerManager._history(npc, day, "Fought beside %s in %s." % [player.name, LocationManager.get_display_name(loc)])
 			WorldClock.add_news(player, _fmt(String(c.get("news", "")), npc, loc), "adventurer")
 			lines.append("%s salutes and heads off (+%d rapport)." % [npc.name, int(c.get("rapport_after", 3))])
@@ -262,6 +278,7 @@ func finish(enc: Dictionary, player: CharacterData, won: bool, joined: Array) ->
 				var item = signature_item(npc, DungeonStateManager.current_floor)
 				if item:
 					MomentumSystem.bank_rewards({"currency": 0, "equipment_instances": [item]})
+				MemoryManager.add(npc, "beat_me", "you", day)
 				npc.rivalry = 0
 				npc.nemesis = false
 				npc.nemesis_beaten = int(npc.get("nemesis_beaten", 0)) + 1
@@ -274,12 +291,14 @@ func finish(enc: Dictionary, player: CharacterData, won: bool, joined: Array) ->
 				lines.append("%s yields. Their %s is yours (banked with your loot)." % [npc.name, item.display_name if item else "gear"])
 			else:
 				npc.rivalry = int(npc.get("rivalry", 0)) + 1
+				MemoryManager.add(player, "beat_me", MemoryManager.key_npc(npc), day)
 				AdventurerManager._history(npc, day, "Bested their nemesis %s in %s." % [player.name, LocationManager.get_display_name(loc)])
 				WorldClock.add_news(player, _fmt(String(c.get("news_lost", "")), npc, loc), "rival")
 		"rival_theft", "saboteur":
 			if joined.is_empty():
 				return lines
 			if won:
+				MemoryManager.add(npc, "beat_me", "you", day)
 				var sab = _t("saboteur")
 				npc.status = "injured"
 				npc.job = {}
@@ -298,6 +317,7 @@ func finish(enc: Dictionary, player: CharacterData, won: bool, joined: Array) ->
 					lines.append("You take back your %s." % Currency.format_copper(stolen))
 			else:
 				npc.nemesis = true   # they'll be back (encounter type nemesis)
+				MemoryManager.add(player, "beat_me", MemoryManager.key_npc(npc), day)
 				AdventurerManager._history(npc, day, "Got the better of %s in %s." % [player.name, LocationManager.get_display_name(loc)])
 				WorldClock.add_news(player, _fmt(String(_t("saboteur").get("news_lost", "")), npc, loc), "rival")
 	return lines

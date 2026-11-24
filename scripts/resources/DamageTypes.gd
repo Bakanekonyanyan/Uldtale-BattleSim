@@ -46,7 +46,8 @@ static func weapon_type(weapon: Equipment) -> int:
 
 ## Race + armor affinity for one type: >0 weak (takes more), <0 resists.
 static func affinity(target: CharacterData, t: int) -> float:
-	return race_affinity(String(target.race), t) + armor_affinity(target, t)
+	var extra = float(target.get_meta("affinity_bonus", {}).get(Type.keys()[t], 0.0)) if target.has_meta("affinity_bonus") else 0.0
+	return race_affinity(String(target.race), t) + armor_affinity(target, t) + extra
 
 static func race_affinity(race: String, t: int) -> float:
 	return float(cfg().get("races", {}).get(race, {}).get(Type.keys()[t], 0.0))

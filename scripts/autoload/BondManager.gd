@@ -107,6 +107,10 @@ func react(player: CharacterData, event: String, times: int = 1) -> Array:
 	if player == null or times <= 0:
 		return lines
 	PersonalityManager.player_event(player, event, times)   # your choices shape how you're seen
+	if event in ["boss_win", "challenge_done"]:
+		for n in PartyManager.members(player):
+			MemoryManager.add(n, "fought_beside", "you")
+			MemoryManager.add(player, "fought_beside", MemoryManager.key_npc(n))
 	var table: Dictionary = cfg().get("opinions", {}).get(event, {})
 	if table.is_empty():
 		return lines

@@ -1,0 +1,33 @@
+{
+	"_comment": "The Guild's social simulation (MemoryManager.gd; docs/design/LIVING_WORLD.md sections A, B, G). Memories are what an adventurer (or you) remembers about someone: weight > 0 good, < 0 bad. They fade daily unless core; the same kind about the same person adds up (to the kind's cap). Gossip copies strong memories to listeners at a fraction of their weight.",
+	"memory": {
+		"max_per_holder": 20,
+		"fade_per_day": 0.02,
+		"forget_below": 1.0,
+		"gossip_per_day": 2,
+		"gossip_min_weight": 15,
+		"gossip_share": 0.3,
+		"heard_rapport_factor": 0.5,
+		"full_view_rapport": 40,
+		"grudge_at": -20,
+		"debt_at": 20,
+		"nemesis_learns_after": 2,
+		"nemesis_resist": 0.3
+	},
+	"kinds": {
+		"saved_me": { "weight": 30, "cap": 60, "text": "{about} saved them when they were dying", "you_text": "You saved them when they were dying", "hint": "keeps glancing at you gratefully" },
+		"helped_me": { "weight": 15, "cap": 40, "text": "{about} helped them", "you_text": "You helped them", "hint": "seems glad to see you" },
+		"fought_beside": { "weight": 8, "cap": 40, "text": "fought beside {about}", "you_text": "You fought side by side", "hint": "nods at you like an old comrade" },
+		"gifted_me": { "weight": 5, "cap": 25, "text": "{about} gave them gifts", "you_text": "You gave them gifts", "hint": "smiles when you come in" },
+		"abandoned_me": { "weight": -30, "cap": -60, "text": "{about} left them to die", "you_text": "You left them to die", "hint": "won't meet your eye", "grudge": true },
+		"robbed_me": { "weight": -25, "cap": -60, "text": "{about} robbed them", "you_text": "You robbed them", "hint": "keeps a hand on their purse around you", "grudge": true },
+		"ambushed_me": { "weight": -20, "cap": -50, "text": "{about} ambushed them", "you_text": "You ambushed them", "hint": "watches you like a hawk", "grudge": true },
+		"betrayed_me": { "weight": -35, "cap": -70, "text": "{about} betrayed them", "you_text": "You betrayed them", "hint": "turns away when you approach", "grudge": true },
+		"beat_me": { "weight": -15, "cap": -45, "text": "lost to {about} in a fight", "you_text": "You beat them in a fight", "hint": "glares at you", "honorable_weight": 5 },
+		"took_my_bounty": { "weight": -5, "cap": -20, "text": "{about} took a bounty they wanted", "you_text": "You took a bounty they wanted", "hint": "mutters about stolen work" },
+		"killed_my_friend": { "weight": -60, "cap": -100, "core": true, "text": "{about} killed someone they loved", "you_text": "You killed someone they loved", "hint": "looks at you with pure hatred", "grudge": true },
+		"avenged_me": { "weight": 50, "cap": 100, "core": true, "text": "{about} avenged someone they lost", "you_text": "You avenged someone they lost", "hint": "would follow you anywhere" },
+		"lost_companion": { "weight": 0, "cap": 0, "core": true, "text": "lost {about}", "you_text": "", "hint": "" }
+	},
+	"heard_hint": "has heard things about you"
+}

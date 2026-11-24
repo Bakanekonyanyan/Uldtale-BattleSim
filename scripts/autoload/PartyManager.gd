@@ -59,6 +59,9 @@ func why_not_recruit(player: CharacterData, id: int) -> String:
 		return "They're no longer with the Guild."
 	if is_member(player, id):
 		return "Already in your party."
+	var g = MemoryManager.grudge(n)
+	if not g.is_empty():
+		return "%s won't travel with you. They remember: %s." % [n.name, String(MemoryManager.kind(g.kind).get("you_text", "something you did")).to_lower()]
 	if slots(player) == 0:
 		return "Your rank allows no companions yet (D-Rank opens a slot)."
 	if party_ids(player).size() >= slots(player):

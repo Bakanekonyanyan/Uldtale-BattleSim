@@ -20,7 +20,10 @@ func _ready():
 	ScreenChrome.place(text, Rect2(24, 18, 652, 434))
 	panel.add_child(text)
 	var t = "[font_size=20][b]You fell in battle.[/b][/font_size]\n"
-	t += "[color=#a99f90]Guild scouts dragged you back to town. Recovery isn't free.[/color]\n\n"
+	if s.has("rescued_by"):
+		t += "[color=#7bd389]%s found you and carried you home, repaying an old debt. No fee, nothing lost.[/color]\n\n" % s.rescued_by
+	else:
+		t += "[color=#a99f90]Guild scouts dragged you back to town. Recovery isn't free.[/color]\n\n"
 	t += "[b]Recovery fee:[/b] [color=#e07a5f]%s[/color]\n" % Currency.format_copper(int(s.get("gold_lost", 0)))
 	var inj: Dictionary = s.get("injury", {})
 	if not inj.is_empty():

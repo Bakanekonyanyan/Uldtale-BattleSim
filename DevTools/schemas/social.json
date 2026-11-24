@@ -1,0 +1,94 @@
+{
+ "tab": "Social",
+ "file": "data/social.json",
+ "order": 57,
+ "description": "The Guild's social simulation: memories, gossip, grudges and debts (MemoryManager.gd); relationships later.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Memory",
+   "path": [
+    "memory"
+   ],
+   "fields": [
+    {
+     "name": "max_per_holder",
+     "type": "int",
+     "min": 5
+    },
+    {
+     "name": "fade_per_day",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Non-core memories lose this share of their weight each day."
+    },
+    {
+     "name": "forget_below",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "gossip_per_day",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "gossip_min_weight",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "gossip_share",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "heard_rapport_factor",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "full_view_rapport",
+     "type": "int",
+     "help": "Rapport at which the Tavern shows full memories instead of a hint."
+    },
+    {
+     "name": "grudge_at",
+     "type": "float"
+    },
+    {
+     "name": "debt_at",
+     "type": "float"
+    },
+    {
+     "name": "nemesis_learns_after",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "nemesis_resist",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Memory kinds",
+   "fields": [
+    {
+     "name": "kinds",
+     "type": "json",
+     "help": "kind -> {weight, cap, core, text ({about}), you_text, hint, grudge, honorable_weight}"
+    },
+    {
+     "name": "heard_hint",
+     "type": "str"
+    }
+   ]
+  }
+ ]
+}

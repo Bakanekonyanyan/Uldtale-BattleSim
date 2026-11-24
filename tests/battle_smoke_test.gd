@@ -1270,6 +1270,7 @@ func _phase0_checks() -> void:
 	_run_state_checks()
 	_bond_checks()
 	_personality_checks()
+	_memory_checks()
 	_town_life_checks()
 	_ledger_checks()
 	_journal_checks()
@@ -1556,6 +1557,68 @@ func _ledger_checks() -> void:
 	check(LedgerManager.champion(p).get("is_player", false) and p.currency.copper > gold0 and int(LedgerManager.profile_player(p).crowns) == 1,
 		"you can take the crown (gold, Guild points, renown)")
 	check(WorldClock.get_news(p, 20).any(func(n): return String(n.text).contains("You are crowned Champion of Year 2")), "your crowning makes the news")
+
+## Memory: what adventurers (and you) remember, fading, gossip, grudges, debts.
+func _memory_checks() -> void:
+	var p = make_player()
+	AdventurerManager.state(p)
+	var prev_cur = CharacterManager.get_current_character()
+	CharacterManager.current_character_resource.set_meta("current_character", p)
+	var a = AdventurerManager._add(p, AdventurerManager.generate(p))
+	a.status = "idle"
+	a.memories = []
+	MemoryManager.add(a, "abandoned_me", "you", 1)
+	check(MemoryManager.opinion(a, "you") == -30 and not MemoryManager.grudge(a).is_empty(), "leaving someone to die is remembered as a grudge")
+	a.rapport = 90
+	check(PartyManager.why_not_recruit(p, int(a.id)).contains("won't travel with you"), "a grudge blocks recruiting even at high rapport")
+	MemoryManager.add(a, "abandoned_me", "you", 2)
+	check(MemoryManager.about_of(a, "you").size() == 1 and int(MemoryManager.opinion(a, "you")) == -60, "the same memory adds up (to its cap) instead of duplicating")
+	# fading
+	var b = AdventurerManager._add(p, AdventurerManager.generate(p))
+	b.memories = []
+	b.status = "idle"
+	MemoryManager.add(b, "gifted_me", "you", 1)
+	MemoryManager.add(b, "killed_my_friend", "npc:9999", 1)
+	for i in range(40):
+		MemoryManager.daily(p, 2 + i)
+	var w_gift = MemoryManager.opinion(b, "you")
+	check(w_gift < 5.0 and MemoryManager.opinion(b, "npc:9999") == -60, "ordinary memories fade; core ones never do (%.1f left of a gift)" % w_gift)
+	# gossip spreads a strong memory to someone else in town
+	for n in AdventurerManager.active(p):
+		if n != a:
+			n.memories = []
+	var spread := 0
+	for i in range(40):
+		for g in MemoryManager.gossip(p, 50 + i):
+			if g.memory.about == "you" and g.teller == a:
+				spread += 1
+	var heard = AdventurerManager.active(p).filter(func(n): return n != a and MemoryManager.about_of(n, "you").any(func(m): return m.has("heard_from")))
+	check(spread > 0 and not heard.is_empty(), "gossip spreads your reputation (%d people heard)" % heard.size())
+	# visibility: hints, then full
+	b.rapport = 0
+	MemoryManager.add(b, "saved_me", "you", 60)
+	check(MemoryManager.tavern_text(b, p).contains("gratefully"), "strangers only show a hint")
+	b.rapport = 50
+	check(MemoryManager.tavern_text(b, p).contains("Remembers about you"), "friends show the full memory list")
+	# debts: carried home after a defeat
+	check(MemoryManager.owes_you(b), "saving someone puts them in your debt")
+	p.currency.copper = 1000
+	var summary = DefeatManager.apply_defeat(p, false)
+	check(String(summary.get("rescued_by", "")) == String(b.name) and p.currency.copper == 1000 and not MemoryManager.owes_you(b), "a debtor carries you home: no fee, no lost gear, debt repaid")
+	# your own memories
+	MemoryManager.add(p, "robbed_me", MemoryManager.key_npc(a), 70)
+	check(MemoryManager.text(MemoryManager.list(p)[-1], p, true).begins_with(String(a.name) + " robbed you"), "you remember who wronged you (%s)" % MemoryManager.text(MemoryManager.list(p)[-1], p, true))
+	check(JournalScreen.build_text(p).contains("People") and JournalScreen.build_text(p).contains("robbed you"), "the Journal lists your people")
+	# a nemesis who lost to you twice studies you
+	var nem = AdventurerManager._add(p, AdventurerManager.generate(p, [3, 3], true))
+	nem.memories = []
+	MemoryManager.add(nem, "beat_me", "you", 1)
+	MemoryManager.add(nem, "beat_me", "you", 2)
+	var sword = ItemManager.create_equipment_for_floor("short_sword", 1) if ItemManager.get_item("short_sword") else ItemManager.create_equipment_for_floor(ItemManager.get_random_weapon("sword"), 1)
+	p.equipment["main_hand"] = sword
+	var foe = EncounterManager.build_nemesis(p, nem)
+	check(MemoryManager.losses_to_you(nem) == 2 and foe.get_meta("studied_you", false) and DamageTypes.multiplier(foe, DamageTypes.attack_type(p)) < 1.0, "a nemesis who lost twice comes back armored against you")
+	CharacterManager.current_character_resource.set_meta("current_character", prev_cur)
 
 ## Personalities: archetypes, drives, flaws, quirks, voices, arcs, your voice.
 func _personality_checks() -> void:
