@@ -200,6 +200,7 @@ func on_promoted(player: CharacterData, npc: Dictionary, day: int) -> void:
 		if o != npc and RankManager.rank_index(String(o.rank)) == peer \
 				and ("ambitious" in o.get("traits", []) or "boastful" in o.get("traits", [])):
 			change(player, o, npc, _ev("passed_over"), day)
+			TemperamentManager.tag(player, o, "passed_over", day)
 
 ## An idle friend to bring along on a job (sworn companions almost always
 ## come; acquaintances sometimes do, which is how friendships start).
@@ -241,6 +242,9 @@ func on_rescue(player: CharacterData, rescuer: Dictionary, rescued: Dictionary, 
 	AdventurerManager._history(rescued, day, "Was dragged out alive by %s." % rescuer.name)
 	AdventurerManager._history(rescuer, day, "Carried %s out of danger." % rescued.name)
 	WorldClock.add_news(player, "%s carried a dying %s out of the depths." % [rescuer.name, rescued.name], "adventurer")
+	TemperamentManager.tag(player, rescuer, "rescuer", day)
+	TemperamentManager.tag(player, rescued, "saved_by", day)
+	TemperamentManager.tag(player, rescued, "near_death", day)
 
 # ------------------------------------------------------------------ you in the web
 

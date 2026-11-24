@@ -1,0 +1,686 @@
+{
+	"_doc": "Temperament: how personality traits play out (TemperamentManager.gd; LIVING_WORLD.md I). scenes = daily trait-driven moments between adventurers in town (and sometimes you); battle = how companions fight by temperament; growth = experiences that change traits; voice = lines by trait, mixed with archetype lines.",
+	"scenes_per_day": 2,
+	"trait_voice_share": 0.4,
+	"talk_keep": 30,
+	"scenes": {
+		"tend_wounded": {
+			"trait": "kind",
+			"weight": 3,
+			"days_off": [
+				1,
+				2
+			],
+			"affinity": 4,
+			"news": "{actor} sat up all night with the injured {target}.",
+			"headline": false
+		},
+		"tend_you": {
+			"trait": "kind",
+			"weight": 2,
+			"min_rapport": 25,
+			"news": "{actor} changed your bandages without being asked. (An injury heals a day sooner.)",
+			"headline": true
+		},
+		"pickpocket": {
+			"trait": "greedy",
+			"weight": 2,
+			"caught_chance": 0.4,
+			"affinity_caught": -25,
+			"news": "{target} caught {actor} with a hand in their purse.",
+			"headline": true
+		},
+		"pickpocket_you": {
+			"trait": "greedy",
+			"weight": 1,
+			"max_rapport": -10,
+			"take_pct": 0.02,
+			"take_max_per_level": 40,
+			"notice_chance": 0.5,
+			"news": "Your purse feels lighter. You saw {actor} slip away from the bar. (-{amount})",
+			"headline": true
+		},
+		"brag": {
+			"trait": "boastful",
+			"weight": 3,
+			"listeners": 3,
+			"annoyed": [
+				"ambitious",
+				"aloof",
+				"honorable"
+			],
+			"amused": [
+				"cheerful",
+				"kind"
+			],
+			"annoyed_affinity": -3,
+			"amused_affinity": 2,
+			"news": "{actor} told the story of their last job again. It has grown another troll.",
+			"headline": false
+		},
+		"teach": {
+			"trait": "scholarly",
+			"weight": 3,
+			"xp_per_level": 30,
+			"affinity": 4,
+			"news": "{actor} spent the evening teaching {target} the weak points of every beast in the Bestiary.",
+			"headline": false
+		},
+		"vigil": {
+			"trait": "devout",
+			"weight": 4,
+			"recent_days": 14,
+			"affinity": 4,
+			"grief_days_off": 3,
+			"news": "{actor} held a vigil for {dead}. {count} came.",
+			"headline": true
+		},
+		"celebrate": {
+			"trait": "cheerful",
+			"weight": 4,
+			"recent_days": 3,
+			"attendees": 3,
+			"affinity": 1,
+			"honoree_affinity": 4,
+			"news": "{actor} threw a party for {honoree}. The Tavern will be cleaning up for days.",
+			"headline": false
+		},
+		"bully": {
+			"trait": "cruel",
+			"weight": 2,
+			"affinity": -10,
+			"stand_up_traits": [
+				"kind",
+				"honorable",
+				"loyal"
+			],
+			"stand_up_chance": 0.5,
+			"stand_up_affinity": -10,
+			"stood_for_affinity": 8,
+			"news": "{actor} has been picking on {target}.",
+			"stand_up_news": "{witness} stood up to {actor} for {target}.",
+			"headline": false
+		},
+		"mediate": {
+			"trait": "honorable",
+			"weight": 3,
+			"affinity": 8,
+			"news": "{actor} sat {a} and {b} down and made them talk it out.",
+			"headline": true,
+			"below": -55
+		},
+		"defend_name": {
+			"trait": "loyal",
+			"weight": 3,
+			"affinity": 3,
+			"news": "{actor} set {listener} straight about {friend}.",
+			"headline": false
+		},
+		"spar": {
+			"trait": "ambitious",
+			"weight": 3,
+			"ledger_reach": 4,
+			"points": 3,
+			"respect_affinity": 3,
+			"sore_affinity": -5,
+			"news": "{actor} challenged {target} to a sparring match behind the Guild. {winner} won.",
+			"headline": false
+		},
+		"carouse": {
+			"trait": "reckless",
+			"weight": 2,
+			"partners": [
+				"cheerful",
+				"reckless",
+				"boastful"
+			],
+			"affinity": 3,
+			"hangover_chance": 0.25,
+			"news": "{actor} and {target} held a drinking contest.{tail}",
+			"headline": false
+		},
+		"freeload": {
+			"trait": "lazy",
+			"weight": 2,
+			"generous": [
+				"kind",
+				"cheerful"
+			],
+			"stingy": [
+				"greedy",
+				"ambitious"
+			],
+			"generous_affinity": 1,
+			"stingy_affinity": -4,
+			"news": "{actor} has been drinking on {target}'s tab again.",
+			"headline": false
+		},
+		"seek_protection": {
+			"trait": "cowardly",
+			"weight": 2,
+			"affinity": 2,
+			"news": "{actor} has been following {target} around like a shadow.",
+			"headline": false
+		},
+		"fuss": {
+			"trait": "cautious",
+			"weight": 2,
+			"targets": [
+				"reckless"
+			],
+			"friend_affinity": 3,
+			"stranger_affinity": -2,
+			"news": "{actor} lectured {target} about checking corners. Again.",
+			"headline": false
+		},
+		"lone_training": {
+			"trait": "aloof",
+			"weight": 2,
+			"xp_per_level": 15,
+			"news": "",
+			"headline": false
+		}
+	},
+	"battle": {
+		"_doc": "Companions (and NPCs in real fights) by temperament: cowardly may freeze at low HP; loyal/kind heal you or allies early; cautious guards when hurt; reckless never guards; cruel finishes the weakest; lazy sometimes just swings.",
+		"cowardly": {
+			"freeze_below": 0.3,
+			"chance": 0.35
+		},
+		"loyal": {
+			"protect_below": 0.45
+		},
+		"kind": {
+			"heal_below": 0.55
+		},
+		"cautious": {
+			"guard_below": 0.35,
+			"chance": 0.5
+		},
+		"reckless": {
+			"never_guard": true
+		},
+		"cruel": {
+			"finisher": true
+		},
+		"lazy": {
+			"basic_chance": 0.15
+		}
+	},
+	"growth": [
+		{
+			"id": "courage_found",
+			"has": "cowardly",
+			"tag": "rescuer",
+			"count": 1,
+			"chance": 0.6,
+			"remove": "cowardly",
+			"add": "cautious",
+			"news": "{name} dragged a friend out of the depths. Whatever they are now, they're not a coward."
+		},
+		{
+			"id": "courage_earned",
+			"has": "cowardly",
+			"tag": "boss_win",
+			"count": 3,
+			"chance": 0.4,
+			"remove": "cowardly",
+			"news": "{name} has stopped flinching at shadows."
+		},
+		{
+			"id": "lesson_learned",
+			"has": "reckless",
+			"tag": "near_death",
+			"count": 2,
+			"chance": 0.5,
+			"remove": "reckless",
+			"add": "cautious",
+			"news": "Two near-deaths later, {name} checks the corners now."
+		},
+		{
+			"id": "heart_hardened",
+			"has": "kind",
+			"tag": "wronged",
+			"count": 2,
+			"chance": 0.5,
+			"remove": "kind",
+			"add": "aloof",
+			"news": "{name} has been wronged once too often. They keep to themselves now."
+		},
+		{
+			"id": "cruelty_softened",
+			"has": "cruel",
+			"tag": "saved_by",
+			"count": 1,
+			"chance": 0.5,
+			"remove": "cruel",
+			"news": "{name} was saved by someone they'd mocked. They've been quieter since."
+		},
+		{
+			"id": "spurred",
+			"has": "lazy",
+			"tag": "passed_over",
+			"count": 2,
+			"chance": 0.5,
+			"remove": "lazy",
+			"add": "ambitious",
+			"news": "{name} watched one too many people pass them by. They're up before dawn now."
+		},
+		{
+			"id": "opened_up",
+			"has": "aloof",
+			"tag": "company_week",
+			"count": 12,
+			"chance": 0.3,
+			"remove": "aloof",
+			"add": "loyal",
+			"news": "{name}'s company has thawed them out."
+		},
+		{
+			"id": "humbled",
+			"has": "boastful",
+			"tag": "lost_spar",
+			"count": 2,
+			"chance": 0.5,
+			"remove": "boastful",
+			"news": "After two public beatings, {name}'s stories have shrunk."
+		},
+		{
+			"id": "content",
+			"has": "ambitious",
+			"tag": "top_rank",
+			"count": 1,
+			"chance": 0.3,
+			"remove": "ambitious",
+			"add": "cheerful",
+			"news": "{name} reached the top and found they could finally relax."
+		},
+		{
+			"id": "found_faith",
+			"lacks": "devout",
+			"tag": "near_death",
+			"count": 1,
+			"chance": 0.08,
+			"add": "devout",
+			"news": "{name} came back from the brink praying."
+		},
+		{
+			"id": "student",
+			"lacks": "scholarly",
+			"tag": "taught",
+			"count": 5,
+			"chance": 0.25,
+			"add": "scholarly",
+			"news": "{name} has caught the bug for books."
+		},
+		{
+			"id": "debt_of_life",
+			"lacks": "loyal",
+			"tag": "saved_by",
+			"count": 1,
+			"chance": 0.3,
+			"add": "loyal",
+			"news": "{name} owes their life to a friend - and they know it."
+		},
+		{
+			"id": "greed_cured",
+			"has": "greedy",
+			"tag": "company_week",
+			"count": 20,
+			"chance": 0.3,
+			"remove": "greedy",
+			"news": "{name} has started splitting the loot evenly."
+		},
+		{
+			"id": "light_dimmed",
+			"has": "cheerful",
+			"tag": "friend_died",
+			"count": 2,
+			"chance": 0.4,
+			"remove": "cheerful",
+			"add": "aloof",
+			"news": "{name} doesn't laugh the way they used to."
+		},
+		{
+			"id": "cycle_of_cruelty",
+			"lacks": "cruel",
+			"tag": "bullied",
+			"count": 4,
+			"chance": 0.2,
+			"add": "cruel",
+			"news": "{name} has started passing on what was done to them."
+		}
+	],
+	"voice": {
+		"reckless": {
+			"greeting": [
+				"Where's the fight?",
+				"Heard there's something big on the deep floors. You in?"
+			],
+			"chat": [
+				"Planning's for people who don't trust their sword.",
+				"I nearly died last week. Best week in months."
+			],
+			"battle_start": [
+				"Out of my way - I'm going first!",
+				"Let's do this the fast way!"
+			],
+			"victory": [
+				"Again! Let's go deeper!",
+				"See? No plan needed."
+			],
+			"low_hp": [
+				"Just a scratch! Keep going!",
+				"Ha... that one hurt."
+			]
+		},
+		"cautious": {
+			"greeting": [
+				"Did you check your gear? Check it again.",
+				"Evening. Quiet one, I hope."
+			],
+			"chat": [
+				"The ones who live longest are the ones who leave early.",
+				"Count your potions before you count your gold."
+			],
+			"battle_start": [
+				"Steady. Watch their hands.",
+				"Stay together. Nobody wanders off."
+			],
+			"victory": [
+				"Good. Now we rest before we push.",
+				"Nobody hurt? Good."
+			],
+			"low_hp": [
+				"Falling back - cover me!",
+				"That's my limit. Careful now."
+			]
+		},
+		"ambitious": {
+			"greeting": [
+				"Have you seen the Ledger this week?",
+				"Busy. Walk with me."
+			],
+			"chat": [
+				"Second place is the first loser. Someone said that. Probably me.",
+				"One day the Champion's seat will have my name on it."
+			],
+			"battle_start": [
+				"This one counts for the Ledger.",
+				"Watch closely - this is how it's done."
+			],
+			"victory": [
+				"Another line in my record.",
+				"Up the Ledger we go."
+			],
+			"low_hp": [
+				"I'm not done climbing yet!",
+				"Not here. Not before the top."
+			]
+		},
+		"greedy": {
+			"greeting": [
+				"Buying? Selling? Lending at fair rates?",
+				"You look like someone with coin."
+			],
+			"chat": [
+				"Everything has a price. Everything.",
+				"The dead don't need their purses. Just saying."
+			],
+			"battle_start": [
+				"Mind the loot - don't break anything valuable.",
+				"Whatever drops is mine. Kidding. Mostly."
+			],
+			"victory": [
+				"Now, about the split...",
+				"Check the bodies. Thoroughly."
+			],
+			"low_hp": [
+				"I'm not dying before I spend it all!",
+				"Expensive day, this."
+			]
+		},
+		"loyal": {
+			"greeting": [
+				"There you are. I was starting to worry.",
+				"Saved you a seat."
+			],
+			"chat": [
+				"You stand by your friends. That's all there is to it.",
+				"I'd walk into the deep floors for the people I care about."
+			],
+			"battle_start": [
+				"I've got your back.",
+				"Stay close. I'm not losing anyone today."
+			],
+			"victory": [
+				"Everyone still standing? Good.",
+				"Told you I'd keep you safe."
+			],
+			"low_hp": [
+				"Don't worry about me - keep going!",
+				"I can still stand. I'll stand."
+			]
+		},
+		"honorable": {
+			"greeting": [
+				"Well met.",
+				"Good evening. I hope the day treated you fairly."
+			],
+			"chat": [
+				"A promise is a debt. I pay my debts.",
+				"There's no glory in a dishonest win."
+			],
+			"battle_start": [
+				"Face us, then.",
+				"Fight well. That's all I ask."
+			],
+			"victory": [
+				"A fair fight, fairly won.",
+				"Rest. They fought bravely too."
+			],
+			"low_hp": [
+				"I yield to nothing.",
+				"Still standing. Still honour-bound."
+			]
+		},
+		"cowardly": {
+			"greeting": [
+				"Oh! You startled me.",
+				"Is it safe? It looks safe. Is it?"
+			],
+			"chat": [
+				"I'm not scared. I'm... cautious. Very cautious.",
+				"Did you hear that? No? Good. Good."
+			],
+			"battle_start": [
+				"W-why is it so big?",
+				"I'll be right behind you. Way behind you."
+			],
+			"victory": [
+				"Is it over? It's over? I knew we'd win!",
+				"I wasn't scared. Not even a little."
+			],
+			"low_hp": [
+				"I don't want to die here!",
+				"Somebody, anybody - help!"
+			]
+		},
+		"kind": {
+			"greeting": [
+				"Have you eaten? Sit, sit.",
+				"You look tired. Are you alright?"
+			],
+			"chat": [
+				"Everyone's carrying something. Help where you can.",
+				"I had a spare potion, so I gave it away. Of course I did."
+			],
+			"battle_start": [
+				"Be careful, everyone.",
+				"Let's get everyone home tonight."
+			],
+			"victory": [
+				"Is anyone hurt? Let me see.",
+				"We all made it. That's what matters."
+			],
+			"low_hp": [
+				"Don't mind me - help the others first.",
+				"I'll be fine. Probably."
+			]
+		},
+		"cruel": {
+			"greeting": [
+				"What do you want?",
+				"Oh, it's you."
+			],
+			"chat": [
+				"The weak exist to make the strong look good.",
+				"I like it when they beg. Is that strange?"
+			],
+			"battle_start": [
+				"Make it hurt.",
+				"Let's see what they're made of. Inside."
+			],
+			"victory": [
+				"Pathetic.",
+				"That's what happens."
+			],
+			"low_hp": [
+				"You'll pay for that.",
+				"Interesting. My turn."
+			]
+		},
+		"lazy": {
+			"greeting": [
+				"Mm. Hey.",
+				"Is it morning already?"
+			],
+			"chat": [
+				"Why do today what someone else might do tomorrow?",
+				"I work smart. Or at least rarely."
+			],
+			"battle_start": [
+				"Can't we just... not?",
+				"Fine. Fine. Let's get it over with."
+			],
+			"victory": [
+				"Great. Nap time.",
+				"Wake me for the next one."
+			],
+			"low_hp": [
+				"Ugh, this is effort.",
+				"I should have stayed in bed."
+			]
+		},
+		"cheerful": {
+			"greeting": [
+				"Hey hey! You're here!",
+				"Drinks are on - well, someone!"
+			],
+			"chat": [
+				"Life's short. Laugh loud.",
+				"Did you hear the one about the goblin and the bard?"
+			],
+			"battle_start": [
+				"Let's have some fun!",
+				"Smile, everyone - we've got this!"
+			],
+			"victory": [
+				"Woo! Party at the Tavern!",
+				"Did you see that? That was amazing!"
+			],
+			"low_hp": [
+				"Ow, ow, ow - still smiling!",
+				"Haha... okay, that's not funny."
+			]
+		},
+		"aloof": {
+			"greeting": [
+				"...",
+				"Hm."
+			],
+			"chat": [
+				"I prefer my own company.",
+				"People talk too much."
+			],
+			"battle_start": [
+				"Stay out of my way.",
+				"Let's be quick."
+			],
+			"victory": [
+				"Done.",
+				"Hm. Adequate."
+			],
+			"low_hp": [
+				"Tch.",
+				"I don't need help."
+			]
+		},
+		"devout": {
+			"greeting": [
+				"May the Ancient Ones watch over you.",
+				"Blessings on your road."
+			],
+			"chat": [
+				"Every dawn is a gift. Even the hard ones.",
+				"I prayed for you last night. I pray for everyone."
+			],
+			"battle_start": [
+				"Gods, guide our hands.",
+				"With faith, forward."
+			],
+			"victory": [
+				"Thanks be.",
+				"The gods were with us today."
+			],
+			"low_hp": [
+				"If this is my hour, I'm ready.",
+				"Grant me strength..."
+			]
+		},
+		"scholarly": {
+			"greeting": [
+				"Did you know trolls regenerate faster in the damp?",
+				"Ah, a fellow seeker of knowledge. Or a fighter. Either way."
+			],
+			"chat": [
+				"I've catalogued forty-one kinds of slime. Forty-two if you count the angry one.",
+				"Theory first, swords second."
+			],
+			"battle_start": [
+				"Fascinating specimen. Weak to fire, I'd wager.",
+				"Observe its posture - there."
+			],
+			"victory": [
+				"I must write this down.",
+				"Exactly as predicted. More or less."
+			],
+			"low_hp": [
+				"This was not in the literature!",
+				"Note to self: that hurts."
+			]
+		},
+		"boastful": {
+			"greeting": [
+				"Ah! You've heard of me, of course.",
+				"Did I tell you about the time I killed a troll bare-handed?"
+			],
+			"chat": [
+				"They'll write songs about me one day. I've started a few myself.",
+				"Modesty is for people with nothing to brag about."
+			],
+			"battle_start": [
+				"Stand back and watch a legend at work!",
+				"This'll make a great story."
+			],
+			"victory": [
+				"Another tale for the Tavern!",
+				"Did everyone see that? Tell them I did it."
+			],
+			"low_hp": [
+				"A flesh wound! For the story!",
+				"This only makes the tale better."
+			]
+		}
+	}
+}

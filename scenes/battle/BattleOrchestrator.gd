@@ -563,6 +563,9 @@ func _run_auto_hero_turn(ally: CharacterData) -> void:
 	var action = AutoBattler.hero_policy(ally, context)
 	if not action:
 		return
+	if ally.has_meta("temperament_bark"):   # e.g. a coward freezing up
+		ui_controller.add_combat_log(String(ally.get_meta("temperament_bark")), "orange")
+		ally.remove_meta("temperament_bark")
 	if action.type == BattleAction.ActionType.UNISON:
 		ui_controller.add_combat_log("%s calls the party together!" % ally.name, "gold")
 	var result: ActionExecutor.Outcome = await action_executor.execute(action, true)

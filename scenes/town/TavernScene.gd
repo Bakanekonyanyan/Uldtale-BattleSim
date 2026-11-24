@@ -239,6 +239,11 @@ func _on_rumours() -> void:
 	var t := ""
 	for r in RumorManager.list(player_character):
 		t += "• %s\n   [color=gray]%d day%s left%s[/color]\n\n" % [RumorManager.text(r), max(0, int(r.expires) - day), "" if int(r.expires) - day == 1 else "s", " - already stirred up" if r.get("spawned", false) else ""]
+	var talk = TemperamentManager.talk(player_character, 10)
+	if not talk.is_empty():
+		t += "[b]Tavern talk[/b]\n"
+		for l in talk:
+			t += "[color=gray]Day %d[/color]  %s\n" % [int(l.day), l.text]
 	var d = AcceptDialog.new()
 	d.title = "Rumours"
 	var label = RichTextLabel.new()

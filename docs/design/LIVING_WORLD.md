@@ -513,3 +513,54 @@ At most one relic per past legend per world.
 - Story mode (later) **casts** its roles from this living population.
 - Class depth makes every adventurer - you and the NPCs - a distinct person
   in a fight, not just a name.
+
+---
+
+## I. Temperament: traits that act, fight, grow and speak (built)
+
+`TemperamentManager.gd` + `data/temperament.json` (tab Temperament). Traits used
+to nudge job odds and town chemistry; now each one does something.
+
+**Town scenes** (2 a day among adventurers in town; one per actor):
+
+| Trait | Scene | What happens |
+|---|---|---|
+| Kind | tend the wounded / tend you | an injured adventurer heals sooner (memory: helped_me); if you're injured and they like you (25+), your injury heals a day sooner |
+| Greedy | pickpocket / pickpocket you | 40% caught: robbed_me, -25 affinity; if they dislike you (-10 or less) they lift 2% of your coin (50% you notice) |
+| Boastful | brag | Ambitious/Aloof/Honorable listeners -3, Cheerful/Kind +2 |
+| Scholarly | teach | a lower-level friend gains XP (taught_me) |
+| Devout | vigil | for a recent death: mourners grow closer to them and grieve 3 days less |
+| Cheerful | celebrate | a party for a recent promotion or boss kill: guests grow closer |
+| Cruel | bully | the weakest suffer (bullied_me); a Kind/Honorable/Loyal witness may stand up for them (stood_up_for_me) |
+| Honorable | mediate | bitter rivals (-55 or worse) are made to talk (+8) |
+| Loyal | defend a name | erases a listener's second-hand slander about a friend |
+| Ambitious | spar | challenges someone just above them on the Ledger; winner gains points; sore losers resent it |
+| Reckless | carouse | a drinking contest; sometimes the loser is out for a day |
+| Lazy | freeload | drinks on someone's tab: the stingy mind, the generous don't |
+| Cowardly | seek protection | attaches to a stronger adventurer |
+| Cautious | fuss | lectures the Reckless (friends like it, strangers don't) |
+| Aloof | train alone | a little XP |
+
+Scenes go to **Tavern talk** (the Rumours dialog at the Tavern); headline
+moments (someone standing up to a bully, a mediation, a vigil, a theft,
+anything involving you) also reach the town news.
+
+**Battle temperament** (companions on Auto and NPCs in real fights): Cowardly
+may freeze below 30% HP (35%); Loyal heals you below 45%; Kind heals any ally
+below 55%; Cautious guards when hurt; Reckless never guards; Cruel finishes the
+weakest foe; Lazy sometimes just swings.
+
+**Growth**: experiences are counted per adventurer (rescued someone, was
+saved, near death, boss kills, wronged, a friend died, passed over, weeks in a
+company, lost a spar, reached the top rank, taught, bullied). Data rules turn
+them into trait changes: a Coward who rescues a friend becomes Cautious; two
+near-deaths make the Reckless careful; the Kind wronged too often turn Aloof;
+the Cruel saved by someone they mocked soften; the bullied may pass it on.
+Exclusive traits are respected; if you knew the old trait you notice the new.
+
+**Voice**: every trait has lines for greeting, chat, battle start, victory and
+low HP; 40% of lines come from a trait instead of the archetype.
+
+Tuning (5 simulated years, 3 seeds): ~2 scenes a day, 15-35 headline items a
+year, 23-31 trait changes over 5 years (most adventurers change at most once),
+and each world keeps its own temperament (one quarrelsome, one close-knit).

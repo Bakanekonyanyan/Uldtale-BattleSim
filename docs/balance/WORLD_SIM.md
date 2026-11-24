@@ -78,3 +78,11 @@ Reading it:
   killings) persist, which is what matters for behaviour.
 - The sim's player is passive apart from `--social`; your own actions (gifts,
   rescues, bounties) add more memories and ripples in real play.
+
+## Temperament (trait scenes, growth)
+
+`WORLD TALK` and `WORLD GROWTH` lines report Tavern talk kept and trait
+changes by rule. After tuning (5 years, `--social=0.3`, seeds 1-3): sworn pairs
+5-10 and rivals 3-11 at year 5; 3-11 feuds begun; 23-31 trait changes; about
+60-70 ms per simulated day (scenes add ~25 ms) and a ~110 KB world state.
+

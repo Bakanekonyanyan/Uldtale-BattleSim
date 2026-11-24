@@ -53,6 +53,9 @@ func _ready() -> void:
 		t_total += Time.get_ticks_usec() - t0
 		var news: Array = WorldClock.state(p).news
 		for e in news:
+			if String(e.get("kind", "")) == "tavern":
+				tally["tavern_news"] = int(tally.get("tavern_news", 0)) + 1
+				year_tally["tavern_news"] = int(year_tally.get("tavern_news", 0)) + 1
 			for k in EVENTS:
 				if String(e.text).contains(EVENTS[k]):
 					tally[k] = int(tally.get(k, 0)) + 1
@@ -69,6 +72,12 @@ func _ready() -> void:
 			year_tally.clear()
 			t_total = 0
 	print("WORLD EVENTS|", JSON.stringify(tally))
+	print("WORLD TALK|", AdventurerManager.state(p).get("temperament", {}).get("talk", []).size(), " kept")
+	var growth := {}
+	for n in AdventurerManager.all_adventurers(p):
+		for g in n.get("growth", []):
+			growth[g] = int(growth.get(g, 0)) + 1
+	print("WORLD GROWTH|", JSON.stringify(growth))
 	print("WORLD CROWNS|", ", ".join(crowns))
 	print("WORLD DONE")
 	get_tree().quit()

@@ -15,6 +15,8 @@ static func build_hero(npc: Dictionary) -> CharacterData:
 	while p.attribute_points > 0:
 		_spend_point(p)
 	_spend_talents(p, int(npc.get("branch", 0)), npc)
+	if not npc.get("traits", []).is_empty():
+		p.set_meta("traits", npc.get("traits", []).duplicate())   # temperament in battle
 	var floor_num = max(1, int(npc.get("gear_floor", 1)))
 	for attempt in range(6):   # a rolled weapon may not suit the class: reroll
 		var main = ClassEquipmentBias.get_biased_equipment_id(p.character_class, "main_hand")
@@ -194,7 +196,74 @@ static func potion_policy(p: CharacterData) -> BattleAction:
 ## strongest damage skill -> attack the weakest enemy.
 ## use_setup = false plays "damage only" (no buffs/debuffs) - the balance sim
 ## compares both styles. Companions on Auto and NPC battles use set-ups.
+## A hero's move. Adventurers (meta "traits") fight by temperament
+## (data/temperament.json "battle"): a hook before and after the usual policy.
 static func hero_policy(p: CharacterData, ctx: BattleContext, use_setup := true, policy := "smart") -> BattleAction:
+	var traits: Array = p.get_meta("traits", []) if p.has_meta("traits") else []
+	if not traits.is_empty():
+		var pre = _temperament_pre(p, ctx, traits)
+		if pre:
+			return pre
+	var act = _hero_policy_core(p, ctx, use_setup, policy)
+	if act and not traits.is_empty():
+		act = _temperament_post(p, ctx, traits, act)
+	return act
+
+static func _tcfg(t: String) -> Dictionary:
+	var d = DataRegistry.get_data("temperament")
+	return d.get("battle", {}).get(t, {}) if d is Dictionary else {}
+
+## Usable healing skill that can target an ally (or null).
+static func _ally_heal(p: CharacterData) -> Skill:
+	for sn in p.get_battle_skills():
+		var s: Skill = p.get_skill_instance(sn)
+		if s and s.type == Skill.SkillType.HEAL and s.target in [Skill.TargetType.ALLY, Skill.TargetType.ALL_ALLIES] \
+				and p.get_skill_cooldown(sn) == 0 and s.can_afford(p):
+			return s
+	return null
+
+static func _temperament_pre(p: CharacterData, ctx: BattleContext, traits: Array) -> BattleAction:
+	var hp = float(p.current_hp) / max(1, p.max_hp)
+	if "cowardly" in traits:
+		var c = _tcfg("cowardly")
+		if hp < float(c.get("freeze_below", 0.3)) and RandomManager.randf() < float(c.get("chance", 0.35)):
+			p.set_meta("temperament_bark", "%s freezes up and cowers!" % p.name)
+			return BattleAction.defend(p)
+	# the loyal and the kind look after others first
+	for t in ["loyal", "kind"]:
+		if not t in traits:
+			continue
+		var below = float(_tcfg(t).get("protect_below" if t == "loyal" else "heal_below", 0.5))
+		var heal = _ally_heal(p)
+		if heal == null:
+			continue
+		var hurt = ctx.get_heroes().filter(func(h): return h != p and h.is_alive() and float(h.current_hp) / max(1, h.max_hp) < below)
+		if t == "loyal":
+			hurt = hurt.filter(func(h): return h == ctx.player)
+		if not hurt.is_empty():
+			hurt.sort_custom(func(a, b): return float(a.current_hp) / max(1, a.max_hp) < float(b.current_hp) / max(1, b.max_hp))
+			return BattleAction.skill(p, heal, ctx.get_heroes().filter(func(h): return h.is_alive()) if heal.target == Skill.TargetType.ALL_ALLIES else [hurt[0]])
+	if "cautious" in traits:
+		var c2 = _tcfg("cautious")
+		if hp < float(c2.get("guard_below", 0.35)) and RandomManager.randf() < float(c2.get("chance", 0.5)):
+			return BattleAction.defend(p)
+	return null
+
+static func _temperament_post(p: CharacterData, ctx: BattleContext, traits: Array, act: BattleAction) -> BattleAction:
+	var living = ctx.get_living_enemies()
+	if living.is_empty():
+		return act
+	living.sort_custom(func(a, b): return a.current_hp < b.current_hp)
+	if "reckless" in traits and act.type == BattleAction.ActionType.DEFEND:
+		return BattleAction.attack(p, living[0])   # the reckless never guard
+	if "lazy" in traits and act.type == BattleAction.ActionType.SKILL and RandomManager.randf() < float(_tcfg("lazy").get("basic_chance", 0.15)):
+		return BattleAction.attack(p, living[0])
+	if "cruel" in traits and act.targets.size() == 1 and act.targets[0] in living and act.type in [BattleAction.ActionType.ATTACK, BattleAction.ActionType.SKILL]:
+		act.targets.clear()
+		act.targets.append(living[0])   # finish the weakest
+	return act
+
+static func _hero_policy_core(p: CharacterData, ctx: BattleContext, use_setup := true, policy := "smart") -> BattleAction:
 	var living = ctx.get_living_enemies()
 	if living.is_empty():
 		return null

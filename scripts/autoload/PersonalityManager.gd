@@ -153,6 +153,10 @@ func line(npc: Dictionary, context: String) -> String:
 		return ""
 	var lines: Array = stage_data(npc).get("voice", {}).get(context, [])
 	if lines.is_empty():
+		# their traits speak too, not just their archetype (TemperamentManager)
+		var tl = TemperamentManager.trait_line(npc, context)
+		if tl != "" and RandomManager.randf() < float(TemperamentManager.cfg().get("trait_voice_share", 0.4)):
+			return _fmt(tl, npc)
 		lines = archetype(String(p(npc).archetype)).get("voice", {}).get(context, [])
 	if lines.is_empty():
 		return ""

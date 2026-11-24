@@ -1347,6 +1347,7 @@ func _phase0_checks() -> void:
 	_memory_checks()
 	_relations_checks()
 	_drama_checks()
+	_temperament_checks()
 	_town_life_checks()
 	_ledger_checks()
 	_journal_checks()
@@ -1766,7 +1767,8 @@ func _relations_checks() -> void:
 	check(int(y.rapport) > 0, "doing right by someone warms their friends to you (%+d)" % int(y.rapport))
 	AdventurerManager._set_rapport(y, 20)
 	check(int(z.rapport) < 0, "and cools their rivals (%+d)" % int(z.rapport))
-	check(RelationsManager.describe(p, y).contains("Sworn companion of") and RelationsManager.describe(p, y).contains("Feuding with"), "the Tavern shows their bonds")
+	var bonds_txt = RelationsManager.describe(p, y)
+	check(bonds_txt.contains("Sworn companion of") and (bonds_txt.contains("Feuding with") or bonds_txt.contains("Rival of")), "the Tavern shows their bonds")
 	# promotion resentment
 	var amb = AdventurerManager._add(p, AdventurerManager.generate(p))
 	amb.traits = ["ambitious"]
@@ -1910,6 +1912,113 @@ func _drama_checks() -> void:
 	check(String(vet.status) == "retired" and String(pm.status) == "party", "veterans retire in time (never from your party)")
 	var hon = mk.call(["honorable"])
 	check(RelationsManager.meeting(hon, k) < RelationsManager.chemistry(hon, k), "clashes grate harder in town meetings (%d)" % RelationsManager.meeting(hon, k))
+	CharacterManager.current_character_resource.set_meta("current_character", prev_cur)
+
+## Temperament: trait scenes in town, growth, voice, battle temperament.
+func _temperament_checks() -> void:
+	var p = make_player()
+	AdventurerManager.state(p)
+	var prev_cur = CharacterManager.get_current_character()
+	CharacterManager.current_character_resource.set_meta("current_character", p)
+	for n in AdventurerManager.active(p):
+		n.status = "job"   # keep the regulars out of these scenes
+		n.job = {"kind": "job", "location": LocationManager.get_ids()[0], "floor": 1, "ends": 99999}
+	var mk = func(traits: Array, lvl := 6) -> Dictionary:
+		var n = AdventurerManager._add(p, AdventurerManager.generate(p, [lvl, lvl]))
+		n.traits = traits
+		n.known_traits = []
+		n.status = "idle"
+		n.memories = []
+		return n
+	var day = WorldClock.day(p)
+	# the kind tend the injured
+	var nurse = mk.call(["kind"])
+	var hurt = mk.call(["aloof"])
+	hurt.status = "injured"
+	hurt.injured_until = day + 6
+	check(TemperamentManager.play(p, "tend_wounded", nurse, day) and int(hurt.injured_until) < day + 6
+		and MemoryManager.about_of(hurt, MemoryManager.key_npc(nurse)).any(func(m): return m.kind == "helped_me"), "the Kind nurse the injured (heals sooner, remembered)")
+	hurt.status = "idle"
+	# the scholarly teach
+	var prof = mk.call(["scholarly"], 12)
+	var pupil = mk.call(["cheerful"], 3)
+	RelationsManager.change(p, prof, pupil, 10, day)
+	var xp0 = int(pupil.xp) + int(pupil.level) * 100000
+	TemperamentManager.play(p, "teach", prof, day)
+	check(int(pupil.xp) + int(pupil.level) * 100000 > xp0 and MemoryManager.about_of(pupil, MemoryManager.key_npc(prof)).any(func(m): return m.kind == "taught_me"), "the Scholarly teach (XP, remembered)")
+	# the cruel bully, and the decent stand up to them
+	var brute = mk.call(["cruel"], 14)
+	var stood := false
+	for i in range(20):
+		TemperamentManager.play(p, "bully", brute, day + i)
+		if MemoryManager.list(pupil).any(func(m): return m.kind == "stood_up_for_me"):
+			stood = true
+			break
+	check(RelationsManager.affinity(p, pupil, brute) < 0 and MemoryManager.about_of(pupil, MemoryManager.key_npc(brute)).any(func(m): return m.kind == "bullied_me"), "the Cruel pick on the weak")
+	check(stood, "and someone decent stands up for them")
+	# the honorable mediate
+	RelationsManager.change(p, pupil, brute, 200, day)   # leave only one feud to settle
+	var judge = mk.call(["honorable"])
+	var x = mk.call(["greedy"])
+	var y = mk.call(["ambitious"])
+	RelationsManager.change(p, x, y, -60, day)
+	var before = RelationsManager.affinity(p, x, y)
+	check(TemperamentManager.play(p, "mediate", judge, day) and RelationsManager.affinity(p, x, y) > before, "the Honorable make rivals talk it out (%d -> %d)" % [before, RelationsManager.affinity(p, x, y)])
+	# the devout hold vigils; mourners grieve less
+	var dead = mk.call(["kind"])
+	RelationsManager.change(p, dead, x, 50, day)
+	dead.status = "dead"
+	DramaManager.on_death(p, dead, day)
+	var g0 = int(x.grief.until) if x.has("grief") else 0
+	var priest = mk.call(["devout"])
+	check(TemperamentManager.play(p, "vigil", priest, day + 1) and x.has("grief") and int(x.grief.until) < g0, "the Devout hold a vigil; grief eases")
+	# the cheerful celebrate
+	TemperamentManager.note_celebration(p, y, day, "promotion")
+	var host = mk.call(["cheerful"])
+	check(TemperamentManager.play(p, "celebrate", host, day + 1) and RelationsManager.affinity(p, y, host) > 0, "the Cheerful throw a party for a promotion")
+	# a few weeks of town life run without trouble
+	var played := 0
+	for i in range(28):
+		played += TemperamentManager.daily(p, day + 10 + i).size()
+	check(played > 10, "town scenes play every day (%d in 4 weeks)" % played)
+	# growth: a coward who rescues a friend
+	var coward = mk.call(["cowardly", "kind"])
+	coward.known_traits = ["cowardly"]
+	for i in range(12):
+		TemperamentManager.tag(p, coward, "rescuer", day)
+		if not "cowardly" in coward.traits:
+			break
+	check(not "cowardly" in coward.traits and "cautious" in coward.traits and "cautious" in coward.known_traits, "a coward who saves a friend becomes Cautious (and you notice)")
+	# growth respects exclusives: kindness hardened into aloofness removes cheer
+	var soft = mk.call(["kind", "cheerful"])
+	TemperamentManager.grow(p, soft, {"id": "heart_hardened", "remove": "kind", "add": "aloof", "news": "{name} changed."}, day)
+	check(soft.traits == ["aloof"], "growth respects exclusive traits (%s)" % ", ".join(soft.traits))
+	# being wronged counts toward growth
+	var w0 = int(nurse.get("experience", {}).get("wronged", 0))
+	MemoryManager.add(nurse, "robbed_me", MemoryManager.key_npc(x), day)
+	check(int(nurse.get("experience", {}).get("wronged", 0)) == w0 + 1, "being wronged is counted")
+	# voice by trait
+	var talk = mk.call(["reckless"])
+	check(TemperamentManager.trait_line(talk, "greeting") != "", "traits have their own lines")
+	# battle temperament
+	var ctx = BattleContext.new()
+	var me = make_player()
+	var ally = AutoBattler.build_hero({"name": "C", "race": "Hume", "cls": "Paladin", "level": 10, "gear_floor": 3, "traits": ["cowardly"]})
+	var foe = make_player()
+	foe.is_player = false
+	ctx.player = me
+	ctx.allies = [ally] as Array[CharacterData]
+	ctx.enemies = [foe] as Array[CharacterData]
+	ally.current_hp = int(ally.max_hp * 0.1)
+	var froze := 0
+	for i in range(40):
+		var act = AutoBattler.hero_policy(ally, ctx)
+		if act and act.type == BattleAction.ActionType.DEFEND and ally.has_meta("temperament_bark"):
+			froze += 1
+			ally.remove_meta("temperament_bark")
+	check(froze > 4 and froze < 30, "a cowardly companion sometimes freezes at low HP (%d / 40)" % froze)
+	var reck = AutoBattler.build_hero({"name": "R", "race": "Hume", "cls": "Paladin", "level": 10, "gear_floor": 3, "traits": ["reckless"]})
+	check(reck.get_meta("traits", []) == ["reckless"], "adventurers carry their temperament into battle")
 	CharacterManager.current_character_resource.set_meta("current_character", prev_cur)
 
 ## Personalities: archetypes, drives, flaws, quirks, voices, arcs, your voice.

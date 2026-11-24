@@ -307,6 +307,7 @@ func separate(player: CharacterData, a: Dictionary, b: Dictionary, day: int) -> 
 func on_death(player: CharacterData, dead: Dictionary, day: int, killer: Dictionary = {}) -> void:
 	if player == null:
 		return
+	TemperamentManager.note_death(player, dead, day)
 	if not killer.is_empty():
 		dead["died_at"] = {"by": int(killer.id)}
 	var g = _c("grief")
@@ -318,6 +319,7 @@ func on_death(player: CharacterData, dead: Dictionary, day: int, killer: Diction
 			MemoryManager.add(m, "killed_my_friend", MemoryManager.key_npc(killer), day)
 			RelationsManager.change(player, m, killer, int(_c("feuds").get("killer_affinity", -50)), day)
 		m["grief"] = {"about": int(dead.id), "until": day + _range(g.get("days", [14, 28])), "partner": int(m.get("partner", -1)) == int(dead.id)}
+		TemperamentManager.tag(player, m, "friend_died", day)
 	if int(dead.get("partner", -1)) >= 0:
 		var p = partner_of(player, dead)
 		if not p.is_empty():
@@ -506,6 +508,7 @@ func confront(player: CharacterData, a: Dictionary, b: Dictionary, day: int, for
 	if force_lethal != null:
 		lethal = bool(force_lethal)
 	MemoryManager.add(loser, "beat_me", MemoryManager.key_npc(winner), day)
+	TemperamentManager.tag(player, loser, "lost_spar", day)
 	if lethal:
 		loser.status = "dead"
 		loser.died_day = day

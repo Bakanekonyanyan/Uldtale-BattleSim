@@ -146,6 +146,31 @@
 			"text": "heard ugly things about {about}",
 			"you_text": "",
 			"hint": ""
+		},
+		"bullied_me": {
+			"weight": -12,
+			"cap": -40,
+			"grudge": true,
+			"text": "{about} bullied them",
+			"you_text": "",
+			"mine_text": "{about} bullied you",
+			"hint": ""
+		},
+		"taught_me": {
+			"weight": 8,
+			"cap": 30,
+			"text": "learned a great deal from {about}",
+			"you_text": "You taught them",
+			"mine_text": "{about} taught you",
+			"hint": ""
+		},
+		"stood_up_for_me": {
+			"weight": 15,
+			"cap": 40,
+			"text": "{about} stood up for them",
+			"you_text": "You stood up for them",
+			"mine_text": "{about} stood up for you",
+			"hint": "seems to think you're one of the good ones"
 		}
 	},
 	"heard_hint": "has heard things about you",

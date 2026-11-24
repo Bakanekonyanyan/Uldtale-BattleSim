@@ -275,6 +275,7 @@ func simulate_day(player: CharacterData, day: int) -> void:
 	RelationsManager.prune(player)
 	RelationsManager.town_day(player, day)
 	DramaManager.daily(player, day)
+	TemperamentManager.daily(player, day)
 	# newcomers keep the guild alive
 	var st: Dictionary = _s("settings")
 	var n_active = active(player).size()
@@ -440,6 +441,9 @@ func _resolve_job(player: CharacterData, npc: Dictionary, day: int) -> void:
 					_history(m, day, "Slew the boss of %s floor %d%s." % [where, fl, _with(members, m)])
 					PersonalityManager.on_boss(player, m, String(j.location))
 					DramaManager.on_npc_boss(player, m, String(j.location), fl, day)
+					TemperamentManager.tag(player, m, "boss_win", day)
+					if lead:
+						TemperamentManager.note_celebration(player, m, day, "boss")
 					if lead and (fl >= 5 or m.get("rival", false) or not tags(m).is_empty()):
 						_news(player, "%s (%s) slew the boss of %s floor %d%s." % [m.name, m.rank, where, fl, _with(members, m)])
 				_:
@@ -470,6 +474,9 @@ func _promote(player: CharacterData, npc: Dictionary, day: int) -> void:
 		return
 	npc.rank = nxt
 	_history(npc, day, "Promoted to %s." % RankManager.display(nxt))
+	TemperamentManager.note_celebration(player, npc, day, "promotion")
+	if RankManager.rank_index(nxt) >= RankManager.rank_ids().size() - 1:
+		TemperamentManager.tag(player, npc, "top_rank", day)
 	RelationsManager.on_promoted(player, npc, day)
 	PersonalityManager.on_rank(player, npc, nxt)
 	var ahead = RankManager.rank_index(nxt) > RankManager.get_rank_index(player)
@@ -512,6 +519,8 @@ func _fate(player: CharacterData, npc: Dictionary, day: int, big: bool, where: S
 		npc.status = "injured"
 		npc.injured_until = day + days
 		_history(npc, day, "Dragged back from %s, injured (%d days)." % [where, days])
+		if big:
+			TemperamentManager.tag(player, npc, "near_death", day)
 		if big and (friend or "Rival" in tags(npc)):
 			_news(player, "%s was carried back from %s, badly hurt." % [npc.name, where])
 

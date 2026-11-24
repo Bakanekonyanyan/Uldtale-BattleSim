@@ -52,6 +52,9 @@ func add(holder, k: String, about: String, day: int = -1, weight_override = null
 	if day < 0:
 		var pl = CharacterManager.get_current_character()
 		day = WorldClock.day(pl) if pl else 1
+	# being wronged leaves a mark on who they are (TemperamentManager growth)
+	if holder is Dictionary and kd.get("grudge", false) and heard_from == "" and k != "bullied_me":
+		TemperamentManager.tag(CharacterManager.get_current_character(), holder, "wronged", day)
 	var mems = list(holder)
 	for m in mems:
 		if m.kind == k and m.about == about and String(m.get("heard_from", "")) == heard_from:
