@@ -162,9 +162,7 @@ remembers you left her in the Troll Caves - day 34"), and what they've heard
 - From rapport 40 (Friend): the full list - what they remember about you and
   what they've heard (with who told them).
 
-### Still open (B)
-1. Should the **player** have memories too (e.g. a journal of people who
-   wronged you, used by storylets)?
+### Decided (B): the player has memories too - see section G.
 
 ---
 
@@ -188,9 +186,7 @@ Capped at ~500 entries (low-importance ones pruned first).
 - **Bonds and feuds**: the social web over time.
 - **Hall of the fallen**: epitaphs written from traits.
 
-### Open questions (C)
-1. Should the Chronicle carry over into the **next world** (Hall of Fame,
-   legacy) beyond your own entry?
+### Decided (C): it carries over as a Legend - see section H.
 
 ---
 
@@ -270,6 +266,133 @@ re-spec against you (rule B3).
 traits, so the Ledger's top adventurers have recognisable builds.
 
 ---
+
+## F. Personality depth: archetypes, drives and arcs
+
+Traits alone (Reckless, Kind, Greedy...) make NPCs act differently; they don't
+make them feel like *characters*. Each adventurer gets five layers, so two
+Kind Clerics can still be completely different people:
+
+| Layer | What it is | Example |
+|---|---|---|
+| **Archetype** | a recognisable anime/manga trope: how they present and how they grow | Tsundere, Hot-blooded Rival, Kuudere |
+| **Traits** (2-3, existing) | how they behave | Reckless, Loyal |
+| **Drive** | what they want - a long-term goal the sim pursues | become Champion, avenge a sibling, pay a family debt, find a lost mentor |
+| **Flaw / fear** | what can break them | pride, fear of abandonment, fear of deep water (a location they avoid) |
+| **Quirks** (1-2) | small, memorable, sometimes mechanical | always orders milk at the Tavern; names every attack; collects goblin teeth |
+
+### Archetypes (first set - data, editable)
+
+Each archetype defines: trait weights (what traits it tends to roll with),
+a **voice** (lines for contexts), behaviour hooks, and an **arc** (stages
+unlocked by memories and rapport).
+
+| Archetype | Presents as | Behaviour hooks | Arc |
+|---|---|---|---|
+| **Tsundere** | prickly, denies caring | their *mood* reads colder than their real opinion until rapport 60; gifts "rejected" but still count | Denial → Slip (a storylet where they let it show) → Honest |
+| **Kuudere** | cool, quiet, logical | slow rapport gains from chat; big ones from shared victories | Distant → Trusting → Fiercely loyal (never leaves your party) |
+| **Dandere** | shy, says little | needs 2x chats; once a friend, the most loyal | Silent → Opens up → Speaks up for you (defends you in gossip) |
+| **Genki** | bursting with energy | cheers the party (small Link gain at battle start) | Reckless joy → learns from a loss → steady light |
+| **Hot-blooded Rival** | loud, competitive, honest | rivalry grows when you're ahead on the Ledger; challenges you to duels | Rival → Respect (2 duels each way) → **Rival-friend** (a special duo tech) |
+| **Stoic Swordmaster** | few words, all discipline | prefers solo jobs; respects strength | Lone wolf → Accepts a party → Mentor to a younger NPC |
+| **Noble Heir** (ojou-sama / young lord) | proud, refined, generous with money | spends gold freely; looks down on low ranks | Arrogant → Humbled (a defeat) → Noblesse oblige |
+| **Chuunibyou** | dramatic, grand titles, secret "dark powers" | names attacks in the combat log; gives themself epithets | Delusion → a real moment of greatness → embraces it, half-joking |
+| **Battle Maniac** | lives for a strong opponent | seeks the deepest floors and the Ledger's top; may challenge the Champion | Thrill-seeker → finds a worthy foe (you or a boss) → dies fighting, or settles |
+| **Lazy Genius** | naps, shirks, brilliant when it counts | takes few jobs; very high success on the ones it takes | Coasting → something they care about is threatened → full power |
+| **Big Sibling** (aniki / aneki) | protective, teasing | helps low-rank adventurers; shows up when you're at low HP | Protector → loses someone → over-protective, or lets go |
+| **Mysterious Stranger** | secretive past | hidden drive revealed in stages | Secret → Clue → Revelation (a storylet) |
+| **Comic Coward** | scared of everything | flees jobs often; somehow survives | Coward → one brave moment (a big story beat) → still scared, but stays |
+| **Airhead** (tennen) | cheerful, oblivious | random harmless mishaps in the news | — (a constant; their arc is everyone else's) |
+| **Veteran Mentor** | older, tired, wise | teaches: friends gain XP faster | Retired spirit → one last job → passes the torch (or falls) |
+| **Gap Character** | scary-looking, soft inside | "intimidating" first impression lowers starting rapport; gifts of sweets x2 | Feared → Understood |
+| **Devoted Admirer** | idolises the top adventurer | follows the Ledger #1 (could be you) | Fan → Disciple → Rival to their idol |
+| **Yandere** *(optional, off by default)* | sweet, possessive | jealous of your other bonds; may sabotage them | — (a dark trope; a world setting) |
+
+### Voice
+Lines per archetype per **context**: greeting, chat, join party, battle start,
+low HP, ally down, victory, gift (liked / disliked), refuse, grief, taunt
+(rivals / nemeses), farewell. 3 lines per context to start (~40 lines per
+archetype). Used in the Tavern, as companion barks in the combat log, in the
+news and in storylets. `{name}`, `{you}`, `{place}` placeholders.
+
+### Drives and flaws drive the simulation
+- A **drive** biases job choice and decisions (an avenger takes jobs at the
+  place their sibling died; a debtor takes the best-paying work and may steal
+  when desperate).
+- Reaching a drive is a Chronicle moment and changes them (a new drive, or
+  retirement).
+- A **flaw** can trigger under pressure: Pride → refuses help / won't retreat;
+  Fear of abandonment → a huge grudge if a friend leaves them; a phobia →
+  avoids a location, or panics there (job failure chance up).
+
+### Arcs
+- Each arc stage has a **trigger** (memory, rapport, event) and a **change**:
+  new voice lines, a behaviour change, sometimes a trait swap or a new skill.
+- Some stage changes are staged as **storylets** (the Tsundere's slip, the
+  Stranger's revelation, the Coward's brave moment).
+- Arcs are why the same archetype is a different story each time: *who* they
+  meet and *what* happens to them decides how far they get.
+
+---
+
+## G. Player memory
+
+The player keeps memories too, with the same structure as NPCs:
+- `helped_me`, `saved_me`, `robbed_me`, `betrayed_me`, `beat_me`,
+  `killed_my_friend`, `stood_by_me`, `my_first_crown`... about NPCs, places
+  and bosses.
+- Core memories never fade; others fade like an NPC's.
+
+Used by:
+- **A "People" page in the Journal**: allies, debts owed (to and by you),
+  grudges, the fallen.
+- **Storylets and story mode**: "confront the one who killed your companion",
+  "repay the debt to Kara".
+- **Dialogue choices**: forgive or hold a grudge - which shapes your
+  reputation (honour, mercy, boldness) and how NPC archetypes see you.
+- **The Legend** (below).
+
+---
+
+## H. Legends: the Chronicle carried into the next world
+
+When your character's story ends (retirement, or death in a hardcore world),
+the world's Chronicle is distilled into a **Legend**: your story retold in a
+mythic voice, kept across playthroughs.
+
+### Writing the Legend
+- Picks the most important beats by score: origin, first rival, bonds, great
+  deeds, tragedies, crowns, the end.
+- Each beat type has legend-voice templates:
+  "In the {year} year of {season}, when {boss} still ruled {place}, there came
+  a {race} {class} named {name}..."; "{name} and {friend} swore an oath beneath
+  the Guild's lamps..."; "But {rival} would not be outdone...".
+- **Epithets** earned from deeds become part of the name: *the Unbroken*,
+  *Trollbane*, *Kingslayer*, *the Twice-Crowned*. NPCs earn them too.
+
+### Carrying it over
+- Legends are stored outside the save (`user://legends.json`) and kept
+  across worlds.
+- In a new world:
+  - **Bards** at the Tavern tell your past Legends (and your past
+    companions' and rivals').
+  - A **Hall of Legends** in the Guild: statues and their stories.
+  - NPCs reference them ("You fight like Mira the Unbroken").
+  - **Heirs**: sometimes a generated adventurer is the descendant or
+    apprentice of a past legend's companion or rival - with a drive tied to
+    that story (e.g. surpass their grandmother's record).
+  - **Relics**: a past legend's signature item can be found as a named relic
+    (flavour first, power modest).
+
+---
+
+## Open questions (F-H)
+1. **Yandere**: include as an optional world setting, or leave out?
+2. **Writing**: I draft archetype voices, storylets and legend templates; you
+   edit. Or do you want to write some yourself?
+3. **The player's own voice**: is your character silent (choices only), or
+   do you pick your own archetype so your lines and choices have a voice?
+4. **Relics**: flavour-only, or modestly powerful heirlooms?
 
 ## E. How it fits together
 
