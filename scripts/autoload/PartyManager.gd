@@ -93,6 +93,8 @@ func dismiss(player: CharacterData, id: int, reason := "") -> Dictionary:
 		return {"ok": false, "reason": "They aren't in your party."}
 	party_ids(player).erase(id)
 	var n = AdventurerManager.get_npc(player, id)
+	n.erase("guest")
+	n.erase("guest_since")
 	if not n.is_empty() and String(n.status) == "party":
 		n.status = "idle"
 	var day = WorldClock.day(player)
@@ -207,6 +209,8 @@ func _on_expedition_ended(location_id: String, cleared: bool) -> void:
 			n.died_day = day
 			AdventurerManager._history(n, day, "Fell beside %s in %s." % [player.name, where])
 			WorldClock.add_news(player, "%s fell beside you in %s." % [n.name, where], "death")
+			n["died_at"] = {"location": location_id, "floor": DungeonStateManager.current_floor}
+			DramaManager.on_death(player, n, day)
 			continue
 		if kos > 0 or not cleared:
 			var days = AdventurerManager._range(c.get("ko_injury_days", [2, 4]))
@@ -218,5 +222,6 @@ func _on_expedition_ended(location_id: String, cleared: bool) -> void:
 		if int(n.rapport) < int(c.get("leave_below", 20)) and RandomManager.randf() < float(c.get("leave_chance", 0.35)) * AdventurerManager.trait_mult(n, "leave"):
 			dismiss(player, int(n.id), "Left %s's party, unhappy." % player.name)
 			WorldClock.add_news(player, "%s has left your party." % n.name, "guild")
+	DramaManager.on_expedition_end(player, cleared)   # guests go home
 	allies.clear()
 	_kos.clear()

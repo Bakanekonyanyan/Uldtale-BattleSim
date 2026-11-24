@@ -104,6 +104,41 @@ story moment: big affinity/rapport, a Chronicle entry, maybe a storylet.
 
 ### Decided (A): all four - NPC parties, romance, lethal feuds, invitations
 
+**Built (Phase 3):** `DramaManager.gd` + `data/social.json` "drama" (tab Social).
+- **Companies:** each week sworn pairs with no company found one ("The Ember
+  Wardens"); a sworn friend of a member joins if they're friends (40+) with
+  everyone (max 3). Companies take jobs together. A death, retirement or
+  rivalry inside (the member with fewer points walks out) breaks them; under 2
+  members they disband.
+- **Invitations:** 4% a day, a company of 1-2 with a member at rapport 40+ and
+  no grudge invites you if there's room beside your party (3 heroes in all).
+  Tavern "Invitation!" button (Join / Decline / Later) and a Journal entry,
+  valid 3 days. Accepted members join as guests for your next expedition (they
+  go back to work after 4 days if you don't set out), then go home with a
+  `shared_victory` / `shared_hardship` memory of you (and you of them).
+  Declining 3 times: -3 rapport each.
+- **Romance:** as decided; partners pair for jobs x1.5. A partner's death
+  leaves the survivor "widowed" and doubles grief (two outcomes).
+- **Grief:** friends (40+) of the dead get a core memory and 14-28 days of
+  grief (job chance x0.4), then an outcome weighted by traits. Vengeance
+  targets the boss where they died (60% of their jobs go there, 120 days), or
+  the killer (feud set to -80, confrontations x3). If **you** kill that boss
+  they gain `avenged_me` and +25 rapport.
+- **Feuds:** 8% a week for idle feuding pairs (x2 per Cruel, x0.5 per
+  Honorable/Kind). The duel is a real AutoBattler fight; lethal at 25% if
+  either is Cruel or the level gap is 5+. Killers get 3 demerits and drop a
+  rank (`honourable_conduct`); mourners get `killed_my_friend` and -50
+  affinity to the killer; you remember it if they were your friend.
+- **Jealousy:** see Decided (F-H). Weekly, a Yandere in their Jealousy stage
+  resents whoever has rapport with you at least theirs (`jealous_of`, -8
+  affinity); at -20 they slander them to two others; at -40, 25% a week, the
+  rival is beaten in an alley (3-6 days), and 50% of the time works out who
+  did it. Rapport 95 reaches the new "Let Go" stage; below 20 they break and
+  become a nemesis (rivalry 5).
+- Tuning (3 simulated years, ~20 adventurers, 3 seeds): ~8 companies founded,
+  5-6 romances, 10-15 feuds, 1-6 brawls (0-1 lethal), 2-4 vengeance oaths
+  (most fulfilled), 1-2 grieving retirements.
+
 **Romance**
 - Two adventurers who are sworn companions (affinity ≥ 70) and neither in a
   romance may become **partners**: a weekly 10% chance, x2 with a compatible
@@ -296,7 +331,7 @@ traits, so the Ledger's top adventurers have recognisable builds.
 
 ## F. Personality depth: archetypes, drives and arcs (built - first pass)
 
-Built: `PersonalityManager` + `data/personalities.json` (tab Personalities). 18 archetypes with voices (10 contexts) and arcs, 12 drives, 8 flaws, 20 quirks; mods feed the existing trait helpers; Tavern shows personality, mood, arc, quirks, drive/flaw reveals and a greeting; voice lines in chat, gifts, joining/refusing and companion battle barks; arcs advance with rapport (news); drives fulfilled by the sim (avenge, S-rank, Champion); phobias steer job choice; your reputation (archetype from your choices) in the Journal. Not yet: event-triggered arc stages and storylets, Yandere jealousy (needs relationships), drive-specific job logic beyond avenge.
+Built: `PersonalityManager` + `data/personalities.json` (tab Personalities). 18 archetypes with voices (10 contexts) and arcs, 12 drives, 8 flaws, 20 quirks; mods feed the existing trait helpers; Tavern shows personality, mood, arc, quirks, drive/flaw reveals and a greeting; voice lines in chat, gifts, joining/refusing and companion battle barks; arcs advance with rapport (news); drives fulfilled by the sim (avenge, S-rank, Champion); phobias steer job choice; your reputation (archetype from your choices) in the Journal. Not yet: event-triggered arc stages and storylets, drive-specific job logic beyond avenge. (Yandere jealousy: built in Phase 3, see A.)
 
 Traits alone (Reckless, Kind, Greedy...) make NPCs act differently; they don't
 make them feel like *characters*. Each adventurer gets five layers, so two

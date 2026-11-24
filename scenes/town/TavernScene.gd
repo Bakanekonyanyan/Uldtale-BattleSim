@@ -19,6 +19,7 @@ var chat_button: Button
 var drink_button: Button
 var gift_button: Button
 var party_button: Button
+var invite_button: Button
 var gift_menu: PopupMenu
 var status_label: Label
 
@@ -80,6 +81,7 @@ func _build_ui() -> void:
 	details.size = Vector2(640, 416)
 	panel.add_child(details)
 	_button(ui, "Rumours", Vector2(1020, 72), _on_rumours, Vector2(148, 36))
+	invite_button = _button(ui, "Invitation!", Vector2(864, 72), _on_invitation, Vector2(148, 36))
 	chat_button = _button(ui, "Chat", Vector2(496, 526), _on_chat)
 	drink_button = _button(ui, "Buy a Drink", Vector2(656, 526), _on_drink, Vector2(190, 40))
 	gift_button = _button(ui, "Give a Gift...", Vector2(856, 526), _on_gift_pressed, Vector2(170, 40))
@@ -115,6 +117,7 @@ func _refresh() -> void:
 		return
 	var p = player_character
 	header_label.text = "%s   Party: %d/%d   Money: %s" % [WorldClock.short_date(p), PartyManager.party_ids(p).size(), PartyManager.slots(p), p.currency.get_formatted()]
+	invite_button.visible = not DramaManager.invitation(p).is_empty()
 	for i in range(tab_buttons.size()):
 		tab_buttons[i].button_pressed = i == tab
 	var all = AdventurerManager.all_adventurers(p)
@@ -194,6 +197,7 @@ func _update_details() -> void:
 	t += PersonalityManager.describe(n)
 	t += MemoryManager.tavern_text(n, p)
 	t += RelationsManager.describe(p, n)
+	t += DramaManager.describe(p, n)
 	if AdventurerManager.in_town(n) and tab == Tab.ROSTER:
 		var hi = PersonalityManager.say(n, "greeting")
 		if hi != "":
@@ -246,6 +250,32 @@ func _on_rumours() -> void:
 	add_child(d)
 	d.popup_centered(Vector2i(600, 0))
 	d.confirmed.connect(d.queue_free)
+
+## A company has invited you along (DramaManager): join them, decline, or decide later.
+func _on_invitation() -> void:
+	var p = player_character
+	var inv = DramaManager.invitation(p)
+	if inv.is_empty():
+		_refresh()
+		return
+	var c = DramaManager.company(p, int(inv.company))
+	var names = DramaManager.company_members(p, c).map(func(m): return "%s (%s %s, Lv %d)" % [m.name, m.rank, m.cls, int(m.level)])
+	var d = AcceptDialog.new()
+	d.title = c.name
+	d.dialog_text = "%s invite you along on their next job:\n  %s\n\nThey'd fight beside you on your next expedition (taking their share of the gold), then go back to their own work.\nThe offer stands until day %d." % [c.name, "\n  ".join(names), int(inv.expires)]
+	d.ok_button_text = "Join them"
+	d.add_button("Decline", true, "decline")
+	d.add_cancel_button("Later")
+	add_child(d)
+	d.confirmed.connect(func():
+		_after(DramaManager.accept_invitation(p))
+		d.queue_free())
+	d.custom_action.connect(func(_a):
+		status_label.text = DramaManager.decline_invitation(p)
+		_refresh()
+		d.queue_free())
+	d.canceled.connect(d.queue_free)
+	d.popup_centered()
 
 func _after(r: Dictionary) -> void:
 	status_label.text = r.reason

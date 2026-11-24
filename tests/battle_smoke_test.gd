@@ -1272,6 +1272,7 @@ func _phase0_checks() -> void:
 	_personality_checks()
 	_memory_checks()
 	_relations_checks()
+	_drama_checks()
 	_town_life_checks()
 	_ledger_checks()
 	_journal_checks()
@@ -1703,6 +1704,127 @@ func _relations_checks() -> void:
 	y.status = "dead"
 	RelationsManager.prune(p)
 	check(RelationsManager.affinity(p, x, y) > 0, "relations to the dead are kept (for grief)")
+	CharacterManager.current_character_resource.set_meta("current_character", prev_cur)
+
+## Drama: companies, invitations, romance, grief, feuds, jealousy.
+func _drama_checks() -> void:
+	var p = make_player()
+	AdventurerManager.state(p)
+	var prev_cur = CharacterManager.get_current_character()
+	CharacterManager.current_character_resource.set_meta("current_character", p)
+	var mk = func(traits: Array) -> Dictionary:
+		var n = AdventurerManager._add(p, AdventurerManager.generate(p, [6, 6]))
+		n.traits = traits
+		n.status = "idle"
+		n.rapport = 0
+		return n
+	var a = mk.call(["loyal"])
+	var b = mk.call(["honorable"])
+	var c = mk.call(["kind"])
+	# companies
+	RelationsManager.change(p, a, b, 80, 1)
+	DramaManager._form_companies(p, 7)
+	var co = DramaManager.company_of(p, a)
+	check(not co.is_empty() and DramaManager.company_of(p, b) == co and String(co.name).begins_with("The "), "sworn companions found a company (%s)" % co.get("name", "?"))
+	RelationsManager.change(p, b, c, 80, 2)
+	RelationsManager.change(p, a, c, 45, 2)
+	DramaManager._form_companies(p, 14)
+	check(DramaManager.company_members(p, co).size() == 3, "a third sworn friend joins the company")
+	check(DramaManager.job_partners(p, a).size() == 2, "a company takes jobs together")
+	RelationsManager.change(p, a, c, -100, 15)
+	DramaManager._tidy_companies(p, 15)
+	check(DramaManager.company_members(p, co).size() == 2 and (DramaManager.company_of(p, a).is_empty() or DramaManager.company_of(p, c).is_empty()), "a falling-out inside splits the company")
+	# romance
+	var x = mk.call(["kind"])
+	var y = mk.call(["kind"])
+	var z = mk.call(["aloof"])
+	RelationsManager.change(p, x, y, 80, 3)
+	RelationsManager.change(p, x, z, 0, 3)
+	var w = mk.call(["kind"])
+	RelationsManager.change(p, w, z, 80, 3)
+	for i in range(40):
+		DramaManager._romance_week(p, 21 + i * 7)
+	check(int(x.get("partner", -1)) == int(y.id) and int(y.get("partner", -1)) == int(x.id), "sworn companions fall for each other in time")
+	check(not w.has("partner") and not z.has("partner"), "one Aloof heart stops it")
+	RelationsManager.change(p, x, y, -200, 400)
+	DramaManager._romance_week(p, 406)
+	check(not x.has("partner"), "partners who fall out split up")
+	# death and grief
+	RelationsManager.change(p, x, y, 200, 410)
+	DramaManager.pair_up(p, x, y, 410)
+	y.status = "dead"
+	y["died_at"] = {"location": LocationManager.get_ids()[0], "floor": 3}
+	DramaManager.on_death(p, y, 411)
+	check(DramaManager.is_grieving(x) and x.grief.partner and DramaManager.job_chance_mult(x) < 1.0 and not x.has("partner"), "a partner's death: grief (fewer jobs)")
+	check(MemoryManager.about_of(x, MemoryManager.key_npc(y)).any(func(m): return m.kind == "lost_companion" and m.core), "the loss is a core memory")
+	var counts := {}
+	var coward = AdventurerManager.generate(p)
+	coward.traits = ["cowardly", "cautious"]
+	var hothead = AdventurerManager.generate(p)
+	hothead.traits = ["reckless", "loyal"]
+	for i in range(300):
+		var oc = "c_" + DramaManager.grief_outcome(coward)
+		var oh = "h_" + DramaManager.grief_outcome(hothead)
+		counts[oc] = int(counts.get(oc, 0)) + 1
+		counts[oh] = int(counts.get(oh, 0)) + 1
+	check(int(counts.get("c_withdraws", 0)) > int(counts.get("h_withdraws", 0)) and int(counts.get("h_vengeance", 0)) > int(counts.get("c_vengeance", 0)), "grief paths follow traits (%s)" % counts)
+	DramaManager._apply_grief(p, x, "vengeance", y, 430)
+	check(x.has("vengeance") and String(x.vengeance.location) == String(y.died_at.location), "vengeance: they swear to kill the boss where their partner fell")
+	check(DramaManager.describe(p, x).contains("sworn to slay"), "the Tavern shows it")
+	x.rapport = 0
+	DramaManager._on_player_floor_cleared(String(y.died_at.location), 3)
+	check(not x.has("vengeance") and int(x.rapport) >= 25 and MemoryManager.about_of(x, "you").any(func(m): return m.kind == "avenged_me"), "you killing that boss is never forgotten")
+	DramaManager._apply_grief(p, x, "hardens", y, 440)
+	check(x.traits.any(func(t): return t in ["aloof", "cruel"]), "or grief hardens them")
+	# lethal feuds
+	var k = mk.call(["cruel"])
+	var v = mk.call(["kind"])
+	var vf = mk.call(["loyal"])
+	k.rank = RankManager.rank_ids()[2]
+	RelationsManager.change(p, v, vf, 60, 450)
+	RelationsManager.change(p, k, v, -90, 450)
+	var res = DramaManager.confront(p, k, v, 451, true)
+	var killer: Dictionary = res.winner
+	var victim: Dictionary = res.loser
+	check(String(victim.status) == "dead" and int(killer.get("demerits", 0)) >= 3, "a lethal feud: a death, and the Guild punishes the killer")
+	if victim == v:
+		check(RankManager.rank_index(String(killer.rank)) == 1 and MemoryManager.about_of(vf, MemoryManager.key_npc(killer)).any(func(m): return m.kind == "killed_my_friend"), "the killer drops a rank; the victim's friends remember who did it")
+	var res2 = DramaManager.confront(p, mk.call(["kind"]), mk.call(["kind"]), 452, false)
+	check(String(res2.loser.status) == "injured", "a non-lethal brawl leaves the loser injured")
+	# invitations
+	var i1 = mk.call(["kind"])
+	var i2 = mk.call(["cheerful"])
+	RelationsManager.change(p, i1, i2, 80, 460)
+	var ic = DramaManager._new_company(p, i1, i2, 460)
+	i1.rapport = 50
+	p.town_state["party"] = []
+	var day = WorldClock.day(p)
+	p.town_state["invitation"] = {"company": int(ic.id), "expires": day + 3}
+	check(JournalScreen.build_text(p).contains("invited you along"), "the Journal shows an invitation")
+	var acc = DramaManager.accept_invitation(p)
+	check(acc.ok and PartyManager.members(p).size() == 2 and DramaManager.is_guest(i1), "accepting brings the company along as guests")
+	DramaManager.on_expedition_end(p, true)
+	check(PartyManager.members(p).is_empty() and String(i1.status) == "idle" and MemoryManager.about_of(i2, "you").any(func(m): return m.kind == "shared_victory"), "after the expedition they go home remembering it")
+	for j in range(3):
+		p.town_state["invitation"] = {"company": int(ic.id), "expires": day + 3}
+		DramaManager.decline_invitation(p)
+	check(int(i1.rapport) < 55, "decline them three times and they cool a little")
+	# jealousy
+	var yan = mk.call(["loyal"])
+	yan.personality.archetype = "yandere"
+	yan.personality.stage = 1
+	yan.rapport = 70
+	var fav = mk.call(["kind"])
+	fav.rapport = 85
+	var did: Array = []
+	for j in range(12):
+		fav.status = "idle"
+		did.append(DramaManager.jealousy_step(p, yan, 470 + j * 7))
+	check("gossip" in did and MemoryManager.opinion(yan, MemoryManager.key_npc(fav)) <= -40, "a jealous Yandere resents your favourite, then spreads poison (%s)" % ", ".join(did.slice(0, 6)))
+	check(AdventurerManager.active(p).any(func(n): return MemoryManager.about_of(n, MemoryManager.key_npc(fav)).any(func(m): return m.kind == "slandered")), "others heard the gossip")
+	yan.rapport = 10
+	DramaManager._jealousy_week(p, 560)
+	check(yan.get("broken", false) and int(yan.rivalry) >= 5, "let their devotion sour and they break: a nemesis")
 	CharacterManager.current_character_resource.set_meta("current_character", prev_cur)
 
 ## Personalities: archetypes, drives, flaws, quirks, voices, arcs, your voice.

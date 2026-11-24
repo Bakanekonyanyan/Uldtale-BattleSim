@@ -124,6 +124,9 @@ static func build_text(p: CharacterData) -> String:
 	var bonds: Array = []
 	for n in BondManager.pending(p):
 		bonds.append("[color=#ff9fbf]%s wants to talk[/color] - visit the Tavern" % n.name)
+	var inv = DramaManager.invitation(p)
+	if not inv.is_empty():
+		bonds.append("[color=#7bd389]%s invited you along[/color] - answer at the Tavern   %s" % [DramaManager.company(p, int(inv.company)).name, _days(max(0, int(inv.expires) - day))])
 	for n in PartyManager.members(p):
 		var tier = BondManager.tier_name(n)
 		bonds.append("%s is in your party%s" % [n.name, (" (%s)" % tier) if tier != "" else ""])

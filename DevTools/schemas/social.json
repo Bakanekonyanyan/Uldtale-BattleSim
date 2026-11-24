@@ -2,7 +2,7 @@
  "tab": "Social",
  "file": "data/social.json",
  "order": 57,
- "description": "The Guild's social simulation: memories, gossip, grudges and debts (MemoryManager.gd) and NPC-to-NPC relationships (RelationsManager.gd).",
+ "description": "The Guild's social simulation: memories, gossip, grudges and debts (MemoryManager.gd), NPC-to-NPC relationships (RelationsManager.gd) and drama - companies, invitations, romance, grief, feuds, jealousy (DramaManager.gd).",
  "sections": [
   {
    "kind": "settings",
@@ -82,7 +82,7 @@
     {
      "name": "kinds",
      "type": "json",
-     "help": "kind -> {weight, cap, core, text ({about}), you_text, hint, grudge, honorable_weight}"
+     "help": "kind -> {weight, cap, core, text ({about}), you_text (their memory of you), mine_text (your memory of them), hint, grudge, honorable_weight}"
     },
     {
      "name": "heard_hint",
@@ -214,6 +214,50 @@
      "type": "int",
      "min": 0,
      "help": "Each week every relation moves this much back toward 0 (bonds need tending); at 0 it's forgotten."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Drama",
+   "path": [
+    "drama"
+   ],
+   "fields": [
+    {
+     "name": "_doc",
+     "type": "text",
+     "help": "Notes for designers."
+    },
+    {
+     "name": "companies",
+     "type": "json",
+     "help": "max_size, join_min_affinity (with every member), adjectives/nouns for names ('The Ember Wardens')."
+    },
+    {
+     "name": "invitations",
+     "type": "json",
+     "help": "chance_per_day, min_rapport (a member's rapport with you), valid_days, max_heroes (you + allies), decline_limit, decline_rapport, victory_rapport, hardship_rapport, guest_days (guests leave if you don't set out)."
+    },
+    {
+     "name": "romance",
+     "type": "json",
+     "help": "weekly_chance for sworn pairs, compatible_mult, aloof_trait (one aloof stops it; two may), pair_mult (partners go on jobs together more)."
+    },
+    {
+     "name": "grief",
+     "type": "json",
+     "help": "days [min,max]; job_chance_mult while grieving; outcomes {vengeance, withdraws, hardens, carries_on: {base, traits: {trait: mult}}}; harden_traits; vengeance_job_chance, vengeance_days, vengeance_feud, avenged_rapport."
+    },
+    {
+     "name": "feuds",
+     "type": "json",
+     "help": "weekly_chance, cruel_mult, gentle_mult + gentle_traits, lethal_chance (if cruel or level gap >= lethal_level_gap), injury_days, killer_affinity (mourners vs the killer), honourable_conduct, killer_demerits, killer_rank_drop."
+    },
+    {
+     "name": "jealousy",
+     "type": "json",
+     "help": "archetype + stage that is jealous, margin, affinity per week, gossip_at / sabotage_at (opinion of the rival), gossip_listeners, gossip_affinity, sabotage_chance, caught_chance, caught_affinity, injury_days, break_below (rapport: they turn on you), break_rivalry."
     }
    ]
   }

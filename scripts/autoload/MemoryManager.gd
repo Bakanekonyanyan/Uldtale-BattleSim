@@ -187,7 +187,9 @@ func text(m: Dictionary, player: CharacterData, holder_is_player := false) -> St
 	var kd = kind(m.kind)
 	var who = _who(m.about, player)
 	var t: String
-	if holder_is_player:   # your memory of someone: "Kara robbed you"
+	if holder_is_player and kd.has("mine_text"):
+		t = String(kd.mine_text).format({"about": who})
+	elif holder_is_player:   # your memory of someone: "Kara robbed you"
 		t = String(kd.get("text", m.kind)).format({"about": who}).replace("them", "you")
 		t = t.substr(0, 1).to_upper() + t.substr(1)
 	elif m.about == "you":

@@ -203,6 +203,8 @@ func pick_partner(player: CharacterData, npc: Dictionary) -> Dictionary:
 			continue
 		var key = "pair_with_sworn" if r.status == "sworn" else ("pair_with_friend" if r.status == "friends" else "pair_with_acquaintance")
 		var p = float(cfg().get(key, 0.5))
+		if int(npc.get("partner", -1)) == int(f.id):
+			p = min(1.0, p * float(DramaManager.cfg().get("romance", {}).get("pair_mult", 1.5)))
 		if RandomManager.randf() < p:
 			if best.is_empty() or affinity(player, npc, f) > affinity(player, npc, best):
 				best = f

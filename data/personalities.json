@@ -385,7 +385,8 @@
 			},
 			"arc": [
 				{ "id": "infatuation", "name": "Infatuation", "rapport": -100 },
-				{ "id": "jealousy", "name": "Jealousy", "rapport": 60, "news": "{name} has been asking around about who {you} spends time with." }
+				{ "id": "jealousy", "name": "Jealousy", "rapport": 60, "news": "{name} has been asking around about who {you} spends time with." },
+				{ "id": "let_go", "name": "Let Go", "rapport": 95, "news": "{name} seems calmer lately - secure, even. Whatever had hold of them has let go." }
 			]
 		}
 	},

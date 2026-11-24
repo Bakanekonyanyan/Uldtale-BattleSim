@@ -272,6 +272,7 @@ func simulate_day(player: CharacterData, day: int) -> void:
 	_prune_departed(player)
 	RelationsManager.prune(player)
 	RelationsManager.town_day(player, day)
+	DramaManager.daily(player, day)
 	# newcomers keep the guild alive
 	var st: Dictionary = _s("settings")
 	var n_active = active(player).size()
@@ -301,7 +302,7 @@ func _maybe_start(player: CharacterData, npc: Dictionary, day: int) -> void:
 		_start_job(npc, day, "trial", String(t.get("location", "the_dungeon")), int(t.get("min_floor", 1)))
 		_history(npc, day, "Set out for the %s." % t.get("title", "promotion trial"))
 		return
-	if RandomManager.randf() >= float(jobs.get("take_chance", 0.45)) + trait_sum(npc, "job_chance"):
+	if RandomManager.randf() >= (float(jobs.get("take_chance", 0.45)) + trait_sum(npc, "job_chance")) * DramaManager.job_chance_mult(npc):
 		return
 	var ids = LocationManager.get_ids().filter(func(l): return not PersonalityManager.avoids(npc, String(l)))
 	if ids.is_empty():
@@ -317,11 +318,17 @@ func _maybe_start(player: CharacterData, npc: Dictionary, day: int) -> void:
 	var kind = "boss" if RandomManager.randf() < float(jobs.get("boss_hunt_chance", 0.2)) else "job"
 	if kind == "boss":
 		fl = max(1, fl - 1)
+	var vj = DramaManager.vengeance_job(npc)   # an avenger goes back for the boss
+	if not vj.is_empty():
+		loc = String(vj.location)
+		fl = int(vj.floor)
+		kind = "boss"
 	_start_job(npc, day, kind, loc, fl)
 	# friends go together
-	var partner = RelationsManager.pick_partner(player, npc)
-	if not partner.is_empty():
-		npc.job["partners"] = [int(partner.id)]
+	var partners = DramaManager.job_partners(player, npc)
+	if not partners.is_empty():
+		npc.job["partners"] = partners.map(func(pt): return int(pt.id))
+	for partner in partners:
 		partner.status = "job"
 		partner.job = npc.job.duplicate()
 		partner.job.erase("partners")
@@ -399,6 +406,7 @@ func _resolve_job(player: CharacterData, npc: Dictionary, day: int) -> void:
 		LedgerManager.record_npc_job(m, fl, won, kind == "boss")
 		m.status = "idle"
 		m.job = {}
+		m["last_job"] = {"location": String(j.location), "floor": fl}
 		m["back_day"] = day   # rests at least until tomorrow
 		if won:
 			m.record.wins = int(m.record.wins) + 1
@@ -413,6 +421,7 @@ func _resolve_job(player: CharacterData, npc: Dictionary, day: int) -> void:
 				"boss":
 					_history(m, day, "Slew the boss of %s floor %d%s." % [where, fl, _with(members, m)])
 					PersonalityManager.on_boss(player, m, String(j.location))
+					DramaManager.on_npc_boss(player, m, String(j.location), fl, day)
 					if lead and (fl >= 5 or m.get("rival", false) or not tags(m).is_empty()):
 						_news(player, "%s (%s) slew the boss of %s floor %d%s." % [m.name, m.rank, where, fl, _with(members, m)])
 				_:
@@ -474,9 +483,8 @@ func _fate(player: CharacterData, npc: Dictionary, day: int, big: bool, where: S
 		npc.died_day = day
 		_history(npc, day, "Fell in %s, floor %d." % [where, fl])
 		_news(player, "%s (%s-Rank %s) fell in %s.%s" % [npc.name, npc.rank, npc.cls, where, " You lost a friend." if friend else ""], "death")
-		for mourner in RelationsManager.friends(player, npc):
-			MemoryManager.add(mourner, "lost_companion", MemoryManager.key_npc(npc), day)
-			_history(mourner, day, "Lost %s." % npc.name)
+		npc["died_at"] = npc.get("last_job", {})
+		DramaManager.on_death(player, npc, day)
 	elif roll < death + retire:
 		npc.status = "retired"
 		_history(npc, day, "Hung up their %s after a bad day in %s." % ["blade" if npc.cls in ["Paladin", "Samurai", "Berserker", "Myrmidon", "Shinobi"] else "gear", where])
