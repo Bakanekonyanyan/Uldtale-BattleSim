@@ -256,15 +256,22 @@ func simulate_day(player: CharacterData, day: int) -> void:
 	for npc in active(player).duplicate():
 		match String(npc.status):
 			"job":
-				if day >= int(npc.job.ends):
+				if npc.job.has("lead"):   # a partner: the leader resolves the job
+					if String(get_npc(player, int(npc.job.lead)).get("status", "")) != "job":
+						npc.status = "idle"
+						npc.job = {}
+				elif day >= int(npc.job.ends):
 					_resolve_job(player, npc, day)
 			"injured":
 				if day >= int(npc.injured_until):
 					npc.status = "idle"
 					_history(npc, day, "Recovered and back in town.")
 			"idle":
-				_maybe_start(player, npc, day)
+				if int(npc.get("back_day", -1)) != day:
+					_maybe_start(player, npc, day)
 	_prune_departed(player)
+	RelationsManager.prune(player)
+	RelationsManager.town_day(player, day)
 	# newcomers keep the guild alive
 	var st: Dictionary = _s("settings")
 	var n_active = active(player).size()
@@ -311,6 +318,15 @@ func _maybe_start(player: CharacterData, npc: Dictionary, day: int) -> void:
 	if kind == "boss":
 		fl = max(1, fl - 1)
 	_start_job(npc, day, kind, loc, fl)
+	# friends go together
+	var partner = RelationsManager.pick_partner(player, npc)
+	if not partner.is_empty():
+		npc.job["partners"] = [int(partner.id)]
+		partner.status = "job"
+		partner.job = npc.job.duplicate()
+		partner.job.erase("partners")
+		partner.job["lead"] = int(npc.id)
+		_history(partner, day, "Went along with %s." % npc.name)
 	# competition: take a bounty off the player's board
 	var board: Array = GuildManager.state(player).board
 	if board.size() > 1 and RandomManager.randf() < float(jobs.get("compete_chance", 0.25)) * trait_mult(npc, "compete"):
@@ -340,45 +356,77 @@ func job_success_chance(npc: Dictionary, fl: int) -> float:
 	var c = float(j.get("success_base", 0.75)) + float(j.get("success_per_power", 0.06)) * power + trait_sum(npc, "success")
 	return clamp(c, float(j.get("success_min", 0.15)), float(j.get("success_max", 0.97)))
 
+## Partners on `npc`'s job (active, still on it).
+func job_members(player: CharacterData, npc: Dictionary) -> Array:
+	var out: Array = [npc]
+	for pid in npc.get("job", {}).get("partners", []):
+		var p = get_npc(player, int(pid))
+		if not p.is_empty() and String(p.status) == "job":
+			out.append(p)
+	return out
+
+## Success chance for a group: the average, plus a bonus per extra member.
+func group_success_chance(members: Array, fl: int) -> float:
+	var c := 0.0
+	for m in members:
+		c += job_success_chance(m, fl)
+	c = c / members.size() + float(RelationsManager.cfg().get("group_bonus_per_member", 0.08)) * (members.size() - 1)
+	return clamp(c, 0.0, float(_s("jobs").get("success_max", 0.97)))
+
 func _resolve_job(player: CharacterData, npc: Dictionary, day: int) -> void:
 	var j: Dictionary = npc.job
 	var kind = String(j.get("kind", "job"))
 	var fl = int(j.floor)
 	var where = LocationManager.get_display_name(String(j.location))
+	var members = job_members(player, npc)
 	var won: bool
 	if kind in ["boss", "trial"]:
 		# the big moments are fought for real
 		var hero = AutoBattler.build_hero(npc)
-		won = AutoBattler.fight_floor(hero, String(j.location), fl, true).won
+		var allies: Array[CharacterData] = []
+		for m in members.slice(1):
+			allies.append(AutoBattler.build_hero(m))
+		won = AutoBattler.fight_floor(hero, String(j.location), fl, true, allies).won
 	else:
-		won = RandomManager.randf() < job_success_chance(npc, fl)
-	npc.record.jobs = int(npc.record.jobs) + 1
-	LedgerManager.record_npc_job(npc, fl, won, kind == "boss")
+		won = RandomManager.randf() < group_success_chance(members, fl)
 	if not stats.has(kind):
 		stats[kind] = [0, 0]
 	stats[kind][0] += 1
 	stats[kind][1] += 1 if won else 0
-	npc.status = "idle"
-	npc.job = {}
-	if won:
-		npc.record.wins = int(npc.record.wins) + 1
-		var jobs: Dictionary = _s("jobs")
-		var mult = 2.0 if kind == "boss" else 1.0
-		npc.points = int(npc.points) + int((int(jobs.get("points_base", 6)) + int(jobs.get("points_per_floor", 4)) * fl) * mult) * (0 if kind == "trial" else 1)
-		_gain_xp(npc, int(int(jobs.get("xp_per_floor", 140)) * fl * mult))
-		match kind:
-			"trial":
-				_promote(player, npc, day)
-			"boss":
-				_history(npc, day, "Slew the boss of %s floor %d." % [where, fl])
-				PersonalityManager.on_boss(player, npc, String(j.location))
-				if fl >= 5 or npc.get("rival", false) or not tags(npc).is_empty():
-					_news(player, "%s (%s) slew the boss of %s floor %d." % [npc.name, npc.rank, where, fl])
-			_:
-				_history(npc, day, "Came back from %s with the job done." % where)
-	else:
-		npc.record.fails = int(npc.record.fails) + 1
-		_fate(player, npc, day, kind != "job", where, fl)
+	for m in members:
+		var lead = m == npc
+		m.record.jobs = int(m.record.jobs) + 1
+		LedgerManager.record_npc_job(m, fl, won, kind == "boss")
+		m.status = "idle"
+		m.job = {}
+		m["back_day"] = day   # rests at least until tomorrow
+		if won:
+			m.record.wins = int(m.record.wins) + 1
+			var jobs: Dictionary = _s("jobs")
+			var mult = 2.0 if kind == "boss" else 1.0
+			m.points = int(m.points) + int((int(jobs.get("points_base", 6)) + int(jobs.get("points_per_floor", 4)) * fl) * mult) * (0 if kind == "trial" else 1)
+			_gain_xp(m, int(int(jobs.get("xp_per_floor", 140)) * fl * mult))
+			match kind:
+				"trial":
+					if lead:
+						_promote(player, m, day)
+				"boss":
+					_history(m, day, "Slew the boss of %s floor %d%s." % [where, fl, _with(members, m)])
+					PersonalityManager.on_boss(player, m, String(j.location))
+					if lead and (fl >= 5 or m.get("rival", false) or not tags(m).is_empty()):
+						_news(player, "%s (%s) slew the boss of %s floor %d%s." % [m.name, m.rank, where, fl, _with(members, m)])
+				_:
+					_history(m, day, "Came back from %s with the job done%s." % [where, _with(members, m)])
+	if members.size() > 1:
+		RelationsManager.after_group_job(player, members, won, day)
+	if not won:
+		for m in members:
+			m.record.fails = int(m.record.fails) + 1
+			_fate(player, m, day, kind != "job", where, fl, members)
+
+func _with(members: Array, me: Dictionary) -> String:
+	var others = members.filter(func(o): return o != me).map(func(o): return String(o.name))
+	return "" if others.is_empty() else " with %s" % ", ".join(others)
 
 func _gain_xp(npc: Dictionary, xp: int) -> void:
 	npc.xp = int(npc.xp) + xp
@@ -395,6 +443,7 @@ func _promote(player: CharacterData, npc: Dictionary, day: int) -> void:
 		return
 	npc.rank = nxt
 	_history(npc, day, "Promoted to %s." % RankManager.display(nxt))
+	RelationsManager.on_promoted(player, npc, day)
 	PersonalityManager.on_rank(player, npc, nxt)
 	var ahead = RankManager.rank_index(nxt) > RankManager.get_rank_index(player)
 	if npc.get("rival", false) or "Rival" in tags(npc):
@@ -407,17 +456,27 @@ func _promote(player: CharacterData, npc: Dictionary, day: int) -> void:
 	npc.ahead_of_player = ahead
 
 ## A failed job: death, retirement or injury, weighted by traits.
-func _fate(player: CharacterData, npc: Dictionary, day: int, big: bool, where: String, fl: int) -> void:
+func _fate(player: CharacterData, npc: Dictionary, day: int, big: bool, where: String, fl: int, members: Array = []) -> void:
 	var f: Dictionary = _s("fates")
 	var death = float(f.get("boss_death_chance" if big else "death_chance", 0.05)) * trait_mult(npc, "death")
 	var retire = float(f.get("boss_retire_chance" if big else "retire_chance", 0.04)) * trait_mult(npc, "retire")
 	var friend = "Friend" in tags(npc) or "Close friend" in tags(npc)
 	var roll = RandomManager.randf()
 	if roll < death:
+		# a partner still standing may drag them out
+		for m in members:
+			if m != npc and String(m.status) != "dead" and RandomManager.randf() < float(RelationsManager.cfg().get("rescue_chance", 0.35)):
+				RelationsManager.on_rescue(player, m, npc, day)
+				roll = 1.0
+				break
+	if roll < death:
 		npc.status = "dead"
 		npc.died_day = day
 		_history(npc, day, "Fell in %s, floor %d." % [where, fl])
 		_news(player, "%s (%s-Rank %s) fell in %s.%s" % [npc.name, npc.rank, npc.cls, where, " You lost a friend." if friend else ""], "death")
+		for mourner in RelationsManager.friends(player, npc):
+			MemoryManager.add(mourner, "lost_companion", MemoryManager.key_npc(npc), day)
+			_history(mourner, day, "Lost %s." % npc.name)
 	elif roll < death + retire:
 		npc.status = "retired"
 		_history(npc, day, "Hung up their %s after a bad day in %s." % ["blade" if npc.cls in ["Paladin", "Samurai", "Berserker", "Myrmidon", "Shinobi"] else "gear", where])
@@ -462,6 +521,7 @@ func _set_rapport(npc: Dictionary, delta: int) -> void:
 	npc.rapport = clamp(int(npc.rapport) + delta, -100, 100)
 	if delta > 0:
 		PersonalityManager.check_arc(npc)
+	RelationsManager.ripple(CharacterManager.get_current_character(), npc, delta)
 
 ## Reveal one unknown trait. Returns its name, or "".
 func _reveal(npc: Dictionary) -> String:

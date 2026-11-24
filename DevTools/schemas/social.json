@@ -2,7 +2,7 @@
  "tab": "Social",
  "file": "data/social.json",
  "order": 57,
- "description": "The Guild's social simulation: memories, gossip, grudges and debts (MemoryManager.gd); relationships later.",
+ "description": "The Guild's social simulation: memories, gossip, grudges and debts (MemoryManager.gd) and NPC-to-NPC relationships (RelationsManager.gd).",
  "sections": [
   {
    "kind": "settings",
@@ -87,6 +87,133 @@
     {
      "name": "heard_hint",
      "type": "str"
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Relationships",
+   "path": [
+    "relations"
+   ],
+   "fields": [
+    {
+     "name": "_doc",
+     "type": "text",
+     "help": "Notes for designers."
+    },
+    {
+     "name": "max_per_npc",
+     "type": "int",
+     "help": "Relations each adventurer keeps; the weakest is forgotten.",
+     "min": 1
+    },
+    {
+     "name": "town_pairs_per_day",
+     "type": "int",
+     "help": "Random pairs of adventurers in town who spend time together each day.",
+     "min": 0
+    },
+    {
+     "name": "compatible",
+     "type": "json",
+     "help": "Trait pairs that get along: +1 affinity per pair each time they meet in town."
+    },
+    {
+     "name": "clashing",
+     "type": "json",
+     "help": "Trait pairs that grate: -1 affinity per pair each time they meet."
+    },
+    {
+     "name": "events",
+     "type": "json",
+     "help": "Affinity changes: job_success, job_fail, job_fail_blame, rescued, rescuer, generous, ledger_rivalry_week, passed_over."
+    },
+    {
+     "name": "blame_traits",
+     "type": "json",
+     "help": "Traits that blame partners after a failed job."
+    },
+    {
+     "name": "generous_traits",
+     "type": "json",
+     "help": "Traits that buy rounds (+generous when either has one)."
+    },
+    {
+     "name": "thresholds",
+     "type": "json",
+     "help": "Affinity for friends, sworn, rivals, feud."
+    },
+    {
+     "name": "ripple",
+     "type": "float",
+     "help": "Share of a rapport change with you that spreads to their friends (and the other way to rivals).",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "ripple_min",
+     "type": "int",
+     "help": "Smallest rapport change that ripples.",
+     "min": 0
+    },
+    {
+     "name": "pair_with_friend",
+     "type": "float",
+     "help": "Chance an idle friend comes along on a job.",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "pair_with_sworn",
+     "type": "float",
+     "help": "Chance an idle sworn companion comes along.",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "group_bonus_per_member",
+     "type": "float",
+     "help": "Success chance added per extra member on a shared job.",
+     "min": 0
+    },
+    {
+     "name": "rescue_chance",
+     "type": "float",
+     "help": "Chance a partner drags a dying partner out (they're injured instead).",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "chemistry_mult",
+     "type": "int",
+     "min": 0,
+     "help": "Affinity per compatible (or clashing) trait pair at each town meeting."
+    },
+    {
+     "name": "familiar_share",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Share of town meetings with someone they already know (so bonds deepen instead of spreading thin)."
+    },
+    {
+     "name": "acquainted_at",
+     "type": "int",
+     "help": "Affinity at which someone may invite the other along on a job."
+    },
+    {
+     "name": "pair_with_acquaintance",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Chance an idle acquaintance comes along on a job."
+    },
+    {
+     "name": "weekly_drift",
+     "type": "int",
+     "min": 0,
+     "help": "Each week every relation moves this much back toward 0 (bonds need tending); at 0 it's forgotten."
     }
    ]
   }

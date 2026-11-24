@@ -75,6 +75,33 @@ story moment: big affinity/rapport, a Chronicle entry, maybe a storylet.
   warm to you; Kara's rival cools.
 - Recruiting someone into your party counts as "ran a job together" for you.
 
+### Built (Phase 2): relationships core
+`RelationsManager.gd` + `data/social.json` "relations":
+- Affinity, thresholds and the 8-relation cap as above; crossing a threshold
+  writes both histories (and news for sworn companions and feuds).
+- Town chemistry: each day a few random pairs in town meet (compatible/clashing
+  trait pairs from the data table, +2 if either is generous). Weekly, Ambitious
+  adventurers within 3 Ledger places resent each other.
+- Friends pair up for jobs (50%; sworn 90%). A shared job uses the average
+  success chance +8% per extra member, or a real AutoBattler fight with allies
+  for boss jobs. Success +6, failure +2 (or -4 with a Boastful/Cruel blamer);
+  both remember fighting side by side.
+- Rescue: when a partner would die, another member drags them out 35% of the
+  time (injured instead; `saved_me` memory, +20/+5 affinity, news).
+- A death gives the dead's friends a core `lost_companion` memory (grief in
+  Phase 3). Relations to the dead are kept until they leave the roster.
+- Promotions: Ambitious/Boastful adventurers at the rank just left behind -5.
+- Ripple to your rapport (friends +25%, rivals -25%, changes of 4+ only).
+- Gossip goes to friends first (75%).
+- The Tavern shows each adventurer's bonds.
+- Bonds need tending: every relation drifts 1 toward 0 each week (forgotten
+  at 0). Half of town meetings are with someone already known, and
+  acquaintances (15+) sometimes come along on jobs, which is how friendships
+  start.
+- Tuning (one simulated year, ~20 adventurers, 3 seeds): 2-3 friend pairs,
+  3-7 sworn pairs, 0-2 rivals, 1-2 feuds. Long-run tuning is Phase 4.
+- Not yet: named NPC parties, romance, feuds that kill, invitations (Phase 3).
+
 ### Decided (A): all four - NPC parties, romance, lethal feuds, invitations
 
 **Romance**

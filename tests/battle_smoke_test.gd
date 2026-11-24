@@ -1271,6 +1271,7 @@ func _phase0_checks() -> void:
 	_bond_checks()
 	_personality_checks()
 	_memory_checks()
+	_relations_checks()
 	_town_life_checks()
 	_ledger_checks()
 	_journal_checks()
@@ -1618,6 +1619,90 @@ func _memory_checks() -> void:
 	p.equipment["main_hand"] = sword
 	var foe = EncounterManager.build_nemesis(p, nem)
 	check(MemoryManager.losses_to_you(nem) == 2 and foe.get_meta("studied_you", false) and DamageTypes.multiplier(foe, DamageTypes.attack_type(p)) < 1.0, "a nemesis who lost twice comes back armored against you")
+	CharacterManager.current_character_resource.set_meta("current_character", prev_cur)
+
+## NPC-to-NPC relationships: chemistry, shared jobs, rescues, ripples.
+func _relations_checks() -> void:
+	var p = make_player()
+	AdventurerManager.state(p)
+	var prev_cur = CharacterManager.get_current_character()
+	CharacterManager.current_character_resource.set_meta("current_character", p)
+	var x = AdventurerManager._add(p, AdventurerManager.generate(p))
+	var y = AdventurerManager._add(p, AdventurerManager.generate(p))
+	var z = AdventurerManager._add(p, AdventurerManager.generate(p))
+	x.traits = ["kind", "loyal"]
+	y.traits = ["kind", "honorable"]
+	z.traits = ["cruel"]
+	check(RelationsManager.chemistry(x, y) == 2 and RelationsManager.chemistry(y, z) == -2, "trait chemistry: kindred spirits click, the cruel grate (%d / %d)" % [RelationsManager.chemistry(x, y), RelationsManager.chemistry(y, z)])
+	check(RelationsManager.change(p, x, y, 45, 1) == "friends" and RelationsManager.status(p, y, x) == "friends", "affinity crosses into friendship (symmetric)")
+	RelationsManager.change(p, x, y, 30, 2)
+	check(RelationsManager.status(p, x, y) == "sworn" and x.history.any(func(h): return String(h.text).contains("Swore")), "sworn companions are written into their histories")
+	RelationsManager.change(p, y, z, -75, 2)
+	check(RelationsManager.status(p, y, z) == "feud", "a feud at -70")
+	# cap: weakest relations are forgotten
+	var others: Array = []
+	for i in range(12):
+		var o = AdventurerManager._add(p, AdventurerManager.generate(p))
+		others.append(o)
+		RelationsManager.change(p, x, o, 5 + i, 3)
+	check(RelationsManager.relations_of(p, x).size() <= int(RelationsManager.cfg().max_per_npc) and RelationsManager.status(p, x, y) == "sworn", "each adventurer keeps their strongest %d relations" % int(RelationsManager.cfg().max_per_npc))
+	# partners: a sworn companion comes along and the job binds them
+	for n in AdventurerManager.active(p):
+		if n.status == "job":
+			n.status = "idle"
+	x.status = "idle"
+	y.status = "idle"
+	var paired := 0
+	for i in range(20):
+		if RelationsManager.pick_partner(p, x) == y:
+			paired += 1
+	check(paired >= 14, "sworn companions go on jobs together (%d / 20)" % paired)
+	var solo = AdventurerManager.job_success_chance(x, 3)
+	var duo = AdventurerManager.group_success_chance([x, y], 3)
+	check(duo > min(solo, AdventurerManager.job_success_chance(y, 3)), "two together do better than the weaker alone (%.2f vs %.2f)" % [duo, solo])
+	var before = RelationsManager.affinity(p, x, y)
+	RelationsManager.after_group_job(p, [x, y], true, 4)
+	check(RelationsManager.affinity(p, x, y) > before and MemoryManager.about_of(x, MemoryManager.key_npc(y)).any(func(m): return m.kind == "fought_beside"), "a shared success brings them closer and is remembered")
+	# blame: the cruel blame partners for failures
+	var w = AdventurerManager._add(p, AdventurerManager.generate(p))
+	w.traits = ["boastful"]
+	RelationsManager.after_group_job(p, [w, z], false, 5)
+	check(RelationsManager.affinity(p, w, z) < 0, "a failure with a blamer sours things")
+	# a full job with a partner, resolved by the sim
+	x.status = "idle"
+	y.status = "idle"
+	AdventurerManager._start_job(x, 10, "job", "the_dungeon" if LocationManager.get_ids().has("the_dungeon") else LocationManager.get_ids()[0], 1)
+	x.job["partners"] = [int(y.id)]
+	y.status = "job"
+	y.job = x.job.duplicate()
+	y.job.erase("partners")
+	y.job["lead"] = int(x.id)
+	var jobs_before = int(y.record.jobs)
+	AdventurerManager.simulate_day(p, int(x.job.ends))
+	check(int(y.record.jobs) == jobs_before + 1 and y.status != "job", "the partner's job is resolved with the leader's (%d -> %d, %s, leader %s)" % [jobs_before, int(y.record.jobs), y.status, x.status])
+	# rescue
+	RelationsManager.on_rescue(p, x, y, 12)
+	check(MemoryManager.about_of(y, MemoryManager.key_npc(x)).any(func(m): return m.kind == "saved_me"), "being dragged out alive is remembered")
+	# ripple: your rapport spreads to friends, the other way to rivals
+	y.rapport = 0
+	z.rapport = 0
+	x.rapport = 0
+	AdventurerManager._set_rapport(x, 20)
+	check(int(y.rapport) > 0, "doing right by someone warms their friends to you (%+d)" % int(y.rapport))
+	AdventurerManager._set_rapport(y, 20)
+	check(int(z.rapport) < 0, "and cools their rivals (%+d)" % int(z.rapport))
+	check(RelationsManager.describe(p, y).contains("Sworn companion of") and RelationsManager.describe(p, y).contains("Feuding with"), "the Tavern shows their bonds")
+	# promotion resentment
+	var amb = AdventurerManager._add(p, AdventurerManager.generate(p))
+	amb.traits = ["ambitious"]
+	amb.rank = x.rank
+	AdventurerManager._promote(p, x, 20)
+	check(RelationsManager.affinity(p, amb, x) < 0, "the ambitious resent a peer's promotion")
+	# the dead are mourned by their friends
+	AdventurerManager._fate(p, y, 30, false, "test", 1)   # may or may not die; force it
+	y.status = "dead"
+	RelationsManager.prune(p)
+	check(RelationsManager.affinity(p, x, y) > 0, "relations to the dead are kept (for grief)")
 	CharacterManager.current_character_resource.set_meta("current_character", prev_cur)
 
 ## Personalities: archetypes, drives, flaws, quirks, voices, arcs, your voice.

@@ -129,9 +129,12 @@ func gossip(player: CharacterData, day: int) -> Array:
 		out.append({"teller": teller, "listener": ear, "memory": mem})
 	return out
 
-## Who an adventurer gossips with: anyone in town (friends first, once
-## relationships exist - RelationsManager).
+## Who an adventurer gossips with: usually their friends in town, otherwise
+## anyone in town.
 func gossip_listeners(player: CharacterData, teller: Dictionary) -> Array:
+	var friends = RelationsManager.friends(player, teller).filter(func(n): return AdventurerManager.in_town(n))
+	if not friends.is_empty() and RandomManager.randf() < 0.75:
+		return friends
 	return AdventurerManager.active(player).filter(func(n): return AdventurerManager.in_town(n) and n != teller)
 
 # ------------------------------------------------------------------ behaviour hooks

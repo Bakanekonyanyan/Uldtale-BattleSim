@@ -193,6 +193,7 @@ func _update_details() -> void:
 	t += "[b]Rapport:[/b] %s%s\n" % [_rapport_bar(int(n.rapport)), ("   " + ", ".join(tg)) if not tg.is_empty() else ""]
 	t += PersonalityManager.describe(n)
 	t += MemoryManager.tavern_text(n, p)
+	t += RelationsManager.describe(p, n)
 	if AdventurerManager.in_town(n) and tab == Tab.ROSTER:
 		var hi = PersonalityManager.say(n, "greeting")
 		if hi != "":
