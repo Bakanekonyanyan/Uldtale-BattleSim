@@ -12,6 +12,8 @@ var classes = {}
 var permadeath_box: CheckBox
 var birthplace_option: OptionButton
 var birthplace_towns: Array = []
+var background_option: OptionButton
+var background_ids: Array = []
 @onready var cancel_button = $QuitButton
 
 const STARTING_GOLD = 100
@@ -48,10 +50,20 @@ func setup_ui():
 	birthplace_option.item_selected.connect(func(_i): update_info_display())
 	add_child(birthplace_option)
 	_default_birthplace()
+	background_option = OptionButton.new()
+	background_option.position = Vector2(64, 378)
+	background_option.size = Vector2(300, 44)
+	background_option.tooltip_text = "Who you were before the Guild."
+	for id in Backgrounds.cfg():
+		background_ids.append(id)
+		background_option.add_item(String(Backgrounds.get_bg(id).get("name", id)))
+	background_option.item_selected.connect(func(_i): update_info_display())
+	add_child(background_option)
+	create_button.position = Vector2(64, 436)
 	permadeath_box = CheckBox.new()
 	permadeath_box.text = "Permadeath"
 	permadeath_box.tooltip_text = "One life. If you fall and no one who owes you drags you out, you die: your Legend is written and the save is gone."
-	permadeath_box.position = Vector2(64, 460)
+	permadeath_box.position = Vector2(64, 506)
 	add_child(permadeath_box)
 	cancel_button.pressed.connect(_on_cancel_pressed)
 	
@@ -202,6 +214,17 @@ func update_info_display():
 	
 	# Display the text
 	var born = chosen_birthplace()
+	if background_option and background_option.selected >= 0:
+		var bgd = Backgrounds.get_bg(String(background_ids[background_option.selected]))
+		var bits: Array = []
+		for at in bgd.get("attributes", {}):
+			bits.append("+%d %s" % [int(bgd.attributes[at]), String(at).capitalize()])
+		if int(bgd.get("start_copper", 0)) != 0: bits.append("%+d copper" % int(bgd.start_copper))
+		for it in bgd.get("start_items", []): bits.append("%dx %s" % [int(it.qty), String(it.id).replace("_", " ")])
+		if float(bgd.get("sell_bonus", 0)) > 0: bits.append("+%d%% sale prices" % int(round(float(bgd.sell_bonus) * 100)))
+		for sh in bgd.get("craft_discount", {}): bits.append("-%d%% %s costs" % [int(round(float(bgd.craft_discount[sh]) * 100)), sh])
+		if int(bgd.get("training_points", 0)) > 0: bits.append("+%d armour training" % int(bgd.training_points))
+		info_text += "\n\n[b][color=#ffd166]Background: %s[/color][/b]\n%s\n[color=gray]%s[/color]" % [bgd.get("name", ""), String(bgd.get("description", "")).replace("{birthplace}", born if born != "" else "your hometown"), ", ".join(bits)]
 	if born != "":
 		var reg = Regions.cfg().get("regions", {}).get(Regions.region_of(born), {})
 		info_text += "\n\n[b][color=#ffd166]Birthplace: %s[/color][/b]\n%s\n[color=gray]Held by %s. You'll travel to the Guild at %s.[/color]" % [Regions.describe(born), reg.get("description", ""), reg.get("god", "?"), Regions.town_name()]
@@ -225,6 +248,8 @@ func _on_create_pressed():
 	new_character.max_floor_unlocked = 1
 	if chosen_birthplace() != "":
 		new_character.town_state["birthplace"] = chosen_birthplace()
+	if background_option and background_option.selected >= 0:
+		Backgrounds.apply_creation(new_character, String(background_ids[background_option.selected]))
 	if permadeath_box and permadeath_box.button_pressed:
 		new_character.town_state["permadeath"] = true
 	

@@ -71,7 +71,7 @@ func short_date(player: CharacterData) -> String:
 ## Days an expedition takes: travel + base + per extra floor (+ defeat).
 func expedition_days(location_id: String, floors_entered: int, defeated: bool) -> int:
 	var tc: Dictionary = cfg.get("time_costs", {})
-	var days = int(LocationManager.get_location(location_id).get("travel_days", 0)) + int(tc.get("expedition_base_days", 1))
+	var days = LocationManager.travel_days(location_id) + int(tc.get("expedition_base_days", 1))
 	days += int(floor(max(0, floors_entered - 1) * float(tc.get("days_per_extra_floor", 0.5))))
 	if defeated:
 		days += int(tc.get("defeat_extra_days", 1))

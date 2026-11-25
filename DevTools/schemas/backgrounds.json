@@ -1,0 +1,83 @@
+{
+ "tab": "Backgrounds",
+ "file": "data/backgrounds.json",
+ "order": 18,
+ "description": "Backgrounds chosen at character creation (Backgrounds.gd): who you were before the Guild.",
+ "sections": [
+  {
+   "kind": "collection",
+   "label": "Background",
+   "path": [
+    "backgrounds"
+   ],
+   "key_style": "snake",
+   "name_field": "name",
+   "summary": "{legend}",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "description",
+     "type": "text",
+     "help": "Shown at creation; {birthplace} is filled in."
+    },
+    {
+     "name": "legend",
+     "type": "str",
+     "help": "How your Legend remembers your youth ({birthplace})."
+    },
+    {
+     "name": "attributes",
+     "type": "json",
+     "optional": true,
+     "help": "{attribute: +n}, applied once at creation."
+    },
+    {
+     "name": "start_copper",
+     "type": "int",
+     "optional": true,
+     "help": "Added to (or taken from) starting money."
+    },
+    {
+     "name": "start_items",
+     "type": "json",
+     "optional": true,
+     "help": "[{id, qty}] added to the pack at the start of a game."
+    },
+    {
+     "name": "sell_bonus",
+     "type": "float",
+     "optional": true,
+     "min": 0,
+     "help": "Share added to what shops pay you."
+    },
+    {
+     "name": "craft_discount",
+     "type": "json",
+     "optional": true,
+     "help": "{blacksmith|enchanter: share off gold costs}."
+    },
+    {
+     "name": "rapport_traits",
+     "type": "json",
+     "optional": true,
+     "help": "{trait: starting rapport with adventurers who have it}."
+    },
+    {
+     "name": "reputation",
+     "type": "json",
+     "optional": true,
+     "help": "{archetype: points} toward how the Guild sees you."
+    },
+    {
+     "name": "training_points",
+     "type": "int",
+     "optional": true,
+     "help": "Armour training points to start with."
+    }
+   ]
+  }
+ ]
+}

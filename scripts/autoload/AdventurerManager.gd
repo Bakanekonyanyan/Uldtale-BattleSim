@@ -117,6 +117,7 @@ func generate(player: CharacterData, level_range = [1, 3], rival := false) -> Di
 	npc["birthplace"] = Regions.roll_birthplace(race)
 	if Regions.same_region(player, npc):   # someone from home
 		npc.rapport = clamp(int(npc.rapport) + int(Regions.cfg().get("same_region_rapport", 5)), -100, 100)
+	npc.rapport = clamp(int(npc.rapport) + Backgrounds.rapport_for(player, npc), -100, 100)   # your past, their temperament
 	PersonalityManager.assign(npc)
 	PersonalityManager.apply_start(npc)
 	LegendManager.maybe_heir(npc, player)   # sometimes, the heir of a past legend

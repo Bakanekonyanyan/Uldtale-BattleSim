@@ -27,6 +27,25 @@ func get_ids() -> Array:
 	ids.sort_custom(func(a, b): return int(locations[a].get("order", 99)) < int(locations[b].get("order", 99)))
 	return ids
 
+## Days of travel from Nexus: from the map when the location has a place,
+## else its travel_days.
+func travel_days(location_id: String) -> int:
+	var loc = get_location(location_id)
+	var d = Regions.travel_days(String(loc.get("place", ""))) if loc.has("place") else -1
+	return d if d >= 0 else int(loc.get("travel_days", 0))
+
+## "Near Bramblewood, The Wildwood Expanse (Fenrisulfr) - 1 day from Nexus"
+func where_text(location_id: String) -> String:
+	var loc = get_location(location_id)
+	var place = String(loc.get("place", ""))
+	if place == "":
+		return ""
+	var reg = Regions.cfg().get("regions", {}).get(String(loc.get("region", "")), {})
+	var d = travel_days(location_id)
+	if place == Regions.town_name():
+		return "In %s itself - no travel." % place
+	return "Near %s, %s (%s) - %d day%s from %s%s." % [place, reg.get("name", ""), reg.get("god", ""), d, "" if d == 1 else "s", Regions.town_name(), " by sea" if Regions.is_island(place) else ""]
+
 func get_display_name(location_id: String) -> String:
 	return get_location(location_id).get("name", location_id)
 

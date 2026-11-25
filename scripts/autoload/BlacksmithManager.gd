@@ -83,7 +83,8 @@ func get_upgrade_cost(item: Equipment, steps: int = 0) -> Dictionary:
 	for id in mats:
 		mats[id] = int(ceil(mats[id] * mult))
 	var standing = 1.0 - CommissionManager.perk(CharacterManager.get_current_character(), "blacksmith", "discount")
-	return {"gold": int(ceil(base_gold * mult * WorldClock.current_modifier("upgrade_fee") * standing)), "materials": mats}
+	var bg = Backgrounds.craft_mult(CharacterManager.get_current_character(), "blacksmith")
+	return {"gold": int(ceil(base_gold * mult * WorldClock.current_modifier("upgrade_fee") * standing * bg)), "materials": mats}
 
 func can_afford(player: CharacterData, cost: Dictionary) -> bool:
 	if player.currency.copper < cost.gold:

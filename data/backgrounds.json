@@ -1,0 +1,210 @@
+{
+	"_doc": "Backgrounds (Backgrounds.gd): who you were before the Guild, chosen at character creation. Light, flavourful effects: attributes (once, at creation), start_copper (+/-), start_items [{id, qty}], sell_bonus (share added to sell prices), craft_discount {blacksmith, enchanter}, rapport_traits {trait: starting rapport with adventurers who have it}, reputation {archetype: points toward how the Guild sees you}, training_points (armour training), legend (how your Legend remembers your youth).",
+	"backgrounds": {
+		"orphan": {
+			"name": "Orphan",
+			"description": "Raised by the streets of {birthplace}. You learned to be quick, and to trust slowly.",
+			"legend": "an orphan of {birthplace}",
+			"attributes": {
+				"agility": 2,
+				"dexterity": 1
+			},
+			"start_copper": -200,
+			"rapport_traits": {
+				"kind": 6
+			},
+			"reputation": {
+				"stoic": 2
+			}
+		},
+		"merchants_child": {
+			"name": "Merchant's Child",
+			"description": "You grew up behind a counter, haggling before you could walk.",
+			"legend": "a merchant's child from {birthplace}",
+			"attributes": {
+				"mind": 1
+			},
+			"start_copper": 500,
+			"sell_bonus": 0.1,
+			"rapport_traits": {
+				"greedy": 6
+			},
+			"reputation": {
+				"noble_heir": 2
+			}
+		},
+		"bandit": {
+			"name": "Former Bandit",
+			"description": "You ran with a gang on the roads out of {birthplace}. You left - mostly.",
+			"legend": "a bandit who turned to honest work",
+			"attributes": {
+				"dexterity": 2,
+				"agility": 1
+			},
+			"sell_bonus": 0.05,
+			"rapport_traits": {
+				"cruel": 5,
+				"honorable": -6
+			},
+			"reputation": {
+				"hot_rival": 2
+			}
+		},
+		"vagabond": {
+			"name": "Vagabond",
+			"description": "No town held you for long. You know every road on Nyxarys - and how to sleep on it.",
+			"legend": "a wanderer with no fixed home",
+			"attributes": {
+				"endurance": 2,
+				"agility": 1
+			},
+			"rapport_traits": {
+				"aloof": 6
+			},
+			"reputation": {
+				"kuudere": 2
+			}
+		},
+		"bakers_child": {
+			"name": "Baker's Child",
+			"description": "Up before dawn at the ovens of {birthplace}. You still smell of bread when you're nervous.",
+			"legend": "the baker's child from {birthplace}",
+			"attributes": {
+				"vitality": 2
+			},
+			"start_items": [
+				{
+					"id": "health_potion",
+					"qty": 3
+				}
+			],
+			"rapport_traits": {
+				"cheerful": 6
+			},
+			"reputation": {
+				"genki": 2
+			}
+		},
+		"blacksmiths_child": {
+			"name": "Blacksmith's Child",
+			"description": "You worked the bellows in {birthplace} and know good steel when you see it.",
+			"legend": "a smith's child from {birthplace}",
+			"attributes": {
+				"strength": 2
+			},
+			"craft_discount": {
+				"blacksmith": 0.15
+			},
+			"rapport_traits": {
+				"scholarly": 3
+			},
+			"reputation": {
+				"stoic": 2
+			}
+		},
+		"temple_foundling": {
+			"name": "Temple Foundling",
+			"description": "Left on a temple's steps and raised by its priests.",
+			"legend": "a foundling raised by the temple",
+			"attributes": {
+				"faith": 2,
+				"mind": 1
+			},
+			"start_items": [
+				{
+					"id": "mana_potion",
+					"qty": 2
+				}
+			],
+			"rapport_traits": {
+				"devout": 6
+			},
+			"reputation": {
+				"big_sibling": 2
+			}
+		},
+		"scholars_apprentice": {
+			"name": "Scholar's Apprentice",
+			"description": "You copied old texts until your hands cramped - and some of it stuck.",
+			"legend": "a scholar's apprentice",
+			"attributes": {
+				"intelligence": 2,
+				"arcane": 1
+			},
+			"craft_discount": {
+				"enchanter": 0.15
+			},
+			"rapport_traits": {
+				"scholarly": 6
+			},
+			"reputation": {
+				"lazy_genius": 2
+			}
+		},
+		"farmhand": {
+			"name": "Farmhand",
+			"description": "Fields, fences and long days outside {birthplace}. Nothing scares you like a bad harvest.",
+			"legend": "a farmhand from {birthplace}",
+			"attributes": {
+				"vitality": 1,
+				"strength": 1,
+				"endurance": 1
+			},
+			"rapport_traits": {
+				"kind": 3,
+				"cheerful": 3
+			},
+			"reputation": {
+				"airhead": 2
+			}
+		},
+		"nobles_bastard": {
+			"name": "Noble's Bastard",
+			"description": "A great house's name you can't use, and a purse to make up for it.",
+			"legend": "the unclaimed child of a noble house",
+			"attributes": {
+				"mind": 2
+			},
+			"start_copper": 800,
+			"rapport_traits": {
+				"ambitious": -5,
+				"honorable": 3
+			},
+			"reputation": {
+				"noble_heir": 3
+			}
+		},
+		"soldiers_child": {
+			"name": "Soldier's Child",
+			"description": "Raised in a garrison. You marched before you could read.",
+			"legend": "a soldier's child",
+			"attributes": {
+				"fortitude": 2
+			},
+			"training_points": 1,
+			"rapport_traits": {
+				"honorable": 5,
+				"loyal": 3
+			},
+			"reputation": {
+				"stoic": 2
+			}
+		},
+		"hunters_child": {
+			"name": "Hunter's Child",
+			"description": "Tracks, snares and long silences in the woods near {birthplace}.",
+			"legend": "a hunter's child from {birthplace}",
+			"attributes": {
+				"dexterity": 2,
+				"agility": 1
+			},
+			"rapport_traits": {
+				"reckless": 3,
+				"cautious": 3
+			},
+			"reputation": {
+				"kuudere": 2
+			}
+		}
+	}
+}

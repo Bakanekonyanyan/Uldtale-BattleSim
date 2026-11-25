@@ -170,7 +170,7 @@
 	"legend": {
 		"_doc": "Legend writing (LegendManager.gd): when you retire, your Chronicle becomes a Legend kept across worlds (user://legends.json). Templates use {name}, {race}, {class}, {year}, {season}, {friend}, {rival}, {rank}, {epithet}, {count}, {text}.",
 		"max_beats": 8,
-		"origin": "In the {season} of Year {year}, a {race} {class} named {name}, born in {birthplace}, came to Nexus and signed their name in the Guild's ledger.",
+		"origin": "In the {season} of Year {year}, {name} - {youth} - came to Nexus, a {race} {class}, and signed their name in the Guild's ledger.",
 		"deed": "In the {season} of Year {year}, {text}",
 		"bond": "{name} and {friend} swore an oath beneath the Guild's lamps, and kept it.",
 		"rival": "But {rival} would not be outdone, and the two measured themselves against each other for years.",

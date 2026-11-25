@@ -116,3 +116,30 @@ can follow distance on the map.
   time; those from your region start with +5 rapport and the Tavern says
   "your homeland"; your Legend opens with where you were born. A new game
   keeps your birthplace.
+
+## Built: the map in the game data
+
+- Every location has a `region` and a `place` (the town it lies near) in
+  `data/locations.json`; town positions come from the map concept
+  (`data/regions.json` "map"). Travel from Nexus = map distance / 250 px per
+  day (at least 1) + 1 day by sea to an island region.
+- Today: the Tower (Nexus) 0 days; Goblin Forest (Bramblewood) 1; Orc Plains
+  (Stonehammer) 1; Fairy Circles (Moonlit Grove) 2; Troll Caves (Frostpeak
+  Island, by sea) 2. The location picker says where each one is.
+
+## Later: the regions as places to go (design, not built)
+
+- **Regional towns you can visit.** Travelling to a region's town takes its
+  map distance in days. Each town is a small hub.
+- **Regional Guild halls.** Each capital has a Guild hall with bounties
+  unique to its region (its monsters, its god's concerns, local storylets)
+  and its own local reputation.
+- **Shops.** Capitals have all three crafters (Blacksmith, Enchanter,
+  Alchemist); other towns in the region have one each, so where you go
+  matters for what you can make. Regional stock and recipes follow the land
+  (Iron Hills smiths, Archipelago enchanters, Verdant Glades alchemists).
+- **Capitals (proposal):** Solara's Beacon, Eldergrove, Fangclaw, Shadowspire,
+  Moonshadow, Nimue's Haven, Ironhold, Warforge, Mount Infernia, Stormwatch
+  Isle.
+- New locations (dungeons) live in their regions; your birthplace town is
+  where some storylets about your past begin.

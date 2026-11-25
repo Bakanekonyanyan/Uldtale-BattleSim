@@ -27,7 +27,7 @@ var shop_initialized: bool = false
 func sell_price(item: Item) -> int:
 	var f: Dictionary = DataRegistry.get_data("shop").get("sell_fraction", {})
 	var frac = float(f.get("equipment", 0.2)) if item is Equipment else float(f.get("other", 0.5))
-	return int(item.value * frac)
+	return int(item.value * frac * Backgrounds.sell_mult(CharacterManager.get_current_character()))
 
 func _ready():
 	initialize_shop()

@@ -2199,6 +2199,38 @@ func _worldgen_checks() -> void:
 	check(local and Regions.describe("Fangclaw") == "Fangclaw (The Wildwood Expanse)", "adventurers from your region are recognised as from home")
 	check(String(LegendManager.write(saved).story[0]).contains("Fangclaw"), "your Legend begins where you were born")
 	check(Regions.town_name() == "Nexus", "the Guild's town is Nexus")
+	# the map: locations sit in their regions; travel follows distance from Nexus
+	check(LocationManager.travel_days("the_dungeon") == 0 and LocationManager.travel_days("goblin_forest") == 1 and LocationManager.travel_days("troll_caves") == 2,
+		"travel days follow the map (Tower 0, Bramblewood 1, Frostpeak by sea 2)")
+	check(LocationManager.where_text("goblin_forest").contains("Bramblewood") and LocationManager.where_text("goblin_forest").contains("Fenrisulfr"), "locations say where they are (%s)" % LocationManager.where_text("goblin_forest"))
+	check(WorldClock.expedition_days("troll_caves", 1, false) > WorldClock.expedition_days("the_dungeon", 1, false), "farther places take longer to reach")
+	# backgrounds
+	var mc = make_player()
+	mc.currency.copper = 1000
+	mc.town_state["birthplace"] = "Sunvale"
+	var junk = ItemManager.create_equipment_for_floor("short_sword", 1)
+	CharacterManager.current_character_resource.set_meta("current_character", mc)
+	var plain_price = ShopManager.sell_price(junk)
+	Backgrounds.apply_creation(mc, "merchants_child")
+	check(mc.currency.copper == 1500 and ShopManager.sell_price(junk) > plain_price, "a merchant's child starts richer and sells better (%d -> %d)" % [plain_price, ShopManager.sell_price(junk)])
+	check(String(LegendManager.write(mc).story[0]).contains("a merchant's child from Sunvale"), "your Legend remembers your youth")
+	var greedy_rap := 0
+	for i in range(40):
+		var g = AdventurerManager.generate(mc)
+		if "greedy" in g.traits:
+			greedy_rap = Backgrounds.rapport_for(mc, g)
+			break
+	check(greedy_rap >= 6, "the greedy take to a merchant's child (+%d)" % greedy_rap)
+	var smith = make_player()
+	CharacterManager.current_character_resource.set_meta("current_character", smith)
+	var sword = ItemManager.create_equipment_for_floor("short_sword", 3)
+	var c0 = int(BlacksmithManager.get_upgrade_cost(sword).gold)
+	Backgrounds.apply_creation(smith, "blacksmiths_child")
+	check(int(BlacksmithManager.get_upgrade_cost(sword).gold) < c0 and smith.strength > make_player().strength, "a smith's child: cheaper upgrades, stronger arms")
+	var sol = make_player()
+	Backgrounds.apply_creation(sol, "soldiers_child")
+	check(ArmorTraining.points(sol) == 1, "a soldier's child starts with armour training")
+	CharacterManager.current_character_resource.set_meta("current_character", p)
 	# a new game is a new world; permadeath stays with the character
 	saved.reset_for_new_game()
 	check(saved.town_state.keys() == ["permadeath", "birthplace"], "a new game clears the old world but keeps permadeath and your birthplace")

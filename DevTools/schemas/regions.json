@@ -34,6 +34,11 @@
      "name": "race_homelands",
      "type": "json",
      "help": "race -> [region ids]."
+    },
+    {
+     "name": "map",
+     "type": "json",
+     "help": "Town positions on the map concept, px_per_day, island_regions/island_towns and island_extra_days: travel from Nexus."
     }
    ]
   },

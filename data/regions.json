@@ -122,6 +122,13 @@
 				"Northstar Isle"
 			],
 			"description": "Shards of Nyxara's essence, frozen and half-asleep under the ice."
+		},
+		"nexus": {
+			"name": "Nexus",
+			"god": "Nyxara",
+			"part": "the wound",
+			"towns": [],
+			"description": "The isle over the wound of the Shattering, where the Guild stands and the Tower rises."
 		}
 	},
 	"race_homelands": {
@@ -157,5 +164,184 @@
 		"Dhampyr": [
 			"gloomshroud"
 		]
+	},
+	"map": {
+		"_doc": "Positions on the map concept (docs/lore/eledoria_map.webp, 1500x1125 px). Travel from Nexus = distance / px_per_day (rounded, at least 1) + island_extra_days for island destinations.",
+		"px_per_day": 250,
+		"island_extra_days": 1,
+		"island_regions": [
+			"northern_wilds",
+			"veiled_realm",
+			"warforged_lands",
+			"enchanted_archipelago"
+		],
+		"island_towns": [
+			"Silverlake",
+			"Starfall",
+			"Nimue's Haven",
+			"Enchantress Bay"
+		],
+		"coords": {
+			"Nexus": [
+				640,
+				410
+			],
+			"Snowdrift Isle": [
+				520,
+				135
+			],
+			"Frostpeak Island": [
+				700,
+				140
+			],
+			"Stormwatch Isle": [
+				590,
+				280
+			],
+			"Glacier Isle": [
+				830,
+				240
+			],
+			"Northstar Isle": [
+				760,
+				315
+			],
+			"Lunalake": [
+				290,
+				460
+			],
+			"Tsukuyomi's Veil": [
+				220,
+				515
+			],
+			"Moonshadow": [
+				160,
+				600
+			],
+			"Duskfall": [
+				215,
+				675
+			],
+			"Sunvale": [
+				410,
+				525
+			],
+			"Solara's Beacon": [
+				450,
+				630
+			],
+			"Dawn's Light": [
+				505,
+				710
+			],
+			"Greenhaven": [
+				665,
+				500
+			],
+			"Eldergrove": [
+				700,
+				670
+			],
+			"Willowshade": [
+				800,
+				775
+			],
+			"Fangclaw": [
+				805,
+				450
+			],
+			"Bramblewood": [
+				940,
+				530
+			],
+			"Oakheart": [
+				930,
+				745
+			],
+			"Nightshade": [
+				1010,
+				465
+			],
+			"Mirewatch": [
+				1110,
+				575
+			],
+			"Shadowspire": [
+				1340,
+				310
+			],
+			"Moonlit Grove": [
+				940,
+				805
+			],
+			"Serpent's Cove": [
+				965,
+				860
+			],
+			"Silverlake": [
+				1290,
+				745
+			],
+			"Starfall": [
+				1225,
+				785
+			],
+			"Nimue's Haven": [
+				1215,
+				815
+			],
+			"Enchantress Bay": [
+				1170,
+				895
+			],
+			"Stonehammer": [
+				555,
+				765
+			],
+			"Ironhold": [
+				520,
+				825
+			],
+			"Shieldwall": [
+				520,
+				855
+			],
+			"Forgehome": [
+				315,
+				910
+			],
+			"Warforge": [
+				330,
+				965
+			],
+			"Ironclad": [
+				450,
+				960
+			],
+			"Wrathorn's Rage": [
+				405,
+				1035
+			],
+			"Mount Infernia": [
+				830,
+				910
+			],
+			"Serpent's Isle": [
+				780,
+				955
+			],
+			"Whispering Isle": [
+				1060,
+				930
+			],
+			"Shimmering Isle": [
+				1040,
+				975
+			],
+			"Moonlit Isle": [
+				820,
+				1000
+			]
+		}
 	}
 }

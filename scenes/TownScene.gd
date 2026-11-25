@@ -254,9 +254,10 @@ func show_location_selection_dialog():
 	var update_description = func():
 		var loc = LocationManager.get_location(selected[0])
 		var races = LocationManager.get_races(selected[0], EnemyFactory.races["non_playable"].keys())
-		description.text = "[b]%s[/b]\n%s\n[color=gray]Enemies: %s  |  Highest floor unlocked: %d[/color]" % [
+		description.text = "[b]%s[/b]\n%s\n[color=#e5c34a]%s[/color]\n[color=gray]Enemies: %s  |  Highest floor unlocked: %d[/color]" % [
 			loc.get("name", selected[0]),
 			loc.get("description", ""),
+			LocationManager.where_text(selected[0]),
 			"Mixed (" + ", ".join(races) + ")" if LocationManager.is_mixed(selected[0]) else ", ".join(races),
 			RankManager.start_floor_limit(current_character, selected[0])
 		]

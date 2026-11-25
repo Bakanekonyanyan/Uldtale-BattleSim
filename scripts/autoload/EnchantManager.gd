@@ -54,7 +54,8 @@ func get_cost(item: Equipment, enchant_id: String) -> Dictionary:
 		mats["monster_core"] = mats.get("monster_core", 0) + int(tier.cores)
 	var tier_no = max(1, _order().find(target))   # uncommon 1 ... epic 4
 	var gold = max(int(cfg().get("min_gold", 50)) * tier_no, int(round(item.value * float(cfg().get("gold_per_value", 0.5)) * tier_no)))
-	gold = int(round(gold * (1.0 - CommissionManager.perk(CharacterManager.get_current_character(), "enchanter", "discount"))))
+	gold = int(round(gold * (1.0 - CommissionManager.perk(CharacterManager.get_current_character(), "enchanter", "discount"))
+		* Backgrounds.craft_mult(CharacterManager.get_current_character(), "enchanter")))
 	return {"gold": gold, "materials": mats}
 
 func get_success_chance(item: Equipment) -> float:

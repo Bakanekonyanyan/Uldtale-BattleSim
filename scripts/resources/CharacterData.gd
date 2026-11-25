@@ -878,11 +878,15 @@ func reset_for_new_game():
 	# permadeath choice is the character's, so it stays
 	var pd = bool(town_state.get("permadeath", false))
 	var born = String(town_state.get("birthplace", ""))
+	var bg = String(town_state.get("background", ""))
 	town_state = {}
+	if bg != "":
+		town_state["background"] = bg
 	if pd:
 		town_state["permadeath"] = true
 	if born != "":
 		town_state["birthplace"] = born   # where you were born doesn't change
+	call_deferred("_background_start")
 	location_progress.clear()
 	max_floor_unlocked = 1
 	if talents:
@@ -900,3 +904,8 @@ func reset_for_new_game():
 		equipment[slot] = null
 	equipment_bonuses.clear()
 	level = 1
+
+## A new game: your background's starting money, items and reputation (after the reset).
+func _background_start() -> void:
+	Backgrounds.apply_start(self)
+

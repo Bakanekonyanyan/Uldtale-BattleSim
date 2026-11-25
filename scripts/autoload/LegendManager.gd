@@ -53,6 +53,7 @@ func write(player: CharacterData) -> Dictionary:
 	var day = WorldClock.day(player)
 	var base := {"name": player.name, "race": player.race, "class": player.character_class, "rank": RankManager.display(RankManager.get_rank(player)),
 		"birthplace": Regions.describe(Regions.player_birthplace(player)) if Regions.player_birthplace(player) != "" else "a place no one remembers",
+		"youth": Backgrounds.youth(player) if Backgrounds.youth(player) != "" else ("born in %s" % (Regions.describe(Regions.player_birthplace(player)) if Regions.player_birthplace(player) != "" else "a place no one remembers")),
 		"epithet": ep, "epithet_sp": (" " + ep) if ep != "" else "", "epithet_or_famous": ep if ep != "" else "famous across the land"}
 	var story: Array = []
 	var joined = int(player.town_state.get("joined_day", 1))
