@@ -114,6 +114,8 @@ func _announce(player: CharacterData, x: Dictionary, y: Dictionary, now: String,
 				AdventurerManager._history(x, day, "Became friends with %s." % y.name)
 				AdventurerManager._history(y, day, "Became friends with %s." % x.name)
 		"sworn":
+			if x.get("history", []).any(func(h): return String(h.text) == "Swore to stand by %s." % y.name):
+				return   # an oath is sworn once
 			AdventurerManager._history(x, day, "Swore to stand by %s." % y.name)
 			AdventurerManager._history(y, day, "Swore to stand by %s." % x.name)
 			WorldClock.add_news(player, "%s swore to fight side by side." % names, "adventurer")

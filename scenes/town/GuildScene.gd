@@ -65,6 +65,7 @@ func _build_ui() -> void:
 
 	_button(ui, "Ledger", Vector2(1020, 72), func(): LedgerBoard.open(self, player_character), Vector2(148, 36))
 	_button(ui, "Training", Vector2(864, 72), _on_training, Vector2(148, 36))
+	_button(ui, "Retire...", Vector2(708, 72), _on_retire, Vector2(148, 36))
 	primary_button = _button(ui, "Accept", Vector2(496, 526), _on_primary_pressed)
 	reroll_button = _button(ui, "Reroll Board", Vector2(660, 526), _on_reroll_pressed, Vector2(220, 40))
 
@@ -418,4 +419,28 @@ func _on_training() -> void:
 	d.canceled.connect(d.queue_free)
 	add_child(d)
 	d.popup_centered(Vector2i(600, 0))
+
+## Retire: end this character's story and write their Legend (LegendManager).
+func _on_retire() -> void:
+	var c = ConfirmationDialog.new()
+	c.title = "Retire?"
+	c.dialog_text = "Retire %s from adventuring?\n\nYour Chronicle will be written as a Legend - told by bards, kept in the Hall of Legends, and remembered in every world you play after.\nThis character's story ends here." % player_character.name
+	c.ok_button_text = "Write my Legend"
+	add_child(c)
+	c.confirmed.connect(func():
+		var leg = LegendManager.retire(player_character)
+		SaveManager.save_game(player_character)
+		var d = AcceptDialog.new()
+		d.title = "Your Legend"
+		var label = RichTextLabel.new()
+		label.bbcode_enabled = true
+		label.custom_minimum_size = Vector2(700, 480)
+		label.text = LegendManager.legend_text(leg)
+		d.add_child(label)
+		add_child(d)
+		d.confirmed.connect(func(): SceneManager.change_to_main_menu())
+		d.canceled.connect(func(): SceneManager.change_to_main_menu())
+		d.popup_centered(Vector2i(740, 0)))
+	c.canceled.connect(c.queue_free)
+	c.popup_centered()
 

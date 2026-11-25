@@ -20,6 +20,7 @@ var drink_button: Button
 var gift_button: Button
 var party_button: Button
 var invite_button: Button
+var bard_button: Button
 var gift_menu: PopupMenu
 var status_label: Label
 
@@ -82,6 +83,7 @@ func _build_ui() -> void:
 	panel.add_child(details)
 	_button(ui, "Rumours", Vector2(1020, 72), _on_rumours, Vector2(148, 36))
 	invite_button = _button(ui, "Invitation!", Vector2(864, 72), _on_invitation, Vector2(148, 36))
+	bard_button = _button(ui, "Hear the bard", Vector2(708, 72), _on_bard, Vector2(148, 36))
 	chat_button = _button(ui, "Chat", Vector2(496, 526), _on_chat)
 	drink_button = _button(ui, "Buy a Drink", Vector2(656, 526), _on_drink, Vector2(190, 40))
 	gift_button = _button(ui, "Give a Gift...", Vector2(856, 526), _on_gift_pressed, Vector2(170, 40))
@@ -118,6 +120,7 @@ func _refresh() -> void:
 	var p = player_character
 	header_label.text = "%s   Party: %d/%d   Money: %s" % [WorldClock.short_date(p), PartyManager.party_ids(p).size(), PartyManager.slots(p), p.currency.get_formatted()]
 	invite_button.visible = not DramaManager.invitation(p).is_empty()
+	bard_button.visible = not LegendManager.all().is_empty()
 	for i in range(tab_buttons.size()):
 		tab_buttons[i].button_pressed = i == tab
 	var all = AdventurerManager.all_adventurers(p)
@@ -198,6 +201,8 @@ func _update_details() -> void:
 	t += MemoryManager.tavern_text(n, p)
 	t += RelationsManager.describe(p, n)
 	t += DramaManager.describe(p, n)
+	if n.has("heir_of"):
+		t += "[color=#ffd166]Heir to the legend of %s.[/color]\n" % n.heir_of
 	if AdventurerManager.in_town(n) and tab == Tab.ROSTER:
 		var hi = PersonalityManager.say(n, "greeting")
 		if hi != "":
@@ -254,6 +259,23 @@ func _on_rumours() -> void:
 	d.add_child(label)
 	add_child(d)
 	d.popup_centered(Vector2i(600, 0))
+	d.confirmed.connect(d.queue_free)
+
+## A bard tells one of the Legends of past worlds (LegendManager).
+func _on_bard() -> void:
+	var song = LegendManager.bard_song()
+	if song == "":
+		return
+	var d = AcceptDialog.new()
+	d.title = "The Bard"
+	var label = RichTextLabel.new()
+	label.bbcode_enabled = true
+	label.fit_content = true
+	label.custom_minimum_size = Vector2(620, 0)
+	label.text = song
+	d.add_child(label)
+	add_child(d)
+	d.popup_centered(Vector2i(660, 0))
 	d.confirmed.connect(d.queue_free)
 
 ## A company has invited you along (DramaManager): join them, decline, or decide later.

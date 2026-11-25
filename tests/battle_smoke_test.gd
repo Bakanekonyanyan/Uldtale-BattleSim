@@ -1410,6 +1410,7 @@ func _phase0_checks() -> void:
 	_relations_checks()
 	_drama_checks()
 	_temperament_checks()
+	_chronicle_checks()
 	_town_life_checks()
 	_ledger_checks()
 	_journal_checks()
@@ -2081,6 +2082,56 @@ func _temperament_checks() -> void:
 	check(froze > 4 and froze < 30, "a cowardly companion sometimes freezes at low HP (%d / 40)" % froze)
 	var reck = AutoBattler.build_hero({"name": "R", "race": "Hume", "cls": "Paladin", "level": 10, "gear_floor": 3, "traits": ["reckless"]})
 	check(reck.get_meta("traits", []) == ["reckless"], "adventurers carry their temperament into battle")
+	CharacterManager.current_character_resource.set_meta("current_character", prev_cur)
+
+## The Chronicle (history, epithets, biographies) and Legends (across worlds).
+func _chronicle_checks() -> void:
+	var p = make_player()
+	AdventurerManager.state(p)
+	var prev_cur = CharacterManager.get_current_character()
+	CharacterManager.current_character_resource.set_meta("current_character", p)
+	var kara = AdventurerManager.active(p)[0]
+	var n0 = ChronicleManager.entries(p).size()
+	WorldClock.add_news(p, "%s (B-Rank Cleric) fell in the Goblin Forest." % kara.name, "death")
+	WorldClock.add_news(p, "The goblins are restless.", "info")
+	var e = ChronicleManager.entries(p)
+	check(e.size() == n0 + 1 and MemoryManager.key_npc(kara) in e[-1].who, "the Chronicle keeps what matters (a death, with who it was about), not idle news")
+	WorldClock.add_news(p, "You are crowned Champion of Year 1!", "rank")
+	check(int(ChronicleManager.entries(p)[-1].imp) >= 9 and "you" in ChronicleManager.entries(p)[-1].who, "a crowning is a major entry about you")
+	check(ChronicleScreen.timeline_text(p).contains("Year 1") and ChronicleScreen.player_text(p).contains("crowned"), "the Timeline and your page show it")
+	# epithets
+	var hero = AdventurerManager.active(p)[1]
+	hero["experience"] = {"near_death": 6}
+	check(ChronicleManager.epithet(hero) == "the Unbroken" and ChronicleManager.full_name(hero).ends_with("the Unbroken"), "deeds earn epithets (%s)" % ChronicleManager.full_name(hero))
+	LedgerManager._deeds(hero).crowns = 2
+	check(ChronicleManager.epithet(hero) == "the Twice-Crowned", "the greater deed wins")
+	check(ChronicleManager.bio(p, kara).contains(kara.name), "everyone has a biography")
+	kara.status = "dead"
+	kara.traits = ["kind"]
+	check(ChronicleScreen.fallen_text(p).contains("Gave away their last potion"), "the Fallen are remembered by their traits")
+	# a Legend, kept across worlds
+	var lp = "user://test_legends.json"
+	if FileAccess.file_exists(lp):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(lp))
+	LegendManager.use_path(lp)
+	var sword = ItemManager.create_equipment_for_floor("short_sword", 1)
+	p.inventory.add_item(sword, 1)
+	p.equip_item(sword)
+	var leg = LegendManager.retire(p)
+	check(leg.story.size() >= 3 and String(leg.story[0]).contains(p.name) and p.town_state.get("retired", false), "retiring writes your Legend (%d beats)" % leg.story.size())
+	check(not String(" ".join(leg.story)).contains("You "), "told in the third person")
+	LegendManager.use_path(lp)   # a new world reads it back from disk
+	check(LegendManager.all().size() == 1 and LegendManager.bard_song().contains(p.name) and LegendManager.legends_text().contains(p.name), "bards and the Hall of Legends tell it in later worlds")
+	var relic = LegendManager.make_relic(LegendManager.all()[0], 5)
+	check(relic != null and relic.display_name.contains("'s") and relic.flavor_text.contains(p.name), "a legend's weapon can return as a relic (%s)" % (relic.display_name if relic else "-"))
+	var heirs := 0
+	for i in range(200):
+		var n = AdventurerManager.generate(p)
+		if n.has("heir_of"):
+			heirs += 1
+	check(heirs > 0 and heirs < 40, "sometimes a new adventurer is the heir of a legend (%d / 200)" % heirs)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(lp))
+	LegendManager.use_path("user://legends.json")
 	CharacterManager.current_character_resource.set_meta("current_character", prev_cur)
 
 ## Personalities: archetypes, drives, flaws, quirks, voices, arcs, your voice.

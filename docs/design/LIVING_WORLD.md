@@ -258,6 +258,25 @@ Capped at ~500 entries (low-importance ones pruned first).
 
 ### Decided (C): it carries over as a Legend - see section H.
 
+**Built (C + H, first pass):** `ChronicleManager.gd`, `LegendManager.gd`,
+`ChronicleScreen.gd`, `data/chronicle.json` (tab Chronicle).
+- Every news line is weighed (importance by kind + keyword boosts, some
+  negative for routine Ledger moves and low-rank promotions) and kept at 3+,
+  linked to the adventurers it names and to you; 500 entries max. Your new
+  deepest floors are recorded too.
+- Chronicle screen (town): Timeline by year (the 25 most important entries
+  of each), People (a biography for everyone, and you), the Fallen (epitaphs
+  by trait), Legends (the Hall of Legends).
+- Epithets from deeds (crowns, feud kills, vengeance, rescues, World Firsts,
+  near-deaths, depth, bosses, top rank) for NPCs and you.
+- Retire (Guild): your Chronicle becomes a Legend in the third person
+  (origin, your most important deeds, a bond, a rival, crowns, the end) saved
+  to `user://legends.json`. In later worlds: a bard at the Tavern, the Hall of
+  Legends, heirs (5% of new adventurers take a legend's or companion's family
+  name and stories) and relics (4% per boss floor, once per legend, an Epic
+  named after its owner).
+- Not yet: Places view, NPCs quoting legends in dialogue, storylets.
+
 ---
 
 ## D. Class depth and customization

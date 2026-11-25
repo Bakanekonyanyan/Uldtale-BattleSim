@@ -447,6 +447,7 @@ func on_npc_boss(player: CharacterData, npc: Dictionary, location: String, fl: i
 	if v.has("location") and String(v.location) == location and fl >= int(v.floor):
 		var dead = AdventurerManager.get_npc(player, int(v.get("for", -1)))
 		npc.erase("vengeance")
+		npc["avenged"] = int(npc.get("avenged", 0)) + 1
 		AdventurerManager._history(npc, day, "Avenged %s." % dead.get("name", "a friend"))
 		WorldClock.add_news(player, "%s avenged %s: the boss of %s floor %d is dead." % [npc.name, dead.get("name", "a friend"), LocationManager.get_display_name(location), fl], "adventurer")
 
@@ -514,6 +515,7 @@ func confront(player: CharacterData, a: Dictionary, b: Dictionary, day: int, for
 		loser.died_day = day
 		AdventurerManager._history(loser, day, "Killed by %s in a feud." % winner.name)
 		AdventurerManager._history(winner, day, "Killed %s." % loser.name)
+		winner["kills"] = int(winner.get("kills", 0)) + 1
 		WorldClock.add_news(player, "Blood behind the Guild hall: %s killed %s." % [winner.name, loser.name], "death")
 		on_death(player, loser, day, winner)
 		_punish_killer(player, winner, day)

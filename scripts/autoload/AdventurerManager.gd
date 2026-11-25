@@ -116,6 +116,7 @@ func generate(player: CharacterData, level_range = [1, 3], rival := false) -> Di
 	}
 	PersonalityManager.assign(npc)
 	PersonalityManager.apply_start(npc)
+	LegendManager.maybe_heir(npc, player)   # sometimes, the heir of a past legend
 	return npc
 
 func _rank_for_level(level: int) -> String:

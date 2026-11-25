@@ -103,6 +103,13 @@ func _ready():
 	journal_button.position = Vector2(256, 528)
 	journal_button.size = Vector2(180, 60)
 	journal_button.pressed.connect(func(): JournalScreen.open(self, current_character))
+	var chronicle_button := Button.new()
+	chronicle_button.name = "ChronicleButton"
+	chronicle_button.text = "Chronicle"
+	chronicle_button.position = Vector2(40, 616)
+	chronicle_button.size = Vector2(180, 60)
+	chronicle_button.pressed.connect(func(): ChronicleScreen.open(self, current_character))
+	journal_button.get_parent().add_child(chronicle_button)
 	$UI.add_child(journal_button)
 	# Commissions: the shops' material requests (CommissionManager)
 	var commissions_button := Button.new()

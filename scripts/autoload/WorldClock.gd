@@ -227,6 +227,7 @@ func price_drift(item_id: String) -> float:
 func add_news(player: CharacterData, text: String, kind := "info") -> void:
 	var s = state(player)
 	s.news.append({"day": int(s.day), "text": text, "kind": kind})
+	ChronicleManager.on_news(player, text, kind)   # the world's history
 	var cap = int(cfg.get("news", {}).get("max_entries", 40))
 	while s.news.size() > cap:
 		s.news.pop_front()
