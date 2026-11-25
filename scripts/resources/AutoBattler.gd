@@ -24,6 +24,13 @@ static func build_hero(npc: Dictionary) -> CharacterData:
 			_equip(p, main, floor_num)
 		if p.equipment["main_hand"] != null:
 			break
+	if p.equipment["main_hand"] == null:   # never go to a fight empty-handed
+		for wid in EnemyFactory.classes.get("playable", {}).get(p.character_class, {}).get("preferred_weapons", []):
+			var tpl = ItemManager.get_equipment_template(String(wid))
+			if String(tpl.get("slot", "")) == "main_hand":
+				_equip(p, String(wid), floor_num)
+				if p.equipment["main_hand"] != null:
+					break
 	for i in range(4):
 		# armour they're trained in (ArmorTraining): reroll a few times before settling
 		var armor := ""

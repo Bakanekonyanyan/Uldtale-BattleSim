@@ -31,7 +31,8 @@ func set_current_character(character: CharacterData):
 
 func get_current_character() -> CharacterData:
 	Log.debug("character", "CharacterManager: get_current_character called")
-	var character = current_character_resource.get_meta("current_character", null)
+	# (get_meta with a null default still logs an error when the key is missing)
+	var character = current_character_resource.get_meta("current_character") if current_character_resource.has_meta("current_character") else null
 	if character == null:
 		Log.debug("character", "CharacterManager: Warning - current_character is null")
 	else:

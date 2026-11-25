@@ -39,7 +39,7 @@ func _ready():
 	await _battle_run("single enemy", 1, false, -1)
 	await _battle_run("three enemies", 3, false, -1)
 	await _battle_run("boss", 1, true, -1)
-	await _battle_run("forced defeat", 2, false, 1)
+	await _battle_run("forced defeat", 3, false, 1)   # 1 HP vs three: a lucky dodge streak could beat two
 	await _battle_run("victory vs three", 3, false, -2)
 	await _battle_run("victory vs boss", 1, true, -2)
 	await _party_battle_run()

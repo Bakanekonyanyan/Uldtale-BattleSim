@@ -93,11 +93,11 @@ func _build_ui() -> void:
 	ui.add_child(respec_button)
 	var thr := Button.new()
 	thr.text = "Attribute passives"
-	ScreenChrome.place(thr, Rect2(968, 640, 200, 48))
+	ScreenChrome.place(thr, Rect2(304, 640, 200, 48))   # beside Respec, clear of Back to Town
 	thr.pressed.connect(_on_thresholds)
 	ui.add_child(thr)
 	status_label = Label.new()
-	ScreenChrome.place(status_label, Rect2(308, 648, 650, 32))
+	ScreenChrome.place(status_label, Rect2(520, 648, 420, 32))
 	ui.add_child(status_label)
 
 # === REFRESH ===

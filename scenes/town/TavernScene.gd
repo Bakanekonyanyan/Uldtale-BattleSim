@@ -81,9 +81,10 @@ func _build_ui() -> void:
 	details.position = Vector2(16, 12)
 	details.size = Vector2(640, 416)
 	panel.add_child(details)
-	_button(ui, "Rumours", Vector2(1020, 72), _on_rumours, Vector2(148, 36))
-	invite_button = _button(ui, "Invitation!", Vector2(864, 72), _on_invitation, Vector2(148, 36))
-	bard_button = _button(ui, "Hear the bard", Vector2(708, 72), _on_bard, Vector2(148, 36))
+	# Tavern extras along the bottom (the header row belongs to the details panel)
+	_button(ui, "Rumours", Vector2(496, 644), _on_rumours, Vector2(148, 40))
+	invite_button = _button(ui, "Invitation!", Vector2(652, 644), _on_invitation, Vector2(148, 40))
+	bard_button = _button(ui, "Hear the bard", Vector2(808, 644), _on_bard, Vector2(148, 40))
 	chat_button = _button(ui, "Chat", Vector2(496, 526), _on_chat)
 	drink_button = _button(ui, "Buy a Drink", Vector2(656, 526), _on_drink, Vector2(190, 40))
 	gift_button = _button(ui, "Give a Gift...", Vector2(856, 526), _on_gift_pressed, Vector2(170, 40))
@@ -231,7 +232,8 @@ func _update_details() -> void:
 	var here = AdventurerManager.in_town(n) and tab == Tab.ROSTER
 	chat_button.disabled = not here or int(n.chat_day) == day
 	drink_button.disabled = not here or int(n.drank_day) == day or p.currency.copper < AdventurerManager.drink_price(p)
-	drink_button.text = "Buy a Drink (%s)" % Currency.format_copper(AdventurerManager.drink_price(p))
+	drink_button.text = "Buy a Drink (%s)" % Currency.format_short(AdventurerManager.drink_price(p))
+	drink_button.tooltip_text = "A round costs %s." % Currency.format_copper(AdventurerManager.drink_price(p))
 	gift_button.disabled = not here or int(n.gift_day) == day
 	var member = PartyManager.is_member(p, int(n.id))
 	party_button.text = "Dismiss" if member else "Invite to Party"

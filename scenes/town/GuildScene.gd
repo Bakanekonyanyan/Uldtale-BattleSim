@@ -63,14 +63,15 @@ func _build_ui() -> void:
 	details.size = Vector2(640, 416)
 	panel.add_child(details)
 
-	_button(ui, "Ledger", Vector2(1020, 72), func(): LedgerBoard.open(self, player_character), Vector2(148, 36))
-	_button(ui, "Training", Vector2(864, 72), _on_training, Vector2(148, 36))
-	_button(ui, "Retire...", Vector2(708, 72), _on_retire, Vector2(148, 36))
+	# Guild services under the details panel (the header row belongs to the panel)
+	_button(ui, "Ledger", Vector2(496, 580), func(): LedgerBoard.open(self, player_character), Vector2(148, 36))
+	_button(ui, "Training", Vector2(652, 580), _on_training, Vector2(148, 36))
+	_button(ui, "Retire...", Vector2(808, 580), _on_retire, Vector2(148, 36))
 	primary_button = _button(ui, "Accept", Vector2(496, 526), _on_primary_pressed)
 	reroll_button = _button(ui, "Reroll Board", Vector2(660, 526), _on_reroll_pressed, Vector2(220, 40))
 
-	status_label = _label(ui, "", Vector2(496, 580), 16)
-	status_label.size = Vector2(670, 50)
+	status_label = _label(ui, "", Vector2(496, 624), 16)
+	status_label.size = Vector2(500, 50)
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 
 	abandon_dialog = ConfirmationDialog.new()
