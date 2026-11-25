@@ -275,7 +275,21 @@ Capped at ~500 entries (low-importance ones pruned first).
   Legends, heirs (5% of new adventurers take a legend's or companion's family
   name and stories) and relics (4% per boss floor, once per legend, an Epic
   named after its owner).
-- Not yet: Places view, NPCs quoting legends in dialogue, storylets.
+- Places view (Chronicle): per location your progress, the deepest boss the
+  Chronicle remembers and who felled it, who fell there, and recent deeds.
+- NPCs quote Legends in Tavern chat (20%; heirs 50%, about their ancestor;
+  "you fight like..." when you share a legend's class).
+- **World generation** (`WorldGen.gd`, `world.json` "prehistory"): a new
+  game runs 224 days (two years) of the real Guild simulation before you
+  arrive - deaths, companies, feuds, a crowned champion - with you left out
+  of everything (Ledger, invitations, scenes, the Chronicle's "you"). Your
+  rivals sign up the day you do. About 15 s with a progress screen on the
+  first town visit; "Start new game" now really starts a new world.
+- **Permadeath** (checkbox at creation): a defeat with no one in your debt
+  to drag you out is death - the Legend is written ending with your fall
+  (where), the save is deleted, and a memorial screen returns you to the
+  title. Retired characters can't be loaded again.
+- Not yet: storylets.
 
 ---
 
