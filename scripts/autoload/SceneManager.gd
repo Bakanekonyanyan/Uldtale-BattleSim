@@ -328,6 +328,8 @@ func _on_battle_completed(player_won: bool, xp_gained: int) -> void:
 		MomentumSystem.clear_accumulated_loot()  # banked Press-On rewards are lost
 		var fallen = DungeonStateManager.active_player
 		var boss = DungeonStateManager.is_boss_fight
+		if fallen:
+			fallen.set_meta("fell_at", DungeonStateManager.current_location)
 		DungeonStateManager.end_dungeon(false)
 		if fallen == null:
 			change_to_character_selection()
@@ -335,7 +337,10 @@ func _on_battle_completed(player_won: bool, xp_gained: int) -> void:
 		# The Guild recovers you: fee, injury, gear to Lost & Found (DefeatManager)
 		var summary = DefeatManager.apply_defeat(fallen, boss)
 		fallen.set_meta("last_defeat", summary)
-		SaveManager.save_game(fallen)
+		if summary.get("died", false):
+			SaveManager.delete_character(fallen.name)   # permadeath: the Legend remains
+		else:
+			SaveManager.save_game(fallen)
 		navigate(ScenePath.DEFEAT, TransitionType.REPLACE, fallen)
 		return
 	

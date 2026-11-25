@@ -1411,6 +1411,7 @@ func _phase0_checks() -> void:
 	_drama_checks()
 	_temperament_checks()
 	_chronicle_checks()
+	_worldgen_checks()
 	_town_life_checks()
 	_ledger_checks()
 	_journal_checks()
@@ -2130,6 +2131,61 @@ func _chronicle_checks() -> void:
 		if n.has("heir_of"):
 			heirs += 1
 	check(heirs > 0 and heirs < 40, "sometimes a new adventurer is the heir of a legend (%d / 200)" % heirs)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(lp))
+	LegendManager.use_path("user://legends.json")
+	CharacterManager.current_character_resource.set_meta("current_character", prev_cur)
+
+## World generation, Places, legend quotes, permadeath, new games.
+func _worldgen_checks() -> void:
+	var p = make_player()
+	var prev_cur = CharacterManager.get_current_character()
+	CharacterManager.current_character_resource.set_meta("current_character", p)
+	WorldGen.run(p, null, Callable(), 90)   # no tree: runs straight through
+	var st = AdventurerManager.state(p)
+	check(not WorldGen.is_prehistory(p) and WorldClock.day(p) >= 90 and int(p.town_state.get("joined_day", 0)) == WorldClock.day(p), "a new character arrives in a world with a past (day %d)" % WorldClock.day(p))
+	var entries = ChronicleManager.entries(p)
+	var about_you = entries.filter(func(e): return "you" in e.who)
+	check(entries.size() > 5 and about_you.size() <= 1, "the Chronicle has history (%d entries) - none of it about you (%d)" % [entries.size(), about_you.size()])
+	var rivals = AdventurerManager.active(p).filter(func(n): return n.get("rival", false) and int(n.get("joined_day", 0)) == WorldClock.day(p))
+	check(rivals.size() == int(AdventurerManager._s("settings").get("rivals_at_start", 2)), "your rivals sign up the same day you do")
+	check(LedgerManager.standings(p).any(func(x): return x.is_player), "you're on the Ledger once you arrive")
+	check(ChronicleScreen.places_text(p).contains(LocationManager.get_display_name(LocationManager.get_ids()[0])), "Places lists every location")
+	var victim = AdventurerManager.active(p)[0]
+	victim.status = "dead"
+	victim["died_at"] = {"location": LocationManager.get_ids()[0], "floor": 7}
+	check(ChronicleScreen.places_text(p).contains("%s (floor 7)" % victim.name), "Places remembers who fell where")
+	# legends quoted; permadeath
+	var lp = "user://test_legends2.json"
+	LegendManager.use_path(lp)
+	var q := ""
+	var npc = AdventurerManager.active(p)[1]
+	var leg_hero = make_player()
+	leg_hero.name = "Aldra Vey"
+	LegendManager.retire(leg_hero)
+	for i in range(80):
+		q = LegendManager.quote(npc, p)
+		if q != "":
+			break
+	check(q.contains("Aldra"), "adventurers talk about the Legends of past worlds (%s)" % q)
+	var pd = make_player()
+	pd.name = "Doomed"
+	pd.town_state["permadeath"] = true
+	AdventurerManager.state(pd)
+	for n in AdventurerManager.active(pd):
+		n.memories = []
+	var s = DefeatManager.apply_defeat(pd, true)
+	check(s.get("died", false) and pd.town_state.get("dead", false) and LegendManager.all().any(func(l): return l.name == "Doomed" and l.get("fell", false)), "permadeath: a defeat is the end, and the Legend says how you fell")
+	check(String(LegendManager.all()[-1].story[-1]).contains("fell"), "the Legend ends with the fall")
+	var saved = make_player()
+	saved.town_state["permadeath"] = true
+	AdventurerManager.state(saved)
+	var friend = AdventurerManager.active(saved)[0]
+	friend.status = "idle"
+	MemoryManager.add(friend, "saved_me", "you", 1)
+	check(not DefeatManager.apply_defeat(saved, false).get("died", false), "unless someone who owes you drags you out")
+	# a new game is a new world; permadeath stays with the character
+	saved.reset_for_new_game()
+	check(saved.town_state.keys() == ["permadeath"], "a new game clears the old world but keeps permadeath")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(lp))
 	LegendManager.use_path("user://legends.json")
 	CharacterManager.current_character_resource.set_meta("current_character", prev_cur)

@@ -109,6 +109,8 @@ func _scene_tend_wounded(player: CharacterData, a: Dictionary, s: Dictionary, da
 	return true
 
 func _scene_tend_you(player: CharacterData, a: Dictionary, s: Dictionary, day: int) -> bool:
+	if WorldGen.is_prehistory(player):
+		return false
 	if int(a.get("rapport", 0)) < int(s.get("min_rapport", 25)):
 		return false
 	var inj = DefeatManager.get_injuries(player).filter(func(i): return int(i.get("remaining", 0)) > 1)
@@ -132,6 +134,8 @@ func _scene_pickpocket(player: CharacterData, a: Dictionary, s: Dictionary, day:
 	return true
 
 func _scene_pickpocket_you(player: CharacterData, a: Dictionary, s: Dictionary, day: int) -> bool:
+	if WorldGen.is_prehistory(player):
+		return false
 	if int(a.get("rapport", 0)) > int(s.get("max_rapport", -10)):
 		return false
 	var amount = min(int(player.currency.copper * float(s.get("take_pct", 0.02))), int(s.get("take_max_per_level", 40)) * max(1, player.level))

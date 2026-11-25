@@ -21,6 +21,9 @@ func _ready():
 
 ## Apply every defeat penalty. Returns a summary for the Defeat screen:
 ## {gold_lost, injury: {id, name, description, expeditions}, items: [{name, rarity, price}]}
+func is_permadeath(player: CharacterData) -> bool:
+	return player != null and bool(player.town_state.get("permadeath", false))
+
 func apply_defeat(player: CharacterData, is_boss: bool = false) -> Dictionary:
 	var summary := {"gold_lost": 0, "injury": {}, "items": []}
 	if player == null:
@@ -37,6 +40,11 @@ func apply_defeat(player: CharacterData, is_boss: bool = false) -> Dictionary:
 		player.current_mp = player.max_mp
 		player.current_sp = player.max_sp
 		player.calculate_secondary_attributes()
+		return summary
+	# permadeath: no one came. This is the end of the story.
+	if is_permadeath(player):
+		summary["died"] = true
+		summary["legend"] = LegendManager.fall(player, String(player.get_meta("fell_at", "")))
 		return summary
 	# gold fee
 	var fee = int(floor(player.currency.copper * float(cfg.get("gold_fee_fraction", 0.15))))

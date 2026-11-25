@@ -184,6 +184,24 @@
 		"heir_chance": 0.05,
 		"heir_drive": "Wants to live up to {legend}.",
 		"relic_chance": 0.04,
-		"relic_rarity": 4
+		"relic_rarity": 4,
+		"quote_chance": 0.2,
+		"heir_quote_chance": 0.5,
+		"quotes": [
+			"The bard sang about {legend}{epithet_sp} again last night. Gives me chills every time.",
+			"My grandmother swore she once saw {legend} walk into the Guild.",
+			"They say {legend} reached {rank} before hanging up their gear. Imagine that.",
+			"Some say {relic} is still out there somewhere, in some boss's hoard."
+		],
+		"same_class_quotes": [
+			"You fight like {legend}, you know - the {class} from the old songs.",
+			"Another {class}? The last famous one was {legend}{epithet_sp}. Big boots to fill."
+		],
+		"heir_quotes": [
+			"My family name comes from {ancestor}. I mean to earn it.",
+			"Everyone expects me to be like {ancestor}. I'll be better.",
+			"{ancestor} rode with {legend}. One day they'll sing about me too."
+		],
+		"end_death": "In Year {year}, {name}{epithet_sp} fell in {place}, a {rank} adventurer to the last. The Guild lowered its banner."
 	}
 }

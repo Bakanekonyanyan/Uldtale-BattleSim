@@ -72,7 +72,7 @@ func get_npc(player: CharacterData, id: int) -> Dictionary:
 func _generate_roster(player: CharacterData) -> void:
 	var st: Dictionary = _s("settings")
 	var count = _range(st.get("roster_start", [15, 17]))
-	var rivals = int(st.get("rivals_at_start", 2))
+	var rivals = 0 if WorldGen.is_prehistory(player) else int(st.get("rivals_at_start", 2))   # rivals arrive with you
 	for i in range(count):
 		# rivals start close to a fresh adventurer: level 1-3
 		var lv = st.get("newcomer_level", [1, 3]) if i < rivals else st.get("start_level", [1, 8])
@@ -356,7 +356,7 @@ func _maybe_start(player: CharacterData, npc: Dictionary, day: int) -> void:
 		_history(partner, day, "Went along with %s." % npc.name)
 	# competition: take a bounty off the player's board
 	var board: Array = GuildManager.state(player).board
-	if board.size() > 1 and RandomManager.randf() < float(jobs.get("compete_chance", 0.25)) * trait_mult(npc, "compete"):
+	if board.size() > 1 and not WorldGen.is_prehistory(player) and RandomManager.randf() < float(jobs.get("compete_chance", 0.25)) * trait_mult(npc, "compete"):
 		var b = board.pop_at(RandomManager.randi() % board.size())
 		npc.job["bounty"] = String(b.title)
 		npc.rivalry = int(npc.get("rivalry", 0)) + 1
@@ -583,6 +583,9 @@ func chat(player: CharacterData, id: int) -> Dictionary:
 	var said = PersonalityManager.say(npc, "chat")
 	if said != "":
 		r += "\n" + said
+	var lq = LegendManager.quote(npc, player)   # the old songs come up in conversation
+	if lq != "":
+		r += "\n" + lq
 	PersonalityManager.player_event(player, "chat")
 	var t = _reveal(npc)
 	if t != "":

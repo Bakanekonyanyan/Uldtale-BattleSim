@@ -35,6 +35,32 @@
   },
   {
    "kind": "settings",
+   "label": "Prehistory",
+   "path": [
+    "prehistory"
+   ],
+   "fields": [
+    {
+     "name": "_doc",
+     "type": "text",
+     "help": "Notes for designers."
+    },
+    {
+     "name": "days",
+     "type": "int",
+     "min": 0,
+     "help": "Days of Guild history simulated before a new character arrives (224 = two years; 0 = a fresh Guild)."
+    },
+    {
+     "name": "frame_every",
+     "type": "int",
+     "min": 1,
+     "help": "Days simulated between UI updates while the history is written."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
    "label": "Time costs",
    "path": [
     "time_costs"

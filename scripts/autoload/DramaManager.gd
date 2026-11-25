@@ -178,6 +178,8 @@ func invitation(player: CharacterData) -> Dictionary:
 	return inv
 
 func _invitation_day(player: CharacterData, day: int) -> void:
+	if WorldGen.is_prehistory(player):
+		return
 	_send_guests_home(player, day)
 	if not invitation(player).is_empty():
 		return

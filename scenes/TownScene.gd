@@ -160,6 +160,7 @@ func _ready():
 
 func set_player(character: CharacterData):
 	current_character = character
+	call_deferred("_maybe_generate_world")
 	Log.debug("town", "TownScene: Character set - ", character.name)
 	Log.debug("town", "TownScene: Inventory items - ", character.inventory.items)
 	update_ui()
@@ -431,4 +432,36 @@ func _on_charselect_pressed():
 
 func _on_arena_pressed():
 	SceneManager.change_to_arena(current_character)
-	
+
+## A new world: the Guild lives through its history before you arrive
+## (WorldGen). Saves that already have a world are left alone.
+func _maybe_generate_world() -> void:
+	var c = current_character
+	if c == null or c.town_state.get("world_ready", false):
+		return
+	if c.town_state.has("adventurers") or WorldClock.day(c) > 1 or WorldGen.days() <= 0:
+		c.town_state["world_ready"] = true
+		return
+	var layer := CanvasLayer.new()
+	layer.layer = 80
+	var dim := ColorRect.new()
+	dim.color = Color(0.04, 0.035, 0.05, 0.96)
+	dim.size = Vector2(1200, 720)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	layer.add_child(dim)
+	var label := Label.new()
+	label.position = Vector2(200, 300)
+	label.size = Vector2(800, 120)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	label.add_theme_font_size_override("font_size", 22)
+	label.text = "The Guild's history is being written..."
+	layer.add_child(label)
+	add_child(layer)
+	await WorldGen.run(c, get_tree(), func(d, total, date):
+		label.text = "The Guild's history is being written...\n%s\n(%d%%)" % [date, int(100.0 * d / total)])
+	c.town_state["world_ready"] = true
+	SaveManager.save_game(c)
+	layer.queue_free()
+	update_ui()
+

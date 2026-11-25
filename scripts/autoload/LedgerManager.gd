@@ -84,7 +84,7 @@ func renown(p: Dictionary) -> int:
 ## The standings, best first. Each profile gets "pos" (1-based) and "move"
 ## (places gained since the week's snapshot; 0 = same or new).
 func standings(player: CharacterData) -> Array:
-	var out: Array = [profile_player(player)]
+	var out: Array = [] if WorldGen.is_prehistory(player) else [profile_player(player)]
 	for n in AdventurerManager.active(player):
 		out.append(profile_npc(n))
 	out.sort_custom(func(a, b): return a.renown > b.renown if a.renown != b.renown else (a.is_player and not b.is_player))
@@ -183,8 +183,8 @@ func _crowning_tick(player: CharacterData, day: int) -> void:
 		var st = standings(player)
 		if not st.is_empty():
 			var lead = st[0]
-			var me = st.filter(func(x): return x.is_player)[0]
-			var tail = "you lead it" if lead.is_player else "%s leads; you're #%d" % [lead.name, me.pos]
+			var me = st.filter(func(x): return x.is_player)
+			var tail = "you lead it" if lead.is_player else ("%s leads; you're #%d" % [lead.name, me[0].pos] if not me.is_empty() else "%s leads" % lead.name)
 			WorldClock.add_news(player, "The Crowning is in %d days: %s." % [days_to_crowning(player), tail], "rank")
 
 ## Crown the Ledger's #1 as Champion of `year`. Returns the crowning record.
@@ -215,7 +215,7 @@ func crown(player: CharacterData, year: int) -> Dictionary:
 			line = "%s keeps the crown: Champion of Year %d." % [top.name, year]
 		elif prev.get("is_player", false):
 			line = "%s takes your crown: Champion of Year %d." % [top.name, year]
-		var me = st.filter(func(x): return x.is_player)[0]
-		WorldClock.add_news(player, line + " You finished #%d." % me.pos, "rank")
+		var me = st.filter(func(x): return x.is_player)
+		WorldClock.add_news(player, line + ((" You finished #%d." % me[0].pos) if not me.is_empty() else ""), "rank")
 	GameEvents.champion_crowned.emit(String(top.name), year, bool(top.is_player))
 	return rec

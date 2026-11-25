@@ -83,5 +83,10 @@
         "effects": {}
       }
     }
+  },
+  "prehistory": {
+    "_doc": "World generation (WorldGen.gd): days of Guild history simulated before a new character arrives (224 = two years). 0 = start a fresh Guild.",
+    "days": 224,
+    "frame_every": 4
   }
 }

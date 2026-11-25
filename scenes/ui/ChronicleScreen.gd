@@ -6,7 +6,7 @@
 class_name ChronicleScreen
 extends CanvasLayer
 
-const TABS := ["Timeline", "People", "The Fallen", "Legends"]
+const TABS := ["Timeline", "People", "Places", "The Fallen", "Legends"]
 
 var player: CharacterData
 var tab := 0
@@ -41,8 +41,8 @@ func _ready() -> void:
 		var b = Button.new()
 		b.text = TABS[i]
 		b.toggle_mode = true
-		b.position = Vector2(260 + i * 150, 14)
-		b.custom_minimum_size = Vector2(140, 34)
+		b.position = Vector2(250 + i * 128, 14)
+		b.custom_minimum_size = Vector2(120, 34)
 		b.pressed.connect(func(): _set_tab(i))
 		panel.add_child(b)
 		tab_buttons.append(b)
@@ -78,8 +78,9 @@ func _set_tab(i: int) -> void:
 	match i:
 		0: body.text = timeline_text(player)
 		1: _fill_people()
-		2: body.text = fallen_text(player)
-		3: body.text = LegendManager.legends_text()
+		2: body.text = places_text(player)
+		3: body.text = fallen_text(player)
+		4: body.text = LegendManager.legends_text()
 
 ## Timeline, year by year (newest first), the most important entries of each year.
 static func timeline_text(p: CharacterData, per_year := 25) -> String:
@@ -138,6 +139,40 @@ static func player_text(p: CharacterData) -> String:
 		t += "[i]Your story hasn't started yet.[/i]\n"
 	for e in mine.slice(max(0, mine.size() - 20)):
 		t += "[color=gray]%s[/color]  %s\n" % [ChronicleManager.date_for(int(e.day)), e.text]
+	return t
+
+## Places: your progress, the deepest boss anyone has felled there, who fell
+## there, and the latest the Chronicle remembers about it.
+static func places_text(p: CharacterData) -> String:
+	var t := ""
+	var entries = ChronicleManager.entries(p)
+	for loc in LocationManager.get_ids():
+		var lname = LocationManager.get_display_name(loc)
+		t += "[b][font_size=20][color=#ffd166]%s[/color][/font_size][/b]\n" % lname
+		t += "You: %s\n" % ("floor %d cleared" % (p.get_max_floor(loc) - 1) if p.get_max_floor(loc) > 1 else "not yet cleared a floor")
+		# the deepest boss the Chronicle remembers here, and by whom
+		var best := 0
+		var by := ""
+		var rx = RegEx.create_from_string("^(.+?) \\(.+\\) slew the boss of " + lname + " floor (\\d+)")
+		for e in entries:
+			var m = rx.search(String(e.text))
+			if m and int(m.get_string(2)) > best:
+				best = int(m.get_string(2))
+				by = m.get_string(1)
+		if best > 0:
+			t += "Deepest boss remembered: floor %d, by %s\n" % [best, by]
+		var fallen = AdventurerManager.all_adventurers(p).filter(func(n): return String(n.status) == "dead" and String(n.get("died_at", {}).get("location", "")) == loc)
+		if not fallen.is_empty():
+			t += "[color=#ff9f6b]Fell here:[/color] %s\n" % ", ".join(fallen.map(func(n): return "%s (floor %d)" % [n.name, int(n.died_at.get("floor", 0))]))
+		var recent: Array = []
+		var seen := {}
+		for e in entries:
+			if String(e.text).contains(lname) and not seen.has(String(e.text)):
+				seen[String(e.text)] = true
+				recent.append(e)
+		for e in recent.slice(max(0, recent.size() - 3)):
+			t += "[color=gray]%s[/color]  %s\n" % [ChronicleManager.date_for(int(e.day)), e.text]
+		t += "\n"
 	return t
 
 static func fallen_text(p: CharacterData) -> String:

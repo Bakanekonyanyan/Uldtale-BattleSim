@@ -25,7 +25,14 @@ static func build_hero(npc: Dictionary) -> CharacterData:
 		if p.equipment["main_hand"] != null:
 			break
 	for i in range(4):
-		var armor = ClassEquipmentBias.get_biased_equipment_id(p.character_class, "armors")
+		# armour they're trained in (ArmorTraining): reroll a few times before settling
+		var armor := ""
+		for attempt in range(6):
+			armor = ClassEquipmentBias.get_biased_equipment_id(p.character_class, "armors")
+			var tpl = ItemManager.get_equipment_template(armor) if armor != "" else {}
+			var tier = ArmorTraining.weights().find(String(tpl.get("type", "")))
+			if armor != "" and (tier < 0 or tier <= ArmorTraining.trained_tier(p)):
+				break
 		if armor != "":
 			_equip(p, armor, floor_num)
 	WeaponArts.grant_npc(p)   # their weapon arts, by level

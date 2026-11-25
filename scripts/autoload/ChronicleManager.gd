@@ -34,7 +34,9 @@ func importance(text: String, kind: String) -> int:
 ## Who a line is about: adventurers named in it, and "you".
 func subjects(player: CharacterData, text: String) -> Array:
 	var who: Array = []
-	if text.contains("You ") or text.contains(" you") or text.contains("Your ") or (player and player.name != "" and text.contains(player.name)):
+	if WorldGen.is_prehistory(player):
+		pass   # the world's history before you arrived
+	elif text.contains("You ") or text.contains(" you") or text.contains("Your ") or (player and player.name != "" and text.contains(player.name)):
 		who.append("you")
 	if player:
 		for n in AdventurerManager.all_adventurers(player):

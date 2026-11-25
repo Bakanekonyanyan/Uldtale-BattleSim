@@ -231,6 +231,12 @@ func start_new_game():
 func _on_load_saved_game_pressed():
 	if selected_character:
 		var loaded_character = SaveManager.load_game(selected_character.name)
+		if loaded_character and loaded_character.town_state.get("retired", false):
+			var d = AcceptDialog.new()
+			d.dialog_text = "%s has retired - their Legend is written. Start a new game to play them in a new world." % loaded_character.name
+			add_child(d)
+			d.popup_centered()
+			return
 		if loaded_character:
 			CharacterManager.set_current_character(loaded_character)
 			Log.debug("character_selection", "Loaded saved game for character: ", loaded_character.name)

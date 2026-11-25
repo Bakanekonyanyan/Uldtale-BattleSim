@@ -605,7 +605,8 @@ and each world keeps its own temperament (one quarrelsome, one close-knit).
 - Weights: Cloth, Leather, Mail, Plate, plus Shields as its own proficiency.
 - Starting training by school: Wardens Mail + Plate (Paladin + Shields);
   Martialists Leather (Myrmidon + Mail); Menders Cloth + Leather (Cleric +
-  Mail + Shields); Sorcerers Cloth (Beastmaster + Leather).
+  Mail + Shields); Sorcerers Cloth (Beastmaster + Leather, raised to Mail
+  after the balance check - it always wore mail).
 - **Untrained armour can be worn with penalties** (decided): -accuracy,
   -dodge, +SP costs, no set bonus - so no drop is ever useless.
 - **Extra training comes from rank-ups** (decided): a promotion grants a

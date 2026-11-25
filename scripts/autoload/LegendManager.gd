@@ -101,6 +101,20 @@ func retire(player: CharacterData) -> Dictionary:
 	ChronicleManager.record(player, "%s retired from adventuring. Their Legend is written." % player.name, "chronicle", 10)
 	return leg
 
+## Permadeath: you fell. The Legend ends with your death.
+func fall(player: CharacterData, location_id := "") -> Dictionary:
+	var leg = write(player)
+	var ep = String(leg.get("epithet", ""))
+	var place = LocationManager.get_display_name(location_id) if location_id != "" else "the depths"
+	if not leg.story.is_empty():
+		leg.story[leg.story.size() - 1] = String(cfg().get("end_death", "{name} fell in {place}.")).format({"name": player.name,
+			"epithet_sp": (" " + ep) if ep != "" else "", "place": place, "rank": leg.rank, "year": ChronicleManager.year_of(WorldClock.day(player))})
+	leg["fell"] = true
+	all().append(leg)
+	_save()
+	player.town_state["dead"] = true
+	return leg
+
 func legend_text(leg: Dictionary) -> String:
 	var t := "[b][font_size=20][color=#ffd166]%s%s[/color][/font_size][/b]\n[color=gray]%s %s, %s. %d year(s) with the Guild.[/color]\n\n" % [
 		leg.get("name", "?"), (" " + String(leg.epithet)) if String(leg.get("epithet", "")) != "" else "", leg.get("race", ""), leg.get("class", ""), leg.get("rank", ""), int(leg.get("years", 1))]
@@ -179,3 +193,34 @@ func make_relic(leg: Dictionary, fl: int) -> Equipment:
 		item.display_name = String(r.name)
 		item.flavor_text = "Carried by %s%s, long ago." % [leg.name, (" " + String(leg.epithet)) if String(leg.get("epithet", "")) != "" else ""]
 	return item
+
+## Something an adventurer might say about the Legends of past worlds ("" if
+## nothing this time). Heirs talk about their ancestor more often.
+func quote(npc: Dictionary, player: CharacterData = null) -> String:
+	if all().is_empty():
+		return ""
+	var c = cfg()
+	var heir = npc.has("heir_of")
+	if RandomManager.randf() >= float(c.get("heir_quote_chance" if heir else "quote_chance", 0.2)):
+		return ""
+	var leg: Dictionary = all()[RandomManager.randi() % all().size()]
+	if heir:
+		for l in all():
+			if String(l.name) == String(npc.get("heir_legend", "")):
+				leg = l
+	var pool: Array = []
+	if heir:
+		pool = c.get("heir_quotes", [])
+	elif player and String(leg.get("class", "")) == player.character_class:
+		pool = c.get("same_class_quotes", [])
+	if pool.is_empty():
+		pool = c.get("quotes", [])
+		if leg.get("relic", {}).is_empty():
+			pool = pool.filter(func(q): return not String(q).contains("{relic}"))
+	if pool.is_empty():
+		return ""
+	var ep = String(leg.get("epithet", ""))
+	var line = String(pool[RandomManager.randi() % pool.size()]).format({"legend": leg.name, "epithet_sp": (" " + ep) if ep != "" else "",
+		"rank": leg.get("rank", ""), "class": leg.get("class", ""), "relic": leg.get("relic", {}).get("name", ""), "ancestor": npc.get("heir_of", "")})
+	return "%s: \"%s\"" % [String(npc.name).get_slice(" ", 0), line]
+

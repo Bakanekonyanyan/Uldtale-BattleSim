@@ -8,9 +8,10 @@ var player_character: CharacterData
 func _ready():
 	if player_character == null:
 		player_character = CharacterManager.get_current_character()
-	var chrome = ScreenChrome.attach(self, "Defeated", _on_continue, "Return to Town")
-	chrome.set_info(ScreenChrome.money_text(player_character))
 	var s: Dictionary = player_character.get_meta("last_defeat", {}) if player_character else {}
+	var died = bool(s.get("died", false))
+	var chrome = ScreenChrome.attach(self, "Fallen" if died else "Defeated", (func(): SceneManager.change_to_main_menu()) if died else _on_continue, "Return to Title" if died else "Return to Town")
+	chrome.set_info("" if died else ScreenChrome.money_text(player_character))
 	var panel := Panel.new()
 	ScreenChrome.place(panel, Rect2(250, 110, 700, 470))
 	$UI.add_child(panel)
@@ -19,6 +20,9 @@ func _ready():
 	text.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	ScreenChrome.place(text, Rect2(24, 18, 652, 434))
 	panel.add_child(text)
+	if died:
+		text.text = "[font_size=22][b]You died.[/b][/font_size]\n[color=#a99f90]No one came. Your story ends here - but it will be told.[/color]\n\n" + LegendManager.legend_text(s.get("legend", {}))
+		return
 	var t = "[font_size=20][b]You fell in battle.[/b][/font_size]\n"
 	if s.has("rescued_by"):
 		t += "[color=#7bd389]%s found you and carried you home, repaying an old debt. No fee, nothing lost.[/color]\n\n" % s.rescued_by

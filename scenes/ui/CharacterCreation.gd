@@ -9,6 +9,7 @@ var classes = {}
 @onready var class_option = $ClassOption
 @onready var info_display = $InfoDisplay
 @onready var create_button = $CreateButton
+var permadeath_box: CheckBox
 @onready var cancel_button = $QuitButton
 
 const STARTING_GOLD = 100
@@ -30,6 +31,11 @@ func setup_ui():
 	race_option.item_selected.connect(_on_race_selected)
 	class_option.item_selected.connect(_on_class_selected)
 	create_button.pressed.connect(_on_create_pressed)
+	permadeath_box = CheckBox.new()
+	permadeath_box.text = "Permadeath"
+	permadeath_box.tooltip_text = "One life. If you fall and no one who owes you drags you out, you die: your Legend is written and the save is gone."
+	permadeath_box.position = Vector2(64, 460)
+	add_child(permadeath_box)
 	cancel_button.pressed.connect(_on_cancel_pressed)
 	
 	update_info_display()
@@ -177,6 +183,8 @@ func _on_create_pressed():
 	# Use CharacterFactory for creation
 	var new_character = CharacterFactory.create_character(char_name, race_name, p_class_name, true)
 	new_character.max_floor_unlocked = 1
+	if permadeath_box and permadeath_box.button_pressed:
+		new_character.town_state["permadeath"] = true
 	
 	# Starting gold
 	new_character.currency.copper = STARTING_GOLD

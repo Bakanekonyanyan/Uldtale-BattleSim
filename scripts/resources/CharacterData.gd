@@ -874,6 +874,19 @@ func reset_for_new_battle():
 	is_defending = false
 
 func reset_for_new_game():
+	# a new game is a new world (WorldGen writes its history on arrival); the
+	# permadeath choice is the character's, so it stays
+	var pd = bool(town_state.get("permadeath", false))
+	town_state = {}
+	if pd:
+		town_state["permadeath"] = true
+	location_progress.clear()
+	max_floor_unlocked = 1
+	if talents:
+		talents.respec(true)
+	if proficiency_manager:
+		proficiency_manager.weapon_proficiencies.clear()
+		proficiency_manager.armor_proficiencies.clear()
 	calculate_secondary_attributes()
 	current_hp = max_hp
 	current_mp = max_mp
