@@ -78,3 +78,29 @@ before class depth (ed37e40) vs after. N=10 for all classes, N=30 for the ones t
 - Shinobi F12 first-try 89% -> 69% (N=30): worth a look in a class tuning pass.
   Note the sim's heroes all share a name, so their fork picks are identical
   per class - a tuning pass should compare both options of each fork.
+
+## Class tuning pass: fork options (A vs B)
+
+`balance_sim -- career --forks=a|b` forces one side of every fork (A = the
+alphabetically first option). 20 careers per class and side, level 1 to floor
+12. First-try clear % at floor 12, A / B:
+
+| Class | First run | After tuning |
+|---|---|---|
+| Paladin | 65 / 95 | 75 / 85 |
+| Druid | 77 / 31 | 88 / 69 |
+| Elementalist | 31 / 61 | 57 / 61 |
+| Necromancer | 81 / 28 | 62 / 57 |
+| Beastmaster | 90 / 66 | 75 / 55 (within noise) |
+| Samurai, Berserker, Monk, Shinobi, Myrmidon, Cleric, Kannagi | within ~12 points | - |
+
+Changes:
+- **Spread mutations** (every foe / every ally at reduced power) now pay their
+  power cost only when they reach more than one target: alone, or against a
+  lone boss, they hit at full power. Party picks no longer punish solo play.
+- Druid *Rabid Bear*: +8% physical lifesteal (sustain to match Den Mother).
+- Necromancer *Sanguine Pact* 10% HP for x1.45 (was 12% for x1.3); *Blood
+  Return* lifesteal 20% (was 25%); *Undying* -14%; *Hexweaver* +12% status
+  chance; *Perfect Vessel* also heals 10%.
+- Elementalist *Prismatic Split* 75% per target (was 60%); *Searing Focus* and
+  *Storm Caller* +8% (was 6%).
