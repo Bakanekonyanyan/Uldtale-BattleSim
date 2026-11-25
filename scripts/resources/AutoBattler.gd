@@ -50,6 +50,10 @@ static func fork_pick(nodes: Array, choice: String, npc: Dictionary) -> String:
 	var opts = nodes.filter(func(n): return String(n.get("choice", "")) == choice)
 	if opts.is_empty():
 		return ""
+	# the balance sim can force a side: "a" = first option, "b" = second
+	var pref = String(npc.get("fork_pref", ""))
+	if pref in ["a", "b"]:
+		return String(opts[0 if pref == "a" or opts.size() < 2 else 1].key)
 	var tr: Array = npc.get("traits", [])
 	var lean = tr.filter(func(t): return t in _BOLD_TRAITS).size() - tr.filter(func(t): return t in _CAREFUL_TRAITS).size()
 	var best: Dictionary = opts[abs(hash("%s|%s" % [npc.get("id", npc.get("name", "")), choice])) % opts.size()]

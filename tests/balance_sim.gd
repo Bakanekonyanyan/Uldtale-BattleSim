@@ -342,7 +342,7 @@ func duel_report(args: Array) -> void:
 ## Prints per floor: level on arrival, first-try clear %, average attempts,
 ## share stuck.   tool: career --floors=15 --runs=20 --policy=smart --party=0
 func career_report(args: Array) -> void:
-	var opts := {"classes": ",".join(CLASSES), "floors": "15", "runs": "20", "tries": "4", "policy": "smart", "party": "0", "potions": "2"}
+	var opts := {"classes": ",".join(CLASSES), "floors": "15", "runs": "20", "tries": "4", "policy": "smart", "party": "0", "potions": "2", "forks": "mix"}
 	for a in args.slice(1):
 		var kv = String(a).trim_prefix("--").split("=", true, 1)
 		if kv.size() == 2:
@@ -371,7 +371,9 @@ func career_report(args: Array) -> void:
 				var n := 0
 				while n < tries and not cleared:
 					n += 1
-					var hero = AutoBattler.build_hero({"name": "Hero", "race": "Hume", "cls": cls, "level": level, "gear_floor": f, "branch": i % 3})
+					# forks: "a"/"b" force a side of every fork; "mix" varies by run (a different name per run)
+					var hero = AutoBattler.build_hero({"name": "Hero%d" % i, "id": i, "race": "Hume", "cls": cls, "level": level, "gear_floor": f, "branch": i % 3,
+						"fork_pref": String(opts.forks) if String(opts.forks) in ["a", "b"] else ""})
 					hero.is_player = true
 					if start_potions > 0:
 						hero.add_to_pack(ItemManager.get_item("health_potion"), start_potions)
