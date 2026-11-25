@@ -1004,6 +1004,67 @@ func _class_depth_checks() -> void:
 	enemy.calculate_secondary_attributes()
 	check(enemy.talents == null or enemy.talents.thresholds_on.is_empty(), "enemies don't get attribute passives")
 
+## Weapon arts (family proficiency) and armour training (penalties, rank-up points).
+func _arts_and_armor_checks() -> void:
+	# a Samurai who keeps using a katana earns the signature art, then the generic ones
+	var sam = CharacterFactory.create_character("S", "Hume", "Samurai", true)
+	var kat = ItemManager.create_equipment_for_floor("katana", 1)
+	sam.inventory.add_item(kat, 1)
+	sam.equip_item(kat)
+	check(WeaponArts.family_of("great_katana") == "katana" and WeaponArts.held_families(sam) == ["katana"], "katanas form one weapon family")
+	var learned: Array = []
+	for i in range(60):
+		var m = sam.proficiency_manager.use_weapon("katana")
+		if m.contains("art"):
+			learned.append(m)
+	check(sam.skills.has("Moonlit Draw") and sam.skills.has("Iai Slash") and not sam.skills.has("Swallow Cut"), "katana use earns Moonlit Draw (signature) and Iai Slash; Swallow Cut needs more (%d messages)" % learned.size())
+	var md: Skill = sam.get_skill_instance("Moonlit Draw")
+	sam.current_sp = sam.max_sp
+	check(md.can_afford(sam), "an art is usable with its weapon in hand")
+	sam.unequip_item("main_hand")
+	check(not md.can_afford(sam), "and not without it")
+	# signatures: one per class, several for the Myrmidon
+	check(WeaponArts.signature_families("Samurai").size() == 1 and WeaponArts.signature_families("Myrmidon").size() >= 4, "one signature art per class; the Myrmidon masters several (%d)" % WeaponArts.signature_families("Myrmidon").size())
+	# any class can train any weapon (generic arts), but only its own signature
+	var mage = CharacterFactory.create_character("E", "Hume", "Elementalist", true)
+	for i in range(60):
+		mage.proficiency_manager.use_weapon("katana")
+	check(mage.skills.has("Iai Slash") and not mage.skills.has("Moonlit Draw"), "an Elementalist can learn katana arts, not the Samurai's signature")
+	# armour training: anyone can wear plate, untrained pieces cost accuracy, dodge, SP
+	var el = CharacterFactory.create_character("E2", "Hume", "Elementalist", true)
+	el.calculate_secondary_attributes()
+	var acc0 = el.accuracy
+	var dodge0 = el.dodge
+	var plate = ItemManager.create_equipment_for_floor("plate_armor", 1)
+	check(plate.can_equip(el), "an Elementalist can put on plate")
+	el.inventory.add_item(plate, 1)
+	el.equip_item(plate)
+	check(el.accuracy < acc0 and el.armor_sp_mult > 1.0 and ArmorTraining.penalties(el).pieces == 1, "untrained plate: accuracy %.3f -> %.3f, SP costs x%.2f" % [acc0, el.accuracy, el.armor_sp_mult])
+	var pal = CharacterFactory.create_character("P", "Hume", "Paladin", true)
+	var pp = ItemManager.create_equipment_for_floor("plate_armor", 1)
+	pal.inventory.add_item(pp, 1)
+	pal.equip_item(pp)
+	check(ArmorTraining.penalties(pal).pieces == 0 and ArmorTraining.shield_trained(pal), "a Paladin is trained in plate and shields")
+	# promotions grant training points
+	el.currency.copper = 0
+	ArmorTraining.grant_point(el)
+	check(ArmorTraining.options(el).size() == 2 and ArmorTraining.train(el, "heavier") != "" and ArmorTraining.trained_weight(el) == "leather", "a promotion's point trains the next weight (cloth -> leather)")
+	check(ArmorTraining.train(el, "shield") == "", "no points left, no more training")
+	var sp_skill: Skill = null
+	for sn in el.skills:
+		var s: Skill = el.get_skill_instance(sn)
+		if s and s.sp_cost > 0:
+			sp_skill = s
+	if sp_skill:
+		check(sp_skill.sp_cost_for(el) > sp_skill.sp_cost, "untrained armour makes SP skills cost more")
+	# enemies don't care
+	var foe = make_player()
+	foe.is_player = false
+	check(ArmorTraining.penalties(foe).pieces == 0, "enemies have no armour penalties")
+	# NPC adventurers get arts for what they hold
+	var npc = AutoBattler.build_hero({"name": "N", "race": "Hume", "cls": "Samurai", "level": 20, "gear_floor": 5})
+	check(npc.skills.has("Moonlit Draw") or not "katana" in WeaponArts.held_families(npc), "NPC Samurai with a katana have their signature art")
+
 ## Classes follow their philosophies (docs/lore/CLASS_PHILOSOPHIES.md)
 func _philosophy_checks() -> void:
 	var monk = CharacterFactory.create_character("M", "Hume", "Monk", true)
@@ -1177,6 +1238,7 @@ func _phase0_checks() -> void:
 	_element_and_class_checks()
 	_philosophy_checks()
 	_class_depth_checks()
+	_arts_and_armor_checks()
 	_talent_checks()
 	_defeat_checks()
 	_archetype_checks()

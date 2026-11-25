@@ -1,0 +1,64 @@
+{
+	"_doc": "Armour training (ArmorTraining.gd; LIVING_WORLD.md J). Weights in order; a hero is trained up to a weight (and every lighter one), plus shields separately. Untrained pieces can be worn with penalties. Each promotion gives a training point: one weight heavier, or shields.",
+	"weights": [
+		"cloth",
+		"leather",
+		"mail",
+		"plate"
+	],
+	"start": {
+		"Paladin": {
+			"weight": "plate",
+			"shield": true
+		},
+		"Samurai": {
+			"weight": "plate"
+		},
+		"Berserker": {
+			"weight": "plate"
+		},
+		"Monk": {
+			"weight": "leather"
+		},
+		"Shinobi": {
+			"weight": "leather"
+		},
+		"Myrmidon": {
+			"weight": "mail",
+			"shield": true
+		},
+		"Druid": {
+			"weight": "leather"
+		},
+		"Cleric": {
+			"weight": "mail",
+			"shield": true
+		},
+		"Kannagi": {
+			"weight": "leather"
+		},
+		"Elementalist": {
+			"weight": "cloth"
+		},
+		"Beastmaster": {
+			"weight": "leather"
+		},
+		"Necromancer": {
+			"weight": "cloth"
+		}
+	},
+	"default_start": {
+		"weight": "leather"
+	},
+	"penalty_per_piece": {
+		"accuracy": -0.02,
+		"dodge": -0.015,
+		"sp_cost": 0.05
+	},
+	"shield_penalty": {
+		"accuracy": -0.03,
+		"dodge": -0.02,
+		"sp_cost": 0.05
+	},
+	"points_per_promotion": 1
+}

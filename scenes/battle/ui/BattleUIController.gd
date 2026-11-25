@@ -567,7 +567,7 @@ func _create_skill_button(skill: Skill, cooldown: int, can_use: bool) -> HBoxCon
 		if skill.mp_cost > 0:
 			cost_parts.append("MP: %d" % skill.mp_cost)
 		if skill.sp_cost > 0:
-			cost_parts.append("SP: %d" % skill.sp_cost)
+			cost_parts.append("SP: %d" % skill.sp_cost_for(player))
 		
 		var cost_str = " | ".join(cost_parts) if not cost_parts.is_empty() else "Free"
 		btn.text = "%s [Lv %s] (%s)" % [skill.name, level_str, cost_str]
@@ -583,6 +583,8 @@ func _create_skill_button(skill: Skill, cooldown: int, can_use: bool) -> HBoxCon
 		btn.text += "  [Link %d]" % rules.link_cost(skill)
 		if not rules.link_ok(player, skill):
 			btn.tooltip_text = "Ultimate: needs %d Link (you have %d). Hits, combos and Breaks fill it." % [rules.link_cost(skill), battle_context.link_gauge]
+	if not skill.has_weapon_for(player):
+		btn.tooltip_text += ("\n" if btn.tooltip_text != "" else "") + "Weapon art: needs a %s in hand." % String(WeaponArts.cfg().get("families", {}).get(skill.weapon_family, {}).get("name", skill.weapon_family)).to_lower()
 	if not skill.mutation_names().is_empty():
 		btn.tooltip_text += ("\n" if btn.tooltip_text != "" else "") + "Mutated: %s" % ", ".join(skill.mutation_names())
 	if skill.turn_delay > 0:

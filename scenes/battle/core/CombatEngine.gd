@@ -110,6 +110,12 @@ func _execute_attack(action: BattleAction) -> ActionResult:
 			
 			if weapon.key != "" and weapon.key != null:
 				prof_level_up_msg = attacker.proficiency_manager.use_weapon(weapon.key)
+		# a shield or focus in the off hand is trained too
+		var off = attacker.equipment.get("off_hand")
+		if off is Equipment and attacker.proficiency_manager and String(off.key) != "" and WeaponArts.family_of(String(off.key)) != "":
+			var m2 = attacker.proficiency_manager.use_weapon(String(off.key))
+			if m2 != "":
+				prof_level_up_msg = (prof_level_up_msg + "\n" + m2) if prof_level_up_msg != "" else m2
 	
 	if RandomManager.randf() >= attacker.accuracy:
 		return ActionResult.missed_attack(attacker, target)

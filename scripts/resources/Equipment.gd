@@ -155,6 +155,9 @@ func _generate_new(data: Dictionary):
 # === EQUIPMENT OPERATIONS ===
 
 func can_equip(character: CharacterData) -> bool:
+	# armour and shields: anyone can wear them; untrained pieces carry penalties (ArmorTraining)
+	if String(type) in ["cloth", "leather", "mail", "plate", "shield"]:
+		return true
 	if class_restriction.is_empty():
 		return true
 	return character.character_class in class_restriction

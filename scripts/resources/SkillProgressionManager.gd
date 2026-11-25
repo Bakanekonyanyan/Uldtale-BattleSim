@@ -84,14 +84,20 @@ func use_skill(skill_name: String) -> String:
 	
 	# Update instance
 	var instance = get_skill_instance(skill_name)
+	# casting through a focus (tome, talisman...) trains it
+	var art_msg := ""
+	if instance and instance.ability_type == Skill.AbilityType.MAGICAL and character and character.proficiency_manager:
+		var off = character.equipment.get("off_hand")
+		if off is Equipment and WeaponArts.family_of(String(off.key)) == "focus":
+			art_msg = character.proficiency_manager.use_weapon(String(off.key))
 	if instance:
 		instance.uses = skill_levels[skill_name]["uses"]
 		var level_up_msg = instance.on_skill_used()
 		if level_up_msg != "":
 			skill_levels[skill_name]["level"] = instance.level
-			return level_up_msg
+			return level_up_msg + (("\n" + art_msg) if art_msg != "" else "")
 	
-	return ""
+	return art_msg
 
 # === COOLDOWN MANAGEMENT ===
 

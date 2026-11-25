@@ -81,6 +81,8 @@ enum ElementType {
 @export var turn_delay: int = 0
 ## Fraction of the user's max HP paid on use (Necromancer blood magic). Never kills.
 @export var hp_cost: float = 0.0
+## Weapon art: needs a weapon of this family in hand (WeaponArts.gd); "" = any.
+@export var weapon_family: String = ""
 ## Talent upgrades {power, cooldown, duration, mp_cost, sp_cost} (set by SkillProgressionManager)
 var talent_mods: Dictionary = {}
 ## Talent mutation (TalentManager "mutate"): shape changes, power_mult, after_use.
@@ -115,6 +117,7 @@ static func create_from_dict(data: Dictionary) -> Skill:
 	skill.category = String(data.get("category", "")).to_upper()
 	skill.turn_delay = int(data.get("turn_delay", 0))
 	skill.hp_cost = float(data.get("hp_cost", 0.0))
+	skill.weapon_family = String(data.get("weapon_family", ""))
 	
 	# Parse elements
 	skill.elements = []
@@ -195,12 +198,20 @@ static func create_from_dict(data: Dictionary) -> Skill:
 	return skill
 
 ## Costs: a skill charges every cost it lists (MP and SP, plus hp_cost).
+## Untrained armour makes SP costs heavier (ArmorTraining).
+func sp_cost_for(user: CharacterData) -> int:
+	return int(ceil(sp_cost * user.armor_sp_mult)) if user and sp_cost > 0 else sp_cost
+
+## A weapon art needs a weapon of its family in hand.
+func has_weapon_for(user: CharacterData) -> bool:
+	return weapon_family == "" or user == null or weapon_family in WeaponArts.held_families(user)
+
 func can_afford(user: CharacterData) -> bool:
-	return user.current_mp >= mp_cost and user.current_sp >= sp_cost
+	return user.current_mp >= mp_cost and user.current_sp >= sp_cost_for(user) and has_weapon_for(user)
 
 func pay_costs(user: CharacterData) -> void:
 	user.current_mp -= mp_cost
-	user.current_sp -= sp_cost
+	user.current_sp -= sp_cost_for(user)
 	if hp_cost > 0.0:   # blood magic, never lethal
 		user.current_hp = max(1, user.current_hp - int(round(user.max_hp * hp_cost)))
 

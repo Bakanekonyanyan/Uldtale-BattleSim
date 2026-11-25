@@ -91,6 +91,8 @@ const CARRY_LIMIT_MAX := 20
 
 # === EQUIPMENT BONUSES (separate from base attributes) ===
 var equipment_bonuses: Dictionary = {}
+## SP cost multiplier from untrained armour (ArmorTraining.gd); 1.0 = none.
+var armor_sp_mult: float = 1.0
 
 # === INVENTORY & EQUIPMENT ===
 @export var inventory: Inventory
@@ -268,6 +270,11 @@ func calculate_secondary_attributes():
 	for stat in ["toughness", "dodge", "spell_ward", "accuracy", "critical_hit_rate", "armor_penetration"]:
 		if flat.has(stat):
 			set(stat, get(stat) + flat[stat])
+	# untrained armour / shields: worn, but clumsily (ArmorTraining)
+	var pen = ArmorTraining.penalties(self)
+	accuracy = max(0.1, accuracy + float(pen.accuracy))
+	dodge = max(0.0, dodge + float(pen.dodge))
+	armor_sp_mult = 1.0 + float(pen.sp_cost)
 	
 	# Attack power
 	match attack_power_type:

@@ -52,11 +52,12 @@ func use_weapon(weapon_key: String) -> String:
 	
 	weapon_proficiencies[weapon_key]["uses"] += 1
 	
+	var lines: Array = []
 	var level_up_msg = _check_weapon_level_up(weapon_key)
 	if level_up_msg != "":
-		return level_up_msg
-	
-	return ""
+		lines.append(level_up_msg)
+	lines.append_array(WeaponArts.check_unlocks(character))   # family levels unlock weapon arts
+	return "\n".join(lines)
 
 func _check_weapon_level_up(weapon_key: String) -> String:
 	"""Check if weapon proficiency should level up"""

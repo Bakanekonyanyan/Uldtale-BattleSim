@@ -286,6 +286,7 @@ func load_game(character_name: String) -> CharacterData:
 	# Handle Proficiencies
 	if "proficiency_data" in save_data:
 		player.proficiency_manager.load_save_data(save_data["proficiency_data"])
+		WeaponArts.check_unlocks(player)   # arts earned before they existed
 	
 	# Load inventory
 	if "inventory" in save_data:

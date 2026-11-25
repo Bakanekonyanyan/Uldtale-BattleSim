@@ -64,6 +64,7 @@ func _build_ui() -> void:
 	panel.add_child(details)
 
 	_button(ui, "Ledger", Vector2(1020, 72), func(): LedgerBoard.open(self, player_character), Vector2(148, 36))
+	_button(ui, "Training", Vector2(864, 72), _on_training, Vector2(148, 36))
 	primary_button = _button(ui, "Accept", Vector2(496, 526), _on_primary_pressed)
 	reroll_button = _button(ui, "Reroll Board", Vector2(660, 526), _on_reroll_pressed, Vector2(220, 40))
 
@@ -384,3 +385,37 @@ func _on_reroll_pressed() -> void:
 func _on_back_pressed() -> void:
 	SaveManager.save_game(player_character)
 	SceneManager.change_to_town(player_character)
+
+## Armour training (ArmorTraining): what you're trained in, penalties worn,
+## and promotions' training points to spend.
+func _on_training() -> void:
+	var p = player_character
+	var pen = ArmorTraining.penalties(p)
+	var t := "Trained in armour up to [b]%s[/b]%s.\n" % [ArmorTraining.trained_weight(p).capitalize(), " and [b]shields[/b]" if ArmorTraining.shield_trained(p) else ""]
+	t += "[color=gray]You can wear anything, but untrained armour costs accuracy, dodge and extra SP per piece.[/color]\n"
+	if int(pen.pieces) > 0 or pen.shield:
+		t += "[color=#ff9f6b]Wearing %d untrained piece%s%s: %+d%% accuracy, %+d%% dodge, +%d%% SP costs.[/color]\n" % [int(pen.pieces), "" if int(pen.pieces) == 1 else "s", " and an untrained shield" if pen.shield else "",
+			int(round(float(pen.accuracy) * 100)), int(round(float(pen.dodge) * 100)), int(round(float(pen.sp_cost) * 100))]
+	t += "\nTraining points: [b]%d[/b] (one per promotion)." % ArmorTraining.points(p)
+	var d = AcceptDialog.new()
+	d.title = "Guild Training"
+	var label = RichTextLabel.new()
+	label.bbcode_enabled = true
+	label.fit_content = true
+	label.custom_minimum_size = Vector2(560, 0)
+	label.text = t
+	d.add_child(label)
+	if ArmorTraining.points(p) > 0:
+		for o in ArmorTraining.options(p):
+			d.add_button("Train: %s" % o.text, false, String(o.id))
+	d.custom_action.connect(func(id):
+		var msg = ArmorTraining.train(p, String(id))
+		if msg != "":
+			status_label.text = msg
+			SaveManager.save_game(p)
+		d.queue_free())
+	d.confirmed.connect(d.queue_free)
+	d.canceled.connect(d.queue_free)
+	add_child(d)
+	d.popup_centered(Vector2i(600, 0))
+

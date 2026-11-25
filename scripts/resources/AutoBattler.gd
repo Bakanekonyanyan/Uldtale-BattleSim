@@ -28,6 +28,7 @@ static func build_hero(npc: Dictionary) -> CharacterData:
 		var armor = ClassEquipmentBias.get_biased_equipment_id(p.character_class, "armors")
 		if armor != "":
 			_equip(p, armor, floor_num)
+	WeaponArts.grant_npc(p)   # their weapon arts, by level
 	p.calculate_secondary_attributes()
 	p.reset_for_new_battle()
 	return p

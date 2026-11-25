@@ -52,10 +52,11 @@
       "LINK",
       "ULTIMATE",
       "TRANSCENDENT",
-      "HIDDEN"
+      "HIDDEN",
+      "ART"
      ],
      "optional": true,
-     "help": "Ability type (docs/lore/ABILITY_TYPES.md). Talents can key off it; ULTIMATE skills come from tier-5 talents."
+     "help": "Ability type (docs/lore/ABILITY_TYPES.md). Talents can key off it; ULTIMATE skills come from tier-5 talents. ART skills come from weapon proficiency (data/weapon_arts.json)."
     },
     {
      "name": "power",
@@ -204,6 +205,23 @@
      "min": -1,
      "max": 5,
      "help": "Turn order: >0 pushes enemy targets back that many places; -1 pulls the ally target forward to act next."
+    },
+    {
+     "name": "weapon_family",
+     "type": "enum",
+     "options": [
+      "sword",
+      "katana",
+      "axe",
+      "mace",
+      "dagger",
+      "spear",
+      "staff",
+      "shield",
+      "focus"
+     ],
+     "optional": true,
+     "help": "Weapon art: usable only with a weapon of this family in hand."
     }
    ]
   }

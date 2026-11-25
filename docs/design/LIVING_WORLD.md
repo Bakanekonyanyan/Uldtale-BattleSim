@@ -567,7 +567,7 @@ and each world keeps its own temperament (one quarrelsome, one close-knit).
 
 ---
 
-## J. Weapon arts and armour training (decided, not built)
+## J. Weapon arts and armour training (built)
 
 **Weapon arts**
 - Any class can gain proficiency in any weapon family through use.
@@ -596,4 +596,23 @@ and each world keeps its own temperament (one quarrelsome, one close-knit).
   Mail balanced, Plate big toughness but -dodge and +SP costs.
 - NPCs and enemies follow the same rules (gear generation and AutoBattler
   builds respect training).
+
+**Built:** `WeaponArts.gd` + `data/weapon_arts.json`, `ArmorTraining.gd` +
+`data/armor_training.json` (both Content Manager tabs).
+- Families from the item data: sword, katana, axe, mace, dagger, spear, staff,
+  shield, focus (no bows or fists exist yet). Uses of every item in a family
+  add up. Proficiency levels are at 10 / 50 / 250 / 1250 / 3000 uses, so arts
+  unlock at family level 2 (signature, 10 uses), 3 (first art, 50) and 4
+  (second, 250). Off-hand shields and foci are trained on basic attacks, and
+  a focus also on every spell.
+- 18 generic arts and 16 signatures (11 classes + 5 for the Myrmidon:
+  sword, axe, spear, dagger, mace). Arts are skills (category ART,
+  `weapon_family`) greyed out without the weapon; generated adventurers get
+  theirs by level.
+- Armour: trained up to a weight (lighter ones included) + shields; mail and
+  plate are no longer class-locked. Untrained pieces: -2% accuracy, -1.5% dodge,
+  +5% SP costs each (shield: -3% / -2% / +5%). A point per promotion, spent at
+  the Guild (Training). Enemies are unaffected; NPC gear still follows class.
+- Not done: weight "feel" bonuses (cloth spell power, plate toughness) - the
+  items' own stats carry that for now.
 
