@@ -201,6 +201,8 @@ func _update_details() -> void:
 	t += MemoryManager.tavern_text(n, p)
 	t += RelationsManager.describe(p, n)
 	t += DramaManager.describe(p, n)
+	if String(n.get("birthplace", "")) != "":
+		t += "[color=gray]From %s%s.[/color]\n" % [Regions.describe(String(n.birthplace)), " - your homeland" if Regions.same_region(p, n) else ""]
 	if n.has("heir_of"):
 		t += "[color=#ffd166]Heir to the legend of %s.[/color]\n" % n.heir_of
 	if AdventurerManager.in_town(n) and tab == Tab.ROSTER:

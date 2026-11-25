@@ -1,0 +1,161 @@
+{
+	"_doc": "Regions of Nyxarys (Regions.gd; docs/lore/ELEDORIA_ATLAS.md). The Guild's town is Nexus. Players choose a birthplace town at character creation; adventurers get one from their race's homelands. Same region = a little warmer at first.",
+	"town": "Nexus",
+	"same_region_rapport": 5,
+	"homeland_chance": 0.7,
+	"regions": {
+		"radiant_plains": {
+			"name": "The Radiant Plains",
+			"god": "Solara",
+			"part": "eyes",
+			"towns": [
+				"Sunvale",
+				"Solara's Beacon",
+				"Dawn's Light"
+			],
+			"description": "Open sunlit country. The Grand Cathedral of the Divine Light stands at Solara's Beacon."
+		},
+		"verdant_glades": {
+			"name": "The Verdant Glades",
+			"god": "Elandria",
+			"part": "lungs",
+			"towns": [
+				"Greenhaven",
+				"Eldergrove",
+				"Willowshade"
+			],
+			"description": "The heartland forest that breathes for the world; home of the Circle of the Verdant Heart."
+		},
+		"wildwood_expanse": {
+			"name": "The Wildwood Expanse",
+			"god": "Fenrisulfr",
+			"part": "stomach",
+			"towns": [
+				"Fangclaw",
+				"Bramblewood",
+				"Oakheart"
+			],
+			"description": "Untamed woods of hunters and the hunted; the Howl of the War Wolf gathers at Fangclaw."
+		},
+		"gloomshroud": {
+			"name": "The Gloomshroud",
+			"god": "Hel",
+			"part": "bones",
+			"towns": [
+				"Nightshade",
+				"Mirewatch",
+				"Shadowspire"
+			],
+			"description": "Mire and bone-grey ridges where the dead are kept."
+		},
+		"veiled_realm": {
+			"name": "The Veiled Realm",
+			"god": "Tsukuyomi",
+			"part": "mind",
+			"towns": [
+				"Lunalake",
+				"Tsukuyomi's Veil",
+				"Moonshadow",
+				"Duskfall"
+			],
+			"description": "A crescent of mist and moonlight; somewhere in it hides Kiri no Kage."
+		},
+		"mystical_highlands": {
+			"name": "The Mystical Highlands",
+			"god": "Nimue",
+			"part": "blood",
+			"towns": [
+				"Moonlit Grove",
+				"Serpent's Cove",
+				"Silverlake",
+				"Starfall",
+				"Nimue's Haven",
+				"Enchantress Bay"
+			],
+			"description": "Lakes, springs and bays where the Spirit Weaver's blood pooled."
+		},
+		"iron_hills": {
+			"name": "The Iron Hills",
+			"god": "Arathorn",
+			"part": "hands",
+			"towns": [
+				"Stonehammer",
+				"Ironhold",
+				"Shieldwall"
+			],
+			"description": "Hills of ore and walls; the Iron Gauntlet guild keeps its hall at Ironhold."
+		},
+		"warforged_lands": {
+			"name": "The Warforged Lands",
+			"god": "Arathorn",
+			"part": "hands",
+			"towns": [
+				"Forgehome",
+				"Warforge",
+				"Ironclad",
+				"Wrathorn's Rage"
+			],
+			"description": "An island of forges and training grounds; the Amakiri Reiken school trains at Warforge."
+		},
+		"enchanted_archipelago": {
+			"name": "The Enchanted Archipelago",
+			"god": "Aetherion",
+			"part": "heart",
+			"towns": [
+				"Mount Infernia",
+				"Serpent's Isle",
+				"Whispering Isle",
+				"Shimmering Isle",
+				"Moonlit Isle"
+			],
+			"description": "Five isles, five elements: the heart that burst in the Shattering."
+		},
+		"northern_wilds": {
+			"name": "The Northern Wilds",
+			"god": "The Ancient Ones",
+			"part": "essence",
+			"towns": [
+				"Snowdrift Isle",
+				"Frostpeak Island",
+				"Stormwatch Isle",
+				"Glacier Isle",
+				"Northstar Isle"
+			],
+			"description": "Shards of Nyxara's essence, frozen and half-asleep under the ice."
+		}
+	},
+	"race_homelands": {
+		"Hume": [
+			"radiant_plains"
+		],
+		"Elvarian": [
+			"verdant_glades"
+		],
+		"Ursari": [
+			"wildwood_expanse"
+		],
+		"Lycan": [
+			"wildwood_expanse"
+		],
+		"Felis": [
+			"radiant_plains"
+		],
+		"Kitsune": [
+			"veiled_realm"
+		],
+		"Durgar": [
+			"iron_hills",
+			"warforged_lands"
+		],
+		"Drakoan": [
+			"warforged_lands",
+			"enchanted_archipelago"
+		],
+		"Djinn": [
+			"enchanted_archipelago"
+		],
+		"Dhampyr": [
+			"gloomshroud"
+		]
+	}
+}

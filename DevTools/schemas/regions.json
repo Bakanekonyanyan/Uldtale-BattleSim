@@ -1,0 +1,76 @@
+{
+ "tab": "Regions",
+ "file": "data/regions.json",
+ "order": 19,
+ "description": "Regions of Nyxarys (Regions.gd): the town (Nexus), regions with their god and towns (birthplaces), and race homelands.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Regions",
+   "fields": [
+    {
+     "name": "_doc",
+     "type": "text",
+     "help": "Notes for designers."
+    },
+    {
+     "name": "town",
+     "type": "str",
+     "help": "The Guild's town."
+    },
+    {
+     "name": "same_region_rapport",
+     "type": "int",
+     "help": "Starting rapport bonus with adventurers from your birth region."
+    },
+    {
+     "name": "homeland_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Chance an adventurer was born in their race's homeland (else anywhere)."
+    },
+    {
+     "name": "race_homelands",
+     "type": "json",
+     "help": "race -> [region ids]."
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Region",
+   "path": [
+    "regions"
+   ],
+   "key_style": "snake",
+   "name_field": "name",
+   "summary": "{god}",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "god",
+     "type": "str",
+     "help": "Who holds this land."
+    },
+    {
+     "name": "part",
+     "type": "str",
+     "help": "The part of Nyxara's body it was formed from."
+    },
+    {
+     "name": "towns",
+     "type": "json",
+     "help": "Towns (birthplaces)."
+    },
+    {
+     "name": "description",
+     "type": "text"
+    }
+   ]
+  }
+ ]
+}

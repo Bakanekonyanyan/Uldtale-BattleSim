@@ -877,9 +877,12 @@ func reset_for_new_game():
 	# a new game is a new world (WorldGen writes its history on arrival); the
 	# permadeath choice is the character's, so it stays
 	var pd = bool(town_state.get("permadeath", false))
+	var born = String(town_state.get("birthplace", ""))
 	town_state = {}
 	if pd:
 		town_state["permadeath"] = true
+	if born != "":
+		town_state["birthplace"] = born   # where you were born doesn't change
 	location_progress.clear()
 	max_floor_unlocked = 1
 	if talents:

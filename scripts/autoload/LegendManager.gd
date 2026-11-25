@@ -52,6 +52,7 @@ func write(player: CharacterData) -> Dictionary:
 	var ep = ChronicleManager.player_epithet(player)
 	var day = WorldClock.day(player)
 	var base := {"name": player.name, "race": player.race, "class": player.character_class, "rank": RankManager.display(RankManager.get_rank(player)),
+		"birthplace": Regions.describe(Regions.player_birthplace(player)) if Regions.player_birthplace(player) != "" else "a place no one remembers",
 		"epithet": ep, "epithet_sp": (" " + ep) if ep != "" else "", "epithet_or_famous": ep if ep != "" else "famous across the land"}
 	var story: Array = []
 	var joined = int(player.town_state.get("joined_day", 1))
@@ -86,7 +87,7 @@ func write(player: CharacterData) -> Dictionary:
 	var w = player.equipment.get("main_hand")
 	if w is Equipment and String(w.key) != "":
 		relic = {"base": String(w.key), "name": "%s's %s" % [String(player.name).get_slice(" ", 0), ItemManager.get_equipment_template(String(w.key)).get("name", w.display_name)]}
-	return {"name": player.name, "epithet": ep, "race": player.race, "class": player.character_class, "rank": base.rank,
+	return {"name": player.name, "birthplace": Regions.player_birthplace(player), "epithet": ep, "race": player.race, "class": player.character_class, "rank": base.rank,
 		"crowns": int(m.crowns), "deepest": int(m.deepest), "years": ChronicleManager.year_of(day), "story": story,
 		"companions": PartyManager.members(player).map(func(n): return {"name": n.name, "race": n.race, "class": n.cls}) + ([{"name": friend.name, "race": friend.race, "class": friend.cls}] if not friend.is_empty() and int(friend.get("rapport", 0)) >= 40 else []),
 		"rival": {"name": rival.name, "race": rival.race, "class": rival.cls} if not rival.is_empty() and int(rival.get("rivalry", 0)) >= 3 else {},

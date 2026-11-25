@@ -104,3 +104,15 @@ Infernia, the Veiled Realm's mists, the Northern isles' ice.
 
 Whichever it is, travel time to a location (`WorldClock.expedition_days`)
 can follow distance on the map.
+
+## Decided
+
+- **The town is Nexus.** The Guild sits over the wound of the Shattering, and
+  **the Dungeon is a tower** rising there (the Tower of Nexus) - every kind of
+  creature climbs its floors.
+- **Birthplaces:** at character creation you choose a town of Nyxarys as your
+  birthplace (default: your race's homeland). Built in `data/regions.json` +
+  `Regions.gd`: adventurers are born in their people's homelands 70% of the
+  time; those from your region start with +5 rapport and the Tavern says
+  "your homeland"; your Legend opens with where you were born. A new game
+  keeps your birthplace.

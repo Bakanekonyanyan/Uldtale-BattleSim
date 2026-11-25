@@ -2,7 +2,7 @@
 	"locations": {
 		"the_dungeon": {
 			"name": "The Dungeon",
-			"description": "A sprawling labyrinth where every kind of creature lurks. Wave after wave, no two fights alike.",
+			"description": "The Tower of Nexus, rising from the wound of the Shattering. Every kind of creature climbs its floors. Wave after wave, no two fights alike.",
 			"races": "all",
 			"mixed": true,
 			"mode": "waves",
@@ -14,7 +14,9 @@
 		"goblin_forest": {
 			"name": "Goblin Forest",
 			"description": "Tangled woods crawling with quick, cunning goblins. Watch for poison and bleeding blades.",
-			"races": ["Goblin"],
+			"races": [
+				"Goblin"
+			],
 			"mixed": false,
 			"mode": "waves",
 			"reward_mult": 1.0,
@@ -25,7 +27,9 @@
 		"troll_caves": {
 			"name": "Troll Caves",
 			"description": "Frozen caverns where hulking trolls hit hard and shrug off blows.",
-			"races": ["Troll"],
+			"races": [
+				"Troll"
+			],
 			"mixed": false,
 			"mode": "waves",
 			"reward_mult": 1.0,
@@ -36,7 +40,9 @@
 		"orc_plains": {
 			"name": "Orc Plains",
 			"description": "Open grasslands held by armored orc warbands. Rich in ore.",
-			"races": ["Orc"],
+			"races": [
+				"Orc"
+			],
 			"mixed": false,
 			"mode": "waves",
 			"reward_mult": 1.0,
@@ -47,7 +53,9 @@
 		"fairy_circles": {
 			"name": "Fairy Circles",
 			"description": "Enchanted glades where fairies weave wild magic. Expect spells, not swords.",
-			"races": ["Fairy"],
+			"races": [
+				"Fairy"
+			],
 			"mixed": false,
 			"mode": "waves",
 			"reward_mult": 1.0,

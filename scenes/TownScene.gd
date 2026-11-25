@@ -25,7 +25,7 @@ var inn_message := ""
 
 func _ready():
 	# Town keeps its art undimmed; the header carries name and money.
-	chrome = ScreenChrome.attach(self, "Town", Callable(), "", false)
+	chrome = ScreenChrome.attach(self, Regions.town_name(), Callable(), "", false)
 	if name_label:
 		name_label.visible = false
 	if shop_button:

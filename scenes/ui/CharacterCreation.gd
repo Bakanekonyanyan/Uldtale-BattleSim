@@ -10,6 +10,8 @@ var classes = {}
 @onready var info_display = $InfoDisplay
 @onready var create_button = $CreateButton
 var permadeath_box: CheckBox
+var birthplace_option: OptionButton
+var birthplace_towns: Array = []
 @onready var cancel_button = $QuitButton
 
 const STARTING_GOLD = 100
@@ -31,6 +33,21 @@ func setup_ui():
 	race_option.item_selected.connect(_on_race_selected)
 	class_option.item_selected.connect(_on_class_selected)
 	create_button.pressed.connect(_on_create_pressed)
+	birthplace_option = OptionButton.new()
+	birthplace_option.position = Vector2(64, 326)
+	birthplace_option.size = Vector2(300, 44)
+	birthplace_option.tooltip_text = "Your birthplace: a town of Nyxarys. Adventurers from the same region start out a little warmer."
+	birthplace_towns = Regions.towns()
+	var last_region := ""
+	for t in birthplace_towns:
+		if t.region != last_region:
+			birthplace_option.add_separator(String(t.region_name))
+			last_region = t.region
+		birthplace_option.add_item("%s" % t.town)
+		birthplace_option.set_item_metadata(birthplace_option.item_count - 1, t.town)
+	birthplace_option.item_selected.connect(func(_i): update_info_display())
+	add_child(birthplace_option)
+	_default_birthplace()
 	permadeath_box = CheckBox.new()
 	permadeath_box.text = "Permadeath"
 	permadeath_box.tooltip_text = "One life. If you fall and no one who owes you drags you out, you die: your Legend is written and the save is gone."
@@ -44,7 +61,26 @@ func _on_cancel_pressed():
 	SceneManager.change_to_character_selection()
 
 func _on_race_selected(_index):
+	_default_birthplace()
 	update_info_display()
+
+## Start on a town of the race's homeland.
+func _default_birthplace() -> void:
+	if birthplace_option == null:
+		return
+	var race_name = race_option.get_item_text(race_option.selected)
+	var home: Array = Regions.cfg().get("race_homelands", {}).get(race_name, [])
+	for i in range(birthplace_option.item_count):
+		var town = birthplace_option.get_item_metadata(i)
+		if town != null and (home.is_empty() or Regions.region_of(String(town)) in home):
+			birthplace_option.select(i)
+			return
+
+func chosen_birthplace() -> String:
+	if birthplace_option == null or birthplace_option.selected < 0:
+		return ""
+	var m = birthplace_option.get_item_metadata(birthplace_option.selected)
+	return String(m) if m != null else ""
 
 func _on_class_selected(_index):
 	update_info_display()
@@ -165,6 +201,10 @@ func update_info_display():
 	info_text += "Spell Power: [color=yellow]%s[/color]-based\n" % selected_class.spell_power_type.capitalize()
 	
 	# Display the text
+	var born = chosen_birthplace()
+	if born != "":
+		var reg = Regions.cfg().get("regions", {}).get(Regions.region_of(born), {})
+		info_text += "\n\n[b][color=#ffd166]Birthplace: %s[/color][/b]\n%s\n[color=gray]Held by %s. You'll travel to the Guild at %s.[/color]" % [Regions.describe(born), reg.get("description", ""), reg.get("god", "?"), Regions.town_name()]
 	if info_display and info_display is RichTextLabel:
 		info_display.bbcode_enabled = true
 		info_display.text = info_text
@@ -183,6 +223,8 @@ func _on_create_pressed():
 	# Use CharacterFactory for creation
 	var new_character = CharacterFactory.create_character(char_name, race_name, p_class_name, true)
 	new_character.max_floor_unlocked = 1
+	if chosen_birthplace() != "":
+		new_character.town_state["birthplace"] = chosen_birthplace()
 	if permadeath_box and permadeath_box.button_pressed:
 		new_character.town_state["permadeath"] = true
 	

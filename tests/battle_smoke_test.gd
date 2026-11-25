@@ -2183,9 +2183,25 @@ func _worldgen_checks() -> void:
 	friend.status = "idle"
 	MemoryManager.add(friend, "saved_me", "you", 1)
 	check(not DefeatManager.apply_defeat(saved, false).get("died", false), "unless someone who owes you drags you out")
+	# birthplaces: you choose one; adventurers come from their people's homelands
+	var home := 0
+	for i in range(100):
+		if Regions.region_of(Regions.roll_birthplace("Kitsune")) == "veiled_realm":
+			home += 1
+	check(home > 50 and home < 95, "most Kitsune are born in the Veiled Realm (%d / 100)" % home)
+	saved.town_state["birthplace"] = "Fangclaw"
+	var local := false
+	for i in range(60):
+		var nn = AdventurerManager.generate(saved)
+		if Regions.region_of(String(nn.birthplace)) == "wildwood_expanse":
+			local = Regions.same_region(saved, nn)
+			break
+	check(local and Regions.describe("Fangclaw") == "Fangclaw (The Wildwood Expanse)", "adventurers from your region are recognised as from home")
+	check(String(LegendManager.write(saved).story[0]).contains("Fangclaw"), "your Legend begins where you were born")
+	check(Regions.town_name() == "Nexus", "the Guild's town is Nexus")
 	# a new game is a new world; permadeath stays with the character
 	saved.reset_for_new_game()
-	check(saved.town_state.keys() == ["permadeath"], "a new game clears the old world but keeps permadeath")
+	check(saved.town_state.keys() == ["permadeath", "birthplace"], "a new game clears the old world but keeps permadeath and your birthplace")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(lp))
 	LegendManager.use_path("user://legends.json")
 	CharacterManager.current_character_resource.set_meta("current_character", prev_cur)
