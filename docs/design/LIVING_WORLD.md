@@ -564,3 +564,36 @@ low HP; 40% of lines come from a trait instead of the archetype.
 Tuning (5 simulated years, 3 seeds): ~2 scenes a day, 15-35 headline items a
 year, 23-31 trait changes over 5 years (most adventurers change at most once),
 and each world keeps its own temperament (one quarrelsome, one close-knit).
+
+---
+
+## J. Weapon arts and armour training (decided, not built)
+
+**Weapon arts**
+- Any class can gain proficiency in any weapon family through use.
+- Each family has two generic arts, unlocked at proficiency 3 and 6
+  (proficiency alone, no trainer). Arts are skills in the 6-slot loadout and
+  need a weapon of their family in hand (greyed out otherwise).
+- Families (check against weapon data): sword, greatsword, katana, axe,
+  mace/hammer, spear, dagger, fist, bow, staff, tome, shield.
+- **Signature art: one per class**, for the family it specialises in (e.g.
+  Samurai/katana *Moonlit Draw*, Paladin/mace *Dawnbreaker*, Shinobi/dagger
+  *Shadow Fang*). **Exception: the Myrmidon**, the weapon master, gets a
+  signature art for every family it masters.
+- Arts can take talent mutations later (same `mutate` effect).
+
+**Armour training**
+- Weights: Cloth, Leather, Mail, Plate, plus Shields as its own proficiency.
+- Starting training by school: Wardens Mail + Plate (Paladin + Shields);
+  Martialists Leather (Myrmidon + Mail); Menders Cloth + Leather (Cleric +
+  Mail + Shields); Sorcerers Cloth (Beastmaster + Leather).
+- **Untrained armour can be worn with penalties** (decided): -accuracy,
+  -dodge, +SP costs, no set bonus - so no drop is ever useless.
+- **Extra training comes from rank-ups** (decided): a promotion grants a
+  proficiency choice (another armour weight or Shields), a Guild perk rather
+  than a talent fork.
+- Each weight has a feel: Cloth +spell power/MP regen, Leather +dodge/crit,
+  Mail balanced, Plate big toughness but -dodge and +SP costs.
+- NPCs and enemies follow the same rules (gear generation and AutoBattler
+  builds respect training).
+
