@@ -39,3 +39,10 @@ Thus, Eledoria was born from the essence of Nyxara, a world of wonder shaped by 
 | Arathorn, the God of War | hands | strength, protection | Samurai, Myrmidon, Berserker |
 | Hel, the Shadow Keeper | bones | structure, the cycle of life and death | Necromancer |
 | Tsukuyomi, the Veiled Shadow | mind | wisdom, secrets | Shinobi |
+
+## Nyxarys
+
+The continent of Eledoria is **Nyxarys**, formed from Nyxara's shattered
+body. Its regions roughly follow her body, each held by the god born from that
+part - see `ELEDORIA_ATLAS.md`.
+

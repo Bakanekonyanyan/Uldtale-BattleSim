@@ -1,14 +1,34 @@
-# Atlas of Eledaria (draft)
+# Atlas of Eledoria: the continent of Nyxarys (draft)
 
-![Map concept](eledaria_map.webp)
+![Map concept](eledoria_map.webp)
 
 Source: the author's map concept. Each region of the world reflects one of the
 pantheon (`CREATION_OF_ELEDORIA.md`): its land, its people, its orders and
 its monsters are shaped by the god who holds it. This is a first draft to
 edit - names on the map are canon; everything else is proposal.
 
-> Spelling to settle: the map reads **Eledaria** and **Nyxarys**; the creation
-> myth and the game say **Eledoria** and **Nyxara**.
+> Names: the world is **Eledoria** (the map's title should read so). The
+> continent is **Nyxarys**, formed from the body of the goddess **Nyxara**
+> when she was shattered - its regions roughly follow her body, and each god
+> holds the part they were born from.
+
+## Nyxarys: the body of Nyxara (proposal)
+
+| Part of Nyxara | God born from it | Region of Nyxarys | Shape on the map |
+|---|---|---|---|
+| eyes | Solara | **The Radiant Plains** | the face of the continent, turned west toward the setting sun |
+| mind | Tsukuyomi | **The Veiled Realm** | the crescent beyond the eyes, cut off by water - thought apart from the body |
+| lungs | Elandria | **The Verdant Glades** | the chest at the centre; the forests breathe for the world |
+| stomach | Fenrisulfr | **The Wildwood Expanse** | below and beside the chest; hunger and the hunt |
+| bones | Hel | **The Gloomshroud** | the long spine of ridges running east to Shadowspire |
+| hands | Arathorn | **The Iron Hills** and **the Warforged Lands** | the arm reaching south-west and the fist of an island beyond it |
+| blood | Nimue | **The Mystical Highlands** and the eastern isle | lakes, springs and bays where her blood pooled |
+| heart | Aetherion | **The Enchanted Archipelago** | the heart burst in the Shattering: five isles, one for each element |
+| essence | the Ancient Ones | **The Northern Wilds** | shards of her essence flung north, frozen and half-asleep |
+| the wound | (Nyxara herself) | **Nexus** | where the void tore; what is left of her lies under it |
+
+The seas between the lands are where the body broke apart - and where
+Xalathar, who broke it, still moves.
 
 ## Regions and their gods
 
