@@ -4308,7 +4308,7 @@
 					"effects": [
 						{
 							"type": "damage",
-							"mult": 0.06,
+							"mult": 0.08,
 							"elements": [
 								"FIRE",
 								"ICE"
@@ -4462,7 +4462,7 @@
 					"effects": [
 						{
 							"type": "damage",
-							"mult": 0.06,
+							"mult": 0.08,
 							"elements": [
 								"WATER",
 								"LIGHTNING",
@@ -4581,7 +4581,7 @@
 							"type": "mutate",
 							"skill": "Elemental Convergence",
 							"target": "ALL_ENEMIES",
-							"power_mult": 0.6,
+							"power_mult": 0.75,
 							"name": "Prismatic Split"
 						}
 					]
@@ -5210,7 +5210,7 @@
 					"effects": [
 						{
 							"type": "status_chance",
-							"chance": 0.08
+							"chance": 0.12
 						}
 					]
 				},
@@ -5291,7 +5291,7 @@
 					"effects": [
 						{
 							"type": "defense",
-							"reduce": 0.1,
+							"reduce": 0.14,
 							"user_hp_below": 0.3
 						}
 					],
@@ -5380,7 +5380,8 @@
 							"skill": "Perfect Drain",
 							"after_use": {
 								"self_status": "REGENERATION",
-								"self_turns": 3
+								"self_turns": 3,
+								"heal_pct": 0.1
 							},
 							"name": "Perfect Vessel"
 						}
