@@ -61,3 +61,20 @@ so they'll do better than the sim; Omens make it harder by choice.
   toward its target, repeat).
 - The decision-value duels (DECISION_VALUE.md) assumed level = 2 x floor;
   real levels are now higher, so re-run those before tuning combat again.
+
+## Class depth check (forks, arts, armour training)
+
+Careers from level 1 to floor 12 (`balance_sim -- career --classes=X --floors=12 --runs=N --tries=3`),
+before class depth (ed37e40) vs after. N=10 for all classes, N=30 for the ones that moved.
+
+- Healers gained most (heals now apply their statuses; party-wide fork options):
+  Kannagi F12 first-try 65% -> 86% (N=30), Druid and Cleric up sharply (N=10).
+- Paladin and Berserker are fine at depth; their floor-1 dips were noise.
+- Armour training first cost Beastmasters and casters: NPC/sim builds still
+  picked gear by the old class lists and wore untrained pieces. Fixed: builds
+  pick trained armour; Beastmaster trained in mail, Necromancer in leather.
+  Beastmaster F12 reached 86% -> 100%, first-try 69% -> 60%; Necromancer F12
+  reached 70% -> 66%, first-try 57% -> 45% (N=30, within noise).
+- Shinobi F12 first-try 89% -> 69% (N=30): worth a look in a class tuning pass.
+  Note the sim's heroes all share a name, so their fork picks are identical
+  per class - a tuning pass should compare both options of each fork.
