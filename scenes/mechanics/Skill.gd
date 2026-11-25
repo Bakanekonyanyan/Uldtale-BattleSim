@@ -358,7 +358,16 @@ func on_skill_used():
 	return ""
 
 func use(user: CharacterData, targets: Array) -> Dictionary:
+	# a spread mutation (every foe / every ally at reduced power) only pays its
+	# cost when it actually reaches more than one target
+	var spread_mult = float(mutation.get("power_mult", 1.0))
+	var restore_power := -1
+	if mutation.has("target") and String(mutation.target) in ["ALL_ENEMIES", "ALL_ALLIES"] and spread_mult < 1.0 and targets.size() <= 1:
+		restore_power = power
+		power = int(round(power / spread_mult))
 	var r = _use(user, targets)
+	if restore_power >= 0:
+		power = restore_power
 	var extra = _after_use(user)
 	if extra != "" and r is Dictionary:
 		r["message"] = String(r.get("message", "")) + extra

@@ -510,7 +510,8 @@ static func describe_mutation(e: Dictionary) -> Array:
 	var bits: Array = []
 	if e.has("target"): bits.append(_TARGET_TEXT.get(String(e.target), String(e.target)))
 	var pm = float(e.get("power_mult", 1.0))
-	if abs(pm - 1.0) > 0.001: bits.append("%d%% power" % int(round(pm * 100)))
+	if abs(pm - 1.0) > 0.001:
+		bits.append(("%d%% power when it hits more than one" if pm < 1.0 and String(e.get("target", "")) in ["ALL_ENEMIES", "ALL_ALLIES"] else "%d%% power") % int(round(pm * 100)))
 	if e.has("set_status"): bits.append("inflicts %s instead" % "/".join(e.set_status.map(func(x): return String(x).capitalize())))
 	if not e.get("add_status", []).is_empty(): bits.append("also %s" % "/".join(e.add_status.map(func(x): return String(x).capitalize())))
 	if e.has("add_element"): bits.append("becomes %s" % String(e.add_element).capitalize())
