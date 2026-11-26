@@ -239,6 +239,21 @@ func change_to_character_creation() -> void:
 func return_to_previous_scene() -> void:
 	navigate(ScenePath.MAIN_MENU, TransitionType.POP)  # Enum ignored for POP
 
+## Swap the current screen for another in place, keeping the back-stack
+## (the Character tabs: Status / Equipment / Inventory / Talents).
+func swap_to(scene: ScenePath, character: CharacterData) -> void:
+	if character:
+		SaveManager.save_game(character)
+	call_deferred("_deferred_load", SCENE_PATHS.get(scene, ""), character, {})
+
+## Leave a screen that may be opened from town or mid-expedition: back to
+## wherever it was opened from, or to town.
+func leave_screen(character: CharacterData) -> void:
+	if scene_stack.is_empty():
+		change_to_town(character)
+	else:
+		return_to_previous_scene()
+
 # ===== DUNGEON FLOW =====
 
 func start_dungeon_from_floor(player: CharacterData, floor: int, location_id: String = "the_dungeon") -> void:

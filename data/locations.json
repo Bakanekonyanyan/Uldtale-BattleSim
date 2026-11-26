@@ -1,7 +1,7 @@
 {
 	"locations": {
 		"the_dungeon": {
-			"name": "The Dungeon",
+			"name": "The Tower",
 			"description": "The Tower of Nexus, rising from the wound of the Shattering. Every kind of creature climbs its floors. Wave after wave, no two fights alike.",
 			"races": "all",
 			"mixed": true,

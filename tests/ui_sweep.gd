@@ -82,6 +82,11 @@ func _sweep() -> void:
 				await _settle()
 				await _check("%s_branch%d" % [key, b], scene)
 		if key == "town":
+			for v in ["guild", "market", "tavern", "book", "menu"]:
+				scene._show_list(v)
+				await _settle()
+				await _check("town_list_" + v, scene)
+			scene._show_districts()
 			for o in [JournalScreen.open(scene, player), CompendiumScreen.open(scene), LedgerBoard.open(scene, player), CommissionBoard.open(scene, player), BestiaryGuide.open(scene)]:
 				await _settle()
 				await _check("town_%s" % o.get_class() if o.get_script() == null else "town_" + String(o.get_script().resource_path.get_file().get_basename()), o)

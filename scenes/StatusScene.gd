@@ -50,13 +50,15 @@ func _ready():
 
 func set_player(character: CharacterData):
 	current_character = character
+	_attach_tabs()
 	if is_node_ready() and chrome:
 		update_status()
 
 # === UI CONSTRUCTION ===
 
 func _build_ui() -> void:
-	chrome = ScreenChrome.attach(self, "Status", _on_exit_pressed)
+	chrome = ScreenChrome.attach(self, "Status", _on_exit_pressed, "Back")
+	_attach_tabs()
 	# Hide the old scene-file labels; everything is rebuilt below.
 	for child in get_children():
 		if (child is Label or child is RichTextLabel or child is Button) and child != chrome:
@@ -155,7 +157,7 @@ func update_status():
 		return
 	var c = current_character
 	chrome.set_title(str(c.name))
-	chrome.set_info("Level %d  %s %s  -  %s" % [c.level, c.race, c.character_class, RankManager.display(RankManager.get_rank(c))])
+	chrome.set_info("%s  -  Lv %d  %s %s  -  %s" % [c.name, c.level, c.race, c.character_class, RankManager.display(RankManager.get_rank(c))])
 
 	_set_bar("HP", c.current_hp, c.max_hp)
 	_set_bar("MP", c.current_mp, c.max_mp)
@@ -338,4 +340,10 @@ func _prof_table(pm, keys: Array, weapons: bool) -> String:
 	return t + "[/table]\n"
 
 func _on_exit_pressed():
-	SceneManager.change_to_town(current_character)
+	SceneManager.leave_screen(current_character)
+
+## Status / Equipment / Inventory / Talents tabs in the header.
+var char_tabs: HBoxContainer
+func _attach_tabs() -> void:
+	if chrome != null and char_tabs == null and current_character != null:
+		char_tabs = CharacterTabs.attach(chrome, "status", current_character)

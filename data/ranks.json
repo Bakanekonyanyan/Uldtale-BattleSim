@@ -38,13 +38,13 @@
       "order": 5, "title": "Champion",
       "description": "One of the Guild's finest. Bards get your name almost right.",
       "points": 800, "floor_cap": 0, "carry_limit": 15, "board_size": 5, "max_active": 5, "reward_mult": 1.75, "party_size": 3,
-      "trial": {"title": "Trial of the Labyrinth", "description": "Defeat the boss of floor 18 or deeper in The Dungeon.", "type": "KILL_BOSS", "location": "the_dungeon", "min_floor": 18, "gold": 4000}
+      "trial": {"title": "Trial of the Labyrinth", "description": "Defeat the boss of floor 18 or deeper in the Tower.", "type": "KILL_BOSS", "location": "the_dungeon", "min_floor": 18, "gold": 4000}
     },
     "S": {
       "order": 6, "title": "Legend",
       "description": "Songs are sung. Rivals measure themselves against you.",
       "points": 1250, "floor_cap": 0, "carry_limit": 20, "board_size": 5, "max_active": 5, "reward_mult": 2.0, "party_size": 3,
-      "trial": {"title": "Trial of Legends", "description": "Defeat the boss of floor 23 or deeper in The Dungeon.", "type": "KILL_BOSS", "location": "the_dungeon", "min_floor": 23, "gold": 8000}
+      "trial": {"title": "Trial of Legends", "description": "Defeat the boss of floor 23 or deeper in the Tower.", "type": "KILL_BOSS", "location": "the_dungeon", "min_floor": 23, "gold": 8000}
     }
   }
 }

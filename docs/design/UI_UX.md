@@ -116,3 +116,28 @@ so every screen picks them up at once.
    screens).
 4. The Gate map, the Bank (from Stash), the Book.
 5. Restyle the districts; build the Party screen when party equipment exists.
+
+---
+
+## Built: simplified hub (current theme, 1200×720)
+
+A first pass using the current default theme, before the art and the
+1080p move.
+- **Nexus hub** (`scenes/TownScene.gd`):
+  - Six district cards (The Tower, The Gate, Guild Hall, Market, Tavern &
+    Inn, Bank), each with a live status line. Keys 1–6 open them.
+  - Districts with several places (Guild Hall, Market, Tavern & Inn) open a
+    list in the same panel. "<- Nexus" or Esc returns.
+  - Footer: Character [C], with a count when there are points to spend;
+    Book [B] (Journal, Chronicle, Compendium, Bestiary, Combos); Menu
+    (Character Selection, Save and Quit). Esc on the hub opens the Menu.
+  - The news panel is now full height.
+- **The Tower** opens its floor picker directly. **The Gate** lists every
+  other location. The location `the_dungeon` is now named "The Tower".
+- **Character tabs** (`ui/CharacterTabs.gd`):
+  - Status, Equipment, Inventory and Talents share a tab row in the header.
+  - Tabs swap screens in place (`SceneManager.swap_to`), and Back returns to
+    wherever you came from (`SceneManager.leave_screen`).
+  - Talents is hidden during an expedition. Tabs show "(n)" when points are
+    waiting.
+- **Bank**: the Stash screen, renamed. Coin deposits come later.

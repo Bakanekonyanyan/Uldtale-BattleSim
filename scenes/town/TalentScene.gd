@@ -31,13 +31,15 @@ func _ready():
 
 func set_player(character: CharacterData) -> void:
 	player_character = character
+	_attach_tabs()
 	if is_node_ready() and chrome:
 		_refresh()
 
 # === UI ===
 
 func _build_ui() -> void:
-	chrome = ScreenChrome.attach(self, "Talents", _on_back_pressed)
+	chrome = ScreenChrome.attach(self, "Talents", _on_back_pressed, "Back")
+	_attach_tabs()
 	var ui: CanvasLayer = $UI
 	for i in 3:
 		var b := Button.new()
@@ -306,4 +308,10 @@ func _on_thresholds() -> void:
 
 func _on_back_pressed() -> void:
 	SaveManager.save_game(player_character)
-	SceneManager.change_to_town(player_character)
+	SceneManager.leave_screen(player_character)
+
+## Status / Equipment / Inventory / Talents tabs in the header.
+var char_tabs: HBoxContainer
+func _attach_tabs() -> void:
+	if chrome != null and char_tabs == null and player_character != null:
+		char_tabs = CharacterTabs.attach(chrome, "talents", player_character)

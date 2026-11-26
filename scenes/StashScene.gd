@@ -57,7 +57,7 @@ func _ready():
 var chrome: ScreenChrome
 
 func _apply_chrome():
-	chrome = ScreenChrome.attach(self, "Stash", _on_back_pressed)
+	chrome = ScreenChrome.attach(self, "Bank  -  Your Vault", _on_back_pressed)
 	back_button.visible = false
 	ScreenChrome.tab_row(tab_container, Rect2(32, 72, 440, 36))
 	ScreenChrome.caption(self, "Pack", Vector2(32, 116))

@@ -41,6 +41,7 @@ func _ready():
 
 func set_player(character: CharacterData):
 	current_character = character
+	_attach_tabs()
 	if is_node_ready() and chrome:
 		_refresh()
 
@@ -48,6 +49,7 @@ func set_player(character: CharacterData):
 
 func _build_ui() -> void:
 	chrome = ScreenChrome.attach(self, "Equipment", _on_exit_pressed, "Back")
+	_attach_tabs()
 	for child in get_children():
 		if child is ItemList or child is Button or child is RichTextLabel or child is Label:
 			child.visible = false
@@ -348,7 +350,7 @@ func _on_swap_hands_pressed() -> void:
 
 func _on_exit_pressed():
 	CharacterManager.save_character(current_character)
-	SceneManager.return_to_previous_scene()
+	SceneManager.leave_screen(current_character)
 
 func get_equipment_from_inventory() -> Array:
 	var items = []
@@ -356,3 +358,9 @@ func get_equipment_from_inventory() -> Array:
 		if current_character.inventory.items[key].item is Equipment:
 			items.append(current_character.inventory.items[key].item)
 	return items
+
+## Status / Equipment / Inventory / Talents tabs in the header.
+var char_tabs: HBoxContainer
+func _attach_tabs() -> void:
+	if chrome != null and char_tabs == null and current_character != null:
+		char_tabs = CharacterTabs.attach(chrome, "equipment", current_character)

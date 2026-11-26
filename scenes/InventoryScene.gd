@@ -40,6 +40,7 @@ var chrome: ScreenChrome
 
 func _apply_chrome():
 	chrome = ScreenChrome.attach(self, "Inventory", _on_back_pressed, "Back")
+	_attach_tabs()
 	back_button.visible = false
 	ScreenChrome.tab_row(tab_container, Rect2(32, 72, 440, 36))
 	ScreenChrome.place(item_list, ScreenChrome.LIST_RECT)
@@ -296,4 +297,10 @@ func _on_use_pressed():
 
 func _on_back_pressed():
 	CharacterManager.save_character(player_character)
-	SceneManager.return_to_previous_scene()
+	SceneManager.leave_screen(player_character)
+
+## Status / Equipment / Inventory / Talents tabs in the header.
+var char_tabs: HBoxContainer
+func _attach_tabs() -> void:
+	if chrome != null and char_tabs == null and player_character != null:
+		char_tabs = CharacterTabs.attach(chrome, "inventory", player_character)

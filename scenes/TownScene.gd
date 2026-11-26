@@ -18,6 +18,8 @@ var current_character: CharacterData
 @onready var guild_button = $UI/GuildButton
 
 
+const TOWER := "the_dungeon"   # the Tower of Nexus (location id)
+
 var chrome: ScreenChrome
 var news_text: RichTextLabel
 var inn_dialog: ConfirmationDialog
@@ -53,97 +55,20 @@ func _ready():
 	if guild_button:
 		guild_button.pressed.connect(func(): SceneManager.change_to_guild(current_character))
 	# Talents (built in code; same size as the other town buttons)
-	var talents_button := Button.new()
-	talents_button.name = "TalentsButton"
-	talents_button.text = "Talents"
-	talents_button.position = Vector2(472, 352)
-	talents_button.size = Vector2(180, 60)
-	talents_button.pressed.connect(func(): SceneManager.change_to_talents(current_character))
-	$UI.add_child(talents_button)
-	# Tavern: the Guild's adventurers (AdventurerManager)
-	var tavern_button := Button.new()
-	tavern_button.name = "TavernButton"
-	tavern_button.text = "Tavern"
-	tavern_button.position = Vector2(40, 352)
-	tavern_button.size = Vector2(180, 60)
-	tavern_button.pressed.connect(func(): SceneManager.change_to_tavern(current_character))
-	$UI.add_child(tavern_button)
-	# Combo guide
-	var combo_button := Button.new()
-	combo_button.name = "CombosButton"
-	combo_button.text = "Combos"
-	combo_button.position = Vector2(40, 440)
-	combo_button.size = Vector2(180, 60)
-	combo_button.pressed.connect(func():
-		var party: Array = [current_character]
-		for n in PartyManager.members(current_character):
-			party.append(AutoBattler.build_hero(n))
-		ComboGuide.open(self, party))
-	$UI.add_child(combo_button)
-	# Bestiary: enemy weaknesses you've found
-	var bestiary_button := Button.new()
-	bestiary_button.name = "BestiaryButton"
-	bestiary_button.text = "Bestiary"
-	bestiary_button.position = Vector2(256, 440)
-	bestiary_button.size = Vector2(180, 60)
-	bestiary_button.pressed.connect(func(): BestiaryGuide.open(self))
-	$UI.add_child(bestiary_button)
-	# Compendium: every system explained (CompendiumScreen, data/compendium.json)
-	var compendium_button := Button.new()
-	compendium_button.name = "CompendiumButton"
-	compendium_button.text = "Compendium"
-	compendium_button.position = Vector2(472, 528)
-	compendium_button.size = Vector2(180, 60)
-	compendium_button.pressed.connect(func(): CompendiumScreen.open(self))
-	$UI.add_child(compendium_button)
-	# Journal: everything you're working on (JournalScreen)
-	var journal_button := Button.new()
-	journal_button.name = "JournalButton"
-	journal_button.text = "Journal"
-	journal_button.position = Vector2(256, 528)
-	journal_button.size = Vector2(180, 60)
-	journal_button.pressed.connect(func(): JournalScreen.open(self, current_character))
-	var chronicle_button := Button.new()
-	chronicle_button.name = "ChronicleButton"
-	chronicle_button.text = "Chronicle"
-	chronicle_button.position = Vector2(40, 616)
-	chronicle_button.size = Vector2(180, 60)
-	chronicle_button.pressed.connect(func(): ChronicleScreen.open(self, current_character))
-	$UI.add_child(journal_button)
-	$UI.add_child(chronicle_button)
-	# Commissions: the shops' material requests (CommissionManager)
-	var commissions_button := Button.new()
-	commissions_button.name = "CommissionsButton"
-	commissions_button.text = "Commissions"
-	commissions_button.position = Vector2(40, 528)
-	commissions_button.size = Vector2(180, 60)
-	commissions_button.pressed.connect(func(): CommissionBoard.open(self, current_character))
-	$UI.add_child(commissions_button)
-	# Enchanter: raise rarity with materials (EnchantManager)
-	var enchanter_button := Button.new()
-	enchanter_button.name = "EnchanterButton"
-	enchanter_button.text = "Enchanter"
-	enchanter_button.position = Vector2(472, 440)
-	enchanter_button.size = Vector2(180, 60)
-	enchanter_button.pressed.connect(func(): SceneManager.change_to_enchanter(current_character))
-	$UI.add_child(enchanter_button)
-	# Inn: rest to pass days (WorldClock)
-	var inn_button := Button.new()
-	inn_button.name = "InnButton"
-	inn_button.text = "Inn"
-	inn_button.position = Vector2(256, 352)
-	inn_button.size = Vector2(180, 60)
-	inn_button.pressed.connect(_on_inn_pressed)
-	$UI.add_child(inn_button)
+	# The old button grid (scene file) gives way to the districts.
+	for child in $UI.get_children():
+		if child is Button:
+			child.visible = false
+	_build_hub()
 	# Town news: date, current event, the news ledger
 	var news_panel := Panel.new()
-	news_panel.position = Vector2(700, 72)
-	news_panel.size = Vector2(460, 352)
+	news_panel.position = Vector2(704, 72)
+	news_panel.size = Vector2(464, 552)
 	$UI.add_child(news_panel)
 	news_text = RichTextLabel.new()
 	news_text.bbcode_enabled = true
 	news_text.position = Vector2(14, 10)
-	news_text.size = Vector2(432, 332)
+	news_text.size = Vector2(436, 532)
 	news_panel.add_child(news_text)
 	inn_dialog = ConfirmationDialog.new()
 	inn_dialog.title = "The Wayfarer's Rest"
@@ -210,6 +135,7 @@ func _rest(nights: int) -> void:
 
 func update_ui():
 	_refresh_news()
+	_refresh_hub()
 	if name_label:
 		if current_character:
 			name_label.text = "Character: " + current_character.name
@@ -234,7 +160,7 @@ func _on_dungeon_pressed():
 # === EXPEDITION: pick a location, then a floor ===
 
 func show_location_selection_dialog():
-	"""Step 1: choose where to go (The Dungeon or a themed location)."""
+	"""Step 1 (The Gate): choose a location beyond Nexus. The Tower has its own district."""
 	var dialog = ConfirmationDialog.new()
 	dialog.title = "Choose Expedition"
 	dialog.ok_button_text = "Next: Choose Floor"
@@ -243,7 +169,8 @@ func show_location_selection_dialog():
 	var vbox = VBoxContainer.new()
 	vbox.custom_minimum_size = Vector2(460, 320)
 	
-	var selected = [current_character.last_location if LocationManager.has_location(current_character.last_location) else LocationManager.DEFAULT_LOCATION]
+	var ids: Array = LocationManager.get_ids().filter(func(i): return i != TOWER)
+	var selected = [current_character.last_location if ids.has(current_character.last_location) else ids[0]]
 	var buttons: Array[Button] = []
 	
 	var description = RichTextLabel.new()
@@ -262,7 +189,7 @@ func show_location_selection_dialog():
 			RankManager.start_floor_limit(current_character, selected[0])
 		]
 	
-	for location_id in LocationManager.get_ids():
+	for location_id in ids:
 		var btn = Button.new()
 		btn.text = "%s  (Floor %d)" % [LocationManager.get_display_name(location_id), RankManager.start_floor_limit(current_character, location_id)]
 		btn.toggle_mode = true
@@ -356,10 +283,11 @@ func show_floor_selection_dialog(location_id: String = "the_dungeon"):
 		show_omen_dialog(location_id, final_floor)
 	)
 	
-	# "Back" returns to the location picker
+	# "Back" returns to the location picker (the Tower has none)
 	dialog.canceled.connect(func():
 		dialog.queue_free()
-		show_location_selection_dialog()
+		if location_id != TOWER:
+			show_location_selection_dialog()
 	)
 
 ## Step 3: optional Omens - harder rules for more loot (RunState, data/omens.json).
@@ -466,3 +394,227 @@ func _maybe_generate_world() -> void:
 	layer.queue_free()
 	update_ui()
 
+# === THE HUB: districts of Nexus (docs/design/UI_UX.md) ===
+# Left: six districts, each with a live status line. A district with several
+# places opens its list in the same panel ("<- Nexus" or Esc returns).
+# Footer: Character [C], Book [B], Menu. Keys 1-6 open districts.
+
+const DISTRICTS := [
+	{"id": "tower", "name": "The Tower", "sub": "The dungeon at the heart of Nexus"},
+	{"id": "gate", "name": "The Gate", "sub": "Expeditions across Nyxarys"},
+	{"id": "guild", "name": "Guild Hall", "sub": "Bounties, trials, the Ledger, training"},
+	{"id": "market", "name": "Market", "sub": "Shop, Blacksmith, Alchemist, Enchanter"},
+	{"id": "tavern", "name": "Tavern & Inn", "sub": "Adventurers, rumours, a bed"},
+	{"id": "bank", "name": "Bank", "sub": "Your vault"},
+]
+
+var hub_panel: Control
+var hub_view := ""                  # "" = districts, else the open list
+var district_buttons := {}
+var footer_buttons := {}
+
+func _build_hub() -> void:
+	hub_panel = Control.new()
+	hub_panel.name = "Hub"
+	hub_panel.position = Vector2(ScreenChrome.LEFT_X, ScreenChrome.CONTENT_TOP)
+	hub_panel.size = Vector2(648, 552)
+	$UI.add_child(hub_panel)
+	var footer := HBoxContainer.new()
+	footer.name = "HubFooter"
+	footer.position = Vector2(ScreenChrome.LEFT_X, ScreenChrome.FOOTER_Y)
+	footer.size = Vector2(648, 48)
+	footer.add_theme_constant_override("separation", 12)
+	$UI.add_child(footer)
+	for f in [["character", "Character  [C]", _open_character], ["book", "Book  [B]", func(): _show_list("book")], ["menu", "Menu", func(): _show_list("menu")]]:
+		var b := Button.new()
+		b.text = f[1]
+		b.custom_minimum_size = Vector2(208, 48)
+		b.pressed.connect(f[2])
+		footer.add_child(b)
+		footer_buttons[f[0]] = b
+	_show_districts()
+
+func _clear_hub() -> void:
+	district_buttons.clear()
+	for ch in hub_panel.get_children():
+		hub_panel.remove_child(ch)
+		ch.queue_free()
+
+func _show_districts() -> void:
+	_clear_hub()
+	hub_view = ""
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.size = hub_panel.size
+	grid.add_theme_constant_override("h_separation", 16)
+	grid.add_theme_constant_override("v_separation", 16)
+	hub_panel.add_child(grid)
+	for i in range(DISTRICTS.size()):
+		var d = DISTRICTS[i]
+		var b := Button.new()
+		b.name = "District_" + d.id
+		b.custom_minimum_size = Vector2(316, 172)
+		var card := VBoxContainer.new()
+		card.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 16)
+		card.alignment = BoxContainer.ALIGNMENT_CENTER
+		card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var title := Label.new()
+		title.name = "Title"
+		title.text = d.name
+		title.theme_type_variation = "ScreenTitle"
+		title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var status := Label.new()
+		status.name = "Status"
+		status.autowrap_mode = TextServer.AUTOWRAP_WORD
+		status.add_theme_color_override("font_color", ScreenChrome.MUTED)
+		status.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card.add_child(title)
+		card.add_child(status)
+		b.add_child(card)
+		b.tooltip_text = "%s  [%d]" % [d.sub, i + 1]
+		b.pressed.connect(_open_district.bind(d.id))
+		grid.add_child(b)
+		district_buttons[d.id] = b
+	_refresh_hub()
+
+## Districts' live status lines and the footer badges.
+func _refresh_hub() -> void:
+	var c = current_character
+	if c == null or hub_panel == null:
+		return
+	for d in DISTRICTS:
+		var b: Button = district_buttons.get(d.id)
+		if b != null:
+			var st: Label = b.get_child(0).get_node("Status")
+			st.text = _district_status(d.id)
+	var pts := CharacterTabs.pending(c)
+	if footer_buttons.has("character"):
+		footer_buttons.character.text = "Character  [C]" + ("  (%d)" % pts if pts > 0 else "")
+
+func _district_status(id: String) -> String:
+	var c = current_character
+	match id:
+		"tower":
+			return "Start from floor %d" % RankManager.start_floor_limit(c, TOWER)
+		"gate":
+			return "%d places beyond the walls" % (LocationManager.get_ids().size() - 1)
+		"guild":
+			var active = GuildManager.get_active(c)
+			var done = active.filter(func(b): return GuildManager.is_complete(c, b)).size()
+			if active.is_empty():
+				return "No bounties taken"
+			return "%d bounties%s" % [active.size(), ("  -  %d ready to turn in!" % done) if done > 0 else ""]
+		"market":
+			return "Shop, Smith, Alchemist, Enchanter"
+		"tavern":
+			var inj = DefeatManager.get_injuries(c)
+			if not inj.is_empty():
+				return "%d injur%s - rest at the inn" % [inj.size(), "y" if inj.size() == 1 else "ies"]
+			var party = PartyManager.members(c).size()
+			return "Your party: %d companion%s" % [party, "" if party == 1 else "s"] if party > 0 else "Find companions, rest"
+		"bank":
+			return "%d item stacks in the vault" % (c.stash.items.size() if c.stash else 0)
+	return ""
+
+func _open_district(id: String) -> void:
+	match id:
+		"tower":
+			current_character.current_floor = 1
+			current_character.last_location = TOWER
+			show_floor_selection_dialog(TOWER)
+		"gate":
+			current_character.current_floor = 1
+			show_location_selection_dialog()
+		"bank":
+			SceneManager.change_to_stash(current_character)
+		_:
+			_show_list(id)
+
+func _open_character() -> void:
+	SceneManager.change_to_status(current_character)
+
+## The places in a district (or the Book / Menu), as a list in the hub panel.
+func _lists() -> Dictionary:
+	var c = current_character
+	return {
+		"guild": ["Guild Hall", [
+			["Guild Desk", "Bounties, rank trials, the Ledger, armour training, retiring", func(): SceneManager.change_to_guild(c)],
+			["Commission Board", "Requests from the crafters - finish them for better prices", func(): CommissionBoard.open(self, c)],
+		]],
+		"market": ["Market", [
+			["Shop", "Buy and sell", func(): SceneManager.change_to_shop(c)],
+			["Blacksmith", "Upgrade, reinforce, salvage", func(): SceneManager.change_to_blacksmith(c)],
+			["Alchemist", "Brew potions and tonics", func(): SceneManager.change_to_alchemist(c)],
+			["Enchanter", "Add modifiers, raise rarity", func(): SceneManager.change_to_enchanter(c)],
+		]],
+		"tavern": ["Tavern & Inn", [
+			["Tavern", "Talk, drink, invite companions, rumours, the bard", func(): SceneManager.change_to_tavern(c)],
+			["Rest at the Inn", "Pass the days: heal injuries, restock the town", _on_inn_pressed],
+		]],
+		"book": ["The Book", [
+			["Journal", "Your story so far, open threads", func(): JournalScreen.open(self, c)],
+			["Chronicle", "The history of the Guild: people, places, the fallen, legends", func(): ChronicleScreen.open(self, c)],
+			["Compendium", "How things work", func(): CompendiumScreen.open(self)],
+			["Bestiary", "Enemy weaknesses you've found", func(): BestiaryGuide.open(self)],
+			["Combos", "Set-ups and payoffs for your party", _open_combos],
+		]],
+		"menu": ["Menu", [
+			["Character Selection", "Save and switch characters", _on_charselect_pressed],
+			["Save and Quit", "Save and close the game", _on_quit_pressed],
+		]],
+	}
+
+func _show_list(id: String) -> void:
+	var spec = _lists().get(id)
+	if spec == null:
+		return
+	_clear_hub()
+	hub_view = id
+	var box := VBoxContainer.new()
+	box.size = hub_panel.size
+	box.add_theme_constant_override("separation", 10)
+	hub_panel.add_child(box)
+	var title := Label.new()
+	title.text = spec[0]
+	title.theme_type_variation = "ScreenTitle"
+	box.add_child(title)
+	for e in spec[1]:
+		var b := Button.new()
+		b.text = "%s\n%s" % [e[0], e[1]]
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.custom_minimum_size = Vector2(648, 72)
+		b.pressed.connect(e[2])
+		box.add_child(b)
+	var spacer := Control.new()
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(spacer)
+	var back := Button.new()
+	back.text = "<- Nexus  [Esc]"
+	back.custom_minimum_size = Vector2(208, 48)
+	back.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	back.pressed.connect(_show_districts)
+	box.add_child(back)
+
+func _open_combos() -> void:
+	var party: Array = [current_character]
+	for n in PartyManager.members(current_character):
+		party.append(AutoBattler.build_hero(n))
+	ComboGuide.open(self, party)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if current_character == null or hub_panel == null or not (event is InputEventKey) or not event.pressed or event.echo:
+		return
+	if event.is_action_pressed("ui_cancel"):
+		if hub_view != "":
+			_show_districts()
+		else:
+			_show_list("menu")
+	elif event.keycode == KEY_C:
+		_open_character()
+	elif event.keycode == KEY_B:
+		_show_list("book")
+	elif event.keycode >= KEY_1 and event.keycode <= KEY_6:
+		_open_district(DISTRICTS[event.keycode - KEY_1].id)
+	else:
+		return
+	get_viewport().set_input_as_handled()
