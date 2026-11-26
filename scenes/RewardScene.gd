@@ -50,6 +50,8 @@ func _ready():
 	update_button_visibility()
 
 var chrome: ScreenChrome
+var camp_text: RichTextLabel
+var camp_lines: Array = []   # picked once, so they don't change on every refresh
 
 func _apply_chrome():
 	# No single "back": the way out is Continue / Next Floor / Back to Town.
@@ -62,7 +64,15 @@ func _apply_chrome():
 	ScreenChrome.place(loot_caption, Rect2(32, 204, 300, 24))
 	ScreenChrome.place(reward_items_list, Rect2(32, 232, 300, 392))
 	ScreenChrome.place($UI/CollectionContainer/ButtonContainer, Rect2(348, 232, 208, 196))
-	ScreenChrome.place(item_info_label, Rect2(572, 72, 372, 552))
+	ScreenChrome.place(item_info_label, Rect2(572, 72, 372, 300))
+	# around the fire: the rest, and a word from the party
+	var camp_panel := Panel.new()
+	ScreenChrome.place(camp_panel, Rect2(572, 388, 372, 236))
+	$UI.add_child(camp_panel)
+	camp_text = RichTextLabel.new()
+	camp_text.bbcode_enabled = true
+	ScreenChrome.place(camp_text, Rect2(12, 10, 348, 216))
+	camp_panel.add_child(camp_text)
 	ScreenChrome.place(use_consumable_button, Rect2(968, 72, 200, 44))
 	ScreenChrome.place(equip_button, Rect2(968, 124, 200, 44))
 	var progress = $UI/ProgressLabel
@@ -138,6 +148,10 @@ func _has_collectable_items() -> bool:
 func display_rewards():
 	if not player_character:
 		return
+	if chrome:
+		chrome.set_title("Floor %d Cleared" % current_floor if is_boss_fight else "A Breather")
+	if camp_text:
+		camp_text.text = _camp_text()
 	
 	# Auto-rewards label
 	if auto_rewards_label:
@@ -503,3 +517,29 @@ func _show_collection_prompt(action: String):
 	dialog.ok_button_text = "OK"
 	add_child(dialog)
 	dialog.popup_centered()
+
+## The rest, the party's condition, and a line or two from companions.
+func _camp_text() -> String:
+	var c = player_character
+	var t = "[b][color=#e5c34a]Around the fire[/color][/b]\n"
+	t += "[color=#a99f90]You rest: HP, MP and SP are restored when you move on.[/color]\n\n"
+	t += "%s  HP %d/%d\n" % [c.name, c.current_hp, c.max_hp]
+	var members = PartyManager.members(c)
+	if camp_lines.is_empty():
+		for n in members:
+			var l = PersonalityManager.say(n, "breather")
+			if l != "":
+				camp_lines.append(l)
+		camp_lines.shuffle()
+		camp_lines = camp_lines.slice(0, 2)
+	for n in members:
+		t += "%s  [color=#a99f90]%s[/color]\n" % [String(n.name), PersonalityManager.archetype_name(n)]
+	if not camp_lines.is_empty():
+		t += "\n"
+		for l in camp_lines:
+			t += "[i]%s[/i]\n" % l
+	elif members.is_empty():
+		t += "\n[i][color=#a99f90]The fire crackles. It's quiet, alone.[/color][/i]\n"
+	var next = "floor %d" % (current_floor + 1) if is_boss_fight else ("the floor's boss" if current_wave >= DungeonStateManager.waves_per_floor else "wave %d" % (current_wave + 1))
+	t += "\n[color=#a99f90]Next: %s.[/color]" % next
+	return t

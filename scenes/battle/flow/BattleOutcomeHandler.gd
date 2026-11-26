@@ -134,7 +134,7 @@ func _show_battle_complete_dialog(xp_gained: int) -> void:
 
 	var dialog = dialog_scene.instantiate()
 	parent_node.add_child(dialog)
-	dialog.show_dialog(context.player, xp_gained)
+	dialog.show_dialog(context.player, xp_gained, context.allies)
 	dialog.press_on_selected.connect(func(): _on_press_on(xp_gained), CONNECT_ONE_SHOT)
 	dialog.take_breather_selected.connect(func(): _on_take_breather(xp_gained), CONNECT_ONE_SHOT)
 

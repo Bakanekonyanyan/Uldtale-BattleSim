@@ -1,7 +1,7 @@
 {
 	"_comment": "Personalities (PersonalityManager.gd, docs/design/LIVING_WORLD.md section F). Every adventurer has an archetype (anime/manga trope), a drive, a flaw and 1-2 quirks. 'mods' use the same keys as traits in adventurers.json (job_chance, success, floor_bias, death, retire, compete, chat, drink, gift, friend_bonus, share; plus start_rapport, level_bonus, start_link). trait_bias: how much more likely the archetype is with each trait. voice: lines per context ({name}, {you}). arc: stages reached at a rapport (kept once reached); a stage may override voice lines.",
 	"reveal": { "drive_after_chats": 3, "drive_at_rapport": 30, "flaw_at_rapport": 50 },
-	"contexts": ["greeting", "chat", "join", "refuse", "battle_start", "low_hp", "ally_down", "victory", "gift_liked", "gift_meh"],
+	"contexts": ["greeting", "chat", "join", "refuse", "battle_start", "low_hp", "ally_down", "victory", "gift_liked", "gift_meh", "breather"],
 	"archetypes": {
 		"tsundere": {
 			"name": "Tsundere", "summary": "Prickly, and would rather die than admit they care.",
@@ -17,7 +17,8 @@
 				"ally_down": ["Hey! Get up! You don't get to quit on me!", "No... no, no, no!"],
 				"victory": ["Obviously. Did you expect anything else?", "Hmph. You did... okay. I guess."],
 				"gift_liked": ["Wh-what is this?! ...I'll keep it. For now.", "Don't think this means anything! ...Thanks."],
-				"gift_meh": ["Is this supposed to impress me?", "...I'll find a use for it somewhere."]
+				"gift_meh": ["Is this supposed to impress me?", "...I'll find a use for it somewhere."],
+				"breather": ["Sit down before you fall down. I-it's not for your sake.", "Here. Water. Don't make it weird."]
 			},
 			"arc": [
 				{ "id": "denial", "name": "Denial", "rapport": -100 },
@@ -39,7 +40,8 @@
 				"ally_down": ["Unacceptable.", "...I will remember this."],
 				"victory": ["As calculated.", "Done."],
 				"gift_liked": ["...Thank you. I mean it.", "Practical. I like it."],
-				"gift_meh": ["Noted.", "I have no use for this. But thank you."]
+				"gift_meh": ["Noted.", "I have no use for this. But thank you."],
+				"breather": ["Rest. The next wave will not wait for you.", "...You fought well. That is all."]
 			},
 			"arc": [
 				{ "id": "distant", "name": "Distant", "rapport": -100 },
@@ -61,7 +63,8 @@
 				"ally_down": ["No! Please get up!", "I'll protect you this time!"],
 				"victory": ["We did it... we really did it!", "Th-that went well, right?"],
 				"gift_liked": ["For... me? Thank you so much!", "I'll treasure it. Really."],
-				"gift_meh": ["Oh... thank you.", "That's... kind of you."]
+				"gift_meh": ["Oh... thank you.", "That's... kind of you."],
+				"breather": ["...I saved you some bread.", "Um... is it okay if I sit here?"]
 			},
 			"arc": [
 				{ "id": "silent", "name": "Silent", "rapport": -100 },
@@ -83,7 +86,8 @@
 				"ally_down": ["Hang in there! We've got this!", "Nooo! Get up, get up!"],
 				"victory": ["We're the BEST!", "Woohoo! High five!"],
 				"gift_liked": ["For me?! I LOVE it!", "Waaah, thank you thank you!"],
-				"gift_meh": ["Ooh, a present! ...What is it?", "Thanks! I'll figure out what it does!"]
+				"gift_meh": ["Ooh, a present! ...What is it?", "Thanks! I'll figure out what it does!"],
+				"breather": ["Snack break! I brought, like, six kinds!", "That was SO cool! Did you see me? Did you?!"]
 			},
 			"arc": [
 				{ "id": "joy", "name": "Reckless Joy", "rapport": -100 },
@@ -104,7 +108,8 @@
 				"ally_down": ["Hey! You can't lose to them before you lose to me!", "Get UP!"],
 				"victory": ["That one was mine, right? RIGHT?", "Hah! I'm getting stronger!"],
 				"gift_liked": ["A gift? From my rival? ...I'll pay you back, you hear me?", "This is going to make me even stronger. Thanks!"],
-				"gift_meh": ["Huh. Thanks, I guess!", "I'll train with it anyway!"]
+				"gift_meh": ["Huh. Thanks, I guess!", "I'll train with it anyway!"],
+				"breather": ["Catch your breath. I want you at full strength when I beat you.", "Not bad. I took down more, though."]
 			},
 			"arc": [
 				{ "id": "rival", "name": "Rival", "rapport": -100 },
@@ -126,7 +131,8 @@
 				"ally_down": ["They will be avenged.", "Stand behind me."],
 				"victory": ["It is done.", "Adequate."],
 				"gift_liked": ["A fine gift. I am in your debt.", "...Well chosen."],
-				"gift_meh": ["I need little.", "Thank you."]
+				"gift_meh": ["I need little.", "Thank you."],
+				"breather": ["Sharpen your blade. Then rest.", "We hold. We go on."]
 			},
 			"arc": [
 				{ "id": "lone_wolf", "name": "Lone Wolf", "rapport": -100 },
@@ -148,7 +154,8 @@
 				"ally_down": ["Someone fetch a healer this instant!", "Unforgivable!"],
 				"victory": ["Naturally.", "Oh-ho-ho! As expected of me!"],
 				"gift_liked": ["Fine craftsmanship. You have taste after all.", "This will do nicely. I am pleased."],
-				"gift_meh": ["How... thoughtful.", "I shall have the servants find a place for it."]
+				"gift_meh": ["How... thoughtful.", "I shall have the servants find a place for it."],
+				"breather": ["Even a breather can be done with dignity.", "My family's cook would weep at these rations."]
 			},
 			"arc": [
 				{ "id": "arrogant", "name": "Arrogant", "rapport": -100 },
@@ -170,7 +177,8 @@
 				"ally_down": ["You dare harm my comrade?! I'll release everything!", "No... the prophecy didn't say this..."],
 				"victory": ["Exactly as the Abyss decreed.", "Kukuku... another soul for the darkness."],
 				"gift_liked": ["A relic of power! You understand me!", "This shall become my sacred artifact!"],
-				"gift_meh": ["Hm. It lacks a dark aura. ...I'll keep it anyway.", "Mere mortal goods."]
+				"gift_meh": ["Hm. It lacks a dark aura. ...I'll keep it anyway.", "Mere mortal goods."],
+				"breather": ["The seal on my right arm grows restless... I need a snack.", "Rest now, mortals. Darkness gathers its strength too."]
 			},
 			"arc": [
 				{ "id": "delusion", "name": "Delusion", "rapport": -100 },
@@ -192,7 +200,8 @@
 				"ally_down": ["Hah. They were weak. ...Get up, you idiot.", "Now I'm angry."],
 				"victory": ["Over already? Pathetic.", "That was a good one!"],
 				"gift_liked": ["A weapon?! Now we're talking!", "I'll test it on something big."],
-				"gift_meh": ["Can I hit things with it?", "Hm."]
+				"gift_meh": ["Can I hit things with it?", "Hm."],
+				"breather": ["Already stopping? I was just warming up!", "More. There have to be more of them down there."]
 			},
 			"arc": [
 				{ "id": "thrill", "name": "Thrill-seeker", "rapport": -100 },
@@ -213,7 +222,8 @@
 				"ally_down": ["...Alright. Now I'm awake.", "That's it. No more holding back."],
 				"victory": ["Done? Great. Nap time.", "That was too much work."],
 				"gift_liked": ["A pillow? You get me.", "Oh, this is actually useful. Thanks."],
-				"gift_meh": ["Thanks... *yawn*", "I'll look at it later. Maybe."]
+				"gift_meh": ["Thanks... *yawn*", "I'll look at it later. Maybe."],
+				"breather": ["Wake me when the next ones show up.", "I did the math. We're fine. Probably. Nap time."]
 			},
 			"arc": [
 				{ "id": "coasting", "name": "Coasting", "rapport": -100 },
@@ -234,7 +244,8 @@
 				"ally_down": ["Nobody touches my family!", "Hold on, I'm coming!"],
 				"victory": ["Good job, everyone! Proud of you.", "That's my crew!"],
 				"gift_liked": ["Aw, you didn't have to! Come here!", "You're a good one, you know that?"],
-				"gift_meh": ["Thanks, kid. It's the thought.", "Heh. I'll put it somewhere special."]
+				"gift_meh": ["Thanks, kid. It's the thought.", "Heh. I'll put it somewhere special."],
+				"breather": ["Let me see that cut. Hold still.", "Eat something. That's not a request."]
 			},
 			"arc": [
 				{ "id": "protector", "name": "Protector", "rapport": -100 },
@@ -255,7 +266,8 @@
 				"ally_down": ["Not again... not like last time.", "I won't let this happen twice."],
 				"victory": ["...", "We should move before others come."],
 				"gift_liked": ["...Thank you. That's... a familiar thing.", "Where did you find this?"],
-				"gift_meh": ["Keep it.", "I travel light."]
+				"gift_meh": ["Keep it.", "I travel light."],
+				"breather": ["The dark down here listens. Speak softly.", "...I have seen this floor before. In a dream."]
 			},
 			"arc": [
 				{ "id": "secret", "name": "Secret", "rapport": -100 },
@@ -277,7 +289,8 @@
 				"ally_down": ["Oh no oh no oh no!", "Somebody do something! ...Fine! I'll do something!"],
 				"victory": ["We... we won? WE WON!", "I knew we'd win! I never doubted it! Much!"],
 				"gift_liked": ["Is this a lucky charm? Please say it's a lucky charm!", "I'll sleep with this under my pillow!"],
-				"gift_meh": ["Does it scare monsters away? No? Oh.", "Thanks! I think!"]
+				"gift_meh": ["Does it scare monsters away? No? Oh.", "Thanks! I think!"],
+				"breather": ["We're alive?! We're ALIVE! ...Can we go home now?", "I was not hiding. I was guarding the rear. Very bravely."]
 			},
 			"arc": [
 				{ "id": "coward", "name": "Coward", "rapport": -100 },
@@ -298,7 +311,8 @@
 				"ally_down": ["Are they napping? They should not nap now!", "Wake up, wake up!"],
 				"victory": ["Yay! Did we win? We won!", "That was fun! Again!"],
 				"gift_liked": ["It's so sparkly! I love it!", "Can I name it? I'm naming it Gerald."],
-				"gift_meh": ["Ooh, what does it do?", "Thank you! I'll put it next to my rock."]
+				"gift_meh": ["Ooh, what does it do?", "Thank you! I'll put it next to my rock."],
+				"breather": ["Ooh, this rock looks like a cat!", "Wait, which way did we come from?"]
 			},
 			"arc": [ { "id": "constant", "name": "Constant", "rapport": -100 } ]
 		},
@@ -316,7 +330,8 @@
 				"ally_down": ["Not another one. Not again.", "Pull them back! I'll hold!"],
 				"victory": ["Well fought. You're getting there.", "Good. Now drink some water."],
 				"gift_liked": ["You remembered. Thank you, kid.", "This reminds me of someone I knew."],
-				"gift_meh": ["At my age, I have everything I need.", "Kind of you."]
+				"gift_meh": ["At my age, I have everything I need.", "Kind of you."],
+				"breather": ["Breathe. Count what you did right, then what you'll fix.", "You're learning. Slowly - but you are."]
 			},
 			"arc": [
 				{ "id": "retired_spirit", "name": "Retired Spirit", "rapport": -100 },
@@ -338,7 +353,8 @@
 				"ally_down": ["...You hurt my friend.", "NOW you've done it."],
 				"victory": ["...Good.", "Everyone okay? ...Just asking."],
 				"gift_liked": ["Is... is this a cake? For me? ...I'm not crying.", "It's so cute. ...Don't tell anyone I said that."],
-				"gift_meh": ["...Thanks.", "Hm."]
+				"gift_meh": ["...Thanks.", "Hm."],
+				"breather": ["Ah, sorry - I get a little... intense in a fight.", "Want some tea? I brought the good kind."]
 			},
 			"arc": [
 				{ "id": "feared", "name": "Feared", "rapport": -100 },
@@ -359,7 +375,8 @@
 				"ally_down": ["I'll be strong for them!", "No! Not while I'm here!"],
 				"victory": ["Did you see that?! Did you see?!", "Was that good? Be honest!"],
 				"gift_liked": ["From YOU? I'm never taking it off!", "This is a treasure. A national treasure."],
-				"gift_meh": ["Anything from you is great!", "I'll keep it forever!"]
+				"gift_meh": ["Anything from you is great!", "I'll keep it forever!"],
+				"breather": ["You were amazing back there! Can I sit next to you?", "I wrote down everything you did. For... research."]
 			},
 			"arc": [
 				{ "id": "fan", "name": "Fan", "rapport": -100 },
@@ -381,7 +398,8 @@
 				"ally_down": ["Oh no. How sad. ...Anyway~", "Don't worry about them. Look at me."],
 				"victory": ["We make such a good pair, don't we?", "I'd do anything for you. Anything."],
 				"gift_liked": ["You thought of me! I'll keep it forever, next to the others!", "I'll never, ever let this go."],
-				"gift_meh": ["Did you give one to anyone else?", "It's from you, so I love it."]
+				"gift_meh": ["Did you give one to anyone else?", "It's from you, so I love it."],
+				"breather": ["You're hurt. Who did this? ...They're already dead? Good.", "Rest your head here. No one else will bother you."]
 			},
 			"arc": [
 				{ "id": "infatuation", "name": "Infatuation", "rapport": -100 },

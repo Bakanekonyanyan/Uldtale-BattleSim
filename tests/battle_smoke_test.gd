@@ -2163,6 +2163,20 @@ func _worldgen_checks() -> void:
 	pop._reset()
 	check(lv.strength == str0 and lv.attribute_points == 3, "reset gives the points back")
 	pop.queue_free()
+	# the victory dialog: the stakes, not the loot
+	var vic = make_player()
+	MomentumSystem.reset_momentum()
+	MomentumSystem.bank_rewards({"currency": 4321})
+	var dlg = load("res://scenes/BattleCompleteDialog.tscn").instantiate()
+	add_child(dlg)
+	dlg.show_dialog(vic, 120, [])
+	var all_text = dlg.stakes_text.text + dlg.press_on_button.text + dlg.breather_button.text + dlg.sub_label.text
+	check(not all_text.contains("4321") and not all_text.contains(Currency.format_copper(4321)) and all_text.contains("+120 XP"), "the victory dialog shows the stakes, not what's in the bag")
+	check(dlg.party_text.text.contains(vic.name), "the victory dialog shows the party's condition")
+	dlg.queue_free()
+	MomentumSystem.clear_accumulated_loot()
+	var said = PersonalityManager.line(AdventurerManager.active(p)[0], "breather")
+	check(said != "", "companions have something to say at a Breather (%s)" % said)
 	# a new game always gets its history, even if a screen built a roster first
 	var fresh = make_player()
 	fresh.town_state["world_pending"] = true
