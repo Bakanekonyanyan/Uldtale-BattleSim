@@ -49,3 +49,34 @@ Joining happens at character creation (the World step), or from
 Character Selection with **New world...**. The newcomer arrives on the
 world's current day, and two rivals sign up with them. Everyone meets them
 fresh.
+
+## Saves from older versions
+
+A save made before world generation existed has no world file and no
+`joined_day`. On load it's marked `returning`, and its world is written
+again as if it were the character's first visit.
+
+**What happens on arrival:**
+- A **Welcome back** dialog explains what's happening. If the save
+  predates birthplaces and backgrounds, it asks for them. "Not now" goes
+  back to the character list.
+- The world's history is generated: 224 days of it.
+- The two rivals who sign up are close to your level, not newcomers.
+- The town news says you came back after a long time away.
+
+**Kept:** level, attributes, gear, inventory, gold, talents, skills, rank
+and Guild points, floor progress, bounties, bestiary, alchemy, injuries,
+Lost & Found, and your Ledger deeds (bosses, firsts, crowns).
+
+**Dropped:** the old world, plus everything that pointed into it: your
+party, your memories of adventurers, pending invitations, and the Ledger's
+weekly snapshot.
+
+Characters hit by the bug where world generation was skipped fit the same
+check, so they get their history on the next load.
+
+**Tests:** real saves made by older versions of the game are in
+`tests/fixtures/old_saves/`. The smoke test loads them every run.
+- `Oldtimer_971c4e9`: made by commit 971c4e9, from before the living world.
+- `Oldtimer_3561778`: made by commit 3561778, from just before world
+  generation.

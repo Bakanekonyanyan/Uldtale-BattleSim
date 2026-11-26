@@ -2190,6 +2190,21 @@ func _worldgen_checks() -> void:
 	fresh.town_state["world_ready"] = true
 	check(not town._needs_world(fresh), "a made world is left alone")
 	town.free()
+	# saves made by older versions of the game (tests/fixtures/old_saves, made
+	# by commits 971c4e9 and 3561778) come back to a world with a history
+	for f in DirAccess.get_files_at("res://tests/fixtures/old_saves/"):
+		if not f.ends_with(".json"):
+			continue
+		var nm = "Fixture " + f.get_basename()
+		var data = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/old_saves/" + f))
+		data["name"] = nm
+		var fw = FileAccess.open(SaveManager.get_save_file_path(nm), FileAccess.WRITE)
+		fw.store_string(JSON.stringify(data))
+		fw.close()
+		var old = SaveManager.load_game(nm)
+		check(old != null and old.level == 12 and old.currency.copper == 123456 and old.equipment.get("main_hand") != null, "an old save (%s) loads with its level, gold and gear" % f.get_basename())
+		check(old != null and old.town_state.get("returning", false) and old.town_state.get("world_pending", false), "an old save (%s) is marked to return to a world with a history" % f.get_basename())
+		SaveManager.delete_character(nm)
 	# shared worlds: two characters, one world file
 	p.name = "Worldkeeper Test"
 	WorldShare.found(p)
