@@ -2149,6 +2149,20 @@ func _worldgen_checks() -> void:
 	var rivals = AdventurerManager.active(p).filter(func(n): return n.get("rival", false) and int(n.get("joined_day", 0)) == WorldClock.day(p))
 	check(rivals.size() == int(AdventurerManager._s("settings").get("rivals_at_start", 2)), "your rivals sign up the same day you do")
 	check(LedgerManager.standings(p).any(func(x): return x.is_player), "you're on the Ledger once you arrive")
+	# the level-up pop-up: previews, spend, reset, keep for later
+	var lv = make_player()
+	lv.attribute_points = 3
+	var pop = load("res://scenes/LevelUpScene.tscn").instantiate()
+	add_child(pop)
+	pop.setup(lv, true)
+	var str0 = lv.strength
+	check(pop.rows.vitality.effect.text.contains("HP"), "level-up shows what +1 does (%s)" % pop.rows.vitality.effect.text)
+	check(int(lv.strength) == str0, "previewing doesn't change the character")
+	pop._change("strength", 1)
+	check(lv.strength == str0 + 1 and lv.attribute_points == 2 and pop.done_button.disabled and pop.later_button.visible, "spending a point; Done waits, Spend later is offered")
+	pop._reset()
+	check(lv.strength == str0 and lv.attribute_points == 3, "reset gives the points back")
+	pop.queue_free()
 	# a new game always gets its history, even if a screen built a roster first
 	var fresh = make_player()
 	fresh.town_state["world_pending"] = true

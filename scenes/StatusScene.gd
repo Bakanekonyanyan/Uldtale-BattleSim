@@ -77,6 +77,12 @@ func _build_ui() -> void:
 	# Attributes
 	var attrs = _card(ui, "Attributes", Rect2(32, 252, 440, 372))
 	attributes_text = _rich(attrs, Rect2(10, 36, 420, 330))
+	# points kept for later (the level-up pop-up's "Spend later")
+	spend_button = Button.new()
+	spend_button.position = Vector2(32, ScreenChrome.FOOTER_Y)
+	spend_button.size = Vector2(240, 48)
+	spend_button.pressed.connect(_open_spend)
+	ui.add_child(spend_button)
 
 	# Combat
 	var combat = _card(ui, "Combat", Rect2(496, 72, 672, 204))
@@ -156,6 +162,9 @@ func update_status():
 	if not current_character or not chrome:
 		return
 	var c = current_character
+	if spend_button:
+		spend_button.visible = c.attribute_points > 0
+		spend_button.text = "Spend points (%d)" % c.attribute_points
 	chrome.set_title(str(c.name))
 	chrome.set_info("%s  -  Lv %d  %s %s  -  %s" % [c.name, c.level, c.race, c.character_class, RankManager.display(RankManager.get_rank(c))])
 
@@ -347,3 +356,17 @@ var char_tabs: HBoxContainer
 func _attach_tabs() -> void:
 	if chrome != null and char_tabs == null and current_character != null:
 		char_tabs = CharacterTabs.attach(chrome, "status", current_character)
+
+var spend_button: Button
+
+func _open_spend() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 50
+	add_child(layer)
+	var s = load("res://scenes/LevelUpScene.tscn").instantiate()
+	layer.add_child(s)
+	s.setup(current_character, false)
+	await s.level_up_complete
+	layer.queue_free()
+	SaveManager.save_game(current_character)
+	update_status()

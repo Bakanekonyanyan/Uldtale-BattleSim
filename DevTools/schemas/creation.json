@@ -1,0 +1,93 @@
+{
+ "tab": "Creation",
+ "file": "data/creation.json",
+ "order": 20,
+ "description": "Character creation lore (CharacterCreation.gd): race and class pages, plus short lore drops on each step.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Creation",
+   "fields": [
+    {
+     "name": "_doc",
+     "type": "text",
+     "help": "Notes for designers."
+    },
+    {
+     "name": "lore_drops",
+     "type": "json",
+     "help": "{step: [lines]} - one is shown at random on each step (race, class, origin, world, name)."
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Race",
+   "path": [
+    "races"
+   ],
+   "key_style": "title",
+   "summary": "{summary}",
+   "fields": [
+    {
+     "name": "lore",
+     "type": "text",
+     "help": "A short paragraph about this people (the race page)."
+    },
+    {
+     "name": "summary",
+     "type": "str",
+     "help": "One line: what they're good at."
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Class",
+   "path": [
+    "classes"
+   ],
+   "key_style": "title",
+   "summary": "{role}",
+   "fields": [
+    {
+     "name": "category",
+     "type": "str",
+     "help": "Warden, Martialist, Mender or Sorcerer."
+    },
+    {
+     "name": "order",
+     "type": "str",
+     "help": "The order that trains them."
+    },
+    {
+     "name": "patrons",
+     "type": "str",
+     "help": "The god(s) they serve."
+    },
+    {
+     "name": "role",
+     "type": "str",
+     "help": "Their role in a party, a few words."
+    },
+    {
+     "name": "difficulty",
+     "type": "int",
+     "min": 1,
+     "max": 3,
+     "help": "1 = easy to play, 3 = demanding."
+    },
+    {
+     "name": "blurb",
+     "type": "text",
+     "help": "Two sentences: how they fight."
+    },
+    {
+     "name": "quote",
+     "type": "text",
+     "help": "Their creed."
+    }
+   ]
+  }
+ ]
+}
