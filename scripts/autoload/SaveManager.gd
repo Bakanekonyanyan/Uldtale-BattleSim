@@ -59,7 +59,7 @@ func save_game(player: CharacterData):
 		"last_location": player.last_location,
 		"carry_limit": player.carry_limit,
 		# Alchemist / Blacksmith / Guild state (filled in by later phases)
-		"town": player.town_state
+		"town": WorldShare.save_split(player)   # the world goes to its own file (shared worlds)
 
 	}
 	
@@ -250,6 +250,7 @@ func load_game(character_name: String) -> CharacterData:
 	player.last_location = save_data.get("last_location", "the_dungeon")
 	player.carry_limit = int(save_data.get("carry_limit", 5))
 	player.town_state = save_data.get("town", {})
+	WorldShare.load_merge(player)   # put the shared world back around the character
 	if not player.town_state.has("world"):
 		WorldClock.migrate_old_save(player)   # timers were in expeditions before the world clock
 	RankManager.apply_perks(player)   # rank perks (carry limit, recipes) for older saves
@@ -483,6 +484,13 @@ func get_all_characters() -> Array:
 func delete_character(character_name: String):
 	var file_name = SAVE_DIR + character_name + ".json"
 	if FileAccess.file_exists(file_name):
+		# leave the shared world's register (a world no one lives in is removed)
+		var mine = _read_town(character_name)
+		var others: Array = []
+		for f in DirAccess.get_files_at(SAVE_DIR):
+			if f.ends_with(".json") and f.get_basename() != character_name:
+				others.append(_read_town(f.get_basename()))
+		WorldShare.on_delete(mine, character_name, others)
 		var dir = DirAccess.open(SAVE_DIR)
 		if dir:
 			dir.remove(file_name)
@@ -526,3 +534,11 @@ func equipment_from_save(d: Dictionary) -> Equipment:
 	if d.has("name"):
 		item.display_name = d["name"]
 	return item
+
+## The raw "town" part of a save (no world merged in).
+func _read_town(character_name: String) -> Dictionary:
+	var p = get_save_file_path(character_name)
+	if not FileAccess.file_exists(p):
+		return {}
+	var d = JSON.parse_string(FileAccess.get_file_as_string(p))
+	return d.get("town", {}) if d is Dictionary else {}

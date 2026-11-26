@@ -388,6 +388,7 @@ func _maybe_generate_world() -> void:
 	c.town_state.erase("world_pending")
 	if WorldGen.days() <= 0:
 		WorldGen._finish(c)
+		WorldShare.found(c)
 		c.town_state["world_ready"] = true
 		update_ui()
 		return
@@ -410,6 +411,7 @@ func _maybe_generate_world() -> void:
 	await WorldGen.run(c, get_tree(), func(d, total, date):
 		label.text = "The Guild's history is being written...\n%s\n(%d%%)" % [date, int(100.0 * d / total)])
 	c.town_state["world_ready"] = true
+	WorldShare.found(c)   # a world of its own, that other characters can join
 	SaveManager.save_game(c)
 	layer.queue_free()
 	update_ui()

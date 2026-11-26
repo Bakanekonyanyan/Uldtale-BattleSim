@@ -33,6 +33,7 @@ func make_player(hp_override: int = -1) -> CharacterData:
 func _ready():
 	Engine.time_scale = 25.0
 	await get_tree().process_frame
+	WorldShare.use_dir("user://smoke_worlds/")   # never touch the player's worlds
 	_unit_checks()
 	_phase0_checks()
 	GameEvents.enemy_killed.connect(func(_e, _loc, _f, _b): kills_seen += 1)
@@ -50,6 +51,8 @@ func _ready():
 	print("SMOKE RESULT: %d passed, %d failed" % [passes, failures.size()])
 	for f in failures:
 		print("  FAILED -> ", f)
+	for f in DirAccess.get_files_at("user://smoke_worlds/"):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path("user://smoke_worlds/" + f))
 	get_tree().quit(1 if failures.size() > 0 else 0)
 
 # ------------------------------------------------------------------ unit checks
@@ -2187,22 +2190,33 @@ func _worldgen_checks() -> void:
 	fresh.town_state["world_ready"] = true
 	check(not town._needs_world(fresh), "a made world is left alone")
 	town.free()
-	# joining another character's world
+	# shared worlds: two characters, one world file
 	p.name = "Worldkeeper Test"
+	WorldShare.found(p)
+	var wid = WorldShare.world_id(p)
 	var jfriend = AdventurerManager.active(p)[0]
 	MemoryManager.add(jfriend, "saved_me", "you", WorldClock.day(p))
 	jfriend.rapport = 90
 	SaveManager.save_game(p)
-	check(WorldShare.joinable("Someone Else").any(func(x): return x.name == p.name), "a saved world can be joined")
+	check(FileAccess.file_exists(WorldShare.path(wid)) and WorldShare.joinable().any(func(x): return x.id == wid), "a world has its own file, and can be joined")
 	var newcomer = make_player()
 	newcomer.name = "Joiner Test"
-	var ok = WorldShare.join(newcomer, p.name)
-	var twin = AdventurerManager.active(newcomer).filter(func(n): return n.name == jfriend.name)
-	check(ok and WorldClock.day(newcomer) == WorldClock.day(p) and not twin.is_empty(), "joining keeps the world's day and its people (day %d)" % WorldClock.day(newcomer))
-	check(not twin.is_empty() and MemoryManager.about_of(twin[0], "you").is_empty() and int(twin[0].rapport) < 90, "people in a joined world don't remember the newcomer as the old character")
-	check(String(newcomer.town_state.get("world_from", "")) == p.name and newcomer.town_state.get("world_ready", false), "the joined world is ready, and remembers where it came from")
-	check(int(AdventurerManager.state(p).list.size()) + int(AdventurerManager._s("settings").get("rivals_at_start", 2)) == AdventurerManager.state(newcomer).list.size(), "the newcomer's rivals sign up on arrival")
+	var ok = WorldShare.join(newcomer, wid)
+	var twin = AdventurerManager.state(newcomer).list.filter(func(n): return n.name == jfriend.name)
+	check(ok and WorldClock.day(newcomer) == WorldClock.day(p) and not twin.is_empty(), "joining a world: the same day and the same people (day %d)" % WorldClock.day(newcomer))
+	check(not twin.is_empty() and MemoryManager.about_of(twin[0], "you").is_empty() and int(twin[0].rapport) < 90, "everyone meets the newcomer fresh")
+	check(LedgerManager.standings(newcomer).any(func(x): return x.get("is_pc", false) and x.name == p.name), "your other character stands on the Ledger beside you")
+	WorldClock.advance(newcomer, 3)   # the newcomer plays; the world moves on for both
+	SaveManager.save_game(newcomer)
+	var back = SaveManager.load_game(p.name)
+	var friend_back = AdventurerManager.state(back).list.filter(func(n): return n.name == jfriend.name)
+	check(back != null and WorldClock.day(back) == WorldClock.day(newcomer), "the world moved on while they were away (day %d)" % (WorldClock.day(back) if back else -1))
+	check(not friend_back.is_empty() and int(friend_back[0].rapport) == 90 and not MemoryManager.about_of(friend_back[0], "you").is_empty(), "each character keeps what people feel about them")
+	check(back != null and WorldShare.others(back).has(newcomer.name), "the world knows who lives there")
+	SaveManager.delete_character(newcomer.name)
+	check(FileAccess.file_exists(WorldShare.path(wid)), "a world with someone still in it stays")
 	SaveManager.delete_character(p.name)
+	check(not FileAccess.file_exists(WorldShare.path(wid)), "a world no one lives in is removed")
 	check(ChronicleScreen.places_text(p).contains(LocationManager.get_display_name(LocationManager.get_ids()[0])), "Places lists every location")
 	var victim = AdventurerManager.active(p)[0]
 	victim.status = "dead"

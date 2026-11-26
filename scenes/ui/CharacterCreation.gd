@@ -185,7 +185,7 @@ func _options() -> Array:
 			if not _worlds.is_empty():
 				out.append(["Join a world", null])
 			for w in _worlds:
-				out.append(["   %s's world" % w.name, String(w.name)])
+				out.append(["   %s" % w.name, String(w.id)])
 	return out
 
 func _key() -> String:
@@ -370,18 +370,21 @@ func _world_text() -> String:
 		t += "The Guild of %s lives through %d days of its own history before you arrive: adventurers join and rise, form companies, fall in love, feud and die, and a champion is crowned.\n\n" % [Regions.town_name(), WorldGen.days()]
 		t += "You sign the Guild's ledger on the day the history ends. Two rivals sign it with you."
 		return t
-	var w := {}
-	for x in _worlds:
-		if x.name == choice.world:
-			w = x
-	t = _title("%s's world" % choice.world)
-	var state = "  ·  fallen" if w.get("fallen", false) else ("  ·  retired" if w.get("retired", false) else "")
-	t += "[color=#a99f90]Lv %d %s %s%s  ·  day %d  ·  %d adventurers[/color]\n\n" % [int(w.get("level", 1)), w.get("race", ""), w.get("cls", ""), state, int(w.get("day", 1)), int(w.get("adventurers", 0))]
+	var w := _world(choice.world)
+	t = _title(String(w.get("name", "A shared world")))
+	var pcs: Array = w.get("pcs", [])
+	t += "[color=#a99f90]Day %d  ·  %d adventurers%s[/color]\n\n" % [int(w.get("day", 1)), int(w.get("adventurers", 0)), ("  ·  home of " + ", ".join(pcs)) if not pcs.is_empty() else ""]
 	t += _drop()
-	t += "Arrive in the world %s knows, as it stands in their save: the same Guild, the same people with their bonds and feuds, the same Ledger and Chronicle.\n\n" % choice.world
-	t += "No one knows [i]you[/i] yet. What they remember of %s stays with %s, whose deeds remain in the Chronicle under their name.\n\n" % [choice.world, choice.world]
-	t += "[color=#a99f90]A copy: from here, your world and theirs go on separately.[/color]"
+	t += "Live in the same world as your other characters: the same Guild, the same people with their bonds and feuds, one Ledger, one Chronicle.\n\n"
+	t += "It's shared for real. When any of you plays, the world moves on for all of you - come back as someone else and days have passed, people have risen or fallen, and your other characters stand on the Ledger beside you.\n\n"
+	t += "[color=#a99f90]Everyone meets you fresh: what they feel about your other characters stays with them.[/color]"
 	return t
+
+func _world(id: String) -> Dictionary:
+	for x in _worlds:
+		if String(x.id) == id:
+			return x
+	return {}
 
 func _mode_text() -> String:
 	var t = _title("Who are you?") + "\n" + _drop()
@@ -401,7 +404,7 @@ func _summary_text() -> String:
 	var t = "[b][color=#e5c34a]%s[/color][/b]\n" % (choice.name if choice.name != "" else "Unnamed")
 	t += "%s %s\n" % [choice.race, choice["class"]]
 	t += "[color=#a99f90]Born in %s\n%s\n%s%s[/color]\n\n" % [Regions.describe(choice.birthplace), Backgrounds.get_bg(choice.background).get("name", ""),
-		"A new world" if choice.world == "" else "Joining %s's world" % choice.world, "  ·  Permadeath" if choice.permadeath else ""]
+		"A new world" if choice.world == "" else "Joining %s" % _world(choice.world).get("name", "a world"), "  ·  Permadeath" if choice.permadeath else ""]
 	t += "HP [b]%d[/b]   MP [b]%d[/b]   SP [b]%d[/b]\n" % [c.max_hp, c.max_mp, c.max_sp]
 	t += "Attack [b]%d[/b]   Spell [b]%d[/b]\n" % [int(BattleFormulas.physical_offense(c)), int(BattleFormulas.magical_offense(c))]
 	t += "Defense [b]%d[/b]   Magic def. [b]%d[/b]\n" % [int(round(BattleFormulas.physical_defense(c))), int(round(BattleFormulas.magical_defense(c)))]

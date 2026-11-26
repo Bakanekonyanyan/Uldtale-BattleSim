@@ -176,9 +176,10 @@ func _detail_text(c: CharacterData) -> String:
 	var st = _status(c)
 	if st != "":
 		t += "[color=#e07a5f]%s - their Legend is written. Start a new world to play them again.[/color]\n" % st
-	t += "\n[b]World[/b]  %s" % WorldClock.date_text(c)
-	if c.town_state.has("world_from"):
-		t += "  [color=#a99f90](joined %s's world)[/color]" % c.town_state.world_from
+	t += "\n[b]%s[/b]  %s" % [String(c.town_state.get("world_meta", {}).get("name", "World")), WorldClock.date_text(c)]
+	var others = WorldShare.others(c)
+	if not others.is_empty():
+		t += "\n[color=#c9b8ff]Shared with %s[/color]" % ", ".join(others.keys())
 	if c.town_state.has("adventurers"):
 		t += "\n%s" % LedgerManager.summary(c)
 	t += "\n\n[b]Condition[/b]  HP %d/%d   MP %d/%d   SP %d/%d\n" % [c.current_hp, c.max_hp, c.current_mp, c.max_mp, c.current_sp, c.max_sp]
@@ -231,9 +232,9 @@ func _ask_new_world() -> void:
 	var pick := OptionButton.new()
 	pick.add_item("A new world (history is generated)")
 	pick.set_item_metadata(0, "")
-	for w in WorldShare.joinable(c.name):
-		pick.add_item("Join %s's world (day %d)" % [w.name, int(w.day)])
-		pick.set_item_metadata(pick.item_count - 1, String(w.name))
+	for w in WorldShare.joinable():
+		pick.add_item("Join %s (day %d)" % [w.name, int(w.day)])
+		pick.set_item_metadata(pick.item_count - 1, String(w.id))
 	box.add_child(pick)
 	d.add_child(box)
 	d.ok_button_text = "Start over"

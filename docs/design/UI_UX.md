@@ -153,9 +153,9 @@ A first pass using the current default theme, before the art and the
   - Each step shows one short lore line, taken from `data/creation.json`
     (Content Manager tab "Creation"). The lore is my draft, for you to edit.
   - **World** step: a new world (its history is generated when you arrive),
-    or join another character's world (`WorldShare`). Joining copies their
-    world: people, bonds, Ledger and Chronicle. It leaves out what anyone
-    remembers of that character.
+    or join a shared world your other characters live in (`WorldShare`,
+    `SHARED_WORLDS.md`). The world is live: when any of them plays, it
+    moves on for all of them.
 - **Character Selection**: one card per character (level, class, rank, day,
   birthplace, Permadeath/Retired/Fallen).
   - The right panel shows details. A tab shows the **Hall of Legends**.

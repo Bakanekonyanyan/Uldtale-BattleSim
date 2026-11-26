@@ -75,6 +75,14 @@ func profile_npc(npc: Dictionary) -> Dictionary:
 	p.renown = renown(p)
 	return p
 
+## Another player character of this world (from the world's register).
+func profile_pc(pc_name: String, e: Dictionary) -> Dictionary:
+	var p := {"key": "pc:" + pc_name, "name": pc_name, "is_player": false, "is_pc": true, "rank": String(e.get("rank", "F")),
+		"points": int(e.get("points", 0)), "level": int(e.get("level", 1)), "deepest": int(e.get("deepest", 0)),
+		"bosses": int(e.get("bosses", 0)), "firsts": int(e.get("firsts", 0)), "crowns": int(e.get("crowns", 0)), "npc": {}}
+	p.renown = renown(p)
+	return p
+
 func renown(p: Dictionary) -> int:
 	return int(round(RankManager.rank_index(String(p.rank)) * _w("per_rank", 120) + int(p.points) * _w("per_point", 1.0)
 		+ int(p.deepest) * _w("per_floor", 25) + int(p.bosses) * _w("per_boss", 15)
@@ -87,6 +95,9 @@ func standings(player: CharacterData) -> Array:
 	var out: Array = [] if WorldGen.is_prehistory(player) else [profile_player(player)]
 	for n in AdventurerManager.active(player):
 		out.append(profile_npc(n))
+	if not WorldGen.is_prehistory(player):
+		for pc in WorldShare.others(player):   # other characters in this shared world
+			out.append(profile_pc(String(pc), WorldShare.others(player)[pc]))
 	out.sort_custom(func(a, b): return a.renown > b.renown if a.renown != b.renown else (a.is_player and not b.is_player))
 	var last: Dictionary = _state(player).last
 	for i in range(out.size()):
@@ -206,6 +217,12 @@ func crown(player: CharacterData, year: int) -> Dictionary:
 		var again = String(prev.get("key", "")) == "you"
 		WorldClock.add_news(player, ("You keep the crown: Champion of Year %d!" if again else "You are crowned Champion of Year %d!") % year
 			+ " The Guild awards you %s." % Currency.format_copper(gold), "rank")
+	elif top.get("is_pc", false):
+		var pcs: Dictionary = player.town_state.get("world_meta", {}).get("pcs", {})
+		if pcs.has(top.name):
+			pcs[top.name]["crowns"] = int(pcs[top.name].get("crowns", 0)) + 1
+		var me_pc = st.filter(func(x): return x.is_player)
+		WorldClock.add_news(player, "%s is crowned Champion of Year %d.%s" % [top.name, year, (" You finished #%d." % me_pc[0].pos) if not me_pc.is_empty() else ""], "rank")
 	else:
 		var npc: Dictionary = top.npc
 		_deeds(npc).crowns = int(_deeds(npc).get("crowns", 0)) + 1

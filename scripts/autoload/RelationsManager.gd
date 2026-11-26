@@ -184,7 +184,7 @@ func town_day(player: CharacterData, day: int) -> void:
 			store[k].aff = aff - sign(aff) * min(drift, abs(aff))
 			if int(store[k].aff) == 0:
 				store.erase(k)
-		var st = LedgerManager.standings(player).filter(func(p): return not p.is_player)
+		var st = LedgerManager.standings(player).filter(func(p): return not p.is_player and not p.get("is_pc", false))
 		for i in range(st.size()):
 			for j in range(i + 1, min(st.size(), i + 4)):
 				var a: Dictionary = st[i].npc

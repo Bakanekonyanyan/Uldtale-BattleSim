@@ -271,7 +271,7 @@ func _scene_defend_name(player: CharacterData, a: Dictionary, s: Dictionary, day
 	return false
 
 func _scene_spar(player: CharacterData, a: Dictionary, s: Dictionary, day: int) -> bool:
-	var st = LedgerManager.standings(player)
+	var st = LedgerManager.standings(player).filter(func(x): return not x.get("is_pc", false))
 	var me := -1
 	for i in range(st.size()):
 		if not st[i].is_player and st[i].npc == a:

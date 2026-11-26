@@ -101,13 +101,15 @@ func _fill() -> void:
 		var it = list.create_item(root)
 		var mv = "▲%d" % p.move if p.move > 0 else ("▼%d" % -p.move if p.move < 0 else "-")
 		var crowned = "♛ " if String(LedgerManager.champion(player).get("key", "")) == String(p.key) else ""
-		var cells = [str(p.pos), crowned + p.name + (" (you)" if p.is_player else ""), String(p.rank), str(p.renown), str(p.deepest), str(p.bosses), mv]
+		var cells = [str(p.pos), crowned + p.name + (" (you)" if p.is_player else (" (your character)" if p.get("is_pc", false) else "")), String(p.rank), str(p.renown), str(p.deepest), str(p.bosses), mv]
 		var col = Color("e6dccb")
 		if p.is_player:
 			col = Color("ffd166")
 			mine = it
 		elif not p.npc.is_empty() and (p.npc.get("rival", false) or p.npc.get("nemesis", false)):
 			col = Color("ff8c69")
+		elif p.get("is_pc", false):
+			col = Color("c9b8ff")
 		elif p.move > 0:
 			col = Color("9fe0a0")
 		for c in range(7):
@@ -129,7 +131,10 @@ func _show(i: int) -> void:
 	t += "%s   Level %d\n\n" % [RankManager.display(String(p.rank)), int(p.level)]
 	t += "[b]Renown:[/b] [color=#ffd166]%d[/color]\n" % int(p.renown)
 	t += "Guild points: %d\nDeepest floor cleared: %d\nBosses slain: %d\nWorld Firsts: %d\nCrowns: %d\n" % [int(p.points), int(p.deepest), int(p.bosses), int(p.firsts), int(p.get("crowns", 0))]
-	if not p.is_player:
+	if p.get("is_pc", false):
+		var e: Dictionary = WorldShare.others(player).get(p.name, {})
+		t += "\n[color=#c9b8ff]Another adventurer of this world - one of your other characters.[/color]\n%s %s, last seen on day %d.\n" % [e.get("race", ""), e.get("cls", ""), int(e.get("day", 1))]
+	elif not p.is_player:
 		var n: Dictionary = p.npc
 		t += "\n%s\n" % AdventurerManager.title_line(n)
 		t += "[color=gray]%s[/color]\n" % AdventurerManager.status_text(player, n)

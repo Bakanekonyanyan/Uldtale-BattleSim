@@ -226,7 +226,10 @@ func price_drift(item_id: String) -> float:
 
 func add_news(player: CharacterData, text: String, kind := "info") -> void:
 	var s = state(player)
-	s.news.append({"day": int(s.day), "text": text, "kind": kind})
+	var entry := {"day": int(s.day), "text": text, "kind": kind}
+	if player and not WorldGen.is_prehistory(player):
+		entry["pc"] = player.name   # whose story it is (shared worlds: WorldShare)
+	s.news.append(entry)
 	ChronicleManager.on_news(player, text, kind)   # the world's history
 	var cap = int(cfg.get("news", {}).get("max_entries", 40))
 	while s.news.size() > cap:

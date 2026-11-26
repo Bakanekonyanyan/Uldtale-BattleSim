@@ -353,7 +353,8 @@ func _on_battle_completed(player_won: bool, xp_gained: int) -> void:
 		var summary = DefeatManager.apply_defeat(fallen, boss)
 		fallen.set_meta("last_defeat", summary)
 		if summary.get("died", false):
-			SaveManager.delete_character(fallen.name)   # permadeath: the Legend remains
+			SaveManager.save_game(fallen)   # the shared world records them as fallen...
+			SaveManager.delete_character(fallen.name)   # ...then the save goes; the Legend remains
 		else:
 			SaveManager.save_game(fallen)
 		navigate(ScenePath.DEFEAT, TransitionType.REPLACE, fallen)
