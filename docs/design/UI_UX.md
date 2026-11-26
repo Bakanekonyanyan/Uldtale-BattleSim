@@ -141,3 +141,37 @@ A first pass using the current default theme, before the art and the
   - Talents is hidden during an expedition. Tabs show "(n)" when points are
     waiting.
 - **Bank**: the Stash screen, renamed. Coin deposits come later.
+
+## Built: creation, selection, level up, victory, breather
+
+- **Character Creation** (`scenes/ui/CharacterCreation.gd`): six steps.
+  - The steps are Race, Class, Birthplace, Background, World, and Name &
+    Mode. Each step has a list on the left and details with lore in the
+    middle.
+  - The summary panel on the right shows stats from a real character built
+    from your choices.
+  - Each step shows one short lore line, taken from `data/creation.json`
+    (Content Manager tab "Creation"). The lore is my draft, for you to edit.
+  - **World** step: a new world (its history is generated when you arrive),
+    or join another character's world (`WorldShare`). Joining copies their
+    world: people, bonds, Ledger and Chronicle. It leaves out what anyone
+    remembers of that character.
+- **Character Selection**: one card per character (level, class, rank, day,
+  birthplace, Permadeath/Retired/Fallen).
+  - The right panel shows details. A tab shows the **Hall of Legends**.
+  - Buttons: Continue, **New world...** (a new world or another character's),
+    and **Delete...** (you type the name to confirm).
+- **Level up**:
+  - Each attribute shows what +1 does right now.
+  - The class's key attributes are marked ★, and the next attribute passive
+    is shown with how far away it is.
+  - Reset and **Spend later** buttons. Saved points are spent from
+    Character > Status ("Spend points").
+- **Victory dialog**:
+  - Shows the party's condition, the momentum level and what's at stake
+    (how many waves of spoils are unopened), the omens, and what comes next.
+  - It never shows the loot itself. That stays the gamble.
+- **Breather screen**: titled "A Breather" or "Floor N Cleared".
+  - A camp panel shows the rest, the party, a line or two from companions
+    (a new `breather` voice context with 2 lines per archetype), and what
+    comes next.

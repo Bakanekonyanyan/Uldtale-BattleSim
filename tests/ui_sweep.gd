@@ -114,7 +114,7 @@ func _check(label: String, root: Node) -> void:
 			var b: Control = ctrls[j]
 			if a.is_ancestor_of(b) or b.is_ancestor_of(a):
 				continue
-			var inter = a.get_global_rect().intersection(b.get_global_rect())
+			var inter = _visible_rect(a).intersection(_visible_rect(b))
 			if min(inter.size.x, inter.size.y) >= 6.0:   # edges touching don't count
 				overlaps += 1
 				print("UI OVERLAP|%s|%s '%s'|%s '%s'" % [label, a.name, _txt(a), b.name, _txt(b)])
@@ -123,6 +123,16 @@ func _check(label: String, root: Node) -> void:
 		var f = "user://sweep/%s.png" % label
 		get_viewport().get_texture().get_image().save_png(f)
 		print("UI SHOT|", f)
+
+## A control's rect, clipped by any scroll container it sits in.
+func _visible_rect(c: Control) -> Rect2:
+	var r = c.get_global_rect()
+	var p = c.get_parent()
+	while p != null:
+		if p is ScrollContainer:
+			r = r.intersection((p as Control).get_global_rect())
+		p = p.get_parent()
+	return r
 
 func _collect(n: Node, out: Array) -> void:
 	if n is CanvasItem and not n.is_visible_in_tree():
