@@ -85,7 +85,11 @@ func _ready():
 
 func set_player(character: CharacterData):
 	current_character = character
-	call_deferred("_maybe_generate_world")
+	if _needs_world(character):
+		# generate before anything reads the world (the first refresh would
+		# otherwise build an empty roster and the history would be skipped)
+		call_deferred("_maybe_generate_world")
+		return
 	Log.debug("town", "TownScene: Character set - ", character.name)
 	Log.debug("town", "TownScene: Inventory items - ", character.inventory.items)
 	update_ui()
@@ -364,12 +368,28 @@ func _on_arena_pressed():
 
 ## A new world: the Guild lives through its history before you arrive
 ## (WorldGen). Saves that already have a world are left alone.
+## A new game whose world hasn't been made yet: world_pending is set at
+## creation and on "new game"; saves from before the flag count if they have
+## no Guild yet.
+func _needs_world(c: CharacterData) -> bool:
+	if c == null or c.town_state.get("world_ready", false):
+		return false
+	if c.town_state.get("world_pending", false):
+		return true
+	return not c.town_state.has("adventurers") and WorldClock.day(c) <= 1
+
 func _maybe_generate_world() -> void:
 	var c = current_character
-	if c == null or c.town_state.get("world_ready", false):
+	if not _needs_world(c):
+		update_ui()
 		return
-	if c.town_state.has("adventurers") or WorldClock.day(c) > 1 or WorldGen.days() <= 0:
+	for k in WorldShare.WORLD_KEYS:
+		c.town_state.erase(k)   # anything built before the history is thrown away
+	c.town_state.erase("world_pending")
+	if WorldGen.days() <= 0:
+		WorldGen._finish(c)
 		c.town_state["world_ready"] = true
+		update_ui()
 		return
 	var layer := CanvasLayer.new()
 	layer.layer = 80

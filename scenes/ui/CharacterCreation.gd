@@ -252,6 +252,7 @@ func _on_create_pressed():
 		Backgrounds.apply_creation(new_character, String(background_ids[background_option.selected]))
 	if permadeath_box and permadeath_box.button_pressed:
 		new_character.town_state["permadeath"] = true
+	new_character.town_state["world_pending"] = true
 	
 	# Starting gold
 	new_character.currency.copper = STARTING_GOLD

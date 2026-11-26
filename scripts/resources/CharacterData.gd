@@ -886,6 +886,7 @@ func reset_for_new_game():
 		town_state["permadeath"] = true
 	if born != "":
 		town_state["birthplace"] = born   # where you were born doesn't change
+	town_state["world_pending"] = true   # TownScene writes the history on arrival
 	call_deferred("_background_start")
 	location_progress.clear()
 	max_floor_unlocked = 1

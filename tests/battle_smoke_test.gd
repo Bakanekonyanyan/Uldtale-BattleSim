@@ -2149,6 +2149,32 @@ func _worldgen_checks() -> void:
 	var rivals = AdventurerManager.active(p).filter(func(n): return n.get("rival", false) and int(n.get("joined_day", 0)) == WorldClock.day(p))
 	check(rivals.size() == int(AdventurerManager._s("settings").get("rivals_at_start", 2)), "your rivals sign up the same day you do")
 	check(LedgerManager.standings(p).any(func(x): return x.is_player), "you're on the Ledger once you arrive")
+	# a new game always gets its history, even if a screen built a roster first
+	var fresh = make_player()
+	fresh.town_state["world_pending"] = true
+	AdventurerManager.state(fresh)
+	var town = load("res://scenes/TownScene.tscn").instantiate()
+	check(town._needs_world(fresh), "a pending world is generated even if a roster was built first")
+	fresh.town_state.erase("world_pending")
+	fresh.town_state["world_ready"] = true
+	check(not town._needs_world(fresh), "a made world is left alone")
+	town.free()
+	# joining another character's world
+	p.name = "Worldkeeper Test"
+	var jfriend = AdventurerManager.active(p)[0]
+	MemoryManager.add(jfriend, "saved_me", "you", WorldClock.day(p))
+	jfriend.rapport = 90
+	SaveManager.save_game(p)
+	check(WorldShare.joinable("Someone Else").any(func(x): return x.name == p.name), "a saved world can be joined")
+	var newcomer = make_player()
+	newcomer.name = "Joiner Test"
+	var ok = WorldShare.join(newcomer, p.name)
+	var twin = AdventurerManager.active(newcomer).filter(func(n): return n.name == jfriend.name)
+	check(ok and WorldClock.day(newcomer) == WorldClock.day(p) and not twin.is_empty(), "joining keeps the world's day and its people (day %d)" % WorldClock.day(newcomer))
+	check(not twin.is_empty() and MemoryManager.about_of(twin[0], "you").is_empty() and int(twin[0].rapport) < 90, "people in a joined world don't remember the newcomer as the old character")
+	check(String(newcomer.town_state.get("world_from", "")) == p.name and newcomer.town_state.get("world_ready", false), "the joined world is ready, and remembers where it came from")
+	check(int(AdventurerManager.state(p).list.size()) + int(AdventurerManager._s("settings").get("rivals_at_start", 2)) == AdventurerManager.state(newcomer).list.size(), "the newcomer's rivals sign up on arrival")
+	SaveManager.delete_character(p.name)
 	check(ChronicleScreen.places_text(p).contains(LocationManager.get_display_name(LocationManager.get_ids()[0])), "Places lists every location")
 	var victim = AdventurerManager.active(p)[0]
 	victim.status = "dead"
@@ -2233,7 +2259,7 @@ func _worldgen_checks() -> void:
 	CharacterManager.current_character_resource.set_meta("current_character", p)
 	# a new game is a new world; permadeath stays with the character
 	saved.reset_for_new_game()
-	check(saved.town_state.keys() == ["permadeath", "birthplace"], "a new game clears the old world but keeps permadeath and your birthplace")
+	check(saved.town_state.keys() == ["permadeath", "birthplace", "world_pending"], "a new game clears the old world but keeps permadeath and your birthplace")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(lp))
 	LegendManager.use_path("user://legends.json")
 	CharacterManager.current_character_resource.set_meta("current_character", prev_cur)
