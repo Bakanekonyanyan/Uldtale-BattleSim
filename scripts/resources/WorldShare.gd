@@ -182,7 +182,13 @@ static func load_merge(player: CharacterData) -> void:
 	var ts = player.town_state
 	var id = world_id(player)
 	if id == "":
-		if ts.has("adventurers"):   # an older save: its world becomes a world file on the next save
+		if not ts.has("joined_day") and not ts.get("world_pending", false):
+			# a save from before world generation: they come back to a world
+			# with a history, like arriving for the first time (TownScene)
+			ts["world_pending"] = true
+			ts["returning"] = true
+			ts.erase("world_ready")
+		elif ts.has("adventurers"):   # made with world generation, before world files
 			found(player)
 		return
 	var data = read(id)

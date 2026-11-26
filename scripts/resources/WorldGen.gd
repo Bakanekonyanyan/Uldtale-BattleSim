@@ -41,10 +41,18 @@ static func _finish(player: CharacterData) -> void:
 	player.town_state.erase("prehistory")
 	var day = WorldClock.day(player)
 	player.town_state["joined_day"] = day
-	# your rivals sign up the same day you do
+	# your rivals sign up the same day you do (a returning veteran draws
+	# rivals of their own standing)
 	var st: Dictionary = AdventurerManager._s("settings")
+	var returning = player.town_state.has("returning")
+	var lv = st.get("newcomer_level", [1, 3])
+	if player.level > int(lv[1]):
+		lv = [max(1, player.level - 2), player.level + 1]
 	for i in range(int(st.get("rivals_at_start", 2))):
-		var npc = AdventurerManager._add(player, AdventurerManager.generate(player, st.get("newcomer_level", [1, 3]), true))
+		var npc = AdventurerManager._add(player, AdventurerManager.generate(player, lv, true))
 		npc.joined_day = day
-		AdventurerManager._history(npc, day, "Signed up with the Guild the same day as %s." % player.name)
-	WorldClock.add_news(player, "%s signed their name in the Guild's ledger." % player.name, "chronicle")
+		AdventurerManager._history(npc, day, ("Took notice of %s the day they came back to the Guild." if returning else "Signed up with the Guild the same day as %s.") % player.name)
+	if returning:
+		WorldClock.add_news(player, "%s returned to the Guild after a long time away. Few remember the name." % player.name, "chronicle")
+	else:
+		WorldClock.add_news(player, "%s signed their name in the Guild's ledger." % player.name, "chronicle")

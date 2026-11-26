@@ -383,11 +383,21 @@ func _maybe_generate_world() -> void:
 	if not _needs_world(c):
 		update_ui()
 		return
+	if c.town_state.get("returning", false):
+		# an older save: keep everything that's yours, let the old world go
+		if not await _welcome_back(c):
+			return
+		for k in ["party", "memories", "invitation", "prehistory"]:
+			c.town_state.erase(k)
+		var led: Dictionary = c.town_state.get("ledger", {})
+		c.town_state["ledger"] = {"bosses": int(led.get("bosses", 0)), "firsts": int(led.get("firsts", 0)), "crowns": int(led.get("crowns", 0)),
+			"last_week": -1, "last": {}, "year": 0, "crownings": [], "champion": ""}
 	for k in WorldShare.WORLD_KEYS:
 		c.town_state.erase(k)   # anything built before the history is thrown away
 	c.town_state.erase("world_pending")
 	if WorldGen.days() <= 0:
 		WorldGen._finish(c)
+		c.town_state.erase("returning")
 		WorldShare.found(c)
 		c.town_state["world_ready"] = true
 		update_ui()
@@ -411,6 +421,7 @@ func _maybe_generate_world() -> void:
 	await WorldGen.run(c, get_tree(), func(d, total, date):
 		label.text = "The Guild's history is being written...\n%s\n(%d%%)" % [date, int(100.0 * d / total)])
 	c.town_state["world_ready"] = true
+	c.town_state.erase("returning")
 	WorldShare.found(c)   # a world of its own, that other characters can join
 	SaveManager.save_game(c)
 	layer.queue_free()
@@ -640,3 +651,62 @@ func _unhandled_input(event: InputEvent) -> void:
 	else:
 		return
 	get_viewport().set_input_as_handled()
+
+## A character from an older version comes back: where were they born and
+## who were they, if the save predates those choices. Returns false if the
+## player backs out to the character list.
+func _welcome_back(c: CharacterData) -> bool:
+	var need_birth = String(c.town_state.get("birthplace", "")) == ""
+	var need_bg = String(c.town_state.get("background", "")) == ""
+	var d := ConfirmationDialog.new()
+	d.title = "Welcome back, %s" % c.name
+	d.ok_button_text = "Return to the Guild"
+	d.cancel_button_text = "Not now"
+	var box := VBoxContainer.new()
+	box.custom_minimum_size = Vector2(560, 0)
+	box.add_theme_constant_override("separation", 10)
+	var l := Label.new()
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD
+	l.text = "The Guild has changed since you were last here. It has a history now - adventurers who rose and fell, feuds, champions - and it will be written before you walk back in. You keep everything that's yours: level, gear, gold, talents, rank and the floors you've reached."
+	box.add_child(l)
+	var born := OptionButton.new()
+	var bg := OptionButton.new()
+	if need_birth:
+		var cap := Label.new()
+		cap.text = "Where were you born?"
+		box.add_child(cap)
+		var home: Array = Regions.cfg().get("race_homelands", {}).get(c.race, [])
+		var picked := false
+		for t in Regions.towns():
+			born.add_item("%s (%s)" % [t.town, t.region_name])
+			born.set_item_metadata(born.item_count - 1, String(t.town))
+			if not picked and t.region in home:
+				born.select(born.item_count - 1)
+				picked = true
+		box.add_child(born)
+	if need_bg:
+		var cap2 := Label.new()
+		cap2.text = "Who were you before the Guild?"
+		box.add_child(cap2)
+		bg.add_item("(leave it untold)")
+		bg.set_item_metadata(0, "")
+		for id in Backgrounds.cfg():
+			bg.add_item(String(Backgrounds.get_bg(id).get("name", id)))
+			bg.set_item_metadata(bg.item_count - 1, String(id))
+		box.add_child(bg)
+	d.add_child(box)
+	$UI.add_child(d)
+	d.popup_centered()
+	var result = [null]
+	d.confirmed.connect(func(): result[0] = true)
+	d.canceled.connect(func(): result[0] = false)
+	while result[0] == null:
+		await get_tree().process_frame
+	if result[0] and need_birth and born.selected >= 0:
+		c.town_state["birthplace"] = String(born.get_item_metadata(born.selected))
+	if result[0] and need_bg and bg.selected > 0:
+		Backgrounds.apply_creation(c, String(bg.get_item_metadata(bg.selected)))
+	d.queue_free()
+	if not result[0]:
+		SceneManager.change_to_character_selection()
+	return result[0]
