@@ -1,0 +1,55 @@
+{
+ "tab": "Thresholds",
+ "file": "data/thresholds.json",
+ "order": 15,
+ "description": "Attribute thresholds: passives a hero gets while a raw attribute (base + gear) is at or above a value (TalentManager.gd).",
+ "sections": [
+  {
+   "kind": "collection",
+   "label": "Passives",
+   "path": [
+    "passives"
+   ],
+   "key_style": "snake",
+   "name_field": "name",
+   "summary": "{attribute} {at}",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "attribute",
+     "type": "enum",
+     "options": [
+      "vitality",
+      "strength",
+      "dexterity",
+      "intelligence",
+      "faith",
+      "mind",
+      "endurance",
+      "arcane",
+      "agility",
+      "fortitude"
+     ]
+    },
+    {
+     "name": "at",
+     "type": "int",
+     "min": 1,
+     "help": "Raw attribute (base + gear) needed."
+    },
+    {
+     "name": "effects",
+     "type": "json",
+     "help": "Talent effect list (stats, damage, defense, heal_bonus, lifesteal, regen, status_chance...). See TalentManager.gd."
+    }
+   ]
+  }
+ ]
+}

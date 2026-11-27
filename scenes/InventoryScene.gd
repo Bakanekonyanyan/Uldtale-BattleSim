@@ -23,30 +23,45 @@ var current_category: ItemCategory = ItemCategory.ALL
 func _ready():
 	player_character = CharacterManager.get_current_character()
 	if not player_character:
-		print("Oops! No character loaded.")
+		Log.debug("inventory", "Oops! No character loaded.")
 		return
 	
+	_apply_chrome()
 	setup_tabs()
 	refresh_inventory()
 	
-	use_button.connect("pressed", Callable(self, "_on_use_pressed"))
-	back_button.connect("pressed", Callable(self, "_on_back_pressed"))
-	item_list.connect("item_selected", Callable(self, "_on_item_selected"))
+	use_button.pressed.connect(_on_use_pressed)
+	back_button.pressed.connect(_on_back_pressed)
+	item_list.item_selected.connect(_on_item_selected)
 	
 	clear_item_info()
+
+var chrome: ScreenChrome
+
+func _apply_chrome():
+	chrome = ScreenChrome.attach(self, "Inventory", _on_back_pressed, "Back")
+	_attach_tabs()
+	back_button.visible = false
+	ScreenChrome.tab_row(tab_container, Rect2(32, 72, 440, 36))
+	ScreenChrome.place(item_list, ScreenChrome.LIST_RECT)
+	ScreenChrome.place(item_info_label, ScreenChrome.DETAIL_RECT)
+	ScreenChrome.place(capacity_label, Rect2(32, 650, 440, 32))
+	ScreenChrome.place(use_button, Rect2(496, 640, 160, 48))
+	item_info_label.bbcode_enabled = true
+	chrome.set_info(ScreenChrome.money_text(player_character))
 
 func setup_tabs():
 	"""Setup category filter tabs with enhanced visuals"""
 	if all_tab:
-		all_tab.connect("pressed", Callable(self, "_on_category_changed").bind(ItemCategory.ALL))
+		all_tab.pressed.connect(_on_category_changed.bind(ItemCategory.ALL))
 	if consumables_tab:
-		consumables_tab.connect("pressed", Callable(self, "_on_category_changed").bind(ItemCategory.CONSUMABLES))
+		consumables_tab.pressed.connect(_on_category_changed.bind(ItemCategory.CONSUMABLES))
 	if weapons_tab:
-		weapons_tab.connect("pressed", Callable(self, "_on_category_changed").bind(ItemCategory.WEAPONS))
+		weapons_tab.pressed.connect(_on_category_changed.bind(ItemCategory.WEAPONS))
 	if armor_tab:
-		armor_tab.connect("pressed", Callable(self, "_on_category_changed").bind(ItemCategory.ARMOR))
+		armor_tab.pressed.connect(_on_category_changed.bind(ItemCategory.ARMOR))
 	if materials_tab:
-		materials_tab.connect("pressed", Callable(self, "_on_category_changed").bind(ItemCategory.MATERIALS))
+		materials_tab.pressed.connect(_on_category_changed.bind(ItemCategory.MATERIALS))
 	
 	_update_tab_visuals()
 
@@ -59,28 +74,7 @@ func _on_category_changed(category: ItemCategory):
 
 func _update_tab_visuals():
 	"""Enhanced tab highlighting with background colors"""
-	var tabs = [all_tab, consumables_tab, weapons_tab, armor_tab, materials_tab]
-	
-	for i in range(tabs.size()):
-		if not tabs[i]:
-			continue
-		
-		var style_normal = StyleBoxFlat.new()
-		style_normal.corner_radius_top_left = 4
-		style_normal.corner_radius_top_right = 4
-		
-		if i == current_category:
-			# Active tab: Brighter with accent border
-			style_normal.bg_color = Color("#4A4A3A")
-			style_normal.border_width_bottom = 3
-			style_normal.border_color = Color("#FFD700")
-			tabs[i].add_theme_stylebox_override("normal", style_normal)
-			tabs[i].modulate = Color(1, 1, 1)
-		else:
-			# Inactive tab: Darker
-			style_normal.bg_color = Color("#2A2A2A")
-			tabs[i].add_theme_stylebox_override("normal", style_normal)
-			tabs[i].modulate = Color(0.7, 0.7, 0.7)
+	ScreenChrome.set_active_tab([all_tab, consumables_tab, weapons_tab, armor_tab, materials_tab], current_category)
 
 func refresh_inventory():
 	"""Refresh item list with enhanced formatting"""
@@ -99,12 +93,7 @@ func refresh_inventory():
 		var display_text = _format_item_display(item, item_data.quantity)
 		
 		# Add to list
-		item_list.add_item(display_text)
-		
-		# Color equipment by rarity
-		if item is Equipment:
-			var rarity_color = Color(item.get_rarity_color())
-			item_list.set_item_custom_fg_color(index, rarity_color)
+		ScreenChrome.add_item_row(item_list, item, item_data.quantity)
 		
 		index += 1
 	
@@ -113,25 +102,7 @@ func refresh_inventory():
 
 func _format_item_display(item: Item, quantity: int) -> String:
 	"""Format item display text for better readability"""
-	var display = ""
-	
-	if item is Equipment:
-		# Equipment: Name [Rarity] (ilvl XX)
-		display = "%s  [%s] (ilvl %d)" % [
-			item.display_name,
-			item.rarity.capitalize(),
-			item.item_level
-		]
-		if quantity > 1:
-			display += "  ×%d" % quantity
-	else:
-		# Regular items: Name ×Qty
-		if quantity > 1:
-			display = "%s  ×%d" % [item.display_name, quantity]
-		else:
-			display = item.display_name
-	
-	return display
+	return ScreenChrome.item_row(item, quantity)
 
 func _matches_category(item: Item) -> bool:
 	"""Check if item matches current category filter"""
@@ -165,10 +136,10 @@ func update_capacity_display():
 		
 		if fullness >= 0.95:
 			color = "#FF4444"  # Red - Critical
-			status_icon = "⚠ "
+			status_icon = ""
 		elif fullness >= 0.8:
 			color = "#FF8800"  # Orange - Warning
-			status_icon = "⚠ "
+			status_icon = ""
 		elif fullness >= 0.6:
 			color = "#FFDD44"  # Yellow - Caution
 		else:
@@ -231,24 +202,24 @@ func display_item_info(item: Item):
 			info_text += "[color=#CCCCCC]%s[/color]\n\n" % item.description
 			
 			if item.item_type == Item.ItemType.CONSUMABLE:
-				info_text += "[color=#00DDFF][b]═══ EFFECT ═══[/b][/color]\n"
+				info_text += "[color=#00DDFF][b]EFFECT [/b][/color]\n"
 				
 				match item.consumable_type:
 					Item.ConsumableType.DAMAGE:
-						info_text += "[color=#FF6666]⚔ Deals %d damage[/color]\n" % item.effect_power
+						info_text += "[color=#FF6666]Deals %d damage[/color]\n" % item.effect_power
 						if item.status_effect != Skill.StatusEffect.NONE:
 							var effect_name = Skill.StatusEffect.keys()[item.status_effect]
-							info_text += "[color=#BB88FF]✦ Inflicts %s for %d turns[/color]\n" % [effect_name, item.effect_duration]
+							info_text += "[color=#BB88FF]Inflicts %s for %d turns[/color]\n" % [effect_name, item.effect_duration]
 					Item.ConsumableType.HEAL:
-						info_text += "[color=#66FF66]❤ Restores %d HP[/color]\n" % item.effect_power
+						info_text += "[color=#66FF66]Restores %d HP[/color]\n" % item.effect_power
 					Item.ConsumableType.RESTORE:
-						info_text += "[color=#6666FF]✦ Restores %d MP/SP[/color]\n" % item.effect_power
+						info_text += "[color=#6666FF]Restores %d MP/SP[/color]\n" % item.effect_power
 					Item.ConsumableType.BUFF:
-						info_text += "[color=#FFDD66]↑ Increases %s by %d for %d turns[/color]\n" % [item.buff_type, item.effect_power, item.effect_duration]
+						info_text += "[color=#FFDD66]Increases %s by %d for %d turns[/color]\n" % [item.buff_type, item.effect_power, item.effect_duration]
 					Item.ConsumableType.CURE:
-						info_text += "[color=#66FFDD]✚ Cures all status effects[/color]\n"
+						info_text += "[color=#66FFDD]Cures all status effects[/color]\n"
 						if item.effect_power > 0:
-							info_text += "[color=#66FF66]❤ Restores %d HP[/color]\n" % item.effect_power
+							info_text += "[color=#66FF66]Restores %d HP[/color]\n" % item.effect_power
 			
 			# Show value
 			if item.value > 0:
@@ -287,7 +258,7 @@ func _on_use_pressed():
 		# Get filtered items
 		var filtered_items = _get_filtered_items()
 		if item_index >= filtered_items.size():
-			print("Invalid item selection")
+			Log.debug("inventory", "Invalid item selection")
 			return
 		
 		var item = filtered_items[item_index]
@@ -295,22 +266,22 @@ func _on_use_pressed():
 		
 		# Check if item is consumable
 		if item.item_type != Item.ItemType.CONSUMABLE:
-			print("Can only use consumable items outside combat")
+			Log.debug("inventory", "Can only use consumable items outside combat")
 			return
 		
 		# Check quantity
 		if not player_character.inventory.items.has(item_id):
-			print("Item not found in inventory")
+			Log.debug("inventory", "Item not found in inventory")
 			refresh_inventory()
 			return
 		
 		var item_data = player_character.inventory.items[item_id]
 		if item_data.quantity <= 0:
-			print("No quantity remaining")
+			Log.debug("inventory", "No quantity remaining")
 			refresh_inventory()
 			return
 		
-		print("Using item outside combat: %s (Quantity: %d)" % [item.display_name, item_data.quantity])
+		Log.debug("inventory", "Using item outside combat: %s (Quantity: %d)" % [item.display_name, item_data.quantity])
 		
 		# Use the item
 		var result = item.use(player_character, [player_character])
@@ -318,12 +289,18 @@ func _on_use_pressed():
 		# Remove one from inventory
 		var removed = player_character.inventory.remove_item(item_id, 1)
 		if removed:
-			print("Item used successfully: ", result)
+			Log.debug("inventory", "Item used successfully: ", result)
 		else:
-			print("ERROR: Failed to remove item!")
+			Log.debug("inventory", "ERROR: Failed to remove item!")
 		
 		refresh_inventory()
 
 func _on_back_pressed():
 	CharacterManager.save_character(player_character)
-	SceneManager.return_to_previous_scene()
+	SceneManager.leave_screen(player_character)
+
+## Status / Equipment / Inventory / Talents tabs in the header.
+var char_tabs: HBoxContainer
+func _attach_tabs() -> void:
+	if chrome != null and char_tabs == null and player_character != null:
+		char_tabs = CharacterTabs.attach(chrome, "inventory", player_character)

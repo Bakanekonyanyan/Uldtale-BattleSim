@@ -1,0 +1,232 @@
+{
+ "tab": "World",
+ "file": "data/world.json",
+ "order": 48,
+ "description": "World clock (WorldClock.gd): calendar, how long things take, Inn prices, shop restock and weekly world events.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Calendar",
+   "path": [
+    "calendar"
+   ],
+   "fields": [
+    {
+     "name": "days_per_week",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "weeks_per_season",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "seasons",
+     "type": "json",
+     "help": "Season names, in order."
+    },
+    {
+     "name": "weekdays",
+     "type": "json",
+     "help": "Weekday names (days_per_week of them)."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Prehistory",
+   "path": [
+    "prehistory"
+   ],
+   "fields": [
+    {
+     "name": "_doc",
+     "type": "text",
+     "help": "Notes for designers."
+    },
+    {
+     "name": "days",
+     "type": "int",
+     "min": 0,
+     "help": "Days of Guild history simulated before a new character arrives (224 = two years; 0 = a fresh Guild)."
+    },
+    {
+     "name": "frame_every",
+     "type": "int",
+     "min": 1,
+     "help": "Days simulated between UI updates while the history is written."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Time costs",
+   "path": [
+    "time_costs"
+   ],
+   "fields": [
+    {
+     "name": "expedition_base_days",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "days_per_extra_floor",
+     "type": "float",
+     "min": 0,
+     "help": "Each floor after the first adds this many days (total rounded down)."
+    },
+    {
+     "name": "defeat_extra_days",
+     "type": "int",
+     "min": 0,
+     "help": "Extra days when you're carried back after a defeat."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Inn",
+   "path": [
+    "inn"
+   ],
+   "fields": [
+    {
+     "name": "copper_per_level",
+     "type": "int",
+     "min": 0,
+     "help": "One night = this x level."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Shop",
+   "path": [
+    "shop"
+   ],
+   "fields": [
+    {
+     "name": "restock_every_days",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "price_drift",
+     "type": "float",
+     "min": 0,
+     "max": 0.9,
+     "help": "Weekly consumable price drift (+/-)."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "News",
+   "path": [
+    "news"
+   ],
+   "fields": [
+    {
+     "name": "max_entries",
+     "type": "int",
+     "min": 5
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Event settings",
+   "path": [
+    "events"
+   ],
+   "ignore": [
+    "list"
+   ],
+   "fields": [
+    {
+     "name": "chance_per_week",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Events",
+   "path": [
+    "events",
+    "list"
+   ],
+   "key_style": "snake",
+   "name_field": "name",
+   "summary": "{duration_days} days",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "news",
+     "type": "text",
+     "help": "Announcement. {location} is replaced."
+    },
+    {
+     "name": "end_news",
+     "type": "text",
+     "optional": true
+    },
+    {
+     "name": "weight",
+     "type": "float",
+     "min": 0,
+     "default": 1
+    },
+    {
+     "name": "duration_days",
+     "type": "int",
+     "min": 1,
+     "default": 7
+    },
+    {
+     "name": "location",
+     "type": "enum",
+     "options": [
+      "",
+      "random_themed"
+     ],
+     "optional": true,
+     "allow_custom": true,
+     "help": "random_themed: a random single-race location; location-bound effects only apply there."
+    },
+    {
+     "name": "restock",
+     "type": "bool",
+     "optional": true,
+     "help": "Restock the shop when the event starts."
+    },
+    {
+     "name": "effects",
+     "type": "map",
+     "key": {
+      "type": "enum",
+      "options": [
+       "enemy_power",
+       "reward_mult",
+       "consumable_price",
+       "upgrade_fee",
+       "inn_price"
+      ]
+     },
+     "value": {
+      "type": "float",
+      "min": 0
+     },
+     "help": "Multipliers. enemy_power and reward_mult apply in the event's location."
+    }
+   ]
+  }
+ ]
+}

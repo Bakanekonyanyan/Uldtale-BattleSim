@@ -1,0 +1,476 @@
+{
+	"_comment": "Personalities (PersonalityManager.gd, docs/design/LIVING_WORLD.md section F). Every adventurer has an archetype (anime/manga trope), a drive, a flaw and 1-2 quirks. 'mods' use the same keys as traits in adventurers.json (job_chance, success, floor_bias, death, retire, compete, chat, drink, gift, friend_bonus, share; plus start_rapport, level_bonus, start_link). trait_bias: how much more likely the archetype is with each trait. voice: lines per context ({name}, {you}). arc: stages reached at a rapport (kept once reached); a stage may override voice lines.",
+	"reveal": { "drive_after_chats": 3, "drive_at_rapport": 30, "flaw_at_rapport": 50 },
+	"contexts": ["greeting", "chat", "join", "refuse", "battle_start", "low_hp", "ally_down", "victory", "gift_liked", "gift_meh", "breather"],
+	"archetypes": {
+		"tsundere": {
+			"name": "Tsundere", "summary": "Prickly, and would rather die than admit they care.",
+			"weight": 1.0, "trait_bias": { "boastful": 1.5, "aloof": 1.5, "honorable": 1.3 },
+			"mods": { "chat": 0.8, "gift": 1.2 }, "mood_offset": -25, "mood_offset_until_stage": "honest",
+			"voice": {
+				"greeting": ["Oh. It's you. Not that I was waiting or anything.", "Hmph. Don't get the wrong idea, I just happened to be here."],
+				"chat": ["I-it's not like I enjoy talking to you!", "...Fine. One story. Then leave me alone."],
+				"join": ["I'm only coming so you don't get yourself killed. Idiot.", "Somebody has to keep you alive. Ugh."],
+				"refuse": ["As if I'd go anywhere with you.", "Ask me again when you're worth my time."],
+				"battle_start": ["Stay behind me. I-I mean, if you want.", "Just try to keep up!"],
+				"low_hp": ["I'm fine! Don't look at me like that!", "This is nothing... nothing at all..."],
+				"ally_down": ["Hey! Get up! You don't get to quit on me!", "No... no, no, no!"],
+				"victory": ["Obviously. Did you expect anything else?", "Hmph. You did... okay. I guess."],
+				"gift_liked": ["Wh-what is this?! ...I'll keep it. For now.", "Don't think this means anything! ...Thanks."],
+				"gift_meh": ["Is this supposed to impress me?", "...I'll find a use for it somewhere."],
+				"breather": ["Sit down before you fall down. I-it's not for your sake.", "Here. Water. Don't make it weird."]
+			},
+			"arc": [
+				{ "id": "denial", "name": "Denial", "rapport": -100 },
+				{ "id": "slip", "name": "The Slip", "rapport": 45, "news": "{name} let slip that they actually care what {you} thinks.", "voice": { "greeting": ["Oh! You're... back. Good. I mean - whatever."] } },
+				{ "id": "honest", "name": "Honest", "rapport": 70, "news": "{name} finally said it out loud: {you} matters to them.", "voice": { "greeting": ["You're back. I'm glad. ...Don't make it weird.", "There you are. I kept your seat."], "join": ["Always. You know that."] } }
+			]
+		},
+		"kuudere": {
+			"name": "Kuudere", "summary": "Cool, quiet and logical. Feelings shown in small actions.",
+			"weight": 1.0, "trait_bias": { "aloof": 3.0, "scholarly": 1.5, "cautious": 1.3 },
+			"mods": { "chat": 0.5, "drink": 0.7, "friend_bonus": 1.6 },
+			"voice": {
+				"greeting": ["...You.", "Mm. Good timing."],
+				"chat": ["I see.", "That is... more interesting than I expected."],
+				"join": ["Acceptable. I'll come.", "Your odds improve with me. I'll come."],
+				"refuse": ["No.", "Not with those odds."],
+				"battle_start": ["Engaging.", "Three of them. Manageable."],
+				"low_hp": ["Damage noted.", "...Inconvenient."],
+				"ally_down": ["Unacceptable.", "...I will remember this."],
+				"victory": ["As calculated.", "Done."],
+				"gift_liked": ["...Thank you. I mean it.", "Practical. I like it."],
+				"gift_meh": ["Noted.", "I have no use for this. But thank you."],
+				"breather": ["Rest. The next wave will not wait for you.", "...You fought well. That is all."]
+			},
+			"arc": [
+				{ "id": "distant", "name": "Distant", "rapport": -100 },
+				{ "id": "trusting", "name": "Trusting", "rapport": 50, "news": "{name} smiled at {you}. Witnesses say it lasted almost a second." },
+				{ "id": "devoted", "name": "Fiercely Loyal", "rapport": 80, "news": "{name} told the Guild they will follow {you} anywhere.", "voice": { "join": ["Where you go, I go. That was decided long ago."] } }
+			]
+		},
+		"dandere": {
+			"name": "Dandere", "summary": "Shy and quiet - until they trust you.",
+			"weight": 1.0, "trait_bias": { "cowardly": 1.5, "kind": 1.5, "scholarly": 1.3 },
+			"mods": { "chat": 0.6, "friend_bonus": 1.6, "retire": 0.8 },
+			"voice": {
+				"greeting": ["Oh! H-hello...", "...Hi."],
+				"chat": ["Um... I liked that story.", "S-sorry, I'm not good at talking..."],
+				"join": ["Y-you want me? ...Okay. I'll do my best.", "I'll come. I won't slow you down."],
+				"refuse": ["I... I'm sorry. Not yet.", "M-maybe another time..."],
+				"battle_start": ["I-I'm ready!", "Please be careful..."],
+				"low_hp": ["I'm... I'm okay...", "D-don't worry about me..."],
+				"ally_down": ["No! Please get up!", "I'll protect you this time!"],
+				"victory": ["We did it... we really did it!", "Th-that went well, right?"],
+				"gift_liked": ["For... me? Thank you so much!", "I'll treasure it. Really."],
+				"gift_meh": ["Oh... thank you.", "That's... kind of you."],
+				"breather": ["...I saved you some bread.", "Um... is it okay if I sit here?"]
+			},
+			"arc": [
+				{ "id": "silent", "name": "Silent", "rapport": -100 },
+				{ "id": "opens_up", "name": "Opens Up", "rapport": 40, "news": "{name} talked to {you} for a whole evening. The Tavern was shocked." },
+				{ "id": "speaks_up", "name": "Speaks Up", "rapport": 70, "news": "{name} stood up in the Guild hall to defend {you}'s name.", "voice": { "greeting": ["You're back! I was hoping you'd come."] } }
+			]
+		},
+		"genki": {
+			"name": "Genki", "summary": "Bursting with energy and optimism.",
+			"weight": 1.0, "trait_bias": { "cheerful": 3.0, "reckless": 1.5, "kind": 1.2 },
+			"mods": { "chat": 1.3, "job_chance": 0.05, "start_link": 10 },
+			"voice": {
+				"greeting": ["Heeey! You're back! Adventure time?", "There you are! Let's go do something amazing!"],
+				"chat": ["Ahaha! That's the best story ever!", "Ooh, and then what happened?!"],
+				"join": ["YES! Let's go let's go let's go!", "Team up? Count me in a hundred times!"],
+				"refuse": ["Aww, I already promised someone else! Next time!", "Not today... but soon, okay?!"],
+				"battle_start": ["Alright! Let's do our best!", "Here we gooo!"],
+				"low_hp": ["Ow ow ow! Still fine! Mostly!", "That stung! Keep going!"],
+				"ally_down": ["Hang in there! We've got this!", "Nooo! Get up, get up!"],
+				"victory": ["We're the BEST!", "Woohoo! High five!"],
+				"gift_liked": ["For me?! I LOVE it!", "Waaah, thank you thank you!"],
+				"gift_meh": ["Ooh, a present! ...What is it?", "Thanks! I'll figure out what it does!"],
+				"breather": ["Snack break! I brought, like, six kinds!", "That was SO cool! Did you see me? Did you?!"]
+			},
+			"arc": [
+				{ "id": "joy", "name": "Reckless Joy", "rapport": -100 },
+				{ "id": "steady", "name": "Steady Light", "rapport": 60, "news": "{name} says {you} taught them that being brave isn't the same as being careless." }
+			]
+		},
+		"hot_rival": {
+			"name": "Hot-blooded Rival", "summary": "Loud, competitive and honest - and always measuring themselves against you.",
+			"weight": 1.0, "trait_bias": { "ambitious": 2.0, "reckless": 2.0, "boastful": 1.5, "honorable": 1.3 },
+			"mods": { "compete": 1.6, "success": 0.03, "floor_bias": 1 },
+			"voice": {
+				"greeting": ["{you}! Perfect! I was just about to beat your record!", "Don't think I've forgotten our contest!"],
+				"chat": ["Ha! I could have done that faster!", "Next time, I'm winning. Remember that!"],
+				"join": ["Fine! But I'm counting every kill!", "Teaming up? Great - I can watch my rival up close!"],
+				"refuse": ["And let you steal my glory? No way!", "I'll beat you on my own!"],
+				"battle_start": ["Watch and learn!", "Let's see who drops more of them!"],
+				"low_hp": ["Not yet! I'm not done!", "This is nothing! NOTHING!"],
+				"ally_down": ["Hey! You can't lose to them before you lose to me!", "Get UP!"],
+				"victory": ["That one was mine, right? RIGHT?", "Hah! I'm getting stronger!"],
+				"gift_liked": ["A gift? From my rival? ...I'll pay you back, you hear me?", "This is going to make me even stronger. Thanks!"],
+				"gift_meh": ["Huh. Thanks, I guess!", "I'll train with it anyway!"],
+				"breather": ["Catch your breath. I want you at full strength when I beat you.", "Not bad. I took down more, though."]
+			},
+			"arc": [
+				{ "id": "rival", "name": "Rival", "rapport": -100 },
+				{ "id": "respect", "name": "Respect", "rapport": 40, "news": "{name} admitted to the whole Tavern that {you} is a worthy rival." },
+				{ "id": "rival_friend", "name": "Rival-Friend", "rapport": 75, "news": "{name} and {you} shook hands as sworn rivals - and friends.", "voice": { "join": ["Partners today, rivals tomorrow. Let's go!"] } }
+			]
+		},
+		"stoic": {
+			"name": "Stoic Swordmaster", "summary": "Few words, all discipline. Respects strength.",
+			"weight": 1.0, "trait_bias": { "honorable": 2.0, "aloof": 1.5, "cautious": 1.5 },
+			"mods": { "chat": 0.7, "success": 0.04, "job_chance": -0.03 },
+			"voice": {
+				"greeting": ["...", "You walk like someone who has fought. Good."],
+				"chat": ["Words are cheap. Show me.", "Hm. There is wisdom in that."],
+				"join": ["I will lend you my blade.", "Very well. Do not slow me down."],
+				"refuse": ["I walk alone.", "Not yet. Prove yourself first."],
+				"battle_start": ["Focus.", "Breathe. Then strike."],
+				"low_hp": ["A scratch.", "Still standing."],
+				"ally_down": ["They will be avenged.", "Stand behind me."],
+				"victory": ["It is done.", "Adequate."],
+				"gift_liked": ["A fine gift. I am in your debt.", "...Well chosen."],
+				"gift_meh": ["I need little.", "Thank you."],
+				"breather": ["Sharpen your blade. Then rest.", "We hold. We go on."]
+			},
+			"arc": [
+				{ "id": "lone_wolf", "name": "Lone Wolf", "rapport": -100 },
+				{ "id": "accepts", "name": "Accepts a Party", "rapport": 50, "news": "{name}, who always fought alone, asked {you} to watch their back." },
+				{ "id": "mentor", "name": "Mentor", "rapport": 80, "news": "{name} has begun teaching younger adventurers. They say {you} changed them." }
+			]
+		},
+		"noble_heir": {
+			"name": "Noble Heir", "summary": "Proud, refined, generous with gold, and used to being obeyed.",
+			"weight": 1.0, "trait_bias": { "greedy": 1.3, "honorable": 1.5, "boastful": 1.5 },
+			"mods": { "drink": 0.5, "gift": 1.3, "likes": { "equipment": 1.5 } },
+			"voice": {
+				"greeting": ["Ah, {you}. You may approach.", "Oh-ho-ho! Come to pay your respects?"],
+				"chat": ["How quaint. Do go on.", "In my family's estate, we would never - but do continue."],
+				"join": ["I suppose I can grace your little party.", "Very well. Try to be worthy of my company."],
+				"refuse": ["Me? With commoners? Not today.", "My schedule is quite full, I'm afraid."],
+				"battle_start": ["Kneel before House {name}!", "Let us show them true breeding!"],
+				"low_hp": ["How DARE they!", "My robes! Do you know what these cost?!"],
+				"ally_down": ["Someone fetch a healer this instant!", "Unforgivable!"],
+				"victory": ["Naturally.", "Oh-ho-ho! As expected of me!"],
+				"gift_liked": ["Fine craftsmanship. You have taste after all.", "This will do nicely. I am pleased."],
+				"gift_meh": ["How... thoughtful.", "I shall have the servants find a place for it."],
+				"breather": ["Even a breather can be done with dignity.", "My family's cook would weep at these rations."]
+			},
+			"arc": [
+				{ "id": "arrogant", "name": "Arrogant", "rapport": -100 },
+				{ "id": "humbled", "name": "Humbled", "rapport": 45, "news": "{name} thanked {you}. Sincerely. In public." },
+				{ "id": "noblesse", "name": "Noblesse Oblige", "rapport": 75, "news": "{name} paid for every adventurer's drinks in honour of {you}." }
+			]
+		},
+		"chuunibyou": {
+			"name": "Chuunibyou", "summary": "Dramatic, grandiose, and convinced they hold a sealed dark power.",
+			"weight": 1.0, "trait_bias": { "boastful": 2.0, "reckless": 1.5, "cheerful": 1.2 },
+			"mods": { "chat": 1.2, "death": 1.1 },
+			"voice": {
+				"greeting": ["We meet again, wielder of fate.", "The stars foretold your arrival, {you}."],
+				"chat": ["Kukuku... you do not yet understand my true power.", "My right arm aches. The seal weakens."],
+				"join": ["Our destinies are now bound! The contract is sealed!", "Very well. I shall unleash my power at your side."],
+				"refuse": ["The time is not yet right. The moon is wrong.", "My dark power must rest."],
+				"battle_start": ["Behold! Forbidden Art: Crimson Eclipse!", "Tremble before the Sealed One!"],
+				"low_hp": ["Impossible... my seal... is breaking...", "This is only my first form!"],
+				"ally_down": ["You dare harm my comrade?! I'll release everything!", "No... the prophecy didn't say this..."],
+				"victory": ["Exactly as the Abyss decreed.", "Kukuku... another soul for the darkness."],
+				"gift_liked": ["A relic of power! You understand me!", "This shall become my sacred artifact!"],
+				"gift_meh": ["Hm. It lacks a dark aura. ...I'll keep it anyway.", "Mere mortal goods."],
+				"breather": ["The seal on my right arm grows restless... I need a snack.", "Rest now, mortals. Darkness gathers its strength too."]
+			},
+			"arc": [
+				{ "id": "delusion", "name": "Delusion", "rapport": -100 },
+				{ "id": "greatness", "name": "A Real Moment", "rapport": 55, "news": "For one moment, {name} really was the hero they always claimed to be." },
+				{ "id": "embraced", "name": "Embraced It", "rapport": 80, "news": "{name} now signs their name with an epithet {you} gave them." }
+			]
+		},
+		"battle_maniac": {
+			"name": "Battle Maniac", "summary": "Lives for a strong opponent.",
+			"weight": 1.0, "trait_bias": { "reckless": 3.0, "ambitious": 1.5, "cruel": 1.2 },
+			"mods": { "floor_bias": 2, "death": 1.4, "success": 0.02, "job_chance": 0.1 },
+			"voice": {
+				"greeting": ["You've gotten stronger. I can smell it.", "Fight me. Just once."],
+				"chat": ["Boring. Tell me about the strongest thing you've killed.", "Ha! Now THAT sounds like a fight!"],
+				"join": ["Somewhere deep? Somewhere dangerous? I'm in.", "Let's find something worth fighting."],
+				"refuse": ["Too easy. Wake me when it's deeper.", "Call me when there's a real enemy."],
+				"battle_start": ["Finally! Come on!", "Ha ha ha! Yes! YES!"],
+				"low_hp": ["Now it's getting fun!", "Blood! Good! More!"],
+				"ally_down": ["Hah. They were weak. ...Get up, you idiot.", "Now I'm angry."],
+				"victory": ["Over already? Pathetic.", "That was a good one!"],
+				"gift_liked": ["A weapon?! Now we're talking!", "I'll test it on something big."],
+				"gift_meh": ["Can I hit things with it?", "Hm."],
+				"breather": ["Already stopping? I was just warming up!", "More. There have to be more of them down there."]
+			},
+			"arc": [
+				{ "id": "thrill", "name": "Thrill-seeker", "rapport": -100 },
+				{ "id": "worthy_foe", "name": "Found a Worthy Foe", "rapport": 50, "news": "{name} declared {you} the only opponent worth their blade." }
+			]
+		},
+		"lazy_genius": {
+			"name": "Lazy Genius", "summary": "Naps through everything - brilliant when it matters.",
+			"weight": 1.0, "trait_bias": { "lazy": 4.0, "scholarly": 1.5, "aloof": 1.2 },
+			"mods": { "job_chance": -0.15, "success": 0.1, "chat": 0.9 },
+			"voice": {
+				"greeting": ["*yawn* ...Oh. It's you.", "Five more minutes..."],
+				"chat": ["Mm-hm. Mm-hm. ...Sorry, I fell asleep.", "Interesting. Wake me if it gets more interesting."],
+				"join": ["Fine. But I'm sleeping on the way.", "If you do the walking, I'll do the thinking."],
+				"refuse": ["Too much effort.", "Ask me after my nap."],
+				"battle_start": ["Ugh. Let's make this quick.", "...Okay. Fine. Focus."],
+				"low_hp": ["Ow. This is why I nap.", "Hm. Annoying."],
+				"ally_down": ["...Alright. Now I'm awake.", "That's it. No more holding back."],
+				"victory": ["Done? Great. Nap time.", "That was too much work."],
+				"gift_liked": ["A pillow? You get me.", "Oh, this is actually useful. Thanks."],
+				"gift_meh": ["Thanks... *yawn*", "I'll look at it later. Maybe."],
+				"breather": ["Wake me when the next ones show up.", "I did the math. We're fine. Probably. Nap time."]
+			},
+			"arc": [
+				{ "id": "coasting", "name": "Coasting", "rapport": -100 },
+				{ "id": "full_power", "name": "Full Power", "rapport": 60, "news": "{name} stayed awake for three days straight to help {you}. Nobody believed it." }
+			]
+		},
+		"big_sibling": {
+			"name": "Big Sibling", "summary": "Protective, teasing, and looks out for the young ones.",
+			"weight": 1.0, "trait_bias": { "kind": 2.0, "loyal": 2.0, "cheerful": 1.2 },
+			"mods": { "friend_bonus": 1.3, "chat": 1.1 },
+			"voice": {
+				"greeting": ["Hey, kiddo! Eating properly?", "There's my favourite troublemaker."],
+				"chat": ["Ha! You remind me of myself at your age.", "Don't push yourself so hard, alright?"],
+				"join": ["Somebody's got to keep you out of trouble.", "Big sib's coming along. No arguments."],
+				"refuse": ["Not today, kid. Someone else needs me.", "Next time, I promise."],
+				"battle_start": ["Stay close to me.", "I've got your back. Always."],
+				"low_hp": ["Heh... still standing. Don't worry.", "I'm fine. Watch yourself!"],
+				"ally_down": ["Nobody touches my family!", "Hold on, I'm coming!"],
+				"victory": ["Good job, everyone! Proud of you.", "That's my crew!"],
+				"gift_liked": ["Aw, you didn't have to! Come here!", "You're a good one, you know that?"],
+				"gift_meh": ["Thanks, kid. It's the thought.", "Heh. I'll put it somewhere special."],
+				"breather": ["Let me see that cut. Hold still.", "Eat something. That's not a request."]
+			},
+			"arc": [
+				{ "id": "protector", "name": "Protector", "rapport": -100 },
+				{ "id": "family", "name": "Family", "rapport": 70, "news": "{name} calls {you} family now. Nobody argues with {name}." }
+			]
+		},
+		"stranger": {
+			"name": "Mysterious Stranger", "summary": "Secretive past. Reveals it piece by piece.",
+			"weight": 0.8, "trait_bias": { "aloof": 2.0, "cautious": 1.5 },
+			"mods": { "chat": 0.7 },
+			"voice": {
+				"greeting": ["...You again.", "Curious. You keep finding me."],
+				"chat": ["Some stories aren't mine to tell. Yet.", "Hm. You ask a lot of questions."],
+				"join": ["For now, our paths align.", "I'll come. Don't ask why."],
+				"refuse": ["My path leads elsewhere tonight.", "Not this time."],
+				"battle_start": ["Stay out of my way.", "...Let's end this quietly."],
+				"low_hp": ["...Not here. Not yet.", "Tch."],
+				"ally_down": ["Not again... not like last time.", "I won't let this happen twice."],
+				"victory": ["...", "We should move before others come."],
+				"gift_liked": ["...Thank you. That's... a familiar thing.", "Where did you find this?"],
+				"gift_meh": ["Keep it.", "I travel light."],
+				"breather": ["The dark down here listens. Speak softly.", "...I have seen this floor before. In a dream."]
+			},
+			"arc": [
+				{ "id": "secret", "name": "Secret", "rapport": -100 },
+				{ "id": "clue", "name": "A Clue", "rapport": 40, "news": "{name} told {you} a name from their past. They wouldn't say whose." },
+				{ "id": "revelation", "name": "Revelation", "rapport": 75, "news": "{name} finally told {you} the truth about where they came from." }
+			]
+		},
+		"comic_coward": {
+			"name": "Comic Coward", "summary": "Scared of everything. Somehow always survives.",
+			"weight": 0.8, "trait_bias": { "cowardly": 4.0, "cheerful": 1.3 },
+			"mods": { "success": -0.04, "death": 0.3, "retire": 1.5, "chat": 1.2 },
+			"voice": {
+				"greeting": ["Oh thank the gods, a friendly face!", "You startled me! Don't DO that!"],
+				"chat": ["And then I ran. Very bravely.", "Do you think goblins can smell fear? Asking for a friend."],
+				"join": ["Y-you'll protect me, right? RIGHT?", "Okay! Okay. I can do this. Probably."],
+				"refuse": ["Is it dangerous? Then absolutely not.", "I have a... a cold. A very serious cold."],
+				"battle_start": ["Why is it always ME?!", "I'll, um, cover the rear! Far in the rear!"],
+				"low_hp": ["I'M DYING! ...Oh, it's a scratch.", "Mommy!"],
+				"ally_down": ["Oh no oh no oh no!", "Somebody do something! ...Fine! I'll do something!"],
+				"victory": ["We... we won? WE WON!", "I knew we'd win! I never doubted it! Much!"],
+				"gift_liked": ["Is this a lucky charm? Please say it's a lucky charm!", "I'll sleep with this under my pillow!"],
+				"gift_meh": ["Does it scare monsters away? No? Oh.", "Thanks! I think!"],
+				"breather": ["We're alive?! We're ALIVE! ...Can we go home now?", "I was not hiding. I was guarding the rear. Very bravely."]
+			},
+			"arc": [
+				{ "id": "coward", "name": "Coward", "rapport": -100 },
+				{ "id": "brave_moment", "name": "One Brave Moment", "rapport": 55, "news": "{name}, of all people, stood their ground to protect {you}. They fainted right after." }
+			]
+		},
+		"airhead": {
+			"name": "Airhead", "summary": "Cheerful, oblivious, and somehow fine.",
+			"weight": 0.8, "trait_bias": { "cheerful": 2.0, "lazy": 1.5, "kind": 1.3 },
+			"mods": { "chat": 1.4, "success": -0.02 },
+			"voice": {
+				"greeting": ["Oh! Hi! Wait, have we met? We have! Hi again!", "Hello! I found a really pretty rock today."],
+				"chat": ["Ehehe, I didn't understand any of that, but it sounded cool!", "Did you know clouds are just sky water? Wild."],
+				"join": ["An adventure? Ooh, are there snacks?", "Sure! Where are we going? Wait, don't tell me, surprise me!"],
+				"refuse": ["Oh, I promised someone something today. I forget what.", "Maybe tomorrow! Is tomorrow a day?"],
+				"battle_start": ["Oh! Monsters! Hello, monsters!", "Which ones are the bad ones again?"],
+				"low_hp": ["Ouchie.", "Huh, I think I'm hurt?"],
+				"ally_down": ["Are they napping? They should not nap now!", "Wake up, wake up!"],
+				"victory": ["Yay! Did we win? We won!", "That was fun! Again!"],
+				"gift_liked": ["It's so sparkly! I love it!", "Can I name it? I'm naming it Gerald."],
+				"gift_meh": ["Ooh, what does it do?", "Thank you! I'll put it next to my rock."],
+				"breather": ["Ooh, this rock looks like a cat!", "Wait, which way did we come from?"]
+			},
+			"arc": [ { "id": "constant", "name": "Constant", "rapport": -100 } ]
+		},
+		"mentor": {
+			"name": "Veteran Mentor", "summary": "Older, tired, wise. Has buried too many friends.",
+			"weight": 0.7, "trait_bias": { "cautious": 2.0, "honorable": 1.5, "loyal": 1.3 },
+			"mods": { "retire": 1.4, "success": 0.04, "level_bonus": 3, "chat": 1.1 },
+			"voice": {
+				"greeting": ["Ah, {you}. Sit. Rest your feet.", "Still alive. Good. That's the hardest part."],
+				"chat": ["When I was your age, the Troll Caves were twice as deep.", "Listen to an old fool: pick your fights."],
+				"join": ["One more job. Just one more.", "These old bones have a little left in them."],
+				"refuse": ["My knees say no today.", "Not this one, youngster."],
+				"battle_start": ["Steady. Watch their feet.", "Remember what I taught you."],
+				"low_hp": ["Getting too old for this...", "Hah. That one used to miss."],
+				"ally_down": ["Not another one. Not again.", "Pull them back! I'll hold!"],
+				"victory": ["Well fought. You're getting there.", "Good. Now drink some water."],
+				"gift_liked": ["You remembered. Thank you, kid.", "This reminds me of someone I knew."],
+				"gift_meh": ["At my age, I have everything I need.", "Kind of you."],
+				"breather": ["Breathe. Count what you did right, then what you'll fix.", "You're learning. Slowly - but you are."]
+			},
+			"arc": [
+				{ "id": "retired_spirit", "name": "Retired Spirit", "rapport": -100 },
+				{ "id": "one_last_job", "name": "One Last Job", "rapport": 55, "news": "{name} took down their old sword for {you}." },
+				{ "id": "torch", "name": "Passes the Torch", "rapport": 85, "news": "{name} gave {you} their blessing - and their old Guild badge." }
+			]
+		},
+		"gap": {
+			"name": "Gap Character", "summary": "Looks terrifying. Is secretly a softie.",
+			"weight": 0.8, "trait_bias": { "kind": 2.0, "aloof": 1.3, "cruel": 0.5 },
+			"mods": { "start_rapport": -10, "gift": 1.4 },
+			"voice": {
+				"greeting": ["...What do you want.", "*grunts*"],
+				"chat": ["...Do you think the kittens behind the Guild are eating enough?", "Hm. That's a sad story. I'm not crying."],
+				"join": ["...Fine. I'll carry the heavy things.", "I'll come. Someone has to scare them off."],
+				"refuse": ["No.", "Go away. ...Please."],
+				"battle_start": ["RAAAH!", "You picked the wrong party."],
+				"low_hp": ["Hrrgh.", "That tickled."],
+				"ally_down": ["...You hurt my friend.", "NOW you've done it."],
+				"victory": ["...Good.", "Everyone okay? ...Just asking."],
+				"gift_liked": ["Is... is this a cake? For me? ...I'm not crying.", "It's so cute. ...Don't tell anyone I said that."],
+				"gift_meh": ["...Thanks.", "Hm."],
+				"breather": ["Ah, sorry - I get a little... intense in a fight.", "Want some tea? I brought the good kind."]
+			},
+			"arc": [
+				{ "id": "feared", "name": "Feared", "rapport": -100 },
+				{ "id": "understood", "name": "Understood", "rapport": 50, "news": "{name} was seen sharing lunch with {you} - and smiling." }
+			]
+		},
+		"admirer": {
+			"name": "Devoted Admirer", "summary": "Idolises the Guild's best - and wants to become them.",
+			"weight": 0.8, "trait_bias": { "ambitious": 1.5, "loyal": 1.5, "cheerful": 1.2 },
+			"mods": { "friend_bonus": 1.2, "compete": 1.2 },
+			"voice": {
+				"greeting": ["It's really you! I've followed every expedition!", "Senpai! I mean - {you}! Hello!"],
+				"chat": ["How do you stay so calm in a fight? Teach me!", "I wrote down everything you said last time."],
+				"join": ["Fighting beside you?! This is the best day of my life!", "I won't let you down! I swear!"],
+				"refuse": ["I'm not good enough yet... but I will be!", "Next time, I'll be ready to stand beside you!"],
+				"battle_start": ["Watch me! I've been practising!", "Just like you showed me!"],
+				"low_hp": ["I can still... keep up!", "I won't quit in front of you!"],
+				"ally_down": ["I'll be strong for them!", "No! Not while I'm here!"],
+				"victory": ["Did you see that?! Did you see?!", "Was that good? Be honest!"],
+				"gift_liked": ["From YOU? I'm never taking it off!", "This is a treasure. A national treasure."],
+				"gift_meh": ["Anything from you is great!", "I'll keep it forever!"],
+				"breather": ["You were amazing back there! Can I sit next to you?", "I wrote down everything you did. For... research."]
+			},
+			"arc": [
+				{ "id": "fan", "name": "Fan", "rapport": -100 },
+				{ "id": "disciple", "name": "Disciple", "rapport": 50, "news": "{name} has started calling {you} their teacher." },
+				{ "id": "rival_to_idol", "name": "Rival to Their Idol", "rapport": 80, "news": "{name} asked {you} for a duel - not to win, but to be seen as an equal." }
+			]
+		},
+		"yandere": {
+			"name": "Yandere", "summary": "Sweet, devoted - and possessive.",
+			"weight": 0.3, "trait_bias": { "loyal": 2.0, "cruel": 1.5, "kind": 1.2 },
+			"mods": { "friend_bonus": 1.5, "gift": 1.3 },
+			"voice": {
+				"greeting": ["You came to see me! Only me, right?", "I saved you a seat. I always save you a seat."],
+				"chat": ["Who was that you were talking to earlier? Just curious~", "I could listen to you forever. Forever and ever."],
+				"join": ["Of course! I'll never leave your side. Never.", "Just us? ...Oh, others too. That's fine. Fine."],
+				"refuse": ["You don't need anyone else, do you?", "...Oh. Maybe next time it'll just be us."],
+				"battle_start": ["Nobody touches you but me~", "I'll protect you. From everything."],
+				"low_hp": ["It's okay... as long as you're safe...", "Ehehe... blood..."],
+				"ally_down": ["Oh no. How sad. ...Anyway~", "Don't worry about them. Look at me."],
+				"victory": ["We make such a good pair, don't we?", "I'd do anything for you. Anything."],
+				"gift_liked": ["You thought of me! I'll keep it forever, next to the others!", "I'll never, ever let this go."],
+				"gift_meh": ["Did you give one to anyone else?", "It's from you, so I love it."],
+				"breather": ["You're hurt. Who did this? ...They're already dead? Good.", "Rest your head here. No one else will bother you."]
+			},
+			"arc": [
+				{ "id": "infatuation", "name": "Infatuation", "rapport": -100 },
+				{ "id": "jealousy", "name": "Jealousy", "rapport": 60, "news": "{name} has been asking around about who {you} spends time with." },
+				{ "id": "let_go", "name": "Let Go", "rapport": 95, "news": "{name} seems calmer lately - secure, even. Whatever had hold of them has let go." }
+			]
+		}
+	},
+	"drives": {
+		"champion": { "name": "Become Champion", "description": "Wants to be crowned the Guild's Champion.", "mods": { "compete": 1.3, "floor_bias": 1 }, "fulfil": "crowned" },
+		"s_rank": { "name": "Reach S-Rank", "description": "Has sworn to reach the highest rank.", "mods": { "job_chance": 0.05 }, "fulfil": "rank_s" },
+		"avenge": { "name": "Avenge a Sibling", "description": "A sibling died in {place}. Wants the boss there dead.", "mods": { "success": 0.02 }, "fulfil": "boss_at_place" },
+		"family_debt": { "name": "Pay a Family Debt", "description": "Sends every coin home to clear an old debt.", "mods": { "share": 1.4, "job_chance": 0.05 } },
+		"family_name": { "name": "Restore the Family Name", "description": "Their house fell in disgrace. Wants it remembered with honour.", "mods": { "compete": 1.2 } },
+		"lost_mentor": { "name": "Find a Lost Mentor", "description": "Searching the depths for a teacher who never came back.", "mods": { "floor_bias": 1 } },
+		"knowledge": { "name": "Seek Forbidden Knowledge", "description": "Believes the deepest floors hold lost secrets.", "mods": { "floor_bias": 1, "success": 0.01 } },
+		"protect": { "name": "Protect the Weak", "description": "Became an adventurer so others wouldn't have to.", "mods": { "friend_bonus": 1.2 } },
+		"thrill": { "name": "The Next Great Fight", "description": "Lives for danger. Nothing else feels real.", "mods": { "floor_bias": 1, "death": 1.2 } },
+		"redemption": { "name": "Redemption", "description": "Did something terrible once. Trying to balance the scales.", "mods": { "friend_bonus": 1.1 } },
+		"wealth": { "name": "Get Rich", "description": "Wants a house, a garden, and never to be hungry again.", "mods": { "likes": { "equipment": 1.3, "material": 1.2 }, "retire": 1.3 } },
+		"quiet_life": { "name": "A Quiet Life", "description": "Just wants to save enough to retire somewhere peaceful.", "mods": { "retire": 1.6, "floor_bias": -1 } }
+	},
+	"flaws": {
+		"pride": { "name": "Pride", "description": "Can't admit a mistake or accept help.", "mods": { "compete": 1.2, "retire": 0.7 } },
+		"abandonment": { "name": "Fear of Abandonment", "description": "Clings hard - and takes leaving personally.", "mods": { "friend_bonus": 1.3 } },
+		"phobia": { "name": "Phobia", "description": "Terrified of {place}. Avoids it if they can.", "avoid_place": true },
+		"hot_temper": { "name": "Hot Temper", "description": "Flies off the handle under pressure.", "mods": { "death": 1.15, "compete": 1.2 } },
+		"self_doubt": { "name": "Self-Doubt", "description": "Never believes they're good enough.", "mods": { "success": -0.03 } },
+		"greed": { "name": "Greed", "description": "Always wants a bigger share.", "mods": { "share": 1.3 } },
+		"jealousy": { "name": "Jealousy", "description": "Can't stand others getting ahead.", "mods": { "compete": 1.3 } },
+		"recklessness": { "name": "Recklessness", "description": "Charges in when they should wait.", "mods": { "death": 1.25, "floor_bias": 1 } }
+	},
+	"quirks": [
+		"Always orders milk at the Tavern.",
+		"Names every weapon they own.",
+		"Collects goblin teeth.",
+		"Hums when nervous.",
+		"Can't stand the sight of mushrooms.",
+		"Writes a letter home after every job.",
+		"Talks to their weapon before a fight.",
+		"Keeps a lucky coin and flips it before decisions.",
+		"Never sits with their back to a door.",
+		"Feeds every stray cat in town.",
+		"Sketches the monsters they fight.",
+		"Insists on cooking for the whole party.",
+		"Sleeps with their boots on.",
+		"Keeps a tally of every kill on their arm.",
+		"Counts their steps in the dungeon.",
+		"Always arrives exactly on time.",
+		"Laughs at the worst possible moments.",
+		"Is terrible with names - calls everyone 'buddy'.",
+		"Wears a charm from someone they lost.",
+		"Practises their victory pose in the mirror."
+	],
+	"player_voice": {
+		"_doc": "Your character's voice drifts with your choices: each event adds points to archetypes. When the top archetype has at least 'threshold' points and leads the next by 'lead', you're seen as that archetype.",
+		"threshold": 10,
+		"lead": 3,
+		"events": {
+			"press_on": { "hot_rival": 1, "battle_maniac": 1, "genki": 1 },
+			"breather": { "kuudere": 1, "stoic": 1, "lazy_genius": 1 },
+			"omens": { "chuunibyou": 2, "battle_maniac": 2 },
+			"boss_win": { "hot_rival": 1, "chuunibyou": 1 },
+			"help_wounded": { "big_sibling": 2, "dandere": 1, "gap": 1 },
+			"refuse_wounded": { "kuudere": 1, "battle_maniac": 1 },
+			"confront_thief": { "hot_rival": 2, "battle_maniac": 1 },
+			"let_thief_go": { "big_sibling": 1, "airhead": 1, "lazy_genius": 1 },
+			"challenge_done": { "hot_rival": 1, "stoic": 1 },
+			"gift": { "big_sibling": 1, "genki": 1, "noble_heir": 1 },
+			"drink": { "genki": 1, "big_sibling": 1 },
+			"chat": { "dandere": 1, "airhead": 1 }
+		}
+	}
+}

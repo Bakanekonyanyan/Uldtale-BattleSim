@@ -1,0 +1,44 @@
+{
+ "tab": "Weapon arts",
+ "file": "data/weapon_arts.json",
+ "order": 16,
+ "description": "Weapon arts (WeaponArts.gd): weapon families, which arts each unlocks at which family proficiency level, and class signature arts.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Weapon arts",
+   "fields": [
+    {
+     "name": "_doc",
+     "type": "text",
+     "help": "Notes for designers."
+    },
+    {
+     "name": "families",
+     "type": "json",
+     "help": "family -> {name, items: [weapon ids]}. Uses of every item add up to the family's proficiency."
+    },
+    {
+     "name": "unlock",
+     "type": "json",
+     "help": "Family proficiency level for: signature (class art), first and second generic art."
+    },
+    {
+     "name": "arts",
+     "type": "json",
+     "help": "family -> [first art, second art] (skill names, category ART, weapon_family set)."
+    },
+    {
+     "name": "signatures",
+     "type": "json",
+     "help": "class -> {family: skill}. One per class; the Myrmidon (weapon master) has one per family."
+    },
+    {
+     "name": "npc_levels",
+     "type": "json",
+     "help": "Generated adventurers get arts for what they hold at these levels."
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,157 @@
+{
+	"_doc": "Weapon arts (WeaponArts.gd; LIVING_WORLD.md J). Using a weapon builds proficiency in its family (uses summed over the family's items); family levels unlock the family's arts. Each class has a signature art for its specialty family; the Myrmidon has one for every family it masters. Arts need a weapon of their family in hand.",
+	"families": {
+		"sword": {
+			"name": "Sword",
+			"items": [
+				"short_sword",
+				"greatsword"
+			]
+		},
+		"katana": {
+			"name": "Katana",
+			"items": [
+				"katana",
+				"great_katana"
+			]
+		},
+		"axe": {
+			"name": "Axe",
+			"items": [
+				"axe",
+				"great_axe"
+			]
+		},
+		"mace": {
+			"name": "Mace and hammer",
+			"items": [
+				"mace",
+				"great_hammer"
+			]
+		},
+		"dagger": {
+			"name": "Dagger",
+			"items": [
+				"dagger"
+			]
+		},
+		"spear": {
+			"name": "Spear",
+			"items": [
+				"spear"
+			]
+		},
+		"staff": {
+			"name": "Staff",
+			"items": [
+				"staff"
+			]
+		},
+		"shield": {
+			"name": "Shield",
+			"items": [
+				"buckler",
+				"great_shield"
+			]
+		},
+		"focus": {
+			"name": "Focus",
+			"items": [
+				"tome",
+				"talisman",
+				"fetish",
+				"relic"
+			]
+		}
+	},
+	"unlock": {
+		"signature": 2,
+		"first": 3,
+		"second": 4
+	},
+	"arts": {
+		"sword": [
+			"Riposte",
+			"Crosscut"
+		],
+		"katana": [
+			"Iai Slash",
+			"Swallow Cut"
+		],
+		"axe": [
+			"Hack",
+			"Splitting Blow"
+		],
+		"mace": [
+			"Skullcrack",
+			"Crushing Swing"
+		],
+		"dagger": [
+			"Quick Stab",
+			"Hamstring"
+		],
+		"spear": [
+			"Impale",
+			"Sweeping Haft"
+		],
+		"staff": [
+			"Staff Strike",
+			"Channel"
+		],
+		"shield": [
+			"Rim Strike",
+			"Shield Wall"
+		],
+		"focus": [
+			"Arcane Bolt",
+			"Warding Sigil"
+		]
+	},
+	"signatures": {
+		"Paladin": {
+			"sword": "Dawnblade"
+		},
+		"Cleric": {
+			"mace": "Vow of Iron"
+		},
+		"Samurai": {
+			"katana": "Moonlit Draw"
+		},
+		"Berserker": {
+			"axe": "Wolfjaw Cleave"
+		},
+		"Monk": {
+			"staff": "Whirling Bo"
+		},
+		"Shinobi": {
+			"dagger": "Shadow Fang"
+		},
+		"Druid": {
+			"staff": "Rootcall Staff"
+		},
+		"Kannagi": {
+			"spear": "Spirit Naginata"
+		},
+		"Elementalist": {
+			"staff": "Elemental Conduit"
+		},
+		"Beastmaster": {
+			"spear": "Hunter's Lance"
+		},
+		"Necromancer": {
+			"focus": "Grimoire of Hel"
+		},
+		"Myrmidon": {
+			"sword": "Gauntlet Blade",
+			"axe": "Gauntlet Axe",
+			"spear": "Gauntlet Spear",
+			"dagger": "Gauntlet Knife",
+			"mace": "Gauntlet Hammer"
+		}
+	},
+	"npc_levels": {
+		"signature": 5,
+		"first": 15,
+		"second": 30
+	}
+}

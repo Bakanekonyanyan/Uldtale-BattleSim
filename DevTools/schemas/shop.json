@@ -1,0 +1,32 @@
+{
+ "tab": "Shop",
+ "file": "data/shop.json",
+ "order": 41,
+ "description": "Consumables the shop sells and their base prices in copper (ShopManager). Weekly drift and world events change the final price.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Consumables",
+   "fields": [
+    {
+     "name": "consumables",
+     "type": "map",
+     "key": {
+      "type": "ref",
+      "source": "consumables"
+     },
+     "value": {
+      "type": "int",
+      "min": 0
+     },
+     "help": "item -> base price (copper)"
+    },
+    {
+     "name": "sell_fraction",
+     "type": "json",
+     "help": "{equipment, other}: share of an item's value the shop pays when you sell it"
+    }
+   ]
+  }
+ ]
+}

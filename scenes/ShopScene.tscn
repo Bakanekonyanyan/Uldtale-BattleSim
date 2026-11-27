@@ -120,7 +120,6 @@ offset_left = 32.0
 offset_top = 48.0
 offset_right = 232.0
 offset_bottom = 82.0
-theme_override_font_sizes/font_size = 24
 text = " Shop"
 
 [node name="ItemList" type="ItemList" parent="UI"]
@@ -130,14 +129,12 @@ offset_top = 88.0
 offset_right = 480.0
 offset_bottom = 338.0
 theme_override_constants/line_separation = 4
-theme_override_font_sizes/font_size = 16
 
 [node name="InventoryLabel" type="Label" parent="UI"]
 offset_left = 32.0
 offset_top = 360.0
 offset_right = 232.0
 offset_bottom = 388.0
-theme_override_font_sizes/font_size = 20
 text = " Your Inventory"
 
 [node name="SellItemList" type="ItemList" parent="UI"]
@@ -147,7 +144,6 @@ offset_top = 392.0
 offset_right = 480.0
 offset_bottom = 642.0
 theme_override_constants/line_separation = 4
-theme_override_font_sizes/font_size = 16
 select_mode = 1
 
 [node name="BuyButton" type="Button" parent="UI"]
@@ -157,7 +153,6 @@ offset_left = 496.0
 offset_top = 88.0
 offset_right = 676.0
 offset_bottom = 138.0
-theme_override_font_sizes/font_size = 16
 text = "Buy Selected"
 
 [node name="SellButton" type="Button" parent="UI"]
@@ -167,7 +162,6 @@ offset_left = 496.0
 offset_top = 408.0
 offset_right = 676.0
 offset_bottom = 458.0
-theme_override_font_sizes/font_size = 16
 text = "Sell Selected"
 
 [node name="SellAllButton" type="Button" parent="UI"]
@@ -177,7 +171,6 @@ offset_left = 496.0
 offset_top = 536.0
 offset_right = 676.0
 offset_bottom = 586.0
-theme_override_font_sizes/font_size = 14
 text = "Sell All Selected
 (Full Stack)"
 
@@ -188,7 +181,6 @@ offset_left = 976.0
 offset_top = 576.0
 offset_right = 1156.0
 offset_bottom = 636.0
-theme_override_font_sizes/font_size = 16
 text = "Back to Town"
 
 [node name="PlayerCurrencyLabel" type="RichTextLabel" parent="UI"]
@@ -197,7 +189,6 @@ offset_left = 496.0
 offset_top = 608.0
 offset_right = 796.0
 offset_bottom = 640.0
-theme_override_font_sizes/normal_font_size = 18
 bbcode_enabled = true
 text = " Currency: "
 fit_content = true
@@ -208,7 +199,5 @@ offset_left = 696.0
 offset_top = 48.0
 offset_right = 1152.0
 offset_bottom = 560.0
-theme_override_font_sizes/normal_font_size = 16
-theme_override_font_sizes/bold_font_size = 20
 bbcode_enabled = true
 fit_content = true

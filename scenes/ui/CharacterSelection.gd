@@ -1,294 +1,291 @@
-# CharacterSelection.gd - UPDATED with equipment and detailed stats preview
+# res://scenes/ui/CharacterSelection.gd
+# Your characters as cards (name, level, class, rank, day, birthplace, mode),
+# the chosen one's details on the right, and the Hall of Legends (retired and
+# fallen heroes of every world).
+#   Continue        load the save and go to town
+#   New world...    start this character over in a new world, or in another
+#                   character's world (deletes their current progress)
+#   Delete...       type the name to confirm
 extends Control
 
-var character_list = []
-var selected_character: CharacterData = null
+const TAB_NAMES := ["Characters", "Hall of Legends"]
+const LIST_RECT := Rect2(32, 132, 440, 492)
+const DETAIL_RECT := Rect2(496, 72, 672, 552)
 
-@onready var character_container = $MainContainer/ScrollContainer/CharacterContainer
-@onready var character_preview = $CharacterPreview  # RichTextLabel for detailed preview
-@onready var create_new_button = $CreateNewButton
-@onready var load_saved_game_button = $LoadSavedGameButton
-@onready var start_new_game_button = $StartNewGameButton
-@onready var quit_button = $QuitButton
+var character_list: Array = []
+var selected_character: CharacterData = null
+var tab := 0
+
+var chrome: ScreenChrome
+var tabs: Array = []
+var cards_box: VBoxContainer
+var cards_scroll: ScrollContainer
+var detail: RichTextLabel
+var continue_button: Button
+var new_world_button: Button
+var delete_button: Button
+var create_button: Button
+var quit_button: Button
 
 func _ready():
-	load_characters()
-	setup_ui()
-	
-	# Connect signals
-	if create_new_button.is_connected("pressed", Callable(self, "_on_create_new_pressed")):
-		create_new_button.disconnect("pressed", Callable(self, "_on_create_new_pressed"))
-	if load_saved_game_button.is_connected("pressed", Callable(self, "_on_load_saved_game_pressed")):
-		load_saved_game_button.disconnect("pressed", Callable(self, "_on_load_saved_game_pressed"))
-	if start_new_game_button.is_connected("pressed", Callable(self, "_on_start_new_game_pressed")):
-		start_new_game_button.disconnect("pressed", Callable(self, "_on_start_new_game_pressed"))
-	if quit_button.is_connected("pressed", Callable(self, "_on_quit_button_pressed")):
-		quit_button.disconnect("pressed", Callable(self, "_on_quit_button_pressed"))
-	
-	create_new_button.connect("pressed", Callable(self, "_on_create_new_pressed"))
-	load_saved_game_button.connect("pressed", Callable(self, "_on_load_saved_game_pressed"))
-	start_new_game_button.connect("pressed", Callable(self, "_on_start_new_game_pressed"))
-	quit_button.connect("pressed", Callable(self, "_on_quit_button_pressed"))
-	
-	# Initially disable buttons
-	load_saved_game_button.disabled = true
-	start_new_game_button.disabled = true
-	
-	# Auto-select first character if list is not empty
-	if not character_list.is_empty():
-		_on_character_selected(character_list[0])
-		update_character_preview()
-
-func _on_quit_button_pressed():
-	get_tree().quit()
-
-func _on_character_selected(character):
-	selected_character = character
-	CharacterManager.set_current_character(character)
-	print("Selected character: ", character.name)
-	
-	# Enable start new game button
-	start_new_game_button.disabled = false
-	
-	# Check if a save exists
-	if SaveManager.save_exists(character.name):
-		load_saved_game_button.disabled = false
-	else:
-		load_saved_game_button.disabled = true
-	
-	_highlight_selected_character()
-	update_character_preview()
-
-func _highlight_selected_character():
-	"""Visual feedback for selected character"""
-	var index = 0
-	for child in character_container.get_children():
-		if child is HBoxContainer:
-			var select_button = child.get_child(0)
-			if index < character_list.size() and character_list[index] == selected_character:
-				select_button.modulate = Color(2.5, 2.8, 2.2)
-			else:
-				select_button.modulate = Color(1, 1, 1)
-			index += 1
-
-func update_character_preview():
-	"""Show detailed character information including equipment"""
-	if not selected_character or not character_preview:
-		return
-	
-	var char = selected_character
-	var preview_text = ""
-	
-	# === HEADER ===
-	preview_text += "[center][b][color=gold]%s[/color][/b]\n" % char.name
-	preview_text += "[color=cyan]Level %d %s %s[/color][/center]\n\n" % [char.level, char.race, char.character_class]
-	
-	# === STATS SUMMARY ===
-	preview_text += "[b][color=cyan]Stats:[/color][/b]\n"
-	preview_text += "HP: %d/%d | MP: %d/%d | SP: %d/%d\n" % [
-		char.current_hp, char.max_hp,
-		char.current_mp, char.max_mp,
-		char.current_sp, char.max_sp
-	]
-	preview_text += "Attack: %d | Spell: %d | Defense: %d\n\n" % [
-		char.get_attack_power(), char.spell_power, char.get_defense()
-	]
-	
-	# === EQUIPMENT ===
-	preview_text += "[b][color=cyan]Equipment:[/color][/b]\n"
-	var has_equipment = false
-	
-	for slot in ["main_hand", "off_hand", "head", "chest", "hands", "legs", "feet"]:
-		var item = char.equipment[slot]
-		if item:
-			has_equipment = true
-			var color = item.get_rarity_color()
-			var slot_name = slot.capitalize().replace("_", " ")
-			
-			var item_line = "%s: [color=%s]%s[/color]" % [slot_name, color, item.display_name]
-			
-			# Add key stats
-			if item.damage > 0:
-				item_line += " ([color=yellow]%d dmg[/color])" % item.damage
-			if item.armor_value > 0:
-				item_line += " ([color=cyan]%d armor[/color])" % item.armor_value
-			
-			# Show item level and rarity
-			if item.get("item_level"):
-				item_line += " [color=gray]iLvl %d[/color]" % item.item_level
-			
-			preview_text += item_line + "\n"
-	
-	if not has_equipment:
-		preview_text += "[color=gray]No equipment[/color]\n"
-	
-	preview_text += "\n"
-	
-	# === ELEMENTAL AFFINITIES (if initialized) ===
-	if char.get("elemental_resistances") != null:
-		preview_text += "[b][color=orange]Elemental Affinities:[/color][/b]\n\n"
-		
-		# DAMAGE BONUSES LIST
-		preview_text += "[b][color=yellow]Damage Bonuses:[/color][/b]\n"
-		for element in ElementalDamage.Element.values():
-			if element == ElementalDamage.Element.NONE:
-				continue
-			
-			var elem_name = ElementalDamage.get_element_name(element)
-			var elem_color = ElementalDamage.get_element_color(element)
-			var bonus = char.get_elemental_damage_bonus(element)
-			
-			var line = "  [color=%s]%s:[/color] " % [elem_color, elem_name]
-			
-			if bonus > 0.0:
-				line += "[color=lime]+%d%% damage[/color]" % int(bonus * 100)
-			else:
-				line += "[color=gray]Normal[/color]"
-			
-			preview_text += line + "\n"
-		
-		preview_text += "\n"
-		
-		# RESISTANCES & WEAKNESSES LIST
-		preview_text += "[b][color=cyan]Resistances & Weaknesses:[/color][/b]\n"
-		for element in ElementalDamage.Element.values():
-			if element == ElementalDamage.Element.NONE:
-				continue
-			
-			var elem_name = ElementalDamage.get_element_name(element)
-			var elem_color = ElementalDamage.get_element_color(element)
-			var resist = char.get_elemental_resistance(element)
-			var weak = char.get_elemental_weakness(element)
-			
-			var line = "  [color=%s]%s:[/color] " % [elem_color, elem_name]
-			
-			if resist > 0.0:
-				line += "[color=cyan]-%d%% damage taken[/color]" % int(resist * 100)
-			elif weak > 0.0:
-				line += "[color=orange]+%d%% damage taken[/color]" % int(weak * 100)
-			else:
-				line += "[color=gray]Normal[/color]"
-			
-			preview_text += line + "\n"
-		
-		preview_text += "\n"
-	
-	# === PROGRESS ===
-	if char.get("current_floor"):
-		preview_text += "[b][color=cyan]Progress:[/color][/b]\n"
-		preview_text += "Floor: %d | Max Cleared: %d\n" % [char.current_floor, char.max_floor_cleared]
-		preview_text += "XP: %d / %d\n\n" % [char.xp, LevelSystem.calculate_xp_for_level(char.level)]
-	
-	# === CURRENCY ===
-	if char.currency:
-		preview_text += "[b][color=gold]Currency:[/color][/b] %s\n\n" % char.currency.get_formatted()
-	
-	# === SKILLS ===
-	if char.skills and char.skills.size() > 0:
-		preview_text += "[b][color=cyan]Skills:[/color][/b] "
-		var skill_names = []
-		for skill_name in char.skills:
-			skill_names.append(skill_name)
-		preview_text += ", ".join(skill_names) + "\n"
-	
-	# Display preview
-	if character_preview is RichTextLabel:
-		character_preview.bbcode_enabled = true
-		character_preview.text = preview_text
-	elif character_preview:
-		character_preview.text = preview_text
-
-func _on_start_new_game_pressed():
-	if selected_character:
-		if SaveManager.save_exists(selected_character.name):
-			show_new_game_warning()
-		else:
-			start_new_game()
-	else:
-		print("No character selected")
-
-func show_new_game_warning():
-	var dialog = ConfirmationDialog.new()
-	dialog.title = "Overwrite Save?"
-	dialog.dialog_text = "Starting a new game will DELETE your existing save for %s!\n\nAre you sure?" % selected_character.name
-	dialog.ok_button_text = "Yes, Delete Save"
-	dialog.cancel_button_text = "Cancel"
-	add_child(dialog)
-	dialog.popup_centered()
-	
-	dialog.confirmed.connect(func(): start_new_game(); dialog.queue_free())
-	dialog.canceled.connect(func(): dialog.queue_free())
-
-func start_new_game():
-	print("Starting new game with character: ", selected_character.name)
-	selected_character.reset_for_new_game()
-	SaveManager.save_game(selected_character)
-	SceneManager.change_to_town(selected_character)
-
-func _on_load_saved_game_pressed():
-	if selected_character:
-		var loaded_character = SaveManager.load_game(selected_character.name)
-		if loaded_character:
-			CharacterManager.set_current_character(loaded_character)
-			print("Loaded saved game for character: ", loaded_character.name)
-			SceneManager.change_to_town(loaded_character)
-		else:
-			print("No saved game found for selected character.")
-	else:
-		print("No character selected.")
-
-func _on_create_new_pressed():
-	print("Creating new character")
-	SceneManager.change_scene("res://scenes/ui/CharacterCreation.tscn")
-
-func load_characters():
 	character_list = SaveManager.get_all_characters()
+	_build_ui()
+	_fill_cards()
+	if not character_list.is_empty():
+		_select(character_list[0])
+	_set_tab(0)
 
-func setup_ui():
-	# Clear existing children
-	for child in character_container.get_children():
-		child.queue_free()
-	
-	for character in character_list:
-		var character_panel = HBoxContainer.new()
-		
-		var select_button = Button.new()
-		select_button.text = "%s - Level %d %s %s" % [character.name, character.level, character.race, character.character_class]
-		select_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		select_button.connect("pressed", Callable(self, "_on_character_selected").bind(character))
-		character_panel.add_child(select_button)
-		
-		var delete_button = Button.new()
-		delete_button.text = "Delete"
-		delete_button.connect("pressed", Callable(self, "_on_delete_pressed").bind(character))
-		character_panel.add_child(delete_button)
-		
-		character_container.add_child(character_panel)
+# === UI ===
 
-func _on_delete_pressed(character):
-	var dialog = ConfirmationDialog.new()
-	dialog.dialog_text = "Are you sure you want to delete %s?" % character.name
-	dialog.connect("confirmed", Callable(self, "_delete_character").bind(character))
-	add_child(dialog)
-	dialog.popup_centered()
+func _build_ui() -> void:
+	chrome = ScreenChrome.attach(self, "Characters", Callable())
+	var ui := CanvasLayer.new()
+	ui.layer = 1
+	add_child(ui)
+	var row := HBoxContainer.new()
+	ScreenChrome.tab_row(row, Rect2(32, 72, 440, 36))
+	ui.add_child(row)
+	for i in range(TAB_NAMES.size()):
+		var b := Button.new()
+		b.text = TAB_NAMES[i]
+		b.pressed.connect(_set_tab.bind(i))
+		row.add_child(b)
+		tabs.append(b)
+	cards_scroll = ScrollContainer.new()
+	ScreenChrome.place(cards_scroll, LIST_RECT)
+	cards_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	ui.add_child(cards_scroll)
+	cards_box = VBoxContainer.new()
+	cards_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cards_box.add_theme_constant_override("separation", 8)
+	cards_scroll.add_child(cards_box)
+	var panel := Panel.new()
+	ScreenChrome.place(panel, DETAIL_RECT)
+	ui.add_child(panel)
+	detail = RichTextLabel.new()
+	detail.bbcode_enabled = true
+	ScreenChrome.place(detail, Rect2(18, 14, DETAIL_RECT.size.x - 36, DETAIL_RECT.size.y - 28))
+	panel.add_child(detail)
+	create_button = _footer("New Character", Vector2(32, 640), func(): SceneManager.change_to_character_creation())
+	quit_button = _footer("Quit", Vector2(208, 640), func(): get_tree().quit())
+	delete_button = _footer("Delete...", Vector2(528, 640), _ask_delete)
+	new_world_button = _footer("New world...", Vector2(688, 640), _ask_new_world)
+	continue_button = _footer("Continue", Vector2(1008, 640), _continue)
+	continue_button.size.x = 160
+	for b in [create_button, quit_button, delete_button, new_world_button, continue_button]:
+		ui.add_child(b)
 
-func _delete_character(character):
-	SaveManager.delete_character(character.name)
-	load_characters()
-	setup_ui()
-	
-	# If deleted character was selected, clear selection
-	if selected_character == character:
-		selected_character = null
-		start_new_game_button.disabled = true
-		load_saved_game_button.disabled = true
-		
-		# Clear preview
-		if character_preview:
-			if character_preview is RichTextLabel:
-				character_preview.bbcode_enabled = true
-			character_preview.text = "[center][color=gray]No character selected[/color][/center]"
-		
-		# Auto-select first character if any remain
-		if not character_list.is_empty():
-			_on_character_selected(character_list[0])
+func _footer(text: String, pos: Vector2, cb: Callable) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.position = pos
+	b.size = Vector2(160, 48)
+	b.pressed.connect(cb)
+	return b
+
+func _set_tab(i: int) -> void:
+	tab = i
+	ScreenChrome.set_active_tab(tabs, i)
+	cards_scroll.visible = i == 0
+	for b in [continue_button, new_world_button, delete_button]:
+		b.visible = i == 0
+	_refresh()
+
+func _refresh() -> void:
+	chrome.set_info("%d character%s" % [character_list.size(), "" if character_list.size() == 1 else "s"])
+	if tab == 1:
+		var t = "[font_size=24][b][color=#e5c34a]Hall of Legends[/color][/b][/font_size]\n[color=#a99f90]Every hero who retired or fell, in any world. The bards remember them, and their names turn up in later worlds.[/color]\n\n"
+		var lt = LegendManager.legends_text()
+		detail.text = t + (lt if lt.strip_edges() != "" else "[i][color=#a99f90]No legends yet.[/color][/i]")
+		return
+	var c = selected_character
+	continue_button.disabled = c == null or _status(c) != ""
+	new_world_button.disabled = c == null
+	delete_button.disabled = c == null
+	detail.text = _detail_text(c) if c else "[color=#a99f90]No characters yet. Create one to begin.[/color]"
+	for card in cards_box.get_children():
+		card.set_pressed_no_signal(card.get_meta("who") == (c.name if c else ""))
+
+# === CARDS ===
+
+func _fill_cards() -> void:
+	for ch in cards_box.get_children():
+		ch.queue_free()
+	for c in character_list:
+		var b := Button.new()
+		b.toggle_mode = true
+		b.custom_minimum_size = Vector2(0, 92)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.set_meta("who", c.name)
+		b.pressed.connect(_select.bind(c))
+		var box := VBoxContainer.new()
+		box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 12)
+		box.alignment = BoxContainer.ALIGNMENT_CENTER
+		box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(box)
+		var badges = _badges(c)
+		_label(box, c.name + ("   " + badges if badges != "" else ""), 20, ScreenChrome.ACCENT)
+		_label(box, "Lv %d %s %s  ·  %s" % [c.level, c.race, c.character_class, RankManager.display(RankManager.get_rank(c))], 16, Color("e6dccb"))
+		var born = String(c.town_state.get("birthplace", ""))
+		_label(box, "Day %d%s" % [WorldClock.day(c), "  ·  from %s" % born if born != "" else ""], 15, ScreenChrome.MUTED)
+		cards_box.add_child(b)
+
+func _label(parent: Node, t: String, size: int, col: Color) -> void:
+	var l := Label.new()
+	l.text = t
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", col)
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	l.clip_text = true
+	parent.add_child(l)
+
+func _badges(c: CharacterData) -> String:
+	var bits: Array = []
+	if c.town_state.get("permadeath", false):
+		bits.append("[Permadeath]")
+	var st = _status(c)
+	if st != "":
+		bits.append("[%s]" % st)
+	return " ".join(bits)
+
+## "Retired" / "Fallen" / "".
+func _status(c: CharacterData) -> String:
+	if c.town_state.get("dead", false):
+		return "Fallen"
+	if c.town_state.get("retired", false):
+		return "Retired"
+	return ""
+
+func _select(c: CharacterData) -> void:
+	selected_character = c
+	CharacterManager.set_current_character(c)
+	_refresh()
+
+# === DETAIL ===
+
+func _detail_text(c: CharacterData) -> String:
+	var t = "[font_size=24][b][color=#e5c34a]%s[/color][/b][/font_size]\n" % c.name
+	t += "[color=#a99f90]Lv %d %s %s  ·  %s" % [c.level, c.race, c.character_class, RankManager.display(RankManager.get_rank(c))]
+	var bg = Backgrounds.of(c)
+	if not bg.is_empty():
+		t += "  ·  %s" % bg.get("name", "")
+	var born = String(c.town_state.get("birthplace", ""))
+	if born != "":
+		t += "  ·  born in %s" % Regions.describe(born)
+	t += "[/color]\n"
+	var st = _status(c)
+	if st != "":
+		t += "[color=#e07a5f]%s - their Legend is written. Start a new world to play them again.[/color]\n" % st
+	t += "\n[b]%s[/b]  %s" % [String(c.town_state.get("world_meta", {}).get("name", "World")), WorldClock.date_text(c)]
+	var others = WorldShare.others(c)
+	if not others.is_empty():
+		t += "\n[color=#c9b8ff]Shared with %s[/color]" % ", ".join(others.keys())
+	if c.town_state.has("adventurers"):
+		t += "\n%s" % LedgerManager.summary(c)
+	t += "\n\n[b]Condition[/b]  HP %d/%d   MP %d/%d   SP %d/%d\n" % [c.current_hp, c.max_hp, c.current_mp, c.max_mp, c.current_sp, c.max_sp]
+	t += "Attack %d   Spell %d   Money %s\n" % [int(BattleFormulas.physical_offense(c)), int(BattleFormulas.magical_offense(c)), c.currency.get_formatted()]
+	var deepest: Array = []
+	for loc in LocationManager.get_ids():
+		if c.location_progress.has(loc):
+			deepest.append("%s %d" % [LocationManager.get_display_name(loc), c.get_max_floor(loc)])
+	if not deepest.is_empty():
+		t += "Deepest floors: %s\n" % ", ".join(deepest)
+	t += "\n[b]Equipment[/b]\n"
+	var any := false
+	for slot in ["main_hand", "off_hand", "head", "chest", "hands", "legs", "feet"]:
+		var item = c.equipment.get(slot)
+		if item:
+			any = true
+			t += "  %s: [color=%s]%s[/color]\n" % [ScreenChrome.slot_name(slot), ScreenChrome.rarity_color(item).to_html(false), item.display_name]
+	if not any:
+		t += "  [color=#a99f90]Nothing equipped[/color]\n"
+	if c.skills and c.skills.size() > 0:
+		t += "\n[b]Skills[/b]  %s\n" % ", ".join(c.skills.map(func(s): return String(s)))
+	return t
+
+# === ACTIONS ===
+
+func _continue() -> void:
+	var c = selected_character
+	if c == null:
+		return
+	var loaded = SaveManager.load_game(c.name)
+	if loaded == null or _status(loaded) != "":
+		return
+	CharacterManager.set_current_character(loaded)
+	SceneManager.change_to_town(loaded)
+
+## Start this character over: a new world, or another character's.
+func _ask_new_world() -> void:
+	var c = selected_character
+	if c == null:
+		return
+	var d := ConfirmationDialog.new()
+	d.title = "Start %s in a new world" % c.name
+	var box := VBoxContainer.new()
+	box.custom_minimum_size = Vector2(520, 0)
+	box.add_theme_constant_override("separation", 10)
+	var warn := Label.new()
+	warn.autowrap_mode = TextServer.AUTOWRAP_WORD
+	warn.text = "%s starts again at level 1 - their current progress is deleted. Their Legend (if any) stays in the Hall." % c.name
+	box.add_child(warn)
+	var pick := OptionButton.new()
+	pick.add_item("A new world (history is generated)")
+	pick.set_item_metadata(0, "")
+	for w in WorldShare.joinable():
+		pick.add_item("Join %s (day %d)" % [w.name, int(w.day)])
+		pick.set_item_metadata(pick.item_count - 1, String(w.id))
+	box.add_child(pick)
+	d.add_child(box)
+	d.ok_button_text = "Start over"
+	d.confirmed.connect(func():
+		_start_new_world(c, String(pick.get_item_metadata(pick.selected)))
+		d.queue_free())
+	d.canceled.connect(d.queue_free)
+	add_child(d)
+	d.popup_centered()
+
+func _start_new_world(c: CharacterData, join_from: String) -> void:
+	c.reset_for_new_game()
+	if join_from != "":
+		WorldShare.join(c, join_from)
+	SaveManager.save_game(c)
+	CharacterManager.set_current_character(c)
+	SceneManager.change_to_town(c)
+
+## Delete: type the name to confirm.
+func _ask_delete() -> void:
+	var c = selected_character
+	if c == null:
+		return
+	var d := ConfirmationDialog.new()
+	d.title = "Delete %s?" % c.name
+	var box := VBoxContainer.new()
+	box.custom_minimum_size = Vector2(460, 0)
+	var l := Label.new()
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD
+	l.text = "This deletes %s's save for good. Type their name to confirm." % c.name
+	box.add_child(l)
+	var input := LineEdit.new()
+	input.placeholder_text = c.name
+	box.add_child(input)
+	d.add_child(box)
+	d.ok_button_text = "Delete"
+	d.get_ok_button().disabled = true
+	input.text_changed.connect(func(t): d.get_ok_button().disabled = t.strip_edges() != c.name)
+	d.confirmed.connect(func():
+		_delete(c)
+		d.queue_free())
+	d.canceled.connect(d.queue_free)
+	add_child(d)
+	d.popup_centered()
+
+func _delete(c: CharacterData) -> void:
+	SaveManager.delete_character(c.name)
+	character_list = SaveManager.get_all_characters()
+	selected_character = null
+	_fill_cards()
+	if not character_list.is_empty():
+		_select(character_list[0])
+	else:
+		_refresh()

@@ -1,0 +1,539 @@
+{
+ "tab": "Adventurers",
+ "file": "data/adventurers.json",
+ "order": 49,
+ "description": "NPC adventurers (AdventurerManager.gd): roster generation, daily jobs, fates, Tavern social values, traits and per-race name tables.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Roster",
+   "path": [
+    "settings"
+   ],
+   "fields": [
+    {
+     "name": "roster_start",
+     "type": "json",
+     "help": "[min, max] adventurers in a new game."
+    },
+    {
+     "name": "roster_min",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "roster_max",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "rivals_at_start",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "start_level",
+     "type": "json",
+     "help": "[min, max] level of the starting roster."
+    },
+    {
+     "name": "newcomer_chance_per_day",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "newcomer_level",
+     "type": "json"
+    },
+    {
+     "name": "history_max",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "departed_keep",
+     "type": "int",
+     "min": 0,
+     "help": "Fallen/retired adventurers kept in the save (oldest dropped)."
+    },
+    {
+     "name": "career",
+     "type": "json",
+     "help": "{prime_years, retire_per_week}: past prime_years with the Guild, each week a retire_per_week x (years past prime) chance to retire (traits' retire multiplier applies; not while in your party or on a job)."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Jobs",
+   "path": [
+    "jobs"
+   ],
+   "fields": [
+    {
+     "name": "take_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "boss_hunt_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Boss hunts are fought for real (AutoBattler)."
+    },
+    {
+     "name": "trial_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "trial_level_per_floor",
+     "type": "float",
+     "min": 0,
+     "help": "Only try a trial at level >= trial floor x this."
+    },
+    {
+     "name": "floors",
+     "type": "json",
+     "help": "[min, max] floors per job (sets its length in days)."
+    },
+    {
+     "name": "success_base",
+     "type": "float"
+    },
+    {
+     "name": "success_per_power",
+     "type": "float"
+    },
+    {
+     "name": "success_min",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "success_max",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "points_per_floor",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "points_base",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "xp_per_floor",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "gear_floor_per_level",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "compete_chance",
+     "type": "float",
+     "min": 0,
+     "help": "Chance a job-taker takes a bounty off your board (x trait 'compete')."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Fates",
+   "path": [
+    "fates"
+   ],
+   "fields": [
+    {
+     "name": "death_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "retire_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "boss_death_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "boss_retire_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "injury_days",
+     "type": "json"
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Social",
+   "path": [
+    "social"
+   ],
+   "fields": [
+    {
+     "name": "drink_copper_per_level",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "drink_rapport",
+     "type": "json"
+    },
+    {
+     "name": "chat_rapport",
+     "type": "json"
+    },
+    {
+     "name": "gift_rapport_per_copper",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "gift_rapport_max",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "friend_at",
+     "type": "int"
+    },
+    {
+     "name": "close_friend_at",
+     "type": "int"
+    },
+    {
+     "name": "enemy_at",
+     "type": "int"
+    },
+    {
+     "name": "rival_at",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "start_rapport",
+     "type": "json"
+    },
+    {
+     "name": "alignment_known_after_chats",
+     "type": "int",
+     "min": 0
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Party",
+   "path": [
+    "party"
+   ],
+   "fields": [
+    {
+     "name": "recruit_rapport",
+     "type": "int",
+     "help": "Rapport needed to recruit (Friend)."
+    },
+    {
+     "name": "hire_copper_per_level",
+     "type": "int",
+     "min": 0,
+     "help": "Hiring someone for one expedition costs this x their level."
+    },
+    {
+     "name": "hire_friend_discount",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Share off the fee for friends (rapport at recruit_rapport or more)."
+    },
+    {
+     "name": "hire_rapport",
+     "type": "int",
+     "help": "Lowest rapport at which someone will take your coin."
+    },
+    {
+     "name": "hire_rank_above",
+     "type": "int",
+     "min": 0,
+     "help": "How many ranks above yours you can hire."
+    },
+    {
+     "name": "hire_days",
+     "type": "int",
+     "min": 1,
+     "help": "A hire who's kept waiting this many days goes back to work (fee kept)."
+    },
+    {
+     "name": "hire_share_by_rank",
+     "type": "map",
+     "key": {
+      "type": "ref",
+      "source": "ranks"
+     },
+     "value": {
+      "type": "float",
+      "min": 0,
+      "max": 1
+     },
+     "help": "Share of Breather gold a hired hand takes, by their rank (more than a team member)."
+    },
+    {
+     "name": "share_by_rank",
+     "type": "map",
+     "key": {
+      "type": "ref",
+      "source": "ranks"
+     },
+     "value": {
+      "type": "float",
+      "min": 0,
+      "max": 0.5
+     },
+     "help": "Share of Breather gold a companion of this rank takes (x trait 'share')."
+    },
+    {
+     "name": "rapport_good_expedition",
+     "type": "int"
+    },
+    {
+     "name": "rapport_bad_expedition",
+     "type": "int"
+    },
+    {
+     "name": "rapport_per_ko",
+     "type": "int"
+    },
+    {
+     "name": "leave_below",
+     "type": "int",
+     "help": "Companions below this rapport may leave after an expedition."
+    },
+    {
+     "name": "leave_chance",
+     "type": "float",
+     "min": 0,
+     "help": "x trait 'leave'."
+    },
+    {
+     "name": "ko_injury_days",
+     "type": "json"
+    },
+    {
+     "name": "wipe_death_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Chance a companion dies when the whole party falls (x trait 'death')."
+    },
+    {
+     "name": "enemy_extra_per_ally",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "enemy_hp_per_ally",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "boss_hp_per_ally",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "boss_damage_per_ally",
+     "type": "float",
+     "min": 0
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Traits",
+   "path": [
+    "traits"
+   ],
+   "key_style": "snake",
+   "name_field": "name",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "exclusive",
+     "type": "json",
+     "optional": true,
+     "help": "Trait ids this one can't appear with."
+    },
+    {
+     "name": "job_chance",
+     "type": "float",
+     "optional": true,
+     "help": "+ chance to take a job each day."
+    },
+    {
+     "name": "success",
+     "type": "float",
+     "optional": true,
+     "help": "+ job success chance."
+    },
+    {
+     "name": "floor_bias",
+     "type": "int",
+     "optional": true,
+     "help": "+ floors deeper (or shallower) than their level suggests."
+    },
+    {
+     "name": "death",
+     "type": "float",
+     "optional": true,
+     "min": 0,
+     "help": "x death chance on failure."
+    },
+    {
+     "name": "retire",
+     "type": "float",
+     "optional": true,
+     "min": 0,
+     "help": "x retire chance on failure."
+    },
+    {
+     "name": "compete",
+     "type": "float",
+     "optional": true,
+     "min": 0,
+     "help": "x chance to take your bounties."
+    },
+    {
+     "name": "rival",
+     "type": "bool",
+     "optional": true,
+     "help": "Resents your promotions; rivals start with one of these traits."
+    },
+    {
+     "name": "drink",
+     "type": "float",
+     "optional": true,
+     "min": 0
+    },
+    {
+     "name": "chat",
+     "type": "float",
+     "optional": true,
+     "min": 0
+    },
+    {
+     "name": "gift",
+     "type": "float",
+     "optional": true,
+     "min": 0
+    },
+    {
+     "name": "friend_bonus",
+     "type": "float",
+     "optional": true,
+     "min": 0,
+     "help": "x rapport gains once rapport >= 20."
+    },
+    {
+     "name": "likes",
+     "type": "map",
+     "optional": true,
+     "key": {
+      "type": "enum",
+      "options": [
+       "equipment",
+       "consumable",
+       "material"
+      ]
+     },
+     "value": {
+      "type": "float",
+      "min": 0
+     }
+    },
+    {
+     "name": "honor",
+     "type": "int",
+     "optional": true,
+     "min": -100,
+     "max": 100
+    },
+    {
+     "name": "heart",
+     "type": "int",
+     "optional": true,
+     "min": -100,
+     "max": 100
+    },
+    {
+     "name": "share",
+     "type": "float",
+     "optional": true,
+     "min": 0,
+     "help": "x gold share as a companion."
+    },
+    {
+     "name": "leave",
+     "type": "float",
+     "optional": true,
+     "min": 0,
+     "help": "x chance to leave an unhappy party."
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Names",
+   "path": [
+    "names"
+   ],
+   "key_style": "title",
+   "fields": [
+    {
+     "name": "start",
+     "type": "json",
+     "help": "Given-name first syllables."
+    },
+    {
+     "name": "end",
+     "type": "json",
+     "help": "Given-name last syllables."
+    },
+    {
+     "name": "family",
+     "type": "json",
+     "help": "Surnames or epithets."
+    }
+   ]
+  }
+ ]
+}

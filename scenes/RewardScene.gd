@@ -30,12 +30,12 @@ var auto_rewards_given: bool = false
 @onready var collection_container: Control = $UI/CollectionContainer
 
 func _ready():
-	print("RewardScene: _ready called")
+	Log.debug("reward", "RewardScene: _ready called")
 	
 	# Restore saved state from RewardsManager
 	var saved_state = RewardsManager.get_saved_state()
 	if not saved_state.is_empty():
-		print("RewardScene: Restoring saved state from RewardsManager")
+		Log.debug("reward", "RewardScene: Restoring saved state from RewardsManager")
 		rewards = saved_state.get("rewards", {})
 		xp_gained = saved_state.get("xp_gained", 0)
 		collected_items = saved_state.get("collected_items", {})
@@ -45,8 +45,45 @@ func _ready():
 		current_wave = saved_state.get("current_wave", 1)
 		max_floor = saved_state.get("max_floor", 25)
 	
+	_apply_chrome()
 	setup_ui_signals()
 	update_button_visibility()
+
+var chrome: ScreenChrome
+var camp_text: RichTextLabel
+var camp_lines: Array = []   # picked once, so they don't change on every refresh
+
+func _apply_chrome():
+	# No single "back": the way out is Continue / Next Floor / Back to Town.
+	chrome = ScreenChrome.attach(self, "Victory")
+	ScreenChrome.place(auto_rewards_label, Rect2(32, 72, 524, 120))
+	reward_label.visible = false
+	$UI/ActionLabel.visible = false
+	var loot_caption = $UI/CollectionContainer/CollectionLabel
+	loot_caption.text = "Loot to Collect"
+	ScreenChrome.place(loot_caption, Rect2(32, 204, 300, 24))
+	ScreenChrome.place(reward_items_list, Rect2(32, 232, 300, 392))
+	ScreenChrome.place($UI/CollectionContainer/ButtonContainer, Rect2(348, 232, 208, 196))
+	ScreenChrome.place(item_info_label, Rect2(572, 72, 372, 300))
+	# around the fire: the rest, and a word from the party
+	var camp_panel := Panel.new()
+	ScreenChrome.place(camp_panel, Rect2(572, 388, 372, 236))
+	$UI.add_child(camp_panel)
+	camp_text = RichTextLabel.new()
+	camp_text.bbcode_enabled = true
+	ScreenChrome.place(camp_text, Rect2(12, 10, 348, 216))
+	camp_panel.add_child(camp_text)
+	ScreenChrome.place(use_consumable_button, Rect2(968, 72, 200, 44))
+	ScreenChrome.place(equip_button, Rect2(968, 124, 200, 44))
+	var progress = $UI/ProgressLabel
+	progress.text = "Onward"
+	progress.add_theme_color_override("font_color", ScreenChrome.MUTED)
+	ScreenChrome.place(progress, Rect2(968, 196, 200, 24))
+	ScreenChrome.place(continue_button, Rect2(968, 224, 200, 48))
+	ScreenChrome.place(next_floor_button, Rect2(968, 280, 200, 48))
+	ScreenChrome.place(quit_button, ScreenChrome.BACK_RECT)
+	if has_node("UI/AcceptRewardButton"):
+		$UI/AcceptRewardButton.visible = false
 
 func setup_ui_signals():
 	if continue_button:
@@ -89,14 +126,15 @@ func set_player_character(character: CharacterData):
 	player_character = character
 
 func initialize_display():
-	print("RewardScene: initialize_display called")
+	Log.debug("reward", "RewardScene: initialize_display called")
 	display_rewards()
 	update_button_visibility()
 	_check_and_auto_collect()
 
 func _check_and_auto_collect():
 	if not _has_collectable_items() and not auto_rewards_given:
-		_add_auto_rewards()
+		await _add_auto_rewards()
+		display_rewards()
 
 func _has_collectable_items() -> bool:
 	for item_id in rewards:
@@ -110,18 +148,26 @@ func _has_collectable_items() -> bool:
 func display_rewards():
 	if not player_character:
 		return
+	if chrome:
+		chrome.set_title("Floor %d Cleared" % current_floor if is_boss_fight else "A Breather")
+	if camp_text:
+		camp_text.text = _camp_text()
 	
 	# Auto-rewards label
 	if auto_rewards_label:
-		var auto_text = "[center][b][color=#FFD700]═══ AUTO-COLLECTED REWARDS ═══[/color][/b][/center]\n\n"
+		var auto_text = "[b][color=#e5c34a]Rewards[/color][/b]\n"
 		if xp_gained > 0:
-			auto_text += "[color=#88FF88]✦ +%d XP[/color]\n" % xp_gained
+			auto_text += "[color=#88FF88]+%d XP[/color]\n" % xp_gained
 		if rewards.has("currency"):
-			auto_text += "[color=#FFD700]💰 +%d Gold[/color]\n" % rewards["currency"]
+			auto_text += "[color=#FFD700]+%d Gold[/color]\n" % rewards["currency"]
+		if RewardsManager.last_party_share > 0:
+			auto_text += "[color=#b8c0ff]Party's share: %s[/color]\n" % Currency.format_copper(RewardsManager.last_party_share)
+		if RewardsManager.last_momentum_bonus > 0.0:
+			auto_text += "[color=#FF9944]Momentum bonus: +%d%% gold and items[/color]\n" % int(round(RewardsManager.last_momentum_bonus * 100))
 		if auto_rewards_given:
-			auto_text += "\n[color=#66DD66][i]✓ Collected[/i][/color]"
+			auto_text += "\n[color=#66DD66][i]Collected[/i][/color]"
 		else:
-			auto_text += "\n[color=#FFAA44][i]⏳ Will be collected when you proceed[/i][/color]"
+			auto_text += "\n[color=#FFAA44][i]Will be collected when you proceed[/i][/color]"
 		auto_rewards_label.bbcode_enabled = true
 		auto_rewards_label.text = auto_text
 	
@@ -144,9 +190,9 @@ func display_rewards():
 			var is_collected = collected_items.has(item_id)
 			var item = ItemManager.get_item(item_id)
 			if item:
-				var display_text = "%dx %s" % [rewards[item_id], item.display_name]
+				var display_text = ScreenChrome.item_row(item, rewards[item_id])
 				if is_collected:
-					display_text += " [COLLECTED]"
+					display_text += "  (collected)"
 				
 				reward_items_list.add_item(display_text)
 				var idx = reward_items_list.get_item_count() - 1
@@ -171,9 +217,9 @@ func display_rewards():
 				var equipment = rewards["equipment_instances"][i]
 				
 				if equipment is Equipment:
-					var display_text = "%s [ilvl %d]" % [equipment.display_name, equipment.item_level]
+					var display_text = ScreenChrome.item_row(equipment)
 					if is_collected:
-						display_text += " [COLLECTED]"
+						display_text += "  (collected)"
 					
 					reward_items_list.add_item(display_text)
 					var idx = reward_items_list.get_item_count() - 1
@@ -182,8 +228,7 @@ func display_rewards():
 						reward_items_list.set_item_custom_fg_color(idx, Color(0.5, 0.5, 0.5))
 						reward_items_list.set_item_disabled(idx, true)
 					else:
-						var color = equipment.get_rarity_color()
-						reward_items_list.set_item_custom_fg_color(idx, Color(color))
+						reward_items_list.set_item_custom_fg_color(idx, ScreenChrome.rarity_color(equipment))
 					
 					reward_items_list.set_item_metadata(idx, {
 						"type": "equipment",
@@ -207,6 +252,11 @@ func update_button_visibility():
 		continue_button.visible = not is_boss_fight
 	if next_floor_button:
 		next_floor_button.visible = is_boss_fight and current_floor < max_floor
+		# Adventurer rank caps how deep you may go (RankManager)
+		if next_floor_button.visible and player_character and RankManager.is_floor_capped(player_character, current_floor + 1):
+			next_floor_button.disabled = true
+			next_floor_button.text = "Rank %s: floor %d max" % [RankManager.get_rank(player_character), RankManager.floor_cap(player_character)]
+			next_floor_button.tooltip_text = "Get promoted at the Adventurers' Guild to go deeper."
 
 # === ITEM SELECTION ===
 func _on_item_selected(index: int):
@@ -233,25 +283,14 @@ func _on_item_clicked(index: int, at_position: Vector2, mouse_button_index: int)
 	var info_text = ""
 	var item = metadata["item"]
 	
-	if metadata["type"] == "consumable":
-		info_text = "[b]%s[/b]\n%s\n\nQuantity: %d" % [
-			item.display_name,
-			item.description if item.has("description") else "",
-			metadata["quantity"]
-		]
-	elif metadata["type"] == "equipment":
-		info_text = "[b]%s[/b]\nRarity: %s\nItem Level: %d\n" % [
-			item.display_name,
-			item.rarity,
-			item.item_level
-		]
-		if item.damage > 0:
-			info_text += "Damage: %d\n" % item.damage
-		if item.armor_value > 0:
-			info_text += "Armor: %d\n" % item.armor_value
+	# `item` is an Item / Equipment resource (not a Dictionary: .has() doesn't exist on it)
+	if item is Equipment:
+		info_text = item.get_full_description()
+	elif item is Item:
+		info_text = "[b]%s[/b]\n%s\n\nQuantity: %d" % [item.display_name, item.description, int(metadata.get("quantity", 1))]
 	
 	if metadata.get("collected", false):
-		info_text += "\n[color=green]✓ COLLECTED[/color]"
+		info_text += "\n[color=green]COLLECTED[/color]"
 	
 	item_info_label.bbcode_enabled = true
 	item_info_label.text = info_text
@@ -271,7 +310,7 @@ func _on_accept_selected_pressed():
 	if metadata["type"] == "consumable":
 		var item = metadata["item"]
 		var quantity = metadata["quantity"]
-		player_character.inventory.add_item(item, quantity)
+		player_character.add_to_pack(item, quantity)  # over the carry limit -> stash
 		collected_items[metadata["id"]] = true
 	elif metadata["type"] == "equipment":
 		var equipment = metadata["item"]
@@ -290,7 +329,7 @@ func _on_accept_all_pressed():
 		if not collected_items.has(item_id):
 			var item = ItemManager.get_item(item_id)
 			if item:
-				player_character.inventory.add_item(item, rewards[item_id])
+				player_character.add_to_pack(item, rewards[item_id])
 				collected_items[item_id] = true
 	
 	if rewards.has("equipment_instances"):
@@ -305,7 +344,7 @@ func _on_accept_all_pressed():
 	_save_state()
 	display_rewards()
 	if item_info_label:
-		item_info_label.text = "[center][color=#66FF66][b]✓ All collected![/b][/color][/center]"
+		item_info_label.text = "[center][color=#66FF66][b]All collected![/b][/color][/center]"
 
 func _on_dispose_selected_pressed():
 	var selected = reward_items_list.get_selected_items()
@@ -345,7 +384,7 @@ func _on_continue_pressed():
 		_show_collection_prompt("continue")
 		return
 	
-	_add_auto_rewards()
+	await _add_auto_rewards()
 	_cleanup_and_continue()
 
 func _on_next_floor_pressed():
@@ -353,25 +392,25 @@ func _on_next_floor_pressed():
 		_show_collection_prompt("advance to the next floor")
 		return
 	
-	_add_auto_rewards()
+	await _add_auto_rewards()
 	_cleanup_and_next_floor()
 
 func _on_quit_pressed():
 	if not _all_items_collected():
 		_on_accept_all_pressed()
 	
-	_add_auto_rewards()
+	await _add_auto_rewards()
 	_cleanup()
 	SaveManager.save_game(player_character)
 	SceneManager.change_to_town(player_character)
 
 func _on_equip_pressed():
 	_save_state()
-	SceneManager.push_scene("res://scenes/EquipmentScene.tscn", player_character)
+	SceneManager.change_to_equipment(player_character)
 
 func _on_use_consumable_pressed():
 	_save_state()
-	SceneManager.push_scene("res://scenes/InventoryScene.tscn", player_character)
+	SceneManager.change_to_inventory(player_character)
 
 # === HELPERS ===
 func _all_items_collected() -> bool:
@@ -390,17 +429,32 @@ func _all_items_collected() -> bool:
 	
 	return true
 
+## Gold and XP. A level-up shows the level-up screen first (the Breather path
+## never did - only Press On, inside the battle, showed it).
 func _add_auto_rewards():
 	if auto_rewards_given:
 		return
+	auto_rewards_given = true
 	
 	if rewards.has("currency"):
 		player_character.currency.add(rewards["currency"])
 	
 	if xp_gained > 0:
+		var level_before = player_character.level
 		player_character.gain_xp(xp_gained)
-	
-	auto_rewards_given = true
+		if player_character.level > level_before:
+			await _show_level_up()
+
+func _show_level_up() -> void:
+	var layer = CanvasLayer.new()
+	layer.layer = 50
+	add_child(layer)
+	var scene = load("res://scenes/LevelUpScene.tscn").instantiate()
+	layer.add_child(scene)
+	scene.setup(player_character)
+	await scene.level_up_complete
+	layer.queue_free()
+	SaveManager.save_game(player_character)
 
 func _save_state():
 	RewardsManager.save_state(rewards, xp_gained, _all_items_collected(), collected_items, auto_rewards_given)
@@ -417,6 +471,7 @@ func _cleanup_and_continue():
 	SaveManager.save_game(player_character)
 	
 	player_character.current_hp = player_character.max_hp
+	PartyManager.restore_allies()
 	player_character.current_mp = player_character.max_mp
 	player_character.current_sp = player_character.max_sp
 	player_character.status_manager.clear_all_effects()
@@ -442,6 +497,7 @@ func _cleanup_and_next_floor():
 	
 	# Reset player state
 	player_character.current_hp = player_character.max_hp
+	PartyManager.restore_allies()
 	player_character.current_mp = player_character.max_mp
 	player_character.current_sp = player_character.max_sp
 	player_character.status_manager.clear_all_effects()
@@ -461,3 +517,29 @@ func _show_collection_prompt(action: String):
 	dialog.ok_button_text = "OK"
 	add_child(dialog)
 	dialog.popup_centered()
+
+## The rest, the party's condition, and a line or two from companions.
+func _camp_text() -> String:
+	var c = player_character
+	var t = "[b][color=#e5c34a]Around the fire[/color][/b]\n"
+	t += "[color=#a99f90]You rest: HP, MP and SP are restored when you move on.[/color]\n\n"
+	t += "%s  HP %d/%d\n" % [c.name, c.current_hp, c.max_hp]
+	var members = PartyManager.members(c)
+	if camp_lines.is_empty():
+		for n in members:
+			var l = PersonalityManager.say(n, "breather")
+			if l != "":
+				camp_lines.append(l)
+		camp_lines.shuffle()
+		camp_lines = camp_lines.slice(0, 2)
+	for n in members:
+		t += "%s  [color=#a99f90]%s[/color]\n" % [String(n.name), PersonalityManager.archetype_name(n)]
+	if not camp_lines.is_empty():
+		t += "\n"
+		for l in camp_lines:
+			t += "[i]%s[/i]\n" % l
+	elif members.is_empty():
+		t += "\n[i][color=#a99f90]The fire crackles. It's quiet, alone.[/color][/i]\n"
+	var next = "floor %d" % (current_floor + 1) if is_boss_fight else ("the floor's boss" if current_wave >= DungeonStateManager.waves_per_floor else "wave %d" % (current_wave + 1))
+	t += "\n[color=#a99f90]Next: %s.[/color]" % next
+	return t

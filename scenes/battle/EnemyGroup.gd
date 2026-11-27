@@ -11,6 +11,10 @@ var enemies: Array[CharacterData] = []
 var current_floor: int = 1
 var current_wave: int = 1
 var is_boss_wave: bool = false
+## Companions fighting with the player (-1 = ask PartyManager). Set before
+## initialize() for headless battles.
+var ally_count: int = -1
+var _base_count: int = 1
 
 func initialize(floor: int, wave: int, boss_wave: bool = false):
 	"""Initialize enemy group for a wave"""
@@ -20,18 +24,29 @@ func initialize(floor: int, wave: int, boss_wave: bool = false):
 	
 	_generate_enemies()
 	
-	print("EnemyGroup: Generated %d enemies for Floor %d, Wave %d" % [
+	Log.debug("enemies", "EnemyGroup: Generated %d enemies for Floor %d, Wave %d" % [
 		enemies.size(), floor, wave
 	])
 
 func _generate_enemies():
 	"""Generate appropriate number of enemies for this wave"""
 	var enemy_count = _calculate_enemy_count()
+	_base_count = enemy_count
 	var momentum = MomentumSystem.get_momentum()
+	var allies = ally_count if ally_count >= 0 else PartyManager.allies.size()
+	var pc: Dictionary = AdventurerManager.cfg.get("party", {})
+	if allies > 0 and not is_boss_wave:
+		enemy_count = min(6, enemy_count + int(pc.get("enemy_extra_per_ally", 1)) * allies)
 	
 	if is_boss_wave:
 		# Boss wave: 1 boss + possible minions
 		var boss = EnemyFactory.create_boss(current_floor, current_wave, momentum)
+		if allies > 0:
+			# a party faces a tougher boss
+			boss.hp_multiplier *= 1.0 + float(pc.get("boss_hp_per_ally", 0.75)) * allies
+			boss.damage_multiplier *= 1.0 + float(pc.get("boss_damage_per_ally", 0.1)) * allies
+			boss.calculate_secondary_attributes()
+			boss.current_hp = boss.max_hp
 		enemies.append(boss)
 		
 		# 30% chance for 1-2 minions with boss (floor 5+)
@@ -57,6 +72,22 @@ func _generate_enemies():
 	# Scale stats if multiple enemies
 	if enemies.size() > 1 and not is_boss_wave:
 		_scale_enemy_group()
+	# A Tavern rumour can promise a named Elite on this floor (RumorManager)
+	var rumour = {} if is_boss_wave or enemies.is_empty() or not DungeonStateManager.dungeon_active \
+		else RumorManager.take_elite(DungeonStateManager.active_player, DungeonStateManager.current_location, current_floor)
+	if not rumour.is_empty():
+		EliteAffixes.apply(enemies[0], String(rumour.affix))
+		enemies[0].set_meta("rumour_id", int(rumour.id))
+	# Sometimes one enemy is an Elite with an affix (data/elites.json)
+	elif not is_boss_wave and not enemies.is_empty() and RandomManager.randf() < EliteAffixes.chance(current_floor):
+		EliteAffixes.apply(enemies[RandomManager.randi() % enemies.size()], EliteAffixes.roll_affix())
+	
+	# A party faces sturdier waves
+	if allies > 0 and not is_boss_wave:
+		for e in enemies:
+			e.hp_multiplier *= 1.0 + float(pc.get("enemy_hp_per_ally", 0.35)) * allies
+			e.calculate_secondary_attributes()
+			e.current_hp = e.max_hp
 
 func _calculate_enemy_count() -> int:
 	"""Determine how many enemies based on floor/wave"""
@@ -88,14 +119,14 @@ func _calculate_enemy_count() -> int:
 
 func _scale_enemy_group():
 	"""Scale enemy stats when fighting multiple (prevent overwhelming player)"""
-	var count = enemies.size()
+	var count = _base_count   # party extras don't make each enemy weaker
 	if count <= 1:
 		return
 	
 	# Reduce stats by 15% per additional enemy (max 45% reduction for 4 enemies)
 	var reduction = 1.0 - (min(count - 1, 3) * 0.15)
 	
-	print("EnemyGroup: Scaling %d enemies by %.2f" % [count, reduction])
+	Log.debug("enemies", "EnemyGroup: Scaling %d enemies by %.2f" % [count, reduction])
 	
 	for enemy in enemies:
 		enemy.vitality = int(enemy.vitality * reduction)
@@ -124,47 +155,15 @@ func remove_dead_enemies():
 	
 	var removed_count = initial_count - enemies.size()
 	if removed_count > 0:
-		print("EnemyGroup: Removed %d defeated enemies" % removed_count)
+		Log.debug("enemies", "EnemyGroup: Removed %d defeated enemies" % removed_count)
 		
 		if enemies.is_empty():
-			emit_signal("all_enemies_defeated")
+			all_enemies_defeated.emit()
 
 func get_living_enemies() -> Array[CharacterData]:
 	"""Get all alive enemies"""
 	return enemies.filter(func(e): return e.is_alive())
 
-func get_random_living_enemy() -> CharacterData:
-	"""Get random alive enemy (for AI targeting)"""
-	var living = get_living_enemies()
-	if living.is_empty():
-		return null
-	return living[RandomManager.randi() % living.size()]
-
-func get_weakest_enemy() -> CharacterData:
-	"""Get enemy with lowest current HP (for smart AI)"""
-	var living = get_living_enemies()
-	if living.is_empty():
-		return null
-	
-	living.sort_custom(func(a, b): return a.current_hp < b.current_hp)
-	return living[0]
-
-func get_strongest_enemy() -> CharacterData:
-	"""Get enemy with highest attack power (for threat assessment)"""
-	var living = get_living_enemies()
-	if living.is_empty():
-		return null
-	
-	living.sort_custom(func(a, b): return a.get_attack_power() > b.get_attack_power())
-	return living[0]
-
 func is_group_alive() -> bool:
 	"""Check if any enemies still alive"""
 	return get_living_enemies().size() > 0
-
-func get_total_xp() -> int:
-	"""Calculate total XP reward for defeating all enemies"""
-	var total = 0
-	for enemy in enemies:
-		total += enemy.level * 50 * current_floor
-	return total

@@ -1,0 +1,78 @@
+{
+	"locations": {
+		"the_dungeon": {
+			"name": "The Tower",
+			"description": "The Tower of Nexus, rising from the wound of the Shattering. Every kind of creature climbs its floors. Wave after wave, no two fights alike.",
+			"races": "all",
+			"mixed": true,
+			"mode": "waves",
+			"reward_mult": 1.0,
+			"background": "",
+			"order": 0,
+			"travel_days": 0,
+			"region": "nexus",
+			"place": "Nexus"
+		},
+		"goblin_forest": {
+			"name": "Goblin Forest",
+			"description": "Tangled woods crawling with quick, cunning goblins. Watch for poison and bleeding blades.",
+			"races": [
+				"Goblin"
+			],
+			"mixed": false,
+			"mode": "waves",
+			"reward_mult": 1.0,
+			"background": "",
+			"order": 1,
+			"travel_days": 1,
+			"region": "wildwood_expanse",
+			"place": "Bramblewood"
+		},
+		"troll_caves": {
+			"name": "Troll Caves",
+			"description": "Frozen caverns where hulking trolls hit hard and shrug off blows.",
+			"races": [
+				"Troll"
+			],
+			"mixed": false,
+			"mode": "waves",
+			"reward_mult": 1.0,
+			"background": "",
+			"order": 2,
+			"travel_days": 1,
+			"region": "northern_wilds",
+			"place": "Frostpeak Island"
+		},
+		"orc_plains": {
+			"name": "Orc Plains",
+			"description": "Open grasslands held by armored orc warbands. Rich in ore.",
+			"races": [
+				"Orc"
+			],
+			"mixed": false,
+			"mode": "waves",
+			"reward_mult": 1.0,
+			"background": "",
+			"order": 3,
+			"travel_days": 1,
+			"region": "iron_hills",
+			"place": "Stonehammer"
+		},
+		"fairy_circles": {
+			"name": "Fairy Circles",
+			"description": "Enchanted glades where fairies weave wild magic. Expect spells, not swords.",
+			"races": [
+				"Fairy"
+			],
+			"mixed": false,
+			"mode": "waves",
+			"reward_mult": 1.0,
+			"background": "",
+			"order": 4,
+			"travel_days": 1,
+			"region": "mystical_highlands",
+			"place": "Moonlit Grove"
+		}
+	},
+	"_doc": " region/place: where it lies on Nyxarys (data/regions.json); travel days are computed from the map distance to Nexus (travel_days is the fallback)."
+}

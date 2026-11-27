@@ -1,0 +1,7 @@
+{
+	"_comment": "Difficulty curves (calibrated with tests/balance_sim.tscn -- career). xp: XP needed to go from level L to L+1 = base + per_level x (L-1) + per_level_sq x (L-1)^2 (LevelSystem). enemy_floor_mult: enemy stat multiplier for floors 1..25, on top of their level (floor + 1); beyond the table the last step repeats (EnemyFactory.get_base_multiplier). Calibrated so a smart solo player who keeps gear current clears floors 1-3 ~85% first try, 4-10 ~75%, 11-20 ~65%, 21-25 ~55% (docs/balance/DIFFICULTY.md).",
+	"class_skill_levels": [1, 3, 6],
+	"_class_skill_levels": "Levels at which a hero learns their class's 1st, 2nd and 3rd skill (classes.json skills, in order). A rookie starts with one.",
+	"xp": { "base": 100, "per_level": 40, "per_level_sq": 30 },
+	"enemy_floor_mult": [1.00, 1.32, 1.54, 1.66, 1.67, 1.68, 1.71, 1.76, 1.77, 1.78, 1.83, 1.87, 1.88, 1.89, 1.90, 1.91, 1.98, 2.08, 2.17, 2.24, 2.29, 2.33, 2.36, 2.39, 2.42]
+}

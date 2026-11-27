@@ -1,0 +1,34 @@
+{
+ "tab": "Ledger",
+ "file": "data/ledger.json",
+ "order": 55,
+ "description": "Guild Ledger renown (LedgerManager.gd): the race to be the top adventurer.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Ledger",
+   "fields": [
+    {
+     "name": "weights",
+     "type": "json",
+     "help": "{per_rank, per_point, per_floor, per_boss, per_level, per_first, per_crown}"
+    },
+    {
+     "name": "show_top",
+     "type": "int",
+     "min": 5
+    },
+    {
+     "name": "news_top",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "crowning",
+     "type": "json",
+     "help": "{warning_days, per_crown, player_gold, player_gold_per_floor, player_points}: the yearly crowning of the Ledger's #1"
+    }
+   ]
+  }
+ ]
+}

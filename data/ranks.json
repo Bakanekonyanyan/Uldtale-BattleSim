@@ -1,0 +1,50 @@
+{
+  "_doc": "Adventurer ranks F -> S (RankManager.gd, docs/design/GAME_ROADMAP.md section 3). To be promoted you need the next rank's Guild Points, fewer than settings.demerit_block demerits, and to finish its promotion trial (a special Guild bounty with no deadline). Perks: floor_cap (highest floor you can unlock; 0 = no cap), carry_limit, board_size, max_active, reward_mult (bounty gold), party_size (heroes in your party, you included: hired hands and team members), team_slots (permanent team members; 0 = hire only). Recipes with unlock {type: adventurer_rank, rank: X} are known from rank X.",
+  "settings": {
+    "demerit_block": 3,
+    "demerits_cleared_per_bounty": 1
+  },
+  "ranks": {
+    "F": {
+      "order": 0, "title": "Fledgling",
+      "description": "Fresh off the road with a borrowed blade. The Guild lets you take small jobs.",
+      "points": 0, "floor_cap": 5, "carry_limit": 5, "board_size": 3, "max_active": 3, "reward_mult": 1.0, "party_size": 2, "team_slots": 0
+    },
+    "E": {
+      "order": 1, "title": "Wayfarer",
+      "description": "You've proven you can come back alive.",
+      "points": 40, "floor_cap": 8, "carry_limit": 5, "board_size": 3, "max_active": 3, "reward_mult": 1.1, "party_size": 3, "team_slots": 0,
+      "trial": {"title": "Trial of the Wood", "description": "Defeat the warband leader of the Goblin Forest on floor 3 or deeper.", "type": "KILL_BOSS", "location": "goblin_forest", "min_floor": 3, "gold": 200}
+    },
+    "D": {
+      "order": 2, "title": "Pathfinder",
+      "description": "Trusted to go deeper. Other adventurers start to know your name.",
+      "points": 120, "floor_cap": 12, "carry_limit": 10, "board_size": 4, "max_active": 3, "reward_mult": 1.2, "party_size": 3, "team_slots": 1,
+      "trial": {"title": "Trial of the Deep Ice", "description": "Defeat a troll king in the Troll Caves on floor 6 or deeper.", "type": "KILL_BOSS", "location": "troll_caves", "min_floor": 6, "gold": 500}
+    },
+    "C": {
+      "order": 3, "title": "Vanguard",
+      "description": "The Guild sends you where the trouble is.",
+      "points": 260, "floor_cap": 16, "carry_limit": 10, "board_size": 4, "max_active": 4, "reward_mult": 1.35, "party_size": 3, "team_slots": 1,
+      "trial": {"title": "Trial of the Warband", "description": "Defeat an orc warlord on the Orc Plains, floor 10 or deeper.", "type": "KILL_BOSS", "location": "orc_plains", "min_floor": 10, "gold": 1000}
+    },
+    "B": {
+      "order": 4, "title": "Veteran",
+      "description": "Seasoned and scarred. Recruits ask to follow you.",
+      "points": 480, "floor_cap": 20, "carry_limit": 15, "board_size": 5, "max_active": 4, "reward_mult": 1.5, "party_size": 3, "team_slots": 2,
+      "trial": {"title": "Trial of the Circle", "description": "Defeat the ruler of the Fairy Circles on floor 14 or deeper.", "type": "KILL_BOSS", "location": "fairy_circles", "min_floor": 14, "gold": 2000}
+    },
+    "A": {
+      "order": 5, "title": "Champion",
+      "description": "One of the Guild's finest. Bards get your name almost right.",
+      "points": 800, "floor_cap": 0, "carry_limit": 15, "board_size": 5, "max_active": 5, "reward_mult": 1.75, "party_size": 3, "team_slots": 2,
+      "trial": {"title": "Trial of the Labyrinth", "description": "Defeat the boss of floor 18 or deeper in the Tower.", "type": "KILL_BOSS", "location": "the_dungeon", "min_floor": 18, "gold": 4000}
+    },
+    "S": {
+      "order": 6, "title": "Legend",
+      "description": "Songs are sung. Rivals measure themselves against you.",
+      "points": 1250, "floor_cap": 0, "carry_limit": 20, "board_size": 5, "max_active": 5, "reward_mult": 2.0, "party_size": 3, "team_slots": 2,
+      "trial": {"title": "Trial of Legends", "description": "Defeat the boss of floor 23 or deeper in the Tower.", "type": "KILL_BOSS", "location": "the_dungeon", "min_floor": 23, "gold": 8000}
+    }
+  }
+}

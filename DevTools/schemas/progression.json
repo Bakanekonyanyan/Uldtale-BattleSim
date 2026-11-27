@@ -1,0 +1,34 @@
+{
+ "tab": "Progression",
+ "file": "data/progression.json",
+ "order": 47,
+ "description": "Difficulty curves: XP to level up and the enemy stat multiplier per floor. Calibrate with tests/balance_sim.tscn -- career.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Progression",
+   "fields": [
+    {
+     "name": "xp",
+     "type": "json",
+     "help": "{base, per_level, per_level_sq}: XP from level L to L+1 = base + per_level x (L-1) + per_level_sq x (L-1)^2"
+    },
+    {
+     "name": "class_skill_levels",
+     "type": "json",
+     "help": "Levels at which a hero learns their class's skills, in classes.json order: [1, 3, 6] = one at the start, the next at 3, the rest at 6."
+    },
+    {
+     "name": "_class_skill_levels",
+     "type": "text",
+     "help": "Note on class_skill_levels."
+    },
+    {
+     "name": "enemy_floor_mult",
+     "type": "json",
+     "help": "25 values: enemy stat multiplier for floors 1..25 (on top of enemy level = floor + 1)"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,95 @@
+{
+ "tab": "Challenges",
+ "file": "data/challenges.json",
+ "order": 49,
+ "description": "Optional per-wave goals (WaveChallenges.gd). Met + won = bonus loot banked with the wave.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Settings",
+   "fields": [
+    {
+     "name": "chance",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Chance a regular wave has a challenge."
+    },
+    {
+     "name": "boss_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "reward",
+     "type": "json",
+     "help": "{gold_base (x the gold curve), boss_mult, material_rolls, gear_chance}"
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Challenges",
+   "path": [
+    "challenges"
+   ],
+   "key_style": "snake",
+   "name_field": "name",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "stat",
+     "type": "enum",
+     "options": [
+      "breaks",
+      "combos",
+      "weak_hits",
+      "guards",
+      "items",
+      "unison",
+      "setbacks",
+      "rounds"
+     ],
+     "help": "What BattleRules counts."
+    },
+    {
+     "name": "at_least",
+     "type": "int",
+     "optional": true,
+     "min": 0
+    },
+    {
+     "name": "at_most",
+     "type": "int",
+     "optional": true,
+     "min": 0
+    },
+    {
+     "name": "min_enemies",
+     "type": "int",
+     "optional": true,
+     "min": 1
+    },
+    {
+     "name": "min_party",
+     "type": "int",
+     "optional": true,
+     "min": 1
+    },
+    {
+     "name": "weight",
+     "type": "float",
+     "min": 0
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,56 @@
+{
+ "tab": "Chronicle",
+ "file": "data/chronicle.json",
+ "order": 59,
+ "description": "The Chronicle and Legends (ChronicleManager.gd, LegendManager.gd): what the world remembers, epithets, epitaphs, and how your Legend is written and carried to new worlds.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Chronicle",
+   "fields": [
+    {
+     "name": "_doc",
+     "type": "text",
+     "help": "Notes for designers."
+    },
+    {
+     "name": "min_importance",
+     "type": "int",
+     "min": 0,
+     "help": "News at or above this importance is kept in the Chronicle."
+    },
+    {
+     "name": "max_entries",
+     "type": "int",
+     "min": 50,
+     "help": "Cap; the least important, oldest entries go first."
+    },
+    {
+     "name": "kind_importance",
+     "type": "json",
+     "help": "News kind -> base importance (death, rival, rank, adventurer, guild, party, tavern, info, event, chronicle)."
+    },
+    {
+     "name": "boosts",
+     "type": "json",
+     "help": "[{contains, add}]: extra importance when a line contains the text."
+    },
+    {
+     "name": "epithets",
+     "type": "json",
+     "help": "[{id, text, <deed>: minimum}] - the first whose every minimum is met. Deeds: crowns, bosses, deepest, firsts, kills, avenged, rescues, near_death, top_rank."
+    },
+    {
+     "name": "epitaphs",
+     "type": "json",
+     "help": "trait -> one line for the Fallen; 'default' otherwise."
+    },
+    {
+     "name": "legend",
+     "type": "json",
+     "help": "Legend writing: max_beats, templates (origin, deed, bond, rival, crowns, end, bard_intro) with {name} {race} {class} {year} {season} {friend} {rival} {rank} {epithet} {count} {text}; heir_chance, heir_drive, relic_chance, relic_rarity."
+    }
+   ]
+  }
+ ]
+}

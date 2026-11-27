@@ -17,8 +17,13 @@ func get_save_file_path(character_name: String) -> String:
 func save_exists(character_name: String) -> bool:
 	return FileAccess.file_exists(get_save_file_path(character_name))
 
+## Bump when the save layout changes; add a step to _migrate() for it.
+## v1: original (no version key). v2: per-location progress, carry limit, town block.
+const SAVE_VERSION := 2
+
 func save_game(player: CharacterData):
 	var save_data = {
+		"save_version": SAVE_VERSION,
 		"name": player.name,
 		"race": player.race,
 		"character_class": player.character_class,
@@ -42,12 +47,19 @@ func save_game(player: CharacterData):
 		"spell_power_type": player.spell_power_type,
 		"skills": player.skills,
 		"skill_levels": player.skill_manager.skill_levels,
+		"talents": player.talents.get_save_data() if player.talents else {},
+		"equipped_skills": player.equipped_skills,
 		"inventory": {},
 		"stash": {},
 		"equipment": {},
 		"xp": player.xp,
 		"attribute_points": player.attribute_points,
-		"max_floor_cleared": player.max_floor_cleared
+		"max_floor_unlocked": player.max_floor_unlocked,
+		"location_progress": player.location_progress,
+		"last_location": player.last_location,
+		"carry_limit": player.carry_limit,
+		# Alchemist / Blacksmith / Guild state (filled in by later phases)
+		"town": WorldShare.save_split(player)   # the world goes to its own file (shared worlds)
 
 	}
 	
@@ -67,6 +79,7 @@ func save_game(player: CharacterData):
 				"damage": item.damage,
 				"armor_value": item.armor_value
 			}
+			equip_save_data.merge(item.get_upgrade_save_data())
 			
 			# CRITICAL FIX: Convert enum keys to strings for JSON
 			if "stat_modifiers" in item and not item.stat_modifiers.is_empty():
@@ -113,6 +126,7 @@ func save_game(player: CharacterData):
 				"damage": item.damage,
 				"armor_value": item.armor_value
 			}
+			equip_save_data.merge(item.get_upgrade_save_data())
 			
 			# CRITICAL FIX: Convert enum keys to strings
 			if "stat_modifiers" in item and not item.stat_modifiers.is_empty():
@@ -156,6 +170,7 @@ func save_game(player: CharacterData):
 				"armor_value": equipped_item.armor_value,
 				"inventory_key": equipped_item.inventory_key
 			}
+			equip_data.merge(equipped_item.get_upgrade_save_data())
 			
 			# CRITICAL FIX: Convert enum keys to strings
 			if "stat_modifiers" in equipped_item and not equipped_item.stat_modifiers.is_empty():
@@ -184,17 +199,17 @@ func save_game(player: CharacterData):
 	var file = FileAccess.open(get_save_file_path(player.name), FileAccess.WRITE)
 	file.store_string(JSON.stringify(save_data))
 	file.close()
-	print("Character saved: ", player.name)
+	Log.debug("save", "Character saved: ", player.name)
 
 func load_game(character_name: String) -> CharacterData:
 	var save_file = get_save_file_path(character_name)
 	if not FileAccess.file_exists(save_file):
-		print("Save file does not exist: ", save_file)
+		Log.debug("save", "Save file does not exist: ", save_file)
 		return null
 
 	var file = FileAccess.open(save_file, FileAccess.READ)
 	if file == null:
-		print("Error: Could not open file for reading: ", save_file)
+		Log.debug("save", "Error: Could not open file for reading: ", save_file)
 		return null
 
 	var json_string = file.get_as_text()
@@ -202,7 +217,7 @@ func load_game(character_name: String) -> CharacterData:
 
 	var save_data = JSON.parse_string(json_string)
 	if save_data == null:
-		print("Error: Could not parse save data for character: ", character_name)
+		Log.debug("save", "Error: Could not parse save data for character: ", character_name)
 		return null
 
 	var player = CharacterData.new()
@@ -229,28 +244,50 @@ func load_game(character_name: String) -> CharacterData:
 	player.spell_power_type = save_data.get("spell_power_type", "intelligence")
 	player.xp = save_data.get("xp", 0)
 	player.attribute_points = save_data.get("attribute_points", 0)
-	player.max_floor_cleared = save_data.get("max_floor_cleared", 0)
+	player.max_floor_unlocked = int(save_data.get("max_floor_unlocked", save_data.get("max_floor_cleared", 0)))   # old saves: same value, old name
+	_migrate(save_data)
+	player.location_progress = save_data.get("location_progress", {})
+	player.last_location = save_data.get("last_location", "the_dungeon")
+	player.carry_limit = int(save_data.get("carry_limit", 5))
+	player.town_state = save_data.get("town", {})
+	WorldShare.load_merge(player)   # put the shared world back around the character
+	if not player.town_state.has("world"):
+		WorldClock.migrate_old_save(player)   # timers were in expeditions before the world clock
+	RankManager.apply_perks(player)   # rank perks (carry limit, recipes) for older saves
 	player.is_player = true
 	
 	# Handle skills separately
 	if "skills" in save_data and save_data["skills"] is Array:
 		player.add_skills(save_data["skills"])
 	else:
-		print("Warning: Skills data not found or invalid for character: ", character_name)
+		Log.debug("save", "Warning: Skills data not found or invalid for character: ", character_name)
 	
 	if "skill_levels" in save_data and typeof(save_data["skill_levels"]) == TYPE_DICTIONARY:
 		player.skill_manager.skill_levels = save_data["skill_levels"]  #  Use skill_manager
-		print("Loaded skill levels: ", player.skill_manager.skill_levels)
+		Log.debug("save", "Loaded skill levels: ", player.skill_manager.skill_levels)
 
 	# Handle skills separately - this will now use the loaded skill_levels
 	if "skills" in save_data and save_data["skills"] is Array:
 		player.add_skills(save_data["skills"])
 	else:
-		print("Warning: Skills data not found or invalid")
+		Log.debug("save", "Warning: Skills data not found or invalid")
+	
+	# Class skills added since the save was made (e.g. the Monk's animal-style kit)
+	var cls_data = DataRegistry.get_data("classes")
+	var class_skills = cls_data.get("playable", {}).get(player.character_class, {}).get("skills", []) if cls_data is Dictionary else []
+	var missing = class_skills.filter(func(s): return not player.skills.has(s))
+	if not missing.is_empty():
+		player.add_skills(missing)
+	
+	# Talents (spent points; unlock their skills) and the battle loadout
+	if player.talents:
+		player.talents.load_save_data(save_data.get("talents", {}))
+	player.set_equipped_skills(save_data.get("equipped_skills", []))
 	
 	# Handle Proficiencies
 	if "proficiency_data" in save_data:
 		player.proficiency_manager.load_save_data(save_data["proficiency_data"])
+		WeaponArts.check_unlocks(player)   # arts earned before they existed
 	
 	# Load inventory
 	if "inventory" in save_data:
@@ -265,6 +302,7 @@ func load_game(character_name: String) -> CharacterData:
 					base_item.damage = item_data.get("damage", base_item.damage)
 					base_item.armor_value = item_data.get("armor_value", base_item.armor_value)
 					base_item.inventory_key = item_key
+					base_item.apply_upgrade_save_data(item_data)
 					
 					# CRITICAL FIX: Convert string keys back to enum
 					if "stat_modifiers" in item_data:
@@ -293,7 +331,7 @@ func load_game(character_name: String) -> CharacterData:
 						"item": base_item,
 						"quantity": item_data["quantity"]
 					}
-					print("Loaded equipment to inventory: ", base_item.display_name, " with stat_modifiers: ", base_item.stat_modifiers)
+					Log.debug("save", "Loaded equipment to inventory: ", base_item.display_name, " with stat_modifiers: ", base_item.stat_modifiers)
 			else:
 				var item = ItemManager.get_item(item_key)
 				if item:
@@ -312,6 +350,7 @@ func load_game(character_name: String) -> CharacterData:
 					base_item.damage = item_data.get("damage", base_item.damage)
 					base_item.armor_value = item_data.get("armor_value", base_item.armor_value)
 					base_item.inventory_key = item_key
+					base_item.apply_upgrade_save_data(item_data)
 					
 					# CRITICAL FIX: Convert string keys back to enum
 					if "stat_modifiers" in item_data:
@@ -340,7 +379,7 @@ func load_game(character_name: String) -> CharacterData:
 						"item": base_item,
 						"quantity": item_data["quantity"]
 					}
-					print("Loaded equipment to stash: ", base_item.display_name)
+					Log.debug("save", "Loaded equipment to stash: ", base_item.display_name)
 			else:
 				var item = ItemManager.get_item(item_key)
 				if item:
@@ -358,6 +397,7 @@ func load_game(character_name: String) -> CharacterData:
 					item.damage = equip_data.get("damage", item.damage)
 					item.armor_value = equip_data.get("armor_value", item.armor_value)
 					item.inventory_key = equip_data.get("inventory_key", item.id)
+					item.apply_upgrade_save_data(equip_data)
 					
 					# CRITICAL FIX: Convert string keys back to enum
 					if "stat_modifiers" in equip_data:
@@ -386,10 +426,15 @@ func load_game(character_name: String) -> CharacterData:
 					item.apply_effects(player)
 					if item.has_method("apply_stat_modifiers"):
 						item.apply_stat_modifiers(player)
-					print("Loaded equipped item: ", item.display_name, " with stat_modifiers: ", item.stat_modifiers)
+					Log.debug("save", "Loaded equipped item: ", item.display_name, " with stat_modifiers: ", item.stat_modifiers)
 	
-	print("Loaded inventory items: ", player.inventory.items.keys())
-	print("Loaded stash items: ", player.stash.items.keys())
+	Log.debug("save", "Loaded inventory items: ", player.inventory.items.keys())
+	Log.debug("save", "Loaded stash items: ", player.stash.items.keys())
+	
+	# Consumables over the carry limit live in the stash (also migrates old saves)
+	var moved = player.enforce_carry_limit()
+	if moved > 0:
+		Log.debug("save", "SaveManager: moved %d consumables over the carry limit to the stash" % moved)
 	
 	#  ADD THIS AFTER ALL CHARACTER DATA IS LOADED:
 	# Initialize elemental resistances if not already present
@@ -404,6 +449,16 @@ func load_game(character_name: String) -> CharacterData:
 	player.calculate_secondary_attributes()
 	
 	return player
+
+## Upgrade older save dictionaries in place to the current layout.
+func _migrate(save_data: Dictionary) -> void:
+	var version = int(save_data.get("save_version", 1))
+	if version < 2:
+		# v1 had a single progress number from the (then only) mixed dungeon
+		var old_max = max(1, int(save_data.get("max_floor_cleared", 1)))
+		save_data["location_progress"] = {"the_dungeon": old_max}
+		Log.debug("save", "SaveManager: migrated v1 save (floor %d -> The Dungeon)" % old_max)
+	save_data["save_version"] = SAVE_VERSION
 
 func get_all_characters() -> Array:
 	var characters = []
@@ -429,9 +484,61 @@ func get_all_characters() -> Array:
 func delete_character(character_name: String):
 	var file_name = SAVE_DIR + character_name + ".json"
 	if FileAccess.file_exists(file_name):
+		# leave the shared world's register (a world no one lives in is removed)
+		var mine = _read_town(character_name)
+		var others: Array = []
+		for f in DirAccess.get_files_at(SAVE_DIR):
+			if f.ends_with(".json") and f.get_basename() != character_name:
+				others.append(_read_town(f.get_basename()))
+		WorldShare.on_delete(mine, character_name, others)
 		var dir = DirAccess.open(SAVE_DIR)
 		if dir:
 			dir.remove(file_name)
-			print("Character deleted: ", character_name)
+			Log.debug("save", "Character deleted: ", character_name)
 	else:
-		print("Character file not found: ", character_name)
+		Log.debug("save", "Character file not found: ", character_name)
+
+# === EQUIPMENT <-> SAVE DICT (shared helpers; used by the Guild's Lost & Found) ===
+
+func equipment_to_save(item: Equipment) -> Dictionary:
+	var d = {
+		"base_id": item.id, "name": item.display_name, "rarity": item.rarity, "rarity_applied": item.rarity_applied,
+		"damage": item.damage, "armor_value": item.armor_value,
+		"status_effect_chance": item.status_effect_chance, "status_effect_type": item.status_effect_type,
+		"bonus_damage": item.bonus_damage, "item_prefix": item.item_prefix, "item_suffix": item.item_suffix,
+		"flavor_text": item.flavor_text,
+	}
+	d.merge(item.get_upgrade_save_data())
+	var mods = {}
+	for stat_enum in item.stat_modifiers:
+		mods[Skill.AttributeTarget.keys()[stat_enum]] = item.stat_modifiers[stat_enum]
+	d["stat_modifiers"] = mods
+	return d
+
+func equipment_from_save(d: Dictionary) -> Equipment:
+	var item = ItemManager.get_item(String(d.get("base_id", "")))
+	if not (item is Equipment):
+		return null
+	item.rarity = d.get("rarity", item.rarity)
+	item.rarity_applied = d.get("rarity_applied", false)
+	item.damage = d.get("damage", item.damage)
+	item.armor_value = d.get("armor_value", item.armor_value)
+	item.apply_upgrade_save_data(d)
+	item.stat_modifiers = {}
+	for stat_name in d.get("stat_modifiers", {}):
+		if Skill.AttributeTarget.has(stat_name):
+			item.stat_modifiers[Skill.AttributeTarget[stat_name]] = d["stat_modifiers"][stat_name]
+	for k in ["status_effect_chance", "status_effect_type", "bonus_damage", "item_prefix", "item_suffix", "flavor_text"]:
+		if d.has(k):
+			item.set(k, d[k])
+	if d.has("name"):
+		item.display_name = d["name"]
+	return item
+
+## The raw "town" part of a save (no world merged in).
+func _read_town(character_name: String) -> Dictionary:
+	var p = get_save_file_path(character_name)
+	if not FileAccess.file_exists(p):
+		return {}
+	var d = JSON.parse_string(FileAccess.get_file_as_string(p))
+	return d.get("town", {}) if d is Dictionary else {}

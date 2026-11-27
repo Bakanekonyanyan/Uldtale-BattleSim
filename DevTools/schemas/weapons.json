@@ -1,0 +1,160 @@
+{
+ "tab": "Weapons",
+ "file": "data/items/weapons.json",
+ "order": 21,
+ "description": "Weapon and off-hand bases. Physical damage type per weapon id is in Damage Types.",
+ "sections": [
+  {
+   "kind": "collection",
+   "label": "Weapons",
+   "key_style": "snake",
+   "name_field": "name",
+   "levels": [
+    {
+     "name": "hand",
+     "options": [
+      "main_hand",
+      "off_hand"
+     ],
+     "sets": [
+      "slot"
+     ]
+    },
+    {
+     "name": "category",
+     "options": [
+      "one_handed",
+      "two_handed",
+      "shield",
+      "source"
+     ],
+     "sets": [
+      "type"
+     ]
+    }
+   ],
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "damage",
+     "type": "int",
+     "min": 0,
+     "optional": true,
+     "help": "Weapon damage (added to attack power)."
+    },
+    {
+     "name": "armor_value",
+     "type": "int",
+     "min": 0,
+     "optional": true,
+     "help": "Shields: armor."
+    },
+    {
+     "name": "spell_power",
+     "type": "int",
+     "min": 0,
+     "optional": true,
+     "help": "Sources (tomes, talismans): spell power."
+    },
+    {
+     "name": "value",
+     "type": "int",
+     "min": 0,
+     "default": 100,
+     "help": "Base price in copper (shop sells for this, buys for half)."
+    },
+    {
+     "name": "attribute_target",
+     "type": "enum_multi",
+     "source": "item_stats",
+     "help": "Stat(s) raised while equipped (pairs with attribute_increase)."
+    },
+    {
+     "name": "attribute_increase",
+     "type": "json",
+     "help": "Number, or a list matching attribute_target, e.g. [3, 5]."
+    },
+    {
+     "name": "class_restriction",
+     "type": "ref_list",
+     "source": "classes",
+     "help": "Classes that can equip it (heroes and enemies)."
+    },
+    {
+     "name": "effects",
+     "type": "map",
+     "key": {
+      "type": "enum",
+      "source": "item_stats",
+      "allow_custom": true
+     },
+     "value": {
+      "type": "float"
+     },
+     "help": "Flat secondary bonuses, e.g. dodge -0.04, spell_power 2, armor_penetration 0.2."
+    },
+    {
+     "name": "rarity",
+     "type": "str",
+     "help": "Leave empty: rarity is rolled when the item drops."
+    },
+    {
+     "name": "type",
+     "type": "enum",
+     "options": [
+      "one_handed",
+      "two_handed",
+      "shield",
+      "source"
+     ]
+    },
+    {
+     "name": "slot",
+     "type": "enum",
+     "options": [
+      "main_hand",
+      "off_hand"
+     ]
+    },
+    {
+     "name": "dual_wieldable",
+     "type": "bool"
+    },
+    {
+     "name": "dual_wield_classes",
+     "type": "ref_list",
+     "source": "classes"
+    },
+    {
+     "name": "preferred_slot",
+     "type": "enum",
+     "options": [
+      "main_hand",
+      "off_hand"
+     ]
+    },
+    {
+     "name": "blocks_offhand",
+     "type": "bool",
+     "help": "Two-handers: no off-hand unless listed in offhand_exceptions."
+    },
+    {
+     "name": "offhand_exceptions",
+     "type": "enum_list",
+     "options": [
+      "shield",
+      "source"
+     ],
+     "allow_custom": true
+    }
+   ]
+  }
+ ]
+}

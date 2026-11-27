@@ -1,0 +1,8 @@
+{
+	"_comment": "Gear worn by defeated enemies. Each piece rolls its rarity's chance (x the momentum reward bonus); an enemy drops at most max_per_enemy pieces. In a boss fight at least boss_guaranteed pieces drop (the rarest worn piece first).",
+	"chance_by_rarity": { "common": 0.0, "uncommon": 0.08, "magic": 0.12, "rare": 0.18, "epic": 0.24, "legendary": 0.30 },
+	"boss_bonus": 0.10,
+	"max_chance": 0.5,
+	"max_per_enemy": 1,
+	"boss_guaranteed": 1
+}

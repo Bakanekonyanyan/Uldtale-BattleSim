@@ -1,0 +1,15 @@
+{
+	"_comment": "Run boons (RunState.gd): after each boss win you pick 1 of offer_count. They last until the expedition ends. Effects: break_heal (party heals this share of max HP when you Break an enemy), link_gain_mult (x), reveal_weaknesses (true), enemy_break_delta / hero_break_delta (+/- hits to Break), wave_heal (HP/MP share restored at each wave's start), start_link (+Link each battle), gold_mult (x wave gold), guard_pips (+attacker pips on Perfect Guard).",
+	"offer_count": 3,
+	"boons": {
+		"vigor": { "name": "Vigor", "description": "Breaking an enemy heals your party 8% of max HP.", "effects": { "break_heal": 0.08 } },
+		"kindred": { "name": "Kindred Spirits", "description": "The Link gauge fills 50% faster.", "effects": { "link_gain_mult": 1.5 } },
+		"keen_eye": { "name": "Keen Eye", "description": "Every enemy weakness is shown.", "effects": { "reveal_weaknesses": true } },
+		"ruthless": { "name": "Ruthless", "description": "Enemies Break one hit sooner.", "effects": { "enemy_break_delta": -1 } },
+		"steadfast": { "name": "Steadfast", "description": "Your heroes take one more hit to Break.", "effects": { "hero_break_delta": 1 } },
+		"second_wind": { "name": "Second Wind", "description": "Recover 10% HP and MP at the start of every wave.", "effects": { "wave_heal": 0.1 } },
+		"opening_gambit": { "name": "Opening Gambit", "description": "Every battle starts with +30 Link.", "effects": { "start_link": 30 } },
+		"plunder": { "name": "Plunder", "description": "+25% gold from waves.", "effects": { "gold_mult": 1.25 } },
+		"bulwark": { "name": "Bulwark", "description": "Perfect Guards stagger the attacker twice as hard.", "effects": { "guard_pips": 1 } }
+	}
+}

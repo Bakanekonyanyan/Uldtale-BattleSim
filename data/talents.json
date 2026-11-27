@@ -1,0 +1,5537 @@
+{
+	"_doc": "Talent trees (TalentManager.gd, docs/design/TALENTS.md). 1 point per level from first_point_level; a tier-T node needs tier_points[T-1] points spent in its branch; nodes with 'skill' unlock that skill; effects are per rank. Forks: nodes sharing a 'choice' id in a branch are mutually exclusive (mut2 = mutate the tier-2 skill, t4 = the tier-4 passive, mut5 = mutate the ultimate); 'requires' names a node in the branch that must be learned first; fork_alt marks the second tier-4 option.",
+	"settings": {
+		"points_per_level": 1,
+		"first_point_level": 2,
+		"tier_points": [
+			0,
+			2,
+			4,
+			6,
+			8
+		],
+		"respec_gold_per_level": 100,
+		"loadout_size": 6
+	},
+	"branches": {
+		"Paladin": {
+			"bulwark": {
+				"name": "Bulwark",
+				"description": "Sword and board: the shield of the party.",
+				"order": 0
+			},
+			"crusader": {
+				"name": "Crusader",
+				"description": "Holy offense; two-handers welcome.",
+				"order": 1
+			},
+			"devotion": {
+				"name": "Devotion",
+				"description": "Faith that mends and protects.",
+				"order": 2
+			}
+		},
+		"Samurai": {
+			"iai": {
+				"name": "Iai",
+				"description": "The art of the draw: one perfect cut.",
+				"order": 0
+			},
+			"bushido": {
+				"name": "Bushido",
+				"description": "Discipline and inner spirit.",
+				"order": 1
+			},
+			"kenjutsu": {
+				"name": "Kenjutsu",
+				"description": "Reading the opponent; the great katana.",
+				"order": 2
+			}
+		},
+		"Berserker": {
+			"carnage": {
+				"name": "Carnage",
+				"description": "Massive weapons, wide arcs.",
+				"order": 0
+			},
+			"bloodlust": {
+				"name": "Bloodlust",
+				"description": "Fenrisulfr's hunger: lifesteal and frenzy.",
+				"order": 1
+			},
+			"war_wolf": {
+				"name": "War Wolf",
+				"description": "The tank that will not fall.",
+				"order": 2
+			}
+		},
+		"Monk": {
+			"tiger": {
+				"name": "Tiger",
+				"description": "Power: the tiger's ferocity.",
+				"order": 0
+			},
+			"crane": {
+				"name": "Crane",
+				"description": "Grace: balance, evasion and counters.",
+				"order": 1
+			},
+			"verdant_heart": {
+				"name": "Verdant Heart",
+				"description": "Harmony with Elandria, Nimue and Fenrisulfr.",
+				"order": 2
+			}
+		},
+		"Myrmidon": {
+			"arms_master": {
+				"name": "Arms Master",
+				"description": "Every weapon, used well.",
+				"order": 0
+			},
+			"skirmisher": {
+				"name": "Skirmisher",
+				"description": "Two blades and quick feet.",
+				"order": 1
+			},
+			"mercenary": {
+				"name": "Mercenary",
+				"description": "Professional grit and dirty tricks.",
+				"order": 2
+			}
+		},
+		"Shinobi": {
+			"kage": {
+				"name": "Kage",
+				"description": "Shadow arts and assassination.",
+				"order": 0
+			},
+			"ninjutsu": {
+				"name": "Ninjutsu",
+				"description": "Fire, water and lightning techniques.",
+				"order": 1
+			},
+			"tools": {
+				"name": "Shinobi Tools",
+				"description": "Kunai, shuriken and smoke.",
+				"order": 2
+			}
+		},
+		"Druid": {
+			"bear": {
+				"name": "Bear Form",
+				"description": "Elandria's bear: raw strength and resilience.",
+				"order": 0
+			},
+			"alraune": {
+				"name": "Alraune",
+				"description": "The flower spirit: healing and control.",
+				"order": 1
+			},
+			"wildcaller": {
+				"name": "Wildcaller",
+				"description": "Storms, frost and thorns of the wild.",
+				"order": 2
+			}
+		},
+		"Cleric": {
+			"battle_priest": {
+				"name": "Battle Priest",
+				"description": "Mace, mail and divine wrath.",
+				"order": 0
+			},
+			"restoration": {
+				"name": "Restoration",
+				"description": "Healing that can mend the gravest wound.",
+				"order": 1
+			},
+			"inquisitor": {
+				"name": "Inquisitor",
+				"description": "Purging fire and judgement.",
+				"order": 2
+			}
+		},
+		"Kannagi": {
+			"barrier_arts": {
+				"name": "Barrier Arts",
+				"description": "Seals and wards of the Ancient Ones.",
+				"order": 0
+			},
+			"ancestral_spirits": {
+				"name": "Ancestral Spirits",
+				"description": "Healing, mana and stamina.",
+				"order": 1
+			},
+			"kotodama": {
+				"name": "Kotodama",
+				"description": "Words of power older than the gods.",
+				"order": 2
+			}
+		},
+		"Elementalist": {
+			"conflux": {
+				"name": "Conflux",
+				"description": "Fire and ice, the classic contradiction.",
+				"order": 0
+			},
+			"stormcalling": {
+				"name": "Stormcalling",
+				"description": "Water, wind and lightning.",
+				"order": 1
+			},
+			"fifth_element": {
+				"name": "The Fifth Element",
+				"description": "Conversion of the four, toward Aether.",
+				"order": 2
+			}
+		},
+		"Beastmaster": {
+			"predator": {
+				"name": "Predator",
+				"description": "Pacts with Fenrisulfr and the Manticore.",
+				"order": 0
+			},
+			"behemoth": {
+				"name": "Behemoth",
+				"description": "The Behemoth's endurance.",
+				"order": 1
+			},
+			"roc": {
+				"name": "Roc",
+				"description": "The Roc's speed and the open sky.",
+				"order": 2
+			}
+		},
+		"Necromancer": {
+			"curses": {
+				"name": "Curses",
+				"description": "Hel's maledictions.",
+				"order": 0
+			},
+			"life_drinker": {
+				"name": "Life Drinker",
+				"description": "Your own life, and others', as fuel.",
+				"order": 1
+			},
+			"gravecaller": {
+				"name": "Gravecaller",
+				"description": "Bone and the cold of the grave.",
+				"order": 2
+			}
+		}
+	},
+	"nodes": {
+		"Paladin": {
+			"bulwark": {
+				"shield_discipline": {
+					"name": "Shield Discipline",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Drilled behind the shield in the Grand Cathedral.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"toughness": 3
+							}
+						},
+						{
+							"type": "defense",
+							"reduce": 0.02,
+							"with": "shield"
+						}
+					]
+				},
+				"shield_bash": {
+					"name": "Shield Bash",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Slam your shield into the foe, knocking it off balance.",
+					"skill": "Shield Bash"
+				},
+				"bastion": {
+					"name": "Bastion",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Your guard becomes a wall.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.04,
+							"with": "shield"
+						},
+						{
+							"type": "stats",
+							"stats": {
+								"fortitude": 1
+							}
+						}
+					]
+				},
+				"unbreakable": {
+					"name": "Unbreakable",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "When the line is about to break, you hold.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.1,
+							"user_hp_below": 0.4
+						}
+					],
+					"choice": "t4"
+				},
+				"aegis_of_dawn": {
+					"name": "Aegis of Dawn",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Solara's light hardens into a radiant aegis that heals and turns blows back.",
+					"skill": "Aegis of Dawn"
+				},
+				"concussive_rim": {
+					"name": "Concussive Rim",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "shield_bash",
+					"description": "Drive the rim into the jaw: the foe reels longer.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Shield Bash",
+							"turn_delay": 1,
+							"name": "Concussive Rim"
+						},
+						{
+							"type": "skill",
+							"skill": "Shield Bash",
+							"duration": 1
+						}
+					]
+				},
+				"rebuke": {
+					"name": "Rebuke",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "shield_bash",
+					"description": "The bash becomes a guard: blows rebound off your shield.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Shield Bash",
+							"after_use": {
+								"self_status": "REFLECT",
+								"self_turns": 2
+							},
+							"name": "Rebuke"
+						}
+					]
+				},
+				"retribution": {
+					"name": "Retribution",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Every blow you absorb sharpens your reply.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.08,
+							"user_hp_below": 0.7
+						}
+					]
+				},
+				"dawn_bulwark": {
+					"name": "Dawn Bulwark",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "aegis_of_dawn",
+					"description": "The aegis spreads over everyone you protect.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Aegis of Dawn",
+							"target": "ALL_ALLIES",
+							"power_mult": 0.6,
+							"name": "Dawn Bulwark"
+						}
+					]
+				},
+				"unyielding_dawn": {
+					"name": "Unyielding Dawn",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "aegis_of_dawn",
+					"description": "Solara's light holds longer and closes your wounds as it rises.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Aegis of Dawn",
+							"duration": 2
+						},
+						{
+							"type": "mutate",
+							"skill": "Aegis of Dawn",
+							"after_use": {
+								"heal_pct": 0.15
+							},
+							"name": "Unyielding Dawn"
+						}
+					]
+				}
+			},
+			"crusader": {
+				"righteous_fury": {
+					"name": "Righteous Fury",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Your strikes carry the Radiant Dawn.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"element": "HOLY"
+						}
+					]
+				},
+				"radiant_cleave": {
+					"name": "Radiant Cleave",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A sweeping blow trailing holy light that dazzles every foe.",
+					"skill": "Radiant Cleave"
+				},
+				"zeal": {
+					"name": "Zeal",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Fervor behind a great blade.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"ability": "PHYSICAL",
+							"with": "two_handed"
+						}
+					]
+				},
+				"sanctified_blows": {
+					"name": "Sanctified Blows",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Strike the reeling and the blinded with judgement.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "sanctified_strike",
+							"bonus": 0.15
+						},
+						{
+							"type": "combo",
+							"combo": "judgement",
+							"bonus": 0.1
+						}
+					],
+					"choice": "t4"
+				},
+				"solaras_verdict": {
+					"name": "Solara's Verdict",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Call down the full judgement of the Radiant Dawn on one foe.",
+					"skill": "Solara's Verdict"
+				},
+				"focused_radiance": {
+					"name": "Focused Radiance",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "radiant_cleave",
+					"description": "Gather the arc into a single burning line.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Radiant Cleave",
+							"target": "ENEMY",
+							"power_mult": 1.6,
+							"name": "Focused Radiance"
+						}
+					]
+				},
+				"searing_arc": {
+					"name": "Searing Arc",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "radiant_cleave",
+					"description": "The light trails holy fire.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Radiant Cleave",
+							"add_status": [
+								"BURN"
+							],
+							"add_element": "HOLY",
+							"name": "Searing Arc"
+						}
+					]
+				},
+				"zealots_charge": {
+					"name": "Zealot's Charge",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "A two-handed blade swung in Solara's name.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.06,
+							"with": "two_handed"
+						}
+					]
+				},
+				"verdict_of_many": {
+					"name": "Verdict of Many",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "solaras_verdict",
+					"description": "Judgement falls on every foe at once.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Solara's Verdict",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.6,
+							"name": "Verdict of Many"
+						}
+					]
+				},
+				"final_judgement": {
+					"name": "Final Judgement",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "solaras_verdict",
+					"description": "The guilty and the broken are judged hardest.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.4,
+							"skill": "Solara's Verdict",
+							"target_hp_below": 0.4
+						},
+						{
+							"type": "skill",
+							"skill": "Solara's Verdict",
+							"cooldown": -1
+						}
+					]
+				}
+			},
+			"devotion": {
+				"faithful": {
+					"name": "Faithful",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Unwavering faith.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"faith": 2
+							}
+						}
+					]
+				},
+				"lay_on_hands": {
+					"name": "Lay on Hands",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Mend an ally's wounds with a touch of Solara's grace.",
+					"skill": "Lay on Hands"
+				},
+				"dawns_mercy": {
+					"name": "Dawn's Mercy",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Your healing burns brighter.",
+					"effects": [
+						{
+							"type": "heal_bonus",
+							"mult": 0.06
+						}
+					]
+				},
+				"radiant_aura": {
+					"name": "Radiant Aura",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Light lingers around you.",
+					"effects": [
+						{
+							"type": "regen",
+							"hp": 0.02
+						}
+					],
+					"choice": "t4"
+				},
+				"dawns_embrace": {
+					"name": "Dawn's Embrace",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Wrap an ally in the dawn itself: a great heal that keeps on mending.",
+					"skill": "Dawn's Embrace"
+				},
+				"mass_benediction": {
+					"name": "Mass Benediction",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "lay_on_hands",
+					"description": "Open your hands to the whole line.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Lay on Hands",
+							"target": "ALL_ALLIES",
+							"power_mult": 0.55,
+							"name": "Mass Benediction"
+						}
+					]
+				},
+				"lingering_grace": {
+					"name": "Lingering Grace",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "lay_on_hands",
+					"description": "The touch keeps mending after you lift your hand.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Lay on Hands",
+							"add_status": [
+								"REGENERATION"
+							],
+							"name": "Lingering Grace"
+						},
+						{
+							"type": "skill",
+							"skill": "Lay on Hands",
+							"duration": 3
+						}
+					]
+				},
+				"martyrs_vow": {
+					"name": "Martyr's Vow",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Your strength flows outward, not inward.",
+					"effects": [
+						{
+							"type": "heal_bonus",
+							"mult": 0.07
+						}
+					]
+				},
+				"dawnbreak": {
+					"name": "Dawnbreak",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "dawns_embrace",
+					"description": "The dawn breaks over every ally.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Dawn's Embrace",
+							"target": "ALL_ALLIES",
+							"power_mult": 0.6,
+							"name": "Dawnbreak"
+						}
+					]
+				},
+				"second_dawn": {
+					"name": "Second Dawn",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "dawns_embrace",
+					"description": "The embrace becomes a ward that turns blows back.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Dawn's Embrace",
+							"add_status": [
+								"REFLECT"
+							],
+							"name": "Second Dawn"
+						},
+						{
+							"type": "skill",
+							"skill": "Dawn's Embrace",
+							"duration": 1
+						}
+					]
+				}
+			}
+		},
+		"Samurai": {
+			"iai": {
+				"swift_draw": {
+					"name": "Swift Draw",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "The blade is out before the eye can follow.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"critical_hit_rate": 0.03
+							}
+						}
+					]
+				},
+				"flash_draw": {
+					"name": "Flash Draw",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A lightning-quick draw cut that opens a bleeding wound.",
+					"skill": "Flash Draw"
+				},
+				"iai_mastery": {
+					"name": "Iai Mastery",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Years of drawing the same cut.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Iaido",
+							"power": 10
+						}
+					]
+				},
+				"killing_intent": {
+					"name": "Killing Intent",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "A wounded foe is a finished foe.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.08,
+							"damage_type": "SLASH",
+							"target_status": "BLEED"
+						}
+					],
+					"choice": "t4"
+				},
+				"thousand_cuts": {
+					"name": "Thousand Cuts",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "A storm of draws too fast to see, cutting every foe.",
+					"skill": "Thousand Cuts"
+				},
+				"sheathed_thunder": {
+					"name": "Sheathed Thunder",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "flash_draw",
+					"description": "Wait longer; cut once, perfectly.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Flash Draw",
+							"power_mult": 1.4,
+							"name": "Sheathed Thunder"
+						},
+						{
+							"type": "skill",
+							"skill": "Flash Draw",
+							"cooldown": 1
+						}
+					]
+				},
+				"crescent_draw": {
+					"name": "Crescent Draw",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "flash_draw",
+					"description": "The draw becomes a sweeping crescent.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Flash Draw",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.6,
+							"name": "Crescent Draw"
+						}
+					]
+				},
+				"zanshin": {
+					"name": "Zanshin",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Remaining aware after the cut: you are never caught open.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.05
+						}
+					]
+				},
+				"single_petal": {
+					"name": "Single Petal",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "thousand_cuts",
+					"description": "A thousand cuts folded into one.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Thousand Cuts",
+							"target": "ENEMY",
+							"power_mult": 1.7,
+							"name": "Single Petal"
+						}
+					]
+				},
+				"scattering_blossoms": {
+					"name": "Scattering Blossoms",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "thousand_cuts",
+					"description": "Foes stagger back from the storm of steel.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Thousand Cuts",
+							"turn_delay": 1,
+							"add_status": [
+								"STAGGERED"
+							],
+							"name": "Scattering Blossoms"
+						}
+					]
+				}
+			},
+			"bushido": {
+				"discipline": {
+					"name": "Discipline",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Body and mind tempered alike.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"endurance": 2,
+								"mind": 2
+							}
+						}
+					]
+				},
+				"kiai": {
+					"name": "Kiai",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A spirit shout that shakes the enemy's footing.",
+					"skill": "Kiai"
+				},
+				"unshaken": {
+					"name": "Unshaken",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Composure in any storm.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"toughness": 2,
+								"spell_ward": 2
+							}
+						}
+					]
+				},
+				"code_of_honor": {
+					"name": "Code of Honor",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "The creed burns longer.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Bushido",
+							"power": 10,
+							"duration": 1
+						}
+					],
+					"choice": "t4"
+				},
+				"spirit_of_amakiri": {
+					"name": "Spirit of Amakiri",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Channel the founder's spirit: speed, strength and a blade no one can touch.",
+					"skill": "Spirit of Amakiri"
+				},
+				"spirit_shout": {
+					"name": "Spirit Shout",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "kiai",
+					"description": "The shout steadies your own breath.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Kiai",
+							"after_use": {
+								"sp_pct": 0.15
+							},
+							"name": "Spirit Shout"
+						}
+					]
+				},
+				"piercing_kiai": {
+					"name": "Piercing Kiai",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "kiai",
+					"description": "Focus the shout on one foe until it breaks.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Kiai",
+							"target": "ENEMY",
+							"power_mult": 1.5,
+							"turn_delay": 1,
+							"name": "Piercing Kiai"
+						}
+					]
+				},
+				"way_of_the_blade": {
+					"name": "Way of the Blade",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Discipline poured into every stroke.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.06,
+							"ability": "PHYSICAL"
+						}
+					]
+				},
+				"founders_lesson": {
+					"name": "Founder's Lesson",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "spirit_of_amakiri",
+					"description": "Amakiri's spirit lifts the whole party.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Spirit of Amakiri",
+							"target": "ALL_ALLIES",
+							"power_mult": 0.6,
+							"name": "Founder's Lesson"
+						}
+					]
+				},
+				"final_stance": {
+					"name": "Final Stance",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "spirit_of_amakiri",
+					"description": "The founder's spirit lingers and steadies you.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Spirit of Amakiri",
+							"duration": 2
+						},
+						{
+							"type": "mutate",
+							"skill": "Spirit of Amakiri",
+							"after_use": {
+								"heal_pct": 0.2
+							},
+							"name": "Final Stance"
+						}
+					]
+				}
+			},
+			"kenjutsu": {
+				"blade_form": {
+					"name": "Blade Form",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Clean, precise forms.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"damage_type": "SLASH"
+						}
+					]
+				},
+				"read_the_opponent": {
+					"name": "Read the Opponent",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Study the foe and find the opening for a decisive cut.",
+					"skill": "Read the Opponent"
+				},
+				"parry": {
+					"name": "Parry",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Turn the blade aside.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"dodge": 0.03
+							}
+						}
+					]
+				},
+				"decisive_strike": {
+					"name": "Decisive Strike",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "When the opening comes, end it.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "decisive_cut",
+							"bonus": 0.15
+						}
+					],
+					"choice": "t4"
+				},
+				"heaven_splitter": {
+					"name": "Heaven Splitter",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "One overhead cut said to split the sky.",
+					"skill": "Heaven Splitter"
+				},
+				"mirror_stance": {
+					"name": "Mirror Stance",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "read_the_opponent",
+					"description": "While you read them, they cannot read you.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Read the Opponent",
+							"after_use": {
+								"self_status": "EVASIVE",
+								"self_turns": 2
+							},
+							"name": "Mirror Stance"
+						}
+					]
+				},
+				"exposed_opening": {
+					"name": "Exposed Opening",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "read_the_opponent",
+					"description": "The opening you find throws them off balance.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Read the Opponent",
+							"add_status": [
+								"STAGGERED"
+							],
+							"name": "Exposed Opening"
+						},
+						{
+							"type": "skill",
+							"skill": "Read the Opponent",
+							"duration": 1
+						}
+					]
+				},
+				"patient_blade": {
+					"name": "Patient Blade",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Breathe; the moment will come.",
+					"effects": [
+						{
+							"type": "regen",
+							"sp": 0.03
+						}
+					]
+				},
+				"heaven_and_earth": {
+					"name": "Heaven and Earth",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "heaven_splitter",
+					"description": "The studied foe is split clean.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.5,
+							"skill": "Heaven Splitter",
+							"target_status": "MARKED"
+						}
+					]
+				},
+				"sky_rending_arc": {
+					"name": "Sky-Rending Arc",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "heaven_splitter",
+					"description": "The cut keeps going, through every foe.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Heaven Splitter",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.6,
+							"name": "Sky-Rending Arc"
+						}
+					]
+				}
+			}
+		},
+		"Berserker": {
+			"carnage": {
+				"heavy_hands": {
+					"name": "Heavy Hands",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "The heavier the weapon, the better.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"with": "two_handed"
+						}
+					]
+				},
+				"whirlwind": {
+					"name": "Whirlwind",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Spin with your weapon, battering everything around you.",
+					"skill": "Whirlwind"
+				},
+				"sundering": {
+					"name": "Sundering",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Armor means little to you.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"armor_penetration": 0.05
+							}
+						}
+					]
+				},
+				"cleave_mastery": {
+					"name": "Cleave Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Wider, deeper cleaves.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Cleave",
+							"power": 10
+						}
+					],
+					"choice": "t4"
+				},
+				"berserker_rage": {
+					"name": "Berserker Rage",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Give yourself fully to Arathorn's fury: huge Strength and Endurance and an Enraged frenzy.",
+					"skill": "Berserker Rage"
+				},
+				"maelstrom": {
+					"name": "Maelstrom",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "whirlwind",
+					"description": "Spin harder than your body can bear.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Whirlwind",
+							"power_mult": 1.25,
+							"hp_cost": 0.06,
+							"name": "Maelstrom"
+						}
+					]
+				},
+				"bloody_spin": {
+					"name": "Bloody Spin",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "whirlwind",
+					"description": "The spin opens wounds and you drink from them.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Whirlwind",
+							"add_status": [
+								"BLEED"
+							],
+							"name": "Bloody Spin"
+						},
+						{
+							"type": "lifesteal",
+							"fraction": 0.15,
+							"skill": "Whirlwind"
+						}
+					]
+				},
+				"splitter": {
+					"name": "Splitter",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Armour is just something to cut through.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"armor_penetration": 0.04
+							}
+						}
+					]
+				},
+				"red_mist": {
+					"name": "Red Mist",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "berserker_rage",
+					"description": "The rage burns away your wounds.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Berserker Rage",
+							"after_use": {
+								"heal_pct": 0.25
+							},
+							"name": "Red Mist"
+						}
+					]
+				},
+				"howling_rage": {
+					"name": "Howling Rage",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "berserker_rage",
+					"description": "Your fury spreads to the war band.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Berserker Rage",
+							"target": "ALL_ALLIES",
+							"power_mult": 0.5,
+							"name": "Howling Rage"
+						}
+					]
+				}
+			},
+			"bloodlust": {
+				"thirst": {
+					"name": "Thirst",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Every wound you deal feeds you.",
+					"effects": [
+						{
+							"type": "lifesteal",
+							"fraction": 0.03
+						}
+					]
+				},
+				"rampage": {
+					"name": "Rampage",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A savage flurry against one foe; devastating on a bleeding target.",
+					"skill": "Rampage"
+				},
+				"frenzy": {
+					"name": "Frenzy",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Pain makes you stronger.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"user_hp_below": 0.5
+						}
+					]
+				},
+				"feast_of_wolves": {
+					"name": "Feast of Wolves",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Blood Feast tears deeper.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Blood Feast",
+							"power": 10
+						}
+					],
+					"choice": "t4"
+				},
+				"fenrisulfrs_maw": {
+					"name": "Fenrisulfr's Maw",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "The Wild Father's jaws close on every foe and drink deep.",
+					"skill": "Fenrisulfr's Maw"
+				},
+				"gorge": {
+					"name": "Gorge",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "rampage",
+					"description": "Feed on every blow.",
+					"effects": [
+						{
+							"type": "lifesteal",
+							"fraction": 0.25,
+							"skill": "Rampage"
+						}
+					]
+				},
+				"frenzied_flurry": {
+					"name": "Frenzied Flurry",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "rampage",
+					"description": "Lighter, faster, again and again.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Rampage",
+							"power_mult": 0.85,
+							"name": "Frenzied Flurry"
+						},
+						{
+							"type": "skill",
+							"skill": "Rampage",
+							"cooldown": -1
+						}
+					]
+				},
+				"blood_scent": {
+					"name": "Blood Scent",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "You smell weakness.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.1,
+							"target_hp_below": 0.5
+						}
+					]
+				},
+				"wild_fathers_hunger": {
+					"name": "Wild Father's Hunger",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "fenrisulfrs_maw",
+					"description": "The jaws close on one foe and do not let go.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Fenrisulfr's Maw",
+							"target": "ENEMY",
+							"power_mult": 1.8,
+							"name": "Wild Father's Hunger"
+						}
+					]
+				},
+				"pack_feast": {
+					"name": "Pack Feast",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "fenrisulfrs_maw",
+					"description": "The bites keep bleeding.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Fenrisulfr's Maw",
+							"add_status": [
+								"BLEED"
+							],
+							"name": "Pack Feast"
+						},
+						{
+							"type": "skill",
+							"skill": "Fenrisulfr's Maw",
+							"duration": 3
+						}
+					]
+				}
+			},
+			"war_wolf": {
+				"thick_hide": {
+					"name": "Thick Hide",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Scarred and hardened.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"max_hp_pct": 0.04,
+								"toughness": 2
+							}
+						}
+					]
+				},
+				"war_howl": {
+					"name": "War Howl",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Howl like the war wolf; foes lose their nerve and footing.",
+					"skill": "War Howl"
+				},
+				"iron_will": {
+					"name": "Iron Will",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Shrug off blows.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.04
+						}
+					]
+				},
+				"last_stand": {
+					"name": "Last Stand",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Hardest to kill when nearly dead.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.12,
+							"user_hp_below": 0.3
+						}
+					],
+					"choice": "t4"
+				},
+				"second_wind": {
+					"name": "Second Wind",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Rise again from the brink with a roar.",
+					"skill": "Second Wind"
+				},
+				"terrifying_howl": {
+					"name": "Terrifying Howl",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "war_howl",
+					"description": "Foes flinch and fall back.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "War Howl",
+							"turn_delay": 1,
+							"name": "Terrifying Howl"
+						}
+					]
+				},
+				"pack_howl": {
+					"name": "Pack Howl",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "war_howl",
+					"description": "The howl wakes the wolf in you.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "War Howl",
+							"after_use": {
+								"self_status": "ENRAGED",
+								"self_turns": 2
+							},
+							"name": "Pack Howl"
+						}
+					]
+				},
+				"wolfs_blood": {
+					"name": "Wolf's Blood",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Your wounds close as you fight.",
+					"effects": [
+						{
+							"type": "regen",
+							"hp": 0.015
+						}
+					]
+				},
+				"unkillable": {
+					"name": "Unkillable",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "second_wind",
+					"description": "Rise, and make them regret every blow.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Second Wind",
+							"add_status": [
+								"REFLECT"
+							],
+							"name": "Unkillable"
+						},
+						{
+							"type": "skill",
+							"skill": "Second Wind",
+							"duration": 1
+						}
+					]
+				},
+				"rally_the_pack": {
+					"name": "Rally the Pack",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "second_wind",
+					"description": "Your roar lifts the whole war band.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Second Wind",
+							"target": "ALL_ALLIES",
+							"power_mult": 0.5,
+							"name": "Rally the Pack"
+						}
+					]
+				}
+			}
+		},
+		"Monk": {
+			"tiger": {
+				"tigers_strength": {
+					"name": "Tiger's Strength",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Muscle like coiled springs.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"strength": 2
+							}
+						},
+						{
+							"type": "damage",
+							"mult": 0.03,
+							"ability": "PHYSICAL"
+						}
+					]
+				},
+				"ox_kick": {
+					"name": "Ox Kick",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A low, heavy kick that takes the legs out from under the foe.",
+					"skill": "Ox Kick"
+				},
+				"ferocity": {
+					"name": "Ferocity",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Strike where it hurts.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"critical_hit_rate": 0.03
+							}
+						}
+					]
+				},
+				"rending_claws": {
+					"name": "Rending Claws",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Tiger Claw tears deeper.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Tiger Claw",
+							"power": 10
+						}
+					],
+					"choice": "t4"
+				},
+				"five_animal_fury": {
+					"name": "Five Animal Fury",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Tiger, crane, mantis, ox and serpent in one devastating sequence.",
+					"skill": "Five Animal Fury"
+				},
+				"ox_stomp": {
+					"name": "Ox Stomp",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "ox_kick",
+					"description": "Stamp the ground; every foe stumbles.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Ox Kick",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.7,
+							"turn_delay": -1,
+							"name": "Ox Stomp"
+						}
+					]
+				},
+				"bone_breaker": {
+					"name": "Bone Breaker",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "ox_kick",
+					"description": "Kick through the bone.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Ox Kick",
+							"power_mult": 1.5,
+							"add_status": [
+								"BLEED"
+							],
+							"name": "Bone Breaker"
+						}
+					]
+				},
+				"tiger_stance": {
+					"name": "Tiger Stance",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Low and coiled, ready to pounce.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"critical_hit_rate": 0.04
+							}
+						}
+					]
+				},
+				"sixth_animal": {
+					"name": "Sixth Animal",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "five_animal_fury",
+					"description": "The dragon: the staggered do not get up.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.5,
+							"skill": "Five Animal Fury",
+							"target_status": "STAGGERED"
+						}
+					]
+				},
+				"stampede": {
+					"name": "Stampede",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "five_animal_fury",
+					"description": "Five animals, every foe.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Five Animal Fury",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.6,
+							"name": "Stampede"
+						}
+					]
+				}
+			},
+			"crane": {
+				"cranes_grace": {
+					"name": "Crane's Grace",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Light as a feather.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"agility": 2,
+								"dodge": 0.02
+							}
+						}
+					]
+				},
+				"crane_wing_sweep": {
+					"name": "Crane Wing Sweep",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Sweeping wing strikes that spin every foe around.",
+					"skill": "Crane Wing Sweep"
+				},
+				"flowing_water": {
+					"name": "Flowing Water",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Move like water around the blow.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"dodge": 0.02,
+								"accuracy": 0.02
+							}
+						}
+					]
+				},
+				"counterflow": {
+					"name": "Counterflow",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Punish the off-balance.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.1,
+							"target_status": "CONFUSED"
+						}
+					],
+					"choice": "t4"
+				},
+				"heavenly_crane": {
+					"name": "Heavenly Crane",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Become untouchable: soaring agility and a body that mends itself.",
+					"skill": "Heavenly Crane"
+				},
+				"riverbend": {
+					"name": "Riverbend",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "crane_wing_sweep",
+					"description": "After the sweep, you are already elsewhere.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Crane Wing Sweep",
+							"after_use": {
+								"self_status": "EVASIVE",
+								"self_turns": 2
+							},
+							"name": "Riverbend"
+						}
+					]
+				},
+				"crane_beak": {
+					"name": "Crane Beak",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "crane_wing_sweep",
+					"description": "Fold the wings into a single striking beak.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Crane Wing Sweep",
+							"target": "ENEMY",
+							"power_mult": 1.6,
+							"turn_delay": 1,
+							"name": "Crane Beak"
+						}
+					]
+				},
+				"still_water": {
+					"name": "Still Water",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Blows slide off a calm surface.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.05
+						}
+					]
+				},
+				"flock": {
+					"name": "Flock",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "heavenly_crane",
+					"description": "Lift your companions with you.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Heavenly Crane",
+							"target": "ALL_ALLIES",
+							"power_mult": 0.6,
+							"name": "Flock"
+						}
+					]
+				},
+				"endless_sky": {
+					"name": "Endless Sky",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "heavenly_crane",
+					"description": "Stay aloft longer, return sooner.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Heavenly Crane",
+							"duration": 2,
+							"cooldown": -1
+						}
+					]
+				}
+			},
+			"verdant_heart": {
+				"inner_harmony": {
+					"name": "Inner Harmony",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Breath and body in balance.",
+					"effects": [
+						{
+							"type": "regen",
+							"hp": 0.01,
+							"sp": 0.02
+						}
+					]
+				},
+				"earth_mothers_palm": {
+					"name": "Earth Mother's Palm",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A palm strike carrying Elandria's weight; it can shatter what is frozen.",
+					"skill": "Earth Mother's Palm"
+				},
+				"spirit_weave": {
+					"name": "Spirit Weave",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Nimue's flow guards the mind.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"mind": 2,
+								"spell_ward": 2
+							}
+						}
+					]
+				},
+				"balance": {
+					"name": "Balance",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Mantis Strike lands truer.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Mantis Strike",
+							"power": 10
+						}
+					],
+					"choice": "t4"
+				},
+				"nimues_tide": {
+					"name": "Nimue's Tide",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Let the Spirit Weaver's tide wash through you, healing deep wounds.",
+					"skill": "Nimue's Tide"
+				},
+				"root_and_branch": {
+					"name": "Root and Branch",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "earth_mothers_palm",
+					"description": "Draw strength from the earth as you strike.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Earth Mother's Palm",
+							"after_use": {
+								"heal_pct": 0.1
+							},
+							"name": "Root and Branch"
+						}
+					]
+				},
+				"rippling_palm": {
+					"name": "Rippling Palm",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "earth_mothers_palm",
+					"description": "Nimue's water runs through the strike.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Earth Mother's Palm",
+							"add_status": [
+								"SOAKED"
+							],
+							"add_element": "WATER",
+							"name": "Rippling Palm"
+						}
+					]
+				},
+				"fenrisulfrs_breath": {
+					"name": "Fenrisulfr's Breath",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "The Wild Father's breath fills your lungs.",
+					"effects": [
+						{
+							"type": "regen",
+							"sp": 0.03
+						}
+					]
+				},
+				"spring_tide": {
+					"name": "Spring Tide",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "nimues_tide",
+					"description": "The tide washes over every ally.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Nimue's Tide",
+							"target": "ALL_ALLIES",
+							"power_mult": 0.6,
+							"name": "Spring Tide"
+						}
+					]
+				},
+				"deep_current": {
+					"name": "Deep Current",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "nimues_tide",
+					"description": "The tide refills spirit and stamina too.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Nimue's Tide",
+							"after_use": {
+								"mp_pct": 0.25,
+								"sp_pct": 0.25
+							},
+							"name": "Deep Current"
+						}
+					]
+				}
+			}
+		},
+		"Myrmidon": {
+			"arms_master": {
+				"weapon_training": {
+					"name": "Weapon Training",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Iron Gauntlet drills.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"ability": "PHYSICAL"
+						}
+					]
+				},
+				"disarming_strike": {
+					"name": "Disarming Strike",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Knock the foe's weapon aside and leave it reeling.",
+					"skill": "Disarming Strike"
+				},
+				"exploit_weakness": {
+					"name": "Exploit Weakness",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Switch to whatever hurts most.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.06,
+							"weak_spot": true
+						}
+					]
+				},
+				"opportunist": {
+					"name": "Opportunist",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Never waste an opening.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "exploit_opening",
+							"bonus": 0.15
+						}
+					],
+					"choice": "t4"
+				},
+				"blade_storm": {
+					"name": "Blade Storm",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "A whirlwind of steel that cuts through every foe.",
+					"skill": "Blade Storm"
+				},
+				"disarm_and_seize": {
+					"name": "Disarm and Seize",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "disarming_strike",
+					"description": "Take their weapon - and their momentum.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Disarming Strike",
+							"after_use": {
+								"sp_pct": 0.15
+							},
+							"name": "Disarm and Seize"
+						}
+					]
+				},
+				"break_guard": {
+					"name": "Break Guard",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "disarming_strike",
+					"description": "Knock the guard aside and mark the gap.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Disarming Strike",
+							"add_status": [
+								"MARKED"
+							],
+							"name": "Break Guard"
+						}
+					]
+				},
+				"drillmaster": {
+					"name": "Drillmaster",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Iron Gauntlet drills, ten thousand times.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"strength": 2,
+								"dexterity": 2
+							}
+						}
+					]
+				},
+				"iron_tempest": {
+					"name": "Iron Tempest",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "blade_storm",
+					"description": "A heavier storm that knocks them off their feet.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Blade Storm",
+							"power_mult": 1.25,
+							"add_status": [
+								"STAGGERED"
+							],
+							"name": "Iron Tempest"
+						}
+					]
+				},
+				"duelists_storm": {
+					"name": "Duelist's Storm",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "blade_storm",
+					"description": "Every blade in the storm finds the same foe.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Blade Storm",
+							"target": "ENEMY",
+							"power_mult": 1.7,
+							"name": "Duelist's Storm"
+						}
+					]
+				}
+			},
+			"skirmisher": {
+				"light_feet": {
+					"name": "Light Feet",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Never where they swing.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"agility": 1,
+								"dodge": 0.02
+							}
+						}
+					]
+				},
+				"twin_fangs": {
+					"name": "Twin Fangs",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Two quick thrusts that link into your next move.",
+					"skill": "Twin Fangs"
+				},
+				"ambidextrous": {
+					"name": "Ambidextrous",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Light weapons, fast hands.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"with": "one_handed"
+						}
+					]
+				},
+				"backstab_mastery": {
+					"name": "Backstab Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "From the shadows, deeper.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Backstab",
+							"power": 12
+						}
+					],
+					"choice": "t4"
+				},
+				"hundred_blades": {
+					"name": "Hundred Blades",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "An unbroken torrent of strikes on one foe.",
+					"skill": "Hundred Blades"
+				},
+				"fang_volley": {
+					"name": "Fang Volley",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "twin_fangs",
+					"description": "Spread the thrusts across the line.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Twin Fangs",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.6,
+							"name": "Fang Volley"
+						}
+					]
+				},
+				"venom_fangs": {
+					"name": "Venom Fangs",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "twin_fangs",
+					"description": "Coat both blades.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Twin Fangs",
+							"add_status": [
+								"POISON"
+							],
+							"name": "Venom Fangs"
+						}
+					]
+				},
+				"light_step": {
+					"name": "Light Step",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Never where they swing.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"dodge": 0.03
+							}
+						}
+					]
+				},
+				"thousand_paths": {
+					"name": "Thousand Paths",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "hundred_blades",
+					"description": "The torrent flows through every foe.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Hundred Blades",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.6,
+							"name": "Thousand Paths"
+						}
+					]
+				},
+				"final_blade": {
+					"name": "Final Blade",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "hundred_blades",
+					"description": "The last of the hundred ends it.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.6,
+							"skill": "Hundred Blades",
+							"target_hp_below": 0.4
+						}
+					]
+				}
+			},
+			"mercenary": {
+				"battle_hardened": {
+					"name": "Battle Hardened",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Countless contracts survived.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"vitality": 2,
+								"endurance": 2,
+								"max_hp_pct": 0.02
+							}
+						}
+					]
+				},
+				"pinning_thrust": {
+					"name": "Pinning Thrust",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Pin the target in place and mark it for the kill.",
+					"skill": "Pinning Thrust"
+				},
+				"toxic_expertise": {
+					"name": "Toxic Expertise",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Your poisons, your rules.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"target_status": "POISON"
+						}
+					]
+				},
+				"contract_killer": {
+					"name": "Contract Killer",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "The mark never escapes.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.1,
+							"target_status": "MARKED"
+						}
+					],
+					"choice": "t4"
+				},
+				"iron_gauntlet": {
+					"name": "Iron Gauntlet",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "The guild's creed made flesh: strength, precision and resolve.",
+					"skill": "Iron Gauntlet"
+				},
+				"nail_down": {
+					"name": "Nail Down",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "pinning_thrust",
+					"description": "Pin them deeper, for longer.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Pinning Thrust",
+							"turn_delay": 1,
+							"name": "Nail Down"
+						},
+						{
+							"type": "skill",
+							"skill": "Pinning Thrust",
+							"duration": 1
+						}
+					]
+				},
+				"poisoned_tip": {
+					"name": "Poisoned Tip",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "pinning_thrust",
+					"description": "A professional's little extra.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Pinning Thrust",
+							"add_status": [
+								"POISON"
+							],
+							"name": "Poisoned Tip"
+						}
+					]
+				},
+				"blood_money": {
+					"name": "Blood Money",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Every wound you deal pays you back.",
+					"effects": [
+						{
+							"type": "lifesteal",
+							"fraction": 0.03
+						}
+					]
+				},
+				"iron_company": {
+					"name": "Iron Company",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "iron_gauntlet",
+					"description": "The guild's creed carries the whole company.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Iron Gauntlet",
+							"target": "ALL_ALLIES",
+							"power_mult": 0.6,
+							"name": "Iron Company"
+						}
+					]
+				},
+				"veterans_resolve": {
+					"name": "Veteran's Resolve",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "iron_gauntlet",
+					"description": "Old wounds close when the creed is spoken.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Iron Gauntlet",
+							"after_use": {
+								"heal_pct": 0.2
+							},
+							"name": "Veteran's Resolve"
+						}
+					]
+				}
+			}
+		},
+		"Shinobi": {
+			"kage": {
+				"silent_steps": {
+					"name": "Silent Steps",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Unheard, unseen.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"dodge": 0.02,
+								"critical_hit_rate": 0.02
+							}
+						}
+					]
+				},
+				"shadow_mark": {
+					"name": "Shadow Mark",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Brand the target with Tsukuyomi's shadow; it cannot hide from you.",
+					"skill": "Shadow Mark"
+				},
+				"lethality": {
+					"name": "Lethality",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Every thrust finds a vital point.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"damage_type": "PIERCE"
+						}
+					]
+				},
+				"assassin": {
+					"name": "Assassin",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "The marked die quickly.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "assassinate",
+							"bonus": 0.15
+						}
+					],
+					"choice": "t4"
+				},
+				"moonless_night": {
+					"name": "Moonless Night",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Vanish into darkness and strike once, perfectly.",
+					"skill": "Moonless Night"
+				},
+				"veil": {
+					"name": "Veil",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "shadow_mark",
+					"description": "Mark them and vanish.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Shadow Mark",
+							"after_use": {
+								"self_status": "EVASIVE",
+								"self_turns": 2
+							},
+							"name": "Veil"
+						}
+					]
+				},
+				"death_mark": {
+					"name": "Death Mark",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "shadow_mark",
+					"description": "Tsukuyomi's shadow blinds the marked.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Shadow Mark",
+							"add_status": [
+								"BLIND"
+							],
+							"name": "Death Mark"
+						}
+					]
+				},
+				"ghost_step": {
+					"name": "Ghost Step",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Your feet make no sound and leave no trace.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"dodge": 0.03
+							}
+						}
+					]
+				},
+				"new_moon": {
+					"name": "New Moon",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "moonless_night",
+					"description": "The marked never see the blade.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.6,
+							"skill": "Moonless Night",
+							"target_status": "MARKED"
+						}
+					]
+				},
+				"night_of_knives": {
+					"name": "Night of Knives",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "moonless_night",
+					"description": "In the dark, every throat is in reach.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Moonless Night",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.55,
+							"name": "Night of Knives"
+						}
+					]
+				}
+			},
+			"ninjutsu": {
+				"chakra_flow": {
+					"name": "Chakra Flow",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Energy guided through the seals.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"intelligence": 2,
+								"spell_power": 2
+							}
+						}
+					]
+				},
+				"phoenix_flower": {
+					"name": "Phoenix Flower",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Fire release: a spray of burning flowers.",
+					"skill": "Phoenix Flower"
+				},
+				"elemental_affinity": {
+					"name": "Elemental Affinity",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Your elements answer faster.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"elements": [
+								"FIRE",
+								"WATER",
+								"LIGHTNING"
+							]
+						}
+					]
+				},
+				"conductor": {
+					"name": "Conductor",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Water and lightning, perfected.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "conduction",
+							"bonus": 0.15
+						}
+					],
+					"choice": "t4"
+				},
+				"raijins_descent": {
+					"name": "Raijin's Descent",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Lightning release: the storm god's strike falls on every foe.",
+					"skill": "Raijin's Descent"
+				},
+				"phoenix_bloom": {
+					"name": "Phoenix Bloom",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "phoenix_flower",
+					"description": "One great flower instead of many.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Phoenix Flower",
+							"target": "ENEMY",
+							"power_mult": 1.6,
+							"name": "Phoenix Bloom"
+						}
+					]
+				},
+				"water_release": {
+					"name": "Water Release",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "phoenix_flower",
+					"description": "Change the seal: a drenching spray instead of fire.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Phoenix Flower",
+							"set_status": [
+								"SOAKED"
+							],
+							"add_element": "WATER",
+							"name": "Water Release"
+						}
+					]
+				},
+				"chakra_control": {
+					"name": "Chakra Control",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Not a drop wasted.",
+					"effects": [
+						{
+							"type": "regen",
+							"mp": 0.03
+						}
+					]
+				},
+				"raijins_spear": {
+					"name": "Raijin's Spear",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "raijins_descent",
+					"description": "The storm god's strike falls on one foe.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Raijin's Descent",
+							"target": "ENEMY",
+							"power_mult": 1.7,
+							"name": "Raijin's Spear"
+						}
+					]
+				},
+				"thunder_cloud": {
+					"name": "Thunder Cloud",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "raijins_descent",
+					"description": "The thunder leaves them stunned and slow.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Raijin's Descent",
+							"turn_delay": 1,
+							"name": "Thunder Cloud"
+						}
+					]
+				}
+			},
+			"tools": {
+				"quick_hands": {
+					"name": "Quick Hands",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Throw faster, tire less.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Lightning Kunai",
+							"power": 5,
+							"sp_cost": -2
+						}
+					]
+				},
+				"shuriken_storm": {
+					"name": "Shuriken Storm",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A fan of shuriken across every foe.",
+					"skill": "Shuriken Storm"
+				},
+				"vanishing": {
+					"name": "Vanishing",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Gone before the blow lands.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"dodge": 0.03
+							}
+						}
+					]
+				},
+				"poisoned_tools": {
+					"name": "Poisoned Tools",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Everything you throw carries something nasty.",
+					"effects": [
+						{
+							"type": "status_chance",
+							"chance": 0.1
+						}
+					],
+					"choice": "t4"
+				},
+				"shadow_clone": {
+					"name": "Shadow Clone",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Split into shadow clones; foes strike the wrong you.",
+					"skill": "Shadow Clone"
+				},
+				"caltrops": {
+					"name": "Caltrops",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "shuriken_storm",
+					"description": "Scatter spikes as you throw.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Shuriken Storm",
+							"turn_delay": 1,
+							"name": "Caltrops"
+						}
+					]
+				},
+				"blinding_powder": {
+					"name": "Blinding Powder",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "shuriken_storm",
+					"description": "Each star carries a puff of powder.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Shuriken Storm",
+							"add_status": [
+								"BLIND"
+							],
+							"name": "Blinding Powder"
+						}
+					]
+				},
+				"smoke_and_mirrors": {
+					"name": "Smoke and Mirrors",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Always a little harder to hit than they think.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.04
+						}
+					]
+				},
+				"clone_assault": {
+					"name": "Clone Assault",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "shadow_clone",
+					"description": "The clones strike too.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Shadow Clone",
+							"add_status": [
+								"ENRAGED"
+							],
+							"name": "Clone Assault"
+						}
+					]
+				},
+				"body_replacement": {
+					"name": "Body Replacement",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "shadow_clone",
+					"description": "A log takes the blow; you were never there.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Shadow Clone",
+							"duration": 2
+						},
+						{
+							"type": "mutate",
+							"skill": "Shadow Clone",
+							"after_use": {
+								"heal_pct": 0.15
+							},
+							"name": "Body Replacement"
+						}
+					]
+				}
+			}
+		},
+		"Druid": {
+			"bear": {
+				"ursine_hide": {
+					"name": "Ursine Hide",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Thick fur and thicker skin.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"max_hp_pct": 0.03,
+								"toughness": 3
+							}
+						}
+					]
+				},
+				"bear_form": {
+					"name": "Bear Form",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Take the shape of a great bear: stronger, tougher, harder to kill.",
+					"skill": "Bear Form"
+				},
+				"maul": {
+					"name": "Maul",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Claws and crushing paws.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"ability": "PHYSICAL"
+						}
+					]
+				},
+				"thick_fur": {
+					"name": "Thick Fur",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Blows sink into fur.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.06
+						}
+					],
+					"choice": "t4"
+				},
+				"elder_bear": {
+					"name": "Elder Bear",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Become the elder bear and crash into every foe.",
+					"skill": "Elder Bear"
+				},
+				"den_mother": {
+					"name": "Den Mother",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "bear_form",
+					"description": "The bear licks its wounds.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Bear Form",
+							"add_status": [
+								"REGENERATION"
+							],
+							"name": "Den Mother"
+						}
+					]
+				},
+				"rabid_bear": {
+					"name": "Rabid Bear",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "bear_form",
+					"description": "Fenrisulfr's wildness in Elandria's bear: enraged, and every bite feeds you.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Bear Form",
+							"add_status": [
+								"ENRAGED"
+							],
+							"name": "Rabid Bear"
+						},
+						{
+							"type": "lifesteal",
+							"fraction": 0.08,
+							"ability": "PHYSICAL"
+						}
+					]
+				},
+				"ursine_fury": {
+					"name": "Ursine Fury",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Claws and weight behind every blow.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.06,
+							"ability": "PHYSICAL"
+						}
+					]
+				},
+				"ancient_roar": {
+					"name": "Ancient Roar",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "elder_bear",
+					"description": "The elder bear's roar sends every foe back.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Elder Bear",
+							"turn_delay": 1,
+							"name": "Ancient Roar"
+						}
+					]
+				},
+				"mauling_charge": {
+					"name": "Mauling Charge",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "elder_bear",
+					"description": "Crash into one foe and maul it.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Elder Bear",
+							"target": "ENEMY",
+							"power_mult": 1.7,
+							"add_status": [
+								"BLEED"
+							],
+							"name": "Mauling Charge"
+						}
+					]
+				}
+			},
+			"alraune": {
+				"verdant_bloom": {
+					"name": "Verdant Bloom",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Growth answers your call.",
+					"effects": [
+						{
+							"type": "heal_bonus",
+							"mult": 0.06
+						}
+					]
+				},
+				"alraunes_kiss": {
+					"name": "Alraune's Kiss",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A blossom's kiss that heals and keeps healing.",
+					"skill": "Alraune's Kiss"
+				},
+				"thorned_vines": {
+					"name": "Thorned Vines",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "The earth bites back.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"element": "EARTH"
+						}
+					]
+				},
+				"strangling_roots": {
+					"name": "Strangling Roots",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Poisoned prey wither faster.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.1,
+							"target_status": "POISON"
+						}
+					],
+					"choice": "t4"
+				},
+				"garden_of_elandria": {
+					"name": "Garden of Elandria",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Raise a living garden that heals and shields.",
+					"skill": "Garden of Elandria"
+				},
+				"pollen_cloud": {
+					"name": "Pollen Cloud",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "alraunes_kiss",
+					"description": "A cloud of healing pollen.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Alraune's Kiss",
+							"target": "ALL_ALLIES",
+							"power_mult": 0.55,
+							"name": "Pollen Cloud"
+						}
+					]
+				},
+				"thorned_kiss": {
+					"name": "Thorned Kiss",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "alraunes_kiss",
+					"description": "The blossom grows thorns around its friend.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Alraune's Kiss",
+							"add_status": [
+								"REFLECT"
+							],
+							"name": "Thorned Kiss"
+						}
+					]
+				},
+				"bloom": {
+					"name": "Bloom",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Everything you tend grows stronger.",
+					"effects": [
+						{
+							"type": "heal_bonus",
+							"mult": 0.07
+						}
+					]
+				},
+				"eternal_garden": {
+					"name": "Eternal Garden",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "garden_of_elandria",
+					"description": "The garden grows around everyone.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Garden of Elandria",
+							"target": "ALL_ALLIES",
+							"power_mult": 0.6,
+							"name": "Eternal Garden"
+						}
+					]
+				},
+				"living_garden": {
+					"name": "Living Garden",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "garden_of_elandria",
+					"description": "The garden lasts and feeds you in return.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Garden of Elandria",
+							"duration": 1
+						},
+						{
+							"type": "mutate",
+							"skill": "Garden of Elandria",
+							"after_use": {
+								"mp_pct": 0.2
+							},
+							"name": "Living Garden"
+						}
+					]
+				}
+			},
+			"wildcaller": {
+				"storm_kin": {
+					"name": "Storm Kin",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Wind and frost obey you.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"elements": [
+								"ICE",
+								"WIND"
+							]
+						}
+					]
+				},
+				"bramble_lash": {
+					"name": "Bramble Lash",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Whip the foe with thorned brambles that leave it bleeding.",
+					"skill": "Bramble Lash"
+				},
+				"natures_grasp": {
+					"name": "Nature's Grasp",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Your effects take hold more often.",
+					"effects": [
+						{
+							"type": "status_chance",
+							"chance": 0.05
+						}
+					]
+				},
+				"arctic_mastery": {
+					"name": "Arctic Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Arctic Blast bites harder.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Arctic Blast",
+							"power": 10
+						}
+					],
+					"choice": "t4"
+				},
+				"wrath_of_the_wild": {
+					"name": "Wrath of the Wild",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "A howling blizzard sweeps the battlefield.",
+					"skill": "Wrath of the Wild"
+				},
+				"bramble_field": {
+					"name": "Bramble Field",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "bramble_lash",
+					"description": "The brambles burst from the ground everywhere.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Bramble Lash",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.6,
+							"name": "Bramble Field"
+						}
+					]
+				},
+				"strangling_briar": {
+					"name": "Strangling Briar",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "bramble_lash",
+					"description": "The briar wraps, poisons and holds.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Bramble Lash",
+							"add_status": [
+								"POISON"
+							],
+							"turn_delay": 1,
+							"name": "Strangling Briar"
+						}
+					]
+				},
+				"thunder_kin": {
+					"name": "Thunder Kin",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Lightning answers you as kin.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.06,
+							"element": "LIGHTNING"
+						}
+					]
+				},
+				"eye_of_the_blizzard": {
+					"name": "Eye of the Blizzard",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "wrath_of_the_wild",
+					"description": "The wind drives every foe back.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Wrath of the Wild",
+							"turn_delay": 1,
+							"name": "Eye of the Blizzard"
+						}
+					]
+				},
+				"avalanche": {
+					"name": "Avalanche",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "wrath_of_the_wild",
+					"description": "Bring the mountain down on one foe.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Wrath of the Wild",
+							"target": "ENEMY",
+							"power_mult": 1.7,
+							"name": "Avalanche"
+						}
+					]
+				}
+			}
+		},
+		"Cleric": {
+			"battle_priest": {
+				"holy_might": {
+					"name": "Holy Might",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Faith in your arm.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"strength": 2
+							}
+						},
+						{
+							"type": "damage",
+							"mult": 0.03,
+							"ability": "PHYSICAL"
+						}
+					]
+				},
+				"hammer_of_dawn": {
+					"name": "Hammer of Dawn",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A blessed blow that rocks the foe on its feet.",
+					"skill": "Hammer of Dawn"
+				},
+				"crushing_faith": {
+					"name": "Crushing Faith",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "The mace is a prayer.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"damage_type": "BLUNT"
+						}
+					]
+				},
+				"smite_mastery": {
+					"name": "Smite Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Smite strikes harder.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Smite",
+							"power": 10
+						}
+					],
+					"choice": "t4"
+				},
+				"solaras_hammer": {
+					"name": "Solara's Hammer",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Bring down the Radiant Dawn's hammer on one foe.",
+					"skill": "Solara's Hammer"
+				},
+				"ringing_blow": {
+					"name": "Ringing Blow",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "hammer_of_dawn",
+					"description": "The hammer rings; the foe staggers back.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Hammer of Dawn",
+							"turn_delay": 1,
+							"name": "Ringing Blow"
+						}
+					]
+				},
+				"blessed_hammer": {
+					"name": "Blessed Hammer",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "hammer_of_dawn",
+					"description": "Each blessed blow mends the one who strikes it.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Hammer of Dawn",
+							"after_use": {
+								"heal_pct": 0.08
+							},
+							"name": "Blessed Hammer"
+						}
+					]
+				},
+				"mail_of_faith": {
+					"name": "Mail of Faith",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Faith and chainmail, both well kept.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.05
+						}
+					]
+				},
+				"hammerfall": {
+					"name": "Hammerfall",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "solaras_hammer",
+					"description": "The hammer comes down on every foe.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Solara's Hammer",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.6,
+							"name": "Hammerfall"
+						}
+					]
+				},
+				"anvil_of_dawn": {
+					"name": "Anvil of Dawn",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "solaras_hammer",
+					"description": "The staggered are struck as on an anvil.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.5,
+							"skill": "Solara's Hammer",
+							"target_status": "STAGGERED"
+						}
+					]
+				}
+			},
+			"restoration": {
+				"healing_hands": {
+					"name": "Healing Hands",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Your prayers mend more.",
+					"effects": [
+						{
+							"type": "heal_bonus",
+							"mult": 0.06
+						}
+					]
+				},
+				"divine_blessing": {
+					"name": "Divine Blessing",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Bless an ally: Fortitude and Endurance up and steady regeneration.",
+					"skill": "Divine Blessing"
+				},
+				"devout": {
+					"name": "Devout",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Deep, constant prayer.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"faith": 2,
+								"mind": 2
+							}
+						}
+					]
+				},
+				"blessed_light": {
+					"name": "Blessed Light",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Healing Light shines brighter.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Healing Light",
+							"power": 10
+						}
+					],
+					"choice": "t4"
+				},
+				"miracle": {
+					"name": "Miracle",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "A true miracle of the Dawn: an enormous heal.",
+					"skill": "Miracle"
+				},
+				"choir": {
+					"name": "Choir",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "divine_blessing",
+					"description": "The blessing is sung over everyone.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Divine Blessing",
+							"target": "ALL_ALLIES",
+							"power_mult": 0.6,
+							"name": "Choir"
+						}
+					]
+				},
+				"sanctified": {
+					"name": "Sanctified",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "divine_blessing",
+					"description": "The blessed turn blows back.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Divine Blessing",
+							"add_status": [
+								"REFLECT"
+							],
+							"name": "Sanctified"
+						},
+						{
+							"type": "skill",
+							"skill": "Divine Blessing",
+							"duration": 1
+						}
+					]
+				},
+				"grace": {
+					"name": "Grace",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "The Dawn refills you as you pray.",
+					"effects": [
+						{
+							"type": "regen",
+							"mp": 0.03
+						}
+					]
+				},
+				"mass_miracle": {
+					"name": "Mass Miracle",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "miracle",
+					"description": "A miracle for every soul in the party.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Miracle",
+							"target": "ALL_ALLIES",
+							"power_mult": 0.6,
+							"name": "Mass Miracle"
+						}
+					]
+				},
+				"lasting_miracle": {
+					"name": "Lasting Miracle",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "miracle",
+					"description": "The miracle keeps working long after.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Miracle",
+							"add_status": [
+								"REGENERATION"
+							],
+							"name": "Lasting Miracle"
+						},
+						{
+							"type": "skill",
+							"skill": "Miracle",
+							"duration": 3
+						}
+					]
+				}
+			},
+			"inquisitor": {
+				"zeal_of_dawn": {
+					"name": "Zeal of the Dawn",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Holy wrath burns hotter.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"element": "HOLY"
+						}
+					]
+				},
+				"purifying_flame": {
+					"name": "Purifying Flame",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Holy fire that sears the unclean.",
+					"skill": "Purifying Flame"
+				},
+				"judgement_mastery": {
+					"name": "Judgement Mastery",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "The blinded and burning are judged harder.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "judgement",
+							"bonus": 0.1
+						},
+						{
+							"type": "combo",
+							"combo": "purge",
+							"bonus": 0.1
+						}
+					]
+				},
+				"heretic_bane": {
+					"name": "Heretic Bane",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "The burning heretic falls.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.1,
+							"target_status": "BURN"
+						}
+					],
+					"choice": "t4"
+				},
+				"dawnfire": {
+					"name": "Dawnfire",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "The sky ignites with the first light: holy fire on every foe.",
+					"skill": "Dawnfire"
+				},
+				"pyre": {
+					"name": "Pyre",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "purifying_flame",
+					"description": "Purge them all.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Purifying Flame",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.6,
+							"name": "Pyre"
+						}
+					]
+				},
+				"branding": {
+					"name": "Branding",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "purifying_flame",
+					"description": "The flame brands the heretic for judgement.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Purifying Flame",
+							"add_status": [
+								"MARKED"
+							],
+							"name": "Branding"
+						}
+					]
+				},
+				"zealotry": {
+					"name": "Zealotry",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Your prayers burn.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.06,
+							"ability": "MAGICAL"
+						}
+					]
+				},
+				"burning_dawn": {
+					"name": "Burning Dawn",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "dawnfire",
+					"description": "The first light sets them alight.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Dawnfire",
+							"add_status": [
+								"BURN"
+							],
+							"name": "Burning Dawn"
+						}
+					]
+				},
+				"suns_eye": {
+					"name": "Sun's Eye",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "dawnfire",
+					"description": "The whole dawn focused on one heretic.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Dawnfire",
+							"target": "ENEMY",
+							"power_mult": 1.7,
+							"name": "Sun's Eye"
+						}
+					]
+				}
+			}
+		},
+		"Kannagi": {
+			"barrier_arts": {
+				"warding": {
+					"name": "Warding",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Symbols of protection.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"spell_ward": 3,
+								"toughness": 2
+							}
+						}
+					]
+				},
+				"sacred_seal": {
+					"name": "Sacred Seal",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Press an ofuda seal onto the foe, binding its spirit.",
+					"skill": "Sacred Seal"
+				},
+				"barrier_mastery": {
+					"name": "Barrier Mastery",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Spirit Barrier grows stronger.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Spirit Barrier",
+							"power": 10
+						}
+					]
+				},
+				"sanctuary": {
+					"name": "Sanctuary",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Sacred ground beneath you.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.05
+						}
+					],
+					"choice": "t4"
+				},
+				"torii_of_the_ancients": {
+					"name": "Torii of the Ancients",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Raise a gate of the Ancient Ones over an ally: warded, healing, reflecting.",
+					"skill": "Torii of the Ancients"
+				},
+				"binding_circle": {
+					"name": "Binding Circle",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "sacred_seal",
+					"description": "Lay a circle of ofuda around every foe.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Sacred Seal",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.7,
+							"name": "Binding Circle"
+						}
+					]
+				},
+				"ward_exchange": {
+					"name": "Ward Exchange",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "sacred_seal",
+					"description": "What the seal binds, it turns back on them.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Sacred Seal",
+							"after_use": {
+								"self_status": "REFLECT",
+								"self_turns": 2
+							},
+							"name": "Ward Exchange"
+						}
+					]
+				},
+				"spirit_ward": {
+					"name": "Spirit Ward",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "The Ancient Ones mend you quietly.",
+					"effects": [
+						{
+							"type": "regen",
+							"hp": 0.015
+						}
+					]
+				},
+				"thousand_torii": {
+					"name": "Thousand Torii",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "torii_of_the_ancients",
+					"description": "A gate over every ally.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Torii of the Ancients",
+							"target": "ALL_ALLIES",
+							"power_mult": 0.6,
+							"name": "Thousand Torii"
+						}
+					]
+				},
+				"eternal_gate": {
+					"name": "Eternal Gate",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "torii_of_the_ancients",
+					"description": "The gate stands for a long time.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Torii of the Ancients",
+							"duration": 2
+						}
+					]
+				}
+			},
+			"ancestral_spirits": {
+				"spirit_well": {
+					"name": "Spirit Well",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "The spirits refill you.",
+					"effects": [
+						{
+							"type": "regen",
+							"mp": 0.03,
+							"sp": 0.02
+						}
+					]
+				},
+				"spirit_exchange": {
+					"name": "Stamina Conversion",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Draw the foe's stamina and turn it into your mana.",
+					"skill": "Stamina Conversion"
+				},
+				"ancestral_blessing": {
+					"name": "Ancestral Blessing",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "The ancestors mend through you.",
+					"effects": [
+						{
+							"type": "heal_bonus",
+							"mult": 0.06
+						}
+					]
+				},
+				"mending_mastery": {
+					"name": "Mending Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Ancestral Mending heals more.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Ancestral Mending",
+							"power": 10
+						}
+					],
+					"choice": "t4"
+				},
+				"communion": {
+					"name": "Communion",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Commune with the Ancient Ones; their power floods an ally with life.",
+					"skill": "Communion"
+				},
+				"spirit_siphon": {
+					"name": "Spirit Siphon",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "spirit_exchange",
+					"description": "Draw deeper.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Stamina Conversion",
+							"power_mult": 1.4,
+							"name": "Spirit Siphon"
+						}
+					]
+				},
+				"shared_breath": {
+					"name": "Shared Breath",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "spirit_exchange",
+					"description": "What you draw from them, the ancestors give to you.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Stamina Conversion",
+							"after_use": {
+								"heal_pct": 0.1
+							},
+							"name": "Shared Breath"
+						}
+					]
+				},
+				"ancestors_watch": {
+					"name": "Ancestors' Watch",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "The ancestors guide your healing hands.",
+					"effects": [
+						{
+							"type": "heal_bonus",
+							"mult": 0.07
+						}
+					]
+				},
+				"great_communion": {
+					"name": "Great Communion",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "communion",
+					"description": "The Ancient Ones flood everyone with life.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Communion",
+							"target": "ALL_ALLIES",
+							"power_mult": 0.6,
+							"name": "Great Communion"
+						}
+					]
+				},
+				"ancestral_shelter": {
+					"name": "Ancestral Shelter",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "communion",
+					"description": "They also stand guard over the one you heal.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Communion",
+							"add_status": [
+								"REFLECT"
+							],
+							"name": "Ancestral Shelter"
+						}
+					]
+				}
+			},
+			"kotodama": {
+				"primal_voice": {
+					"name": "Primal Voice",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Your words carry weight.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"arcane": 2
+							}
+						},
+						{
+							"type": "damage",
+							"mult": 0.03,
+							"ability": "MAGICAL"
+						}
+					]
+				},
+				"spirit_lance": {
+					"name": "Spirit Lance",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A spear of pure spirit, unbound by element.",
+					"skill": "Spirit Lance"
+				},
+				"exorcist": {
+					"name": "Exorcist",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Sealed spirits break apart.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "exorcism",
+							"bonus": 0.1
+						}
+					]
+				},
+				"wrath_mastery": {
+					"name": "Wrath Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Wrath of the Ancients grows.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Wrath of the Ancients",
+							"power": 10
+						}
+					],
+					"choice": "t4"
+				},
+				"voice_of_nyxara": {
+					"name": "Voice of Nyxara",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Speak a word from before creation; every foe reels.",
+					"skill": "Voice of Nyxara"
+				},
+				"spirit_volley": {
+					"name": "Spirit Volley",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "spirit_lance",
+					"description": "Speak the word many times.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Spirit Lance",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.6,
+							"name": "Spirit Volley"
+						}
+					]
+				},
+				"binding_word": {
+					"name": "Binding Word",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "spirit_lance",
+					"description": "The lance carries a word that binds.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Spirit Lance",
+							"add_status": [
+								"SEALED"
+							],
+							"name": "Binding Word"
+						},
+						{
+							"type": "skill",
+							"skill": "Spirit Lance",
+							"duration": 3
+						}
+					]
+				},
+				"word_of_power": {
+					"name": "Word of Power",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Every word you speak carries weight.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.06,
+							"ability": "MAGICAL"
+						}
+					]
+				},
+				"unspoken_word": {
+					"name": "Unspoken Word",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "voice_of_nyxara",
+					"description": "The silence after the word pushes them back.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Voice of Nyxara",
+							"turn_delay": 1,
+							"name": "Unspoken Word"
+						}
+					]
+				},
+				"name_of_nyxara": {
+					"name": "Name of Nyxara",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "voice_of_nyxara",
+					"description": "Speak her true name - to one foe.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Voice of Nyxara",
+							"target": "ENEMY",
+							"power_mult": 1.7,
+							"name": "Name of Nyxara"
+						}
+					]
+				}
+			}
+		},
+		"Elementalist": {
+			"conflux": {
+				"searing_mind": {
+					"name": "Searing Mind",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Heat and cold both answer.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"elements": [
+								"FIRE",
+								"ICE"
+							]
+						}
+					]
+				},
+				"glacial_prison": {
+					"name": "Glacial Prison",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Encase the foe in ice.",
+					"skill": "Glacial Prison"
+				},
+				"thermodynamics": {
+					"name": "Thermodynamics",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Exploit every temperature shock.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "thermal_shock",
+							"bonus": 0.1
+						},
+						{
+							"type": "combo",
+							"combo": "steam_burst",
+							"bonus": 0.1
+						}
+					]
+				},
+				"spear_mastery": {
+					"name": "Spear Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Blazing Ice Spear grows.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Blazing Ice Spear",
+							"power": 10
+						}
+					],
+					"choice": "t4"
+				},
+				"meteor": {
+					"name": "Meteor",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Pull a burning star down on every foe.",
+					"skill": "Meteor"
+				},
+				"permafrost": {
+					"name": "Permafrost",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "glacial_prison",
+					"description": "The ice does not melt.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Glacial Prison",
+							"turn_delay": 1,
+							"name": "Permafrost"
+						},
+						{
+							"type": "skill",
+							"skill": "Glacial Prison",
+							"duration": 1
+						}
+					]
+				},
+				"frostburn": {
+					"name": "Frostburn",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "glacial_prison",
+					"description": "Fire under the ice: thermal shock.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Glacial Prison",
+							"add_status": [
+								"BURN"
+							],
+							"add_element": "FIRE",
+							"name": "Frostburn"
+						}
+					]
+				},
+				"searing_focus": {
+					"name": "Searing Focus",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Fire and ice, studied to their roots.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.08,
+							"elements": [
+								"FIRE",
+								"ICE"
+							]
+						}
+					]
+				},
+				"comet": {
+					"name": "Comet",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "meteor",
+					"description": "Pull the star down on one foe.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Meteor",
+							"target": "ENEMY",
+							"power_mult": 1.7,
+							"name": "Comet"
+						}
+					]
+				},
+				"ice_meteor": {
+					"name": "Ice Meteor",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "meteor",
+					"description": "A frozen star: it burns and freezes.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Meteor",
+							"add_status": [
+								"FREEZE"
+							],
+							"add_element": "ICE",
+							"name": "Ice Meteor"
+						}
+					]
+				}
+			},
+			"stormcalling": {
+				"static_mind": {
+					"name": "Static Mind",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "The storm hums in you.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"elements": [
+								"LIGHTNING",
+								"WATER",
+								"WIND"
+							]
+						}
+					]
+				},
+				"tidal_wave": {
+					"name": "Tidal Wave",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A wave crashes over every foe and leaves them drenched.",
+					"skill": "Tidal Wave"
+				},
+				"conduction_mastery": {
+					"name": "Conduction Mastery",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Lightning through water.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "conduction",
+							"bonus": 0.1
+						},
+						{
+							"type": "combo",
+							"combo": "overload",
+							"bonus": 0.1
+						}
+					]
+				},
+				"storm_mastery": {
+					"name": "Storm Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Volcanic Thunder Storm grows.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Volcanic Thunder Storm",
+							"power": 10
+						}
+					],
+					"choice": "t4"
+				},
+				"tempest": {
+					"name": "Tempest",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "A living storm of wind and lightning.",
+					"skill": "Tempest"
+				},
+				"riptide": {
+					"name": "Riptide",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "tidal_wave",
+					"description": "The wave drags them back.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Tidal Wave",
+							"turn_delay": 1,
+							"name": "Riptide"
+						}
+					]
+				},
+				"charged_rain": {
+					"name": "Charged Rain",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "tidal_wave",
+					"description": "Lightning rides the water.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Tidal Wave",
+							"add_status": [
+								"SHOCK"
+							],
+							"add_element": "LIGHTNING",
+							"name": "Charged Rain"
+						}
+					]
+				},
+				"storm_caller": {
+					"name": "Storm Caller",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Water and lightning heed you.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.08,
+							"elements": [
+								"WATER",
+								"LIGHTNING",
+								"WIND"
+							]
+						}
+					]
+				},
+				"eye_of_the_tempest": {
+					"name": "Eye of the Tempest",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "tempest",
+					"description": "The storm narrows to one foe.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Tempest",
+							"target": "ENEMY",
+							"power_mult": 1.7,
+							"name": "Eye of the Tempest"
+						}
+					]
+				},
+				"monsoon": {
+					"name": "Monsoon",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "tempest",
+					"description": "The tempest drenches as it strikes.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Tempest",
+							"add_status": [
+								"SOAKED"
+							],
+							"name": "Monsoon"
+						},
+						{
+							"type": "skill",
+							"skill": "Tempest",
+							"duration": 1
+						}
+					]
+				}
+			},
+			"fifth_element": {
+				"arcane_study": {
+					"name": "Arcane Study",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Endless study in the tower.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"intelligence": 2,
+								"arcane": 2
+							}
+						}
+					]
+				},
+				"elemental_convergence": {
+					"name": "Elemental Convergence",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Fire, ice, lightning and earth fused in one bolt; it answers any combo.",
+					"skill": "Elemental Convergence"
+				},
+				"overflowing_mana": {
+					"name": "Overflowing Mana",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Mana wells up unbidden.",
+					"effects": [
+						{
+							"type": "regen",
+							"mp": 0.03
+						}
+					]
+				},
+				"eccentric_genius": {
+					"name": "Eccentric Genius",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Brilliant, chaotic, effective.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"critical_hit_rate": 0.05
+							}
+						}
+					],
+					"choice": "t4"
+				},
+				"aether_nova": {
+					"name": "Aether Nova",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "A glimpse of the fifth element: pure Aether, beyond any resistance.",
+					"skill": "Aether Nova"
+				},
+				"prismatic_split": {
+					"name": "Prismatic Split",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "elemental_convergence",
+					"description": "Split the bolt into its colours.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Elemental Convergence",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.75,
+							"name": "Prismatic Split"
+						}
+					]
+				},
+				"unstable_core": {
+					"name": "Unstable Core",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "elemental_convergence",
+					"description": "Pack more in. Much more.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Elemental Convergence",
+							"power_mult": 1.35,
+							"name": "Unstable Core"
+						},
+						{
+							"type": "skill",
+							"skill": "Elemental Convergence",
+							"mp_cost": 10
+						}
+					]
+				},
+				"aether_tap": {
+					"name": "Aether Tap",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "A thread to the fifth element.",
+					"effects": [
+						{
+							"type": "regen",
+							"mp": 0.03
+						}
+					]
+				},
+				"singularity": {
+					"name": "Singularity",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "aether_nova",
+					"description": "Collapse the nova onto one point.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Aether Nova",
+							"target": "ENEMY",
+							"power_mult": 1.7,
+							"name": "Singularity"
+						}
+					]
+				},
+				"afterglow": {
+					"name": "Afterglow",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "aether_nova",
+					"description": "The Aether flows back into you.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Aether Nova",
+							"after_use": {
+								"mp_pct": 0.25
+							},
+							"name": "Afterglow"
+						}
+					]
+				}
+			}
+		},
+		"Beastmaster": {
+			"predator": {
+				"feral_strength": {
+					"name": "Feral Strength",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Borrowed claws, borrowed fury.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"ability": "PHYSICAL"
+						},
+						{
+							"type": "stats",
+							"stats": {
+								"arcane": 1
+							}
+						}
+					]
+				},
+				"hunters_mark": {
+					"name": "Hunter's Mark",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Mark your prey; the pack will not lose it.",
+					"skill": "Hunter's Mark"
+				},
+				"venom_glands": {
+					"name": "Venom Glands",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Poisoned prey weakens fast.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.05,
+							"target_status": "POISON"
+						}
+					]
+				},
+				"manticore_fury": {
+					"name": "Manticore Fury",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Manticore Sting, deeper.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Manticore Sting",
+							"power": 10
+						},
+						{
+							"type": "combo",
+							"combo": "manticores_venom",
+							"bonus": 0.1
+						}
+					],
+					"choice": "t4"
+				},
+				"call_of_fenrisulfr": {
+					"name": "Call of Fenrisulfr",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "The Wild Father answers: spectral wolves tear through every foe.",
+					"skill": "Call of Fenrisulfr"
+				},
+				"pack_hunt": {
+					"name": "Pack Hunt",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "hunters_mark",
+					"description": "The pack marks every prey.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Hunter's Mark",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.7,
+							"name": "Pack Hunt"
+						}
+					]
+				},
+				"bleeding_mark": {
+					"name": "Bleeding Mark",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "hunters_mark",
+					"description": "The mark is a bite.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Hunter's Mark",
+							"add_status": [
+								"BLEED"
+							],
+							"name": "Bleeding Mark"
+						}
+					]
+				},
+				"alpha": {
+					"name": "Alpha",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Lead the hunt from the front.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.06,
+							"ability": "PHYSICAL"
+						}
+					]
+				},
+				"fenrisulfrs_chosen": {
+					"name": "Fenrisulfr's Chosen",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "call_of_fenrisulfr",
+					"description": "The whole pack on one prey.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Call of Fenrisulfr",
+							"target": "ENEMY",
+							"power_mult": 1.7,
+							"name": "Fenrisulfr's Chosen"
+						}
+					]
+				},
+				"endless_pack": {
+					"name": "Endless Pack",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "call_of_fenrisulfr",
+					"description": "Wolves keep coming; foes keep falling back.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Call of Fenrisulfr",
+							"turn_delay": 1,
+							"add_status": [
+								"STAGGERED"
+							],
+							"name": "Endless Pack"
+						}
+					]
+				}
+			},
+			"behemoth": {
+				"behemoth_blood": {
+					"name": "Behemoth Blood",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Its blood in your veins.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"vitality": 2,
+								"fortitude": 2,
+								"max_hp_pct": 0.02
+							}
+						}
+					]
+				},
+				"behemoth_charge": {
+					"name": "Behemoth Charge",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Charge with the Behemoth's weight and bowl the foe over.",
+					"skill": "Behemoth Charge"
+				},
+				"stone_skin": {
+					"name": "Stone Skin",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Hide like rock.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.04
+						}
+					]
+				},
+				"hide_mastery": {
+					"name": "Hide Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Behemoth Hide grows thicker.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Behemoth Hide",
+							"power": 10
+						}
+					],
+					"choice": "t4"
+				},
+				"earthshaker": {
+					"name": "Earthshaker",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "The Behemoth stamps; the ground breaks under every foe.",
+					"skill": "Earthshaker"
+				},
+				"stampede_charge": {
+					"name": "Stampede",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "behemoth_charge",
+					"description": "The Behemoth charges through the whole line.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Behemoth Charge",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.7,
+							"turn_delay": -1,
+							"name": "Stampede"
+						}
+					]
+				},
+				"gore": {
+					"name": "Gore",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "behemoth_charge",
+					"description": "Horns first.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Behemoth Charge",
+							"power_mult": 1.3,
+							"add_status": [
+								"BLEED"
+							],
+							"name": "Gore"
+						}
+					]
+				},
+				"behemoths_patience": {
+					"name": "Behemoth's Patience",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Unmoved, unhurried, unhurt.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.05
+						}
+					]
+				},
+				"fault_line": {
+					"name": "Fault Line",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "earthshaker",
+					"description": "The ground splits beneath them.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Earthshaker",
+							"turn_delay": 1,
+							"name": "Fault Line"
+						}
+					]
+				},
+				"behemoths_wrath": {
+					"name": "Behemoth's Wrath",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "earthshaker",
+					"description": "One stamp, one foe, nothing left.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Earthshaker",
+							"target": "ENEMY",
+							"power_mult": 1.7,
+							"name": "Behemoth's Wrath"
+						}
+					]
+				}
+			},
+			"roc": {
+				"rocs_wings": {
+					"name": "Roc's Wings",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Lighter than air.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"agility": 2,
+								"dodge": 0.02
+							}
+						}
+					]
+				},
+				"roc_dive": {
+					"name": "Roc Dive",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Plunge from above with talons first.",
+					"skill": "Roc Dive"
+				},
+				"tailwind": {
+					"name": "Tailwind",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Strike first, strike true.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"critical_hit_rate": 0.03
+							}
+						}
+					]
+				},
+				"sky_hunter": {
+					"name": "Sky Hunter",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Marked prey can't escape the sky.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.1,
+							"target_status": "MARKED"
+						}
+					],
+					"choice": "t4"
+				},
+				"storm_of_feathers": {
+					"name": "Storm of Feathers",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "The Roc's wings whip up a storm of razor feathers.",
+					"skill": "Storm of Feathers"
+				},
+				"talons": {
+					"name": "Talons",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "roc_dive",
+					"description": "The talons hold the prey for the sky to see.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Roc Dive",
+							"add_status": [
+								"MARKED"
+							],
+							"name": "Talons"
+						}
+					]
+				},
+				"sweeping_dive": {
+					"name": "Sweeping Dive",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "roc_dive",
+					"description": "Skim the whole line.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Roc Dive",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.6,
+							"name": "Sweeping Dive"
+						}
+					]
+				},
+				"updraft": {
+					"name": "Updraft",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "The Roc's wind at your back.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"agility": 2,
+								"dodge": 0.02
+							}
+						}
+					]
+				},
+				"eye_of_the_roc": {
+					"name": "Eye of the Roc",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "storm_of_feathers",
+					"description": "Every feather finds one foe.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Storm of Feathers",
+							"target": "ENEMY",
+							"power_mult": 1.7,
+							"name": "Eye of the Roc"
+						}
+					]
+				},
+				"gale_force": {
+					"name": "Gale Force",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "storm_of_feathers",
+					"description": "The wings blow them back.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Storm of Feathers",
+							"turn_delay": 1,
+							"name": "Gale Force"
+						}
+					]
+				}
+			}
+		},
+		"Necromancer": {
+			"curses": {
+				"malediction": {
+					"name": "Malediction",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Darkness answers you.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"element": "DARK"
+						}
+					]
+				},
+				"crippling_hex": {
+					"name": "Crippling Hex",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Wither Strength, Agility and Fortitude and blind the foe.",
+					"skill": "Crippling Hex"
+				},
+				"lingering_curse": {
+					"name": "Lingering Curse",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Curse of Weakness bites deeper.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Curse of Weakness",
+							"power": 8
+						}
+					]
+				},
+				"blight_mastery": {
+					"name": "Blight Mastery",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Poison and shadow, perfected.",
+					"effects": [
+						{
+							"type": "combo",
+							"combo": "blight",
+							"bonus": 0.15
+						},
+						{
+							"type": "combo",
+							"combo": "dread",
+							"bonus": 0.1
+						}
+					],
+					"choice": "t4"
+				},
+				"hels_decree": {
+					"name": "Hel's Decree",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "The Shadow Keeper's decree: every foe weakens and rots.",
+					"skill": "Hel's Decree"
+				},
+				"plague_hex": {
+					"name": "Plague Hex",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "crippling_hex",
+					"description": "The curse spreads.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Crippling Hex",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.6,
+							"name": "Plague Hex"
+						}
+					]
+				},
+				"rotting_hex": {
+					"name": "Rotting Hex",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "crippling_hex",
+					"description": "The curse rots as it weakens.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Crippling Hex",
+							"add_status": [
+								"POISON"
+							],
+							"name": "Rotting Hex"
+						},
+						{
+							"type": "skill",
+							"skill": "Crippling Hex",
+							"duration": 1
+						}
+					]
+				},
+				"hexweaver": {
+					"name": "Hexweaver",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Your curses find a way in.",
+					"effects": [
+						{
+							"type": "status_chance",
+							"chance": 0.12
+						}
+					]
+				},
+				"hels_shroud": {
+					"name": "Hel's Shroud",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "hels_decree",
+					"description": "The decree also takes their sight.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Hel's Decree",
+							"add_status": [
+								"BLIND"
+							],
+							"name": "Hel's Shroud"
+						}
+					]
+				},
+				"final_decree": {
+					"name": "Final Decree",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "hels_decree",
+					"description": "The whole of Hel's will on one soul.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Hel's Decree",
+							"target": "ENEMY",
+							"power_mult": 1.6,
+							"name": "Final Decree"
+						}
+					]
+				}
+			},
+			"life_drinker": {
+				"dark_pact": {
+					"name": "Dark Pact",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "Stolen life sustains you.",
+					"effects": [
+						{
+							"type": "lifesteal",
+							"fraction": 0.03
+						}
+					]
+				},
+				"blood_rite": {
+					"name": "Blood Rite",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "Pay with your own blood for a devastating bolt of shadow.",
+					"skill": "Blood Rite"
+				},
+				"sanguine": {
+					"name": "Sanguine",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "Life Tap drinks deeper.",
+					"effects": [
+						{
+							"type": "skill",
+							"skill": "Life Tap",
+							"power": 8
+						}
+					]
+				},
+				"undying": {
+					"name": "Undying",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Death keeps letting you go.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.14,
+							"user_hp_below": 0.3
+						}
+					],
+					"choice": "t4"
+				},
+				"perfect_drain": {
+					"name": "Perfect Drain",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "Tear the life from a foe and take all of it for yourself.",
+					"skill": "Perfect Drain"
+				},
+				"sanguine_pact": {
+					"name": "Sanguine Pact",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "blood_rite",
+					"description": "Pay more; get more.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Blood Rite",
+							"power_mult": 1.45,
+							"hp_cost": 0.1,
+							"name": "Sanguine Pact"
+						}
+					]
+				},
+				"blood_return": {
+					"name": "Blood Return",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "blood_rite",
+					"description": "The blood comes back to you.",
+					"effects": [
+						{
+							"type": "lifesteal",
+							"fraction": 0.2,
+							"skill": "Blood Rite"
+						}
+					]
+				},
+				"deaths_bargain": {
+					"name": "Death's Bargain",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Every wound you deal is a coin in your purse.",
+					"effects": [
+						{
+							"type": "lifesteal",
+							"fraction": 0.03
+						}
+					]
+				},
+				"exsanguinate": {
+					"name": "Exsanguinate",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "perfect_drain",
+					"description": "Drain them all.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Perfect Drain",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.55,
+							"name": "Exsanguinate"
+						}
+					]
+				},
+				"perfect_vessel": {
+					"name": "Perfect Vessel",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "perfect_drain",
+					"description": "What you take keeps you whole.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Perfect Drain",
+							"after_use": {
+								"self_status": "REGENERATION",
+								"self_turns": 3,
+								"heal_pct": 0.1
+							},
+							"name": "Perfect Vessel"
+						}
+					]
+				}
+			},
+			"gravecaller": {
+				"deaths_embrace": {
+					"name": "Death's Embrace",
+					"tier": 1,
+					"max_rank": 3,
+					"description": "The grave's patience.",
+					"effects": [
+						{
+							"type": "stats",
+							"stats": {
+								"intelligence": 2,
+								"mind": 2
+							}
+						}
+					]
+				},
+				"bone_spear": {
+					"name": "Bone Spear",
+					"tier": 2,
+					"max_rank": 1,
+					"description": "A lance of bone that tears and bleeds.",
+					"skill": "Bone Spear"
+				},
+				"grave_chill": {
+					"name": "Grave Chill",
+					"tier": 3,
+					"max_rank": 3,
+					"description": "The cold of the grave.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.04,
+							"elements": [
+								"ICE",
+								"DARK"
+							]
+						}
+					]
+				},
+				"reaper": {
+					"name": "Reaper",
+					"tier": 4,
+					"max_rank": 2,
+					"description": "Finish the dying.",
+					"effects": [
+						{
+							"type": "damage",
+							"mult": 0.12,
+							"target_hp_below": 0.3
+						}
+					],
+					"choice": "t4"
+				},
+				"danse_macabre": {
+					"name": "Danse Macabre",
+					"tier": 5,
+					"max_rank": 1,
+					"description": "The dead rise and dance through the enemy ranks.",
+					"skill": "Danse Macabre"
+				},
+				"bone_volley": {
+					"name": "Bone Volley",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "bone_spear",
+					"description": "A hail of bone.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Bone Spear",
+							"target": "ALL_ENEMIES",
+							"power_mult": 0.6,
+							"name": "Bone Volley"
+						}
+					]
+				},
+				"marrowfreeze": {
+					"name": "Marrowfreeze",
+					"tier": 3,
+					"max_rank": 1,
+					"choice": "mut2",
+					"requires": "bone_spear",
+					"description": "The cold of the grave in every splinter.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Bone Spear",
+							"add_status": [
+								"FREEZE"
+							],
+							"add_element": "ICE",
+							"name": "Marrowfreeze"
+						}
+					]
+				},
+				"bone_armor": {
+					"name": "Bone Armor",
+					"tier": 4,
+					"max_rank": 2,
+					"choice": "t4",
+					"fork_alt": true,
+					"description": "Ribs of the dead around you.",
+					"effects": [
+						{
+							"type": "defense",
+							"reduce": 0.05
+						}
+					]
+				},
+				"grand_danse": {
+					"name": "Grand Danse",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "danse_macabre",
+					"description": "The dance drives them back.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Danse Macabre",
+							"turn_delay": 1,
+							"name": "Grand Danse"
+						}
+					]
+				},
+				"deaths_partner": {
+					"name": "Death's Partner",
+					"tier": 5,
+					"max_rank": 1,
+					"choice": "mut5",
+					"requires": "danse_macabre",
+					"description": "Death dances with one partner only.",
+					"effects": [
+						{
+							"type": "mutate",
+							"skill": "Danse Macabre",
+							"target": "ENEMY",
+							"power_mult": 1.7,
+							"name": "Death's Partner"
+						}
+					]
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,149 @@
+{
+ "tab": "Talents",
+ "file": "data/talents.json",
+ "order": 14,
+ "description": "Talent trees: 3 branches x 5 tiers per class. tools/talent_spec.py generated the first version; edit here from now on. Engine: scripts/resources/TalentManager.gd.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Talent settings",
+   "path": [
+    "settings"
+   ],
+   "fields": [
+    {
+     "name": "points_per_level",
+     "type": "int",
+     "min": 1,
+     "max": 5
+    },
+    {
+     "name": "first_point_level",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "tier_points",
+     "type": "json",
+     "help": "Points that must be spent in a branch before each tier opens, e.g. [0, 2, 4, 6, 8]."
+    },
+    {
+     "name": "respec_gold_per_level",
+     "type": "int",
+     "min": 0,
+     "help": "Respec cost in copper = this x level."
+    },
+    {
+     "name": "loadout_size",
+     "type": "int",
+     "min": 1,
+     "max": 12,
+     "help": "Skills a character can take into battle."
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Branches",
+   "path": [
+    "branches"
+   ],
+   "levels": [
+    {
+     "name": "class"
+    }
+   ],
+   "key_style": "snake",
+   "name_field": "name",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "order",
+     "type": "int",
+     "min": 0,
+     "max": 2
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Nodes",
+   "path": [
+    "nodes"
+   ],
+   "levels": [
+    {
+     "name": "class"
+    },
+    {
+     "name": "branch"
+    }
+   ],
+   "key_style": "snake",
+   "name_field": "name",
+   "summary": "Tier {tier}, {max_rank} rank(s)",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "tier",
+     "type": "int",
+     "min": 1,
+     "max": 5,
+     "default": 1
+    },
+    {
+     "name": "max_rank",
+     "type": "int",
+     "min": 1,
+     "max": 5,
+     "default": 1
+    },
+    {
+     "name": "skill",
+     "type": "ref",
+     "source": "skills",
+     "optional": true,
+     "help": "This node unlocks an active skill (then 'effects' is usually empty)."
+    },
+    {
+     "name": "effects",
+     "type": "json",
+     "optional": true,
+     "help": "List of effects per rank, e.g. [{\"type\": \"stats\", \"stats\": {\"toughness\": 3}}, {\"type\": \"damage\", \"mult\": 0.05, \"with\": \"two_handed\"}]. Types: stats, damage, defense, heal_bonus, lifesteal, skill, combo, status_chance, regen, mutate (change a skill: target, power_mult, add_status, set_status, add_element, turn_delay, hp_cost, after_use {heal_pct, mp_pct, sp_pct, self_status, self_turns}). See TalentManager.gd."
+    },
+    {
+     "name": "choice",
+     "type": "str",
+     "optional": true,
+     "help": "Fork id: nodes in a branch with the same choice are mutually exclusive (mut2 = tier-2 skill mutation, t4 = tier-4 passive, mut5 = ultimate mutation)."
+    },
+    {
+     "name": "requires",
+     "type": "str",
+     "optional": true,
+     "help": "Node id in this branch that must be learned first (a mutation needs its skill)."
+    },
+    {
+     "name": "fork_alt",
+     "type": "bool",
+     "optional": true,
+     "help": "Marks the added second option of the tier-4 fork."
+    }
+   ]
+  }
+ ]
+}

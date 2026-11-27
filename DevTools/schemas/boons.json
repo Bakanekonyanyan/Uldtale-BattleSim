@@ -1,0 +1,44 @@
+{
+ "tab": "Boons",
+ "file": "data/boons.json",
+ "order": 51,
+ "description": "Run boons picked after each boss (RunState.gd, BoonPicker.gd). Last until the expedition ends.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Settings",
+   "fields": [
+    {
+     "name": "offer_count",
+     "type": "int",
+     "min": 1,
+     "max": 5
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Boons",
+   "path": [
+    "boons"
+   ],
+   "key_style": "snake",
+   "name_field": "name",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "effects",
+     "type": "json",
+     "help": "break_heal, link_gain_mult, reveal_weaknesses, enemy_break_delta, hero_break_delta, wave_heal, start_link, gold_mult, guard_pips (and any Omen effect key)"
+    }
+   ]
+  }
+ ]
+}

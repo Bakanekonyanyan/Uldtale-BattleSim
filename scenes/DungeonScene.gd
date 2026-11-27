@@ -12,14 +12,14 @@ var player_character: CharacterData
 @onready var dungeon_description_label = $DungeonDescriptionLabel
 
 func _ready():
-	print("DungeonScene: _ready called, waiting for start_dungeon")
+	Log.debug("dungeon", "DungeonScene: _ready called, waiting for start_dungeon")
 
 func set_player(character: CharacterData):
-	print("DungeonScene: set_player - ", character.name if character else "NULL")
+	Log.debug("dungeon", "DungeonScene: set_player - ", character.name if character else "NULL")
 	player_character = character
 
 func set_player_character(character: CharacterData):
-	print("DungeonScene: set_player_character - ", character.name if character else "NULL")
+	Log.debug("dungeon", "DungeonScene: set_player_character - ", character.name if character else "NULL")
 	player_character = character
 
 func start_dungeon(battle_data: Dictionary):
@@ -28,19 +28,19 @@ func start_dungeon(battle_data: Dictionary):
 	This scene just displays the floor info briefly, then transitions to battle
 	 FIXED: Now handles both single enemy (legacy) and multi-enemy arrays
 	"""
-	print("DungeonScene: start_dungeon called")
-	print("  - Floor: %d, Wave: %d" % [battle_data["current_floor"], battle_data["current_wave"]])
-	print("  - Player: ", battle_data["player_character"].name if battle_data["player_character"] else "NULL")
+	Log.debug("dungeon", "DungeonScene: start_dungeon called")
+	Log.debug("dungeon", "  - Floor: %d, Wave: %d" % [battle_data["current_floor"], battle_data["current_wave"]])
+	Log.debug("dungeon", "  - Player: ", battle_data["player_character"].name if battle_data["player_character"] else "NULL")
 	
 	#  FIX: Handle both multi-enemy and legacy single enemy
 	if battle_data.has("enemies"):
-		print("  - Enemies: %d" % battle_data["enemies"].size())
+		Log.debug("dungeon", "  - Enemies: %d" % battle_data["enemies"].size())
 		for enemy in battle_data["enemies"]:
-			print("    - %s" % enemy.name)
+			Log.debug("dungeon", "    - %s" % enemy.name)
 	elif battle_data.has("enemy"):
-		print("  - Enemy: ", battle_data["enemy"].name if battle_data["enemy"] else "NULL")
+		Log.debug("dungeon", "  - Enemy: ", battle_data["enemy"].name if battle_data["enemy"] else "NULL")
 	
-	print("  - Boss: ", battle_data["is_boss_fight"])
+	Log.debug("dungeon", "  - Boss: ", battle_data["is_boss_fight"])
 	
 	# Validate player
 	if not battle_data.has("player_character") or not battle_data["player_character"]:
@@ -69,7 +69,7 @@ func start_dungeon(battle_data: Dictionary):
 	# Brief display, then transition to battle
 	await get_tree().create_timer(0.5).timeout
 	
-	print("DungeonScene: Transitioning to battle...")
+	Log.debug("dungeon", "DungeonScene: Transitioning to battle...")
 	SceneManager.start_battle(battle_data)
 
 func update_labels(battle_data: Dictionary):
@@ -88,4 +88,4 @@ func update_labels(battle_data: Dictionary):
 	if floor_label:
 		floor_label.text = "Floor: %d" % current_floor
 	
-	print("DungeonScene: Labels updated - Floor %d, Wave %d" % [current_floor, current_wave])
+	Log.debug("dungeon", "DungeonScene: Labels updated - Floor %d, Wave %d" % [current_floor, current_wave])

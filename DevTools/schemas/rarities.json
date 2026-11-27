@@ -1,0 +1,25 @@
+{
+ "tab": "Rarities",
+ "file": "data/rarities.json",
+ "order": 30,
+ "sections": [
+  {
+   "kind": "collection",
+   "label": "Rarities",
+   "key_style": "snake",
+   "fields": [
+    {
+     "name": "multiplier",
+     "type": "float",
+     "min": 0,
+     "help": "Stat multiplier for gear of this rarity."
+    },
+    {
+     "name": "color",
+     "type": "str",
+     "help": "Godot color name or hex (#rrggbb) used for item names."
+    }
+   ]
+  }
+ ]
+}

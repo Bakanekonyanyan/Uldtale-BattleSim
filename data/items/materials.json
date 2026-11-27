@@ -1,89 +1,154 @@
 {
-  "iron_ore": {
-	"name": "Iron Ore",
-	"description": "Raw iron ore",
-	"item_type": "MATERIAL",
-	"value": 10,
-	"stackable": true,
-	"max_stack": 999
-  },
-  "wood": {
-	"name": "Wood",
-	"description": "A piece of wood",
-	"item_type": "MATERIAL",
-	"value": 5,
-	"stackable": true,
-	"max_stack": 999
+	"iron_ore": {
+		"name": "Iron Ore",
+		"description": "Raw iron ore",
+		"item_type": "MATERIAL",
+		"value": 10,
+		"stackable": true,
+		"max_stack": 999
 	},
-  "bogblossom_petal": {
-	"name": "Bogblossom Petal",
-	"description": "Used to craft Antidote Herbs. A swamp flower with natural toxin-eating properties.",
-	"item_type": "MATERIAL",
-	"value": 8,
-	"stackable": true,
-	"max_stack": 999
-  },
-
-  "frostroot_chunk": {
-	"name": "Frostroot Chunk",
-	"description": "Used to craft Coolroot Gel. A cold cavern root known for its burn-soothing qualities.",
-	"item_type": "MATERIAL",
-	"value": 10,
-	"stackable": true,
-	"max_stack": 999
-  },
-
-  "embershard_fragment": {
-	"name": "Embershard Fragment",
-	"description": "Used to craft Warmth Charms. A mineral shard that emits soft natural heat.",
-	"item_type": "MATERIAL",
-	"value": 12,
-	"stackable": true,
-	"max_stack": 999
-  },
-
-  "bloodvine_fiber": {
-	"name": "Bloodvine Fiber",
-	"description": "Used to craft Coagulant Bandages. Fibers from a plant that magically clots wounds.",
-	"item_type": "MATERIAL",
-	"value": 6,
-	"stackable": true,
-	"max_stack": 999
-  },
-
-  "voltslate_pebble": {
-	"name": "Voltslate Pebble",
-	"description": "Used to craft Grounding Stones. A stone that naturally absorbs electrical charge.",
-	"item_type": "MATERIAL",
-	"value": 9,
-	"stackable": true,
-	"max_stack": 999
-  },
-
-  "mindglass_shard": {
-	"name": "Mindglass Shard",
-	"description": "Used to craft Clarity Droplets. A crystal that resonates with mental focus.",
-	"item_type": "MATERIAL",
-	"value": 11,
-	"stackable": true,
-	"max_stack": 999
-  },
-
-  "glowcap_mushroom": {
-	"name": "Glowcap Mushroom",
-	"description": "Used to craft Glowcap Salve. A bioluminescent mushroom that restores magical sight.",
-	"item_type": "MATERIAL",
-	"value": 7,
-	"stackable": true,
-	"max_stack": 999
-  },
-
-  "rousepepper_seeds": {
-	"name": "Rousepepper Seeds",
-	"description": "Used to craft Awakening Spice. Hot seeds that snap the senses awake.",
-	"item_type": "MATERIAL",
-	"value": 5,
-	"stackable": true,
-	"max_stack": 999
-  }
+	"wood": {
+		"name": "Wood",
+		"description": "A piece of wood",
+		"item_type": "MATERIAL",
+		"value": 5,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"bogblossom_petal": {
+		"name": "Bogblossom Petal",
+		"description": "Used to craft Antidote Herbs. A swamp flower with natural toxin-eating properties.",
+		"item_type": "MATERIAL",
+		"value": 8,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"frostroot_chunk": {
+		"name": "Frostroot Chunk",
+		"description": "Used to craft Coolroot Gel. A cold cavern root known for its burn-soothing qualities.",
+		"item_type": "MATERIAL",
+		"value": 10,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"embershard_fragment": {
+		"name": "Embershard Fragment",
+		"description": "Used to craft Warmth Charms. A mineral shard that emits soft natural heat.",
+		"item_type": "MATERIAL",
+		"value": 12,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"bloodvine_fiber": {
+		"name": "Bloodvine Fiber",
+		"description": "Used to craft Coagulant Bandages. Fibers from a plant that magically clots wounds.",
+		"item_type": "MATERIAL",
+		"value": 6,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"voltslate_pebble": {
+		"name": "Voltslate Pebble",
+		"description": "Used to craft Grounding Stones. A stone that naturally absorbs electrical charge.",
+		"item_type": "MATERIAL",
+		"value": 9,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"mindglass_shard": {
+		"name": "Mindglass Shard",
+		"description": "Used to craft Clarity Droplets. A crystal that resonates with mental focus.",
+		"item_type": "MATERIAL",
+		"value": 11,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"glowcap_mushroom": {
+		"name": "Glowcap Mushroom",
+		"description": "Used to craft Glowcap Salve. A bioluminescent mushroom that restores magical sight.",
+		"item_type": "MATERIAL",
+		"value": 7,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"rousepepper_seeds": {
+		"name": "Rousepepper Seeds",
+		"description": "Used to craft Awakening Spice. Hot seeds that snap the senses awake.",
+		"item_type": "MATERIAL",
+		"value": 5,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"mithril_ore": {
+		"name": "Mithril Ore",
+		"description": "Used by the Blacksmith for mid-level upgrades (+4 to +6). Found from floor 6 onward.",
+		"item_type": "MATERIAL",
+		"value": 40,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"adamant_ore": {
+		"name": "Adamant Ore",
+		"description": "Used by the Blacksmith for high-level upgrades (+7 and up). Found from floor 12 onward.",
+		"item_type": "MATERIAL",
+		"value": 120,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"monster_core": {
+		"name": "Monster Core",
+		"description": "A pulsing core torn from a boss. Used for top-tier potions and high-level upgrades.",
+		"item_type": "MATERIAL",
+		"value": 150,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"linen_cloth": {
+		"name": "Linen Cloth",
+		"description": "Plain woven linen. Upgrades cloth armor (up to +3).",
+		"item_type": "MATERIAL",
+		"value": 10,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"silk_cloth": {
+		"name": "Silk Cloth",
+		"description": "Fine silk that holds enchantments well. Upgrades cloth armor (+4 to +6).",
+		"item_type": "MATERIAL",
+		"value": 30,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"spellweave_cloth": {
+		"name": "Spellweave Cloth",
+		"description": "Cloth spun with living threads of mana. Upgrades cloth armor (+7 and up).",
+		"item_type": "MATERIAL",
+		"value": 70,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"rawhide": {
+		"name": "Rawhide",
+		"description": "Untreated hide. Upgrades leather armor (up to +3).",
+		"item_type": "MATERIAL",
+		"value": 10,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"thick_hide": {
+		"name": "Thick Hide",
+		"description": "Tough hide from large beasts. Upgrades leather armor (+4 to +6).",
+		"item_type": "MATERIAL",
+		"value": 30,
+		"stackable": true,
+		"max_stack": 999
+	},
+	"drake_hide": {
+		"name": "Drake Hide",
+		"description": "Scaled hide that shrugs off flame. Upgrades leather armor (+7 and up).",
+		"item_type": "MATERIAL",
+		"value": 70,
+		"stackable": true,
+		"max_stack": 999
+	}
 }

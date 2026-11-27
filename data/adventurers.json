@@ -1,0 +1,641 @@
+{
+  "_doc": "NPC adventurers (AdventurerManager.gd, GAME_ROADMAP.md section 4). A roster is generated per new game from the name tables, the 12 classes and the traits below. Each day (WorldClock) idle adventurers may take jobs; everyday jobs resolve with abstract rolls, boss hunts and promotion trials with a real battle (AutoBattler). Failure means injury, retirement or death, weighted by traits. Rapport (-100..100) moves with chats, drinks and gifts at the Tavern.",
+  "settings": {
+    "roster_start": [
+      15,
+      17
+    ],
+    "roster_min": 14,
+    "roster_max": 20,
+    "rivals_at_start": 2,
+    "start_level": [
+      1,
+      8
+    ],
+    "newcomer_chance_per_day": 0.15,
+    "newcomer_level": [
+      1,
+      3
+    ],
+    "history_max": 10,
+    "departed_keep": 30,
+    "career": {
+      "_doc": "Careers end: past prime_years with the Guild, each week retire_per_week x (years past prime) chance to retire (not while in your party or on a job).",
+      "prime_years": 4,
+      "retire_per_week": 0.01
+    }
+  },
+  "jobs": {
+    "take_chance": 0.45,
+    "boss_hunt_chance": 0.12,
+    "trial_chance": 0.5,
+    "floors": [
+      1,
+      2
+    ],
+    "success_base": 0.84,
+    "success_per_power": 0.06,
+    "success_min": 0.15,
+    "success_max": 0.93,
+    "points_per_floor": 4,
+    "points_base": 6,
+    "xp_per_floor": 180,
+    "gear_floor_per_level": 0.6,
+    "compete_chance": 0.12,
+    "_doc": "Power = level x 0.5 + gear floor - job floor x 1.5 (positive = easy). Success = success_base + success_per_power x power (+ traits), clamped. Each success gives points_base + points_per_floor x floor Guild Points and xp_per_floor x floor XP. Adventurers only attempt a promotion trial at level >= trial floor x trial_level_per_floor; boss hunts are one floor shallower than their everyday jobs.",
+    "trial_level_per_floor": 1.6
+  },
+  "fates": {
+    "_doc": "After a failed job: death_chance, else retire_chance, else an injury of injury_days. Big moments (real battles) use the boss_ values. Trait death/retire multipliers apply.",
+    "death_chance": 0.03,
+    "retire_chance": 0.03,
+    "boss_death_chance": 0.06,
+    "boss_retire_chance": 0.05,
+    "injury_days": [
+      3,
+      8
+    ]
+  },
+  "social": {
+    "drink_copper_per_level": 8,
+    "drink_rapport": [
+      3,
+      7
+    ],
+    "chat_rapport": [
+      1,
+      3
+    ],
+    "gift_rapport_per_copper": 0.08,
+    "gift_rapport_max": 15,
+    "friend_at": 40,
+    "close_friend_at": 70,
+    "enemy_at": -40,
+    "rival_at": 3,
+    "start_rapport": [
+      -10,
+      15
+    ],
+    "alignment_known_after_chats": 3
+  },
+  "traits": {
+    "reckless": {
+      "name": "Reckless",
+      "description": "Charges in first, thinks later.",
+      "exclusive": [
+        "cautious",
+        "cowardly"
+      ],
+      "job_chance": 0.15,
+      "success": -0.05,
+      "floor_bias": 1,
+      "death": 2.0,
+      "retire": 0.5,
+      "honor": -10,
+      "heart": 0
+    },
+    "cautious": {
+      "name": "Cautious",
+      "description": "Checks every corner twice.",
+      "exclusive": [
+        "reckless"
+      ],
+      "job_chance": -0.1,
+      "success": 0.06,
+      "floor_bias": -1,
+      "death": 0.4,
+      "retire": 1.3,
+      "honor": 5,
+      "heart": 0
+    },
+    "ambitious": {
+      "name": "Ambitious",
+      "description": "Wants the top rank, and wants it first.",
+      "exclusive": [
+        "lazy"
+      ],
+      "job_chance": 0.12,
+      "floor_bias": 1,
+      "compete": 2.0,
+      "rival": true,
+      "honor": -5,
+      "heart": -5,
+      "leave": 1.3
+    },
+    "greedy": {
+      "name": "Greedy",
+      "description": "Counts the coin before the cost.",
+      "compete": 1.5,
+      "likes": {
+        "equipment": 1.5,
+        "material": 1.2
+      },
+      "honor": -15,
+      "heart": -15,
+      "share": 1.5
+    },
+    "loyal": {
+      "name": "Loyal",
+      "description": "Never forgets a friend.",
+      "friend_bonus": 1.3,
+      "honor": 20,
+      "heart": 10,
+      "share": 0.9,
+      "leave": 0.2
+    },
+    "honorable": {
+      "name": "Honorable",
+      "description": "Keeps their word, even when it costs them.",
+      "exclusive": [
+        "greedy"
+      ],
+      "compete": 0.5,
+      "honor": 35,
+      "heart": 5,
+      "share": 0.8
+    },
+    "cowardly": {
+      "name": "Cowardly",
+      "description": "Brave right up until the danger arrives.",
+      "exclusive": [
+        "reckless"
+      ],
+      "success": -0.03,
+      "floor_bias": -1,
+      "death": 0.6,
+      "retire": 2.5,
+      "honor": -10,
+      "heart": 0
+    },
+    "kind": {
+      "name": "Kind",
+      "description": "Shares their last potion.",
+      "exclusive": [
+        "cruel"
+      ],
+      "drink": 1.3,
+      "gift": 1.2,
+      "likes": {
+        "consumable": 1.4
+      },
+      "honor": 5,
+      "heart": 35,
+      "share": 0.9
+    },
+    "cruel": {
+      "name": "Cruel",
+      "description": "Enjoys the fight a little too much.",
+      "exclusive": [
+        "kind"
+      ],
+      "drink": 0.6,
+      "success": 0.02,
+      "honor": -10,
+      "heart": -35
+    },
+    "lazy": {
+      "name": "Lazy",
+      "description": "Tomorrow is a fine day for adventure.",
+      "exclusive": [
+        "ambitious"
+      ],
+      "job_chance": -0.2,
+      "heart": 5
+    },
+    "cheerful": {
+      "name": "Cheerful",
+      "description": "Laughs loudest in the tavern.",
+      "exclusive": [
+        "aloof"
+      ],
+      "drink": 1.4,
+      "chat": 1.5,
+      "heart": 15
+    },
+    "aloof": {
+      "name": "Aloof",
+      "description": "Keeps to themselves.",
+      "exclusive": [
+        "cheerful"
+      ],
+      "drink": 0.5,
+      "chat": 0.5,
+      "heart": -5,
+      "leave": 1.5
+    },
+    "devout": {
+      "name": "Devout",
+      "description": "Prays to the Ancient Ones before every job.",
+      "success": 0.02,
+      "honor": 15,
+      "heart": 10,
+      "likes": {
+        "consumable": 1.2
+      }
+    },
+    "scholarly": {
+      "name": "Scholarly",
+      "description": "Knows every monster's weakness - on paper.",
+      "success": 0.03,
+      "job_chance": -0.05,
+      "likes": {
+        "material": 1.5
+      }
+    },
+    "boastful": {
+      "name": "Boastful",
+      "description": "Every story grows in the telling.",
+      "compete": 1.3,
+      "rival": true,
+      "chat": 1.2,
+      "honor": -5
+    }
+  },
+  "names": {
+    "_doc": "Per race: given names are built from start + end syllables; family is a surname or epithet list.",
+    "Hume": {
+      "start": [
+        "Al",
+        "Bran",
+        "Cor",
+        "Da",
+        "El",
+        "Fen",
+        "Gar",
+        "Hal",
+        "Ire",
+        "Jor",
+        "Ka",
+        "Lor",
+        "Mar",
+        "Ny",
+        "Os",
+        "Per",
+        "Ren",
+        "Sa",
+        "Tor",
+        "Wil"
+      ],
+      "end": [
+        "an",
+        "en",
+        "is",
+        "a",
+        "ric",
+        "wen",
+        "ett",
+        "o",
+        "ia",
+        "ard",
+        "yn",
+        "el"
+      ],
+      "family": [
+        "Ashford",
+        "Brightwater",
+        "Cole",
+        "Dunmore",
+        "Fairbanks",
+        "Greaves",
+        "Hollow",
+        "Marsh",
+        "Redfern",
+        "Thorne",
+        "Vale",
+        "Whitlock"
+      ]
+    },
+    "Ursari": {
+      "start": [
+        "Bor",
+        "Gru",
+        "Hu",
+        "Ka",
+        "Mo",
+        "Ur",
+        "Bo",
+        "Ta",
+        "Bru",
+        "Og"
+      ],
+      "end": [
+        "n",
+        "ga",
+        "mir",
+        "ka",
+        "do",
+        "rak",
+        "sa",
+        "vin"
+      ],
+      "family": [
+        "Honeypaw",
+        "Stonehide",
+        "Oakshoulder",
+        "Riverclaw",
+        "Deepden",
+        "Frostfur"
+      ]
+    },
+    "Lycan": {
+      "start": [
+        "Fen",
+        "Var",
+        "Gry",
+        "Ul",
+        "Ska",
+        "Wol",
+        "Ra",
+        "Ly",
+        "Hro",
+        "Ka"
+      ],
+      "end": [
+        "rik",
+        "a",
+        "ven",
+        "ulf",
+        "dis",
+        "gar",
+        "na",
+        "rr"
+      ],
+      "family": [
+        "Moonhowl",
+        "Greymane",
+        "Swiftfang",
+        "of the Iron Pack",
+        "Nightrunner",
+        "Ashpelt"
+      ]
+    },
+    "Felis": {
+      "start": [
+        "Mi",
+        "Pur",
+        "Shi",
+        "Ze",
+        "Ka",
+        "Ny",
+        "Ri",
+        "Sa",
+        "Ta",
+        "Lu"
+      ],
+      "end": [
+        "ri",
+        "sha",
+        "ko",
+        "ra",
+        "ne",
+        "ki",
+        "ssa",
+        "ru"
+      ],
+      "family": [
+        "Softstep",
+        "Quickwhisker",
+        "Sunnap",
+        "Tallgrass",
+        "Silkclaw",
+        "Duskeye"
+      ]
+    },
+    "Kitsune": {
+      "start": [
+        "Ak",
+        "Hi",
+        "Ku",
+        "Mi",
+        "Sa",
+        "Ta",
+        "Yu",
+        "Ki",
+        "Ren",
+        "Ai"
+      ],
+      "end": [
+        "ko",
+        "ra",
+        "mi",
+        "ne",
+        "suke",
+        "na",
+        "ri",
+        "ki",
+        "ya"
+      ],
+      "family": [
+        "Inari",
+        "Kagebi",
+        "Tsukimori",
+        "Hoshino",
+        "Akagitsune",
+        "Kurogane"
+      ]
+    },
+    "Elvarian": {
+      "start": [
+        "Ael",
+        "Cael",
+        "Ili",
+        "Lae",
+        "Syl",
+        "Thal",
+        "Va",
+        "Eri",
+        "Ny",
+        "Ara"
+      ],
+      "end": [
+        "thir",
+        "wen",
+        "ris",
+        "dor",
+        "lia",
+        "las",
+        "nor",
+        "thiel",
+        "vyn"
+      ],
+      "family": [
+        "Starbough",
+        "Silverleaf",
+        "Dawnglade",
+        "Moonwhisper",
+        "Thornveil",
+        "Windsong"
+      ]
+    },
+    "Durgar": {
+      "start": [
+        "Thra",
+        "Bal",
+        "Dur",
+        "Gim",
+        "Kor",
+        "Brom",
+        "Hil",
+        "Mor",
+        "Dra",
+        "Ung"
+      ],
+      "end": [
+        "in",
+        "rik",
+        "da",
+        "grim",
+        "li",
+        "nar",
+        "dis",
+        "ok"
+      ],
+      "family": [
+        "Ironbeard",
+        "Stonefist",
+        "Deepforge",
+        "Coppervein",
+        "Anvilborn",
+        "Hammerfall"
+      ]
+    },
+    "Drakoan": {
+      "start": [
+        "Vor",
+        "Zar",
+        "Kra",
+        "Rha",
+        "Sy",
+        "Ix",
+        "Dra",
+        "Tha",
+        "Vey",
+        "Ska"
+      ],
+      "end": [
+        "thax",
+        "vex",
+        "rion",
+        "zara",
+        "kesh",
+        "nyx",
+        "ros",
+        "lith"
+      ],
+      "family": [
+        "Emberscale",
+        "Ashwing",
+        "Stormcrest",
+        "Cinderhorn",
+        "Goldscale",
+        "of the Red Spire"
+      ]
+    },
+    "Djinn": {
+      "start": [
+        "Ash",
+        "Zah",
+        "Ifr",
+        "Nur",
+        "Sa",
+        "Ma",
+        "Ka",
+        "Ra",
+        "Fa",
+        "Ja"
+      ],
+      "end": [
+        "im",
+        "ra",
+        "eed",
+        "an",
+        "ira",
+        "zul",
+        "ra",
+        "deh"
+      ],
+      "family": [
+        "of the Seven Winds",
+        "Brasslamp",
+        "Sandveil",
+        "Smokeborn",
+        "al-Sahir",
+        "Mirageweaver"
+      ]
+    },
+    "Dhampyr": {
+      "start": [
+        "Vla",
+        "Ca",
+        "Mir",
+        "Sev",
+        "Lu",
+        "Ani",
+        "Dra",
+        "Ve",
+        "Ize",
+        "Ka"
+      ],
+      "end": [
+        "dek",
+        "mira",
+        "ren",
+        "ika",
+        "stin",
+        "lea",
+        "vor",
+        "sha"
+      ],
+      "family": [
+        "Nightbloom",
+        "Ashgrave",
+        "Crimsonhollow",
+        "Duskmantle",
+        "Vesperhall",
+        "Thornheart"
+      ]
+    }
+  },
+  "party": {
+    "_doc": "Parties (PartyManager.gd). From F-Rank you can HIRE adventurers for one expedition (a fee by their level, half for friends; a bigger share of the gold; up to one rank above yours; they leave when it ends). From D-Rank you can RECRUIT a permanent team (Friend rapport, rank team_slots). Party size by rank: party_size. Recruits level with you (never below your level), pick their own gear and talents, share your pack, and take a share of Breather gold. Rapport moves with each expedition; below leave_below they may walk away.",
+    "recruit_rapport": 40,
+    "hire_copper_per_level": 20,
+    "hire_friend_discount": 0.5,
+    "hire_rapport": -20,
+    "hire_rank_above": 1,
+    "hire_days": 4,
+    "hire_share_by_rank": {
+      "F": 0.2,
+      "E": 0.22,
+      "D": 0.24,
+      "C": 0.26,
+      "B": 0.28,
+      "A": 0.3,
+      "S": 0.3
+    },
+    "share_by_rank": {
+      "F": 0.1,
+      "E": 0.12,
+      "D": 0.14,
+      "C": 0.16,
+      "B": 0.18,
+      "A": 0.2,
+      "S": 0.2
+    },
+    "rapport_good_expedition": 3,
+    "rapport_bad_expedition": -2,
+    "rapport_per_ko": -3,
+    "leave_below": 20,
+    "leave_chance": 0.35,
+    "ko_injury_days": [
+      2,
+      4
+    ],
+    "wipe_death_chance": 0.04,
+    "enemy_extra_per_ally": 1,
+    "boss_hp_per_ally": 2.0,
+    "boss_damage_per_ally": 0.3,
+    "_scaling_doc": "Battles scale with your party: regular waves get enemy_extra_per_ally more enemies and +enemy_hp_per_ally HP per companion (group stat reduction uses the base count); bosses get +boss_hp_per_ally HP and +boss_damage_per_ally damage per companion.",
+    "enemy_hp_per_ally": 0.7
+  }
+}

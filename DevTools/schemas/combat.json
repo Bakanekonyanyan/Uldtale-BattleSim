@@ -1,0 +1,261 @@
+{
+ "tab": "Combat",
+ "file": "data/combat.json",
+ "order": 12,
+ "description": "Combat rules (BattleRules.gd): enemy intents and boss charge-ups, Break (weakness hits), the party Link gauge and Unison Strike.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Damage",
+   "fields": [
+    {
+     "name": "weakness_bonus",
+     "type": "float",
+     "min": 0,
+     "help": "Extra damage for a hit on a weakness (damage type or element)."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Intents",
+   "path": [
+    "intents"
+   ],
+   "fields": [
+    {
+     "name": "boss_charge",
+     "type": "bool",
+     "help": "Bosses spend a turn charging their signature/ultimate (shown as an intent)."
+    },
+    {
+     "name": "charge_power_mult",
+     "type": "float",
+     "min": 0,
+     "help": "Damage multiplier of a charged strike."
+    },
+    {
+     "name": "regular_charge_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Chance a regular enemy winds up a heavy skill instead of using it at once."
+    },
+    {
+     "name": "regular_charge_min_power",
+     "type": "int",
+     "min": 0,
+     "help": "Only skills at least this strong are charged."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Break",
+   "path": [
+    "break"
+   ],
+   "fields": [
+    {
+     "name": "regular_hits",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "elite_hits",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "boss_hits",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "hero_hits",
+     "type": "int",
+     "min": 1,
+     "help": "Weakness hits that Break a hero or companion."
+    },
+    {
+     "name": "growth_per_break",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "combo_bonus",
+     "type": "int",
+     "min": 0,
+     "help": "Extra points when the weakness hit also triggers a combo."
+    },
+    {
+     "name": "broken_damage_bonus",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "link_gain",
+     "type": "int",
+     "min": 0
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Bestiary",
+   "path": [
+    "bestiary"
+   ],
+   "fields": [
+    {
+     "name": "enabled",
+     "type": "bool",
+     "help": "Off = all enemy weaknesses are always shown."
+    },
+    {
+     "name": "scholar_classes",
+     "type": "json",
+     "help": "Classes whose Inspect reveals all weaknesses."
+    },
+    {
+     "name": "scholar_traits",
+     "type": "json",
+     "help": "Companion traits that do the same."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Perfect Guard",
+   "path": [
+    "guard"
+   ],
+   "fields": [
+    {
+     "name": "enabled",
+     "type": "bool"
+    },
+    {
+     "name": "damage_mult",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Multiplies the already-halved Defend damage."
+    },
+    {
+     "name": "attacker_pips",
+     "type": "int",
+     "min": 0,
+     "help": "Break pips the attacker gains."
+    },
+    {
+     "name": "counter_mult",
+     "type": "float",
+     "min": 0,
+     "help": "Counter vs a charged strike: share of a basic hit."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Combat rhythm",
+   "path": [
+    "rhythm"
+   ],
+   "fields": [
+    {
+     "name": "skill_cost_mult",
+     "type": "float",
+     "min": 0,
+     "help": "Heroes pay this x a skill's listed MP/SP."
+    },
+    {
+     "name": "cost_per_level",
+     "type": "float",
+     "min": 0,
+     "help": "Skill costs rise by this share per hero level (keeps pace with MP/SP pools)."
+    },
+    {
+     "name": "attack_restore",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Share of max MP and SP a hero's basic attack restores."
+    },
+    {
+     "name": "defend_restore",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Share of max MP and SP a hero's Defend restores."
+    },
+    {
+     "name": "riposte_bonus",
+     "type": "float",
+     "min": 0,
+     "help": "After a Perfect Guard, the hero's next action deals this much more."
+    },
+    {
+     "name": "attack_weak_break",
+     "type": "int",
+     "min": 1,
+     "help": "Break points from a basic attack on a weakness (skills give 1)."
+    },
+    {
+     "name": "_doc",
+     "type": "text",
+     "help": "Notes for designers."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Link",
+   "path": [
+    "link"
+   ],
+   "fields": [
+    {
+     "name": "max",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "start_per_momentum",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "gain_per_hit",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "gain_combo",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "gain_link_skill",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "ultimate_cost",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "unison_cost",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "unison_mult",
+     "type": "float",
+     "min": 0
+    }
+   ]
+  }
+ ]
+}

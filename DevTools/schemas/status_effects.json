@@ -1,0 +1,137 @@
+{
+ "tab": "Status Effects",
+ "file": "data/status_effects.json",
+ "order": 31,
+ "description": "Tuning for each status. The list of statuses itself is the StatusEffect enum in scenes/mechanics/Skill.gd.",
+ "sections": [
+  {
+   "kind": "collection",
+   "label": "Status effects",
+   "key_style": "upper",
+   "key_label": "Status",
+   "key_help": "Must match a StatusEffect enum value in Skill.gd.",
+   "fields": [
+    {
+     "name": "element",
+     "type": "enum",
+     "source": "gd:Element",
+     "exclude": [
+      "NONE"
+     ],
+     "optional": true,
+     "help": "Element of the status (Poison = EARTH). Its damage ticks use the target's resistance/weakness to it."
+    },
+    {
+     "name": "damage_type",
+     "type": "enum",
+     "options": [
+      "none",
+      "hp_percent",
+      "heal_percent",
+      "stackable_burst"
+     ],
+     "default": "none",
+     "help": "hp_percent: DoT as % of max HP; heal_percent: HoT; stackable_burst: bleed-style stacks that burst."
+    },
+    {
+     "name": "damage_value",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "optional": true,
+     "help": "Fraction of max HP per tick."
+    },
+    {
+     "name": "message",
+     "type": "str",
+     "help": "Log line. Placeholders: {name}, {damage}, {stacks}."
+    },
+    {
+     "name": "stat_modifiers",
+     "type": "map",
+     "optional": true,
+     "key": {
+      "type": "enum",
+      "source": "gd:AttributeTarget",
+      "exclude": [
+       "NONE"
+      ],
+      "case": "lower"
+     },
+     "value": {
+      "type": "int",
+      "min": -50,
+      "max": 50
+     }
+    },
+    {
+     "name": "stun_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "optional": true
+    },
+    {
+     "name": "max_stacks",
+     "type": "int",
+     "min": 1,
+     "optional": true
+    },
+    {
+     "name": "burst_damage_percent",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "optional": true
+    },
+    {
+     "name": "accuracy_reduction",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "optional": true
+    },
+    {
+     "name": "dodge_reduction",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "optional": true
+    },
+    {
+     "name": "dodge_bonus",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "optional": true
+    },
+    {
+     "name": "self_harm_chance",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "optional": true
+    },
+    {
+     "name": "self_harm_multiplier",
+     "type": "float",
+     "min": 0,
+     "max": 3,
+     "optional": true
+    },
+    {
+     "name": "break_on_damage",
+     "type": "bool",
+     "optional": true
+    },
+    {
+     "name": "reflect_damage",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "optional": true
+    }
+   ]
+  }
+ ]
+}

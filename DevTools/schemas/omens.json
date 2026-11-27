@@ -1,0 +1,50 @@
+{
+ "tab": "Omens",
+ "file": "data/omens.json",
+ "order": 50,
+ "description": "Optional run modifiers picked when setting out (RunState.gd). Harder rules, more gold and materials.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Settings",
+   "fields": [
+    {
+     "name": "max_omens",
+     "type": "int",
+     "min": 0,
+     "max": 7
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Omens",
+   "path": [
+    "omens"
+   ],
+   "key_style": "snake",
+   "name_field": "name",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "reward",
+     "type": "float",
+     "min": 0,
+     "help": "Loot bonus (0.2 = +20% gold and materials)."
+    },
+    {
+     "name": "effects",
+     "type": "json",
+     "help": "enemy_damage_mult, enemy_hp_mult, enemy_agility_mult, elite_chance_add, break_hits_delta, gear_drop_mult, link_gain_mult, hide_weaknesses"
+    }
+   ]
+  }
+ ]
+}

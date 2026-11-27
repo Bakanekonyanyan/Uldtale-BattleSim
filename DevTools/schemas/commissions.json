@@ -1,0 +1,39 @@
+{
+ "tab": "Commissions",
+ "file": "data/commissions.json",
+ "order": 53,
+ "description": "Shop commissions and standing (CommissionManager.gd).",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Commissions",
+   "fields": [
+    {
+     "name": "deadline_days",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "reward_per_value",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "min_reward",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "standing_tiers",
+     "type": "json",
+     "help": "[{done, name, discount, success}]"
+    },
+    {
+     "name": "shops",
+     "type": "json",
+     "help": "shop -> {name, line, materials: {id: {qty: [min,max], min_floor}}}"
+    }
+   ]
+  }
+ ]
+}

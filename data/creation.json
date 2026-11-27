@@ -1,0 +1,177 @@
+{
+	"_doc": "Character creation: lore shown on each page (CharacterCreation.gd). Draft text from the design docs (CLASS_PHILOSOPHIES, ELEDORIA_ATLAS) - edit freely.",
+	"races": {
+		"Hume": {
+			"lore": "The children of every road. Humes settled the Radiant Plains first and everywhere after; what they lack in gifts they make up in stubbornness.",
+			"summary": "Balanced at everything; no weaknesses."
+		},
+		"Ursari": {
+			"lore": "Bear-blooded folk of Bramblewood and Oakheart, slow to anger and slower to fall. Their elders say they were shaped from Elandria's first breath.",
+			"summary": "Tough and strong; hard to knock down."
+		},
+		"Lycan": {
+			"lore": "Wolf-kin of Fangclaw and the Wildwood, who hunt in packs and settle quarrels with their teeth. Fenrisulfr's hunger runs in them.",
+			"summary": "Fierce and quick; built for the hunt."
+		},
+		"Felis": {
+			"lore": "Cat-folk of Sunvale and the plains' edge: curious, graceful, and gone before you notice. Every Felis has a secret; most have several.",
+			"summary": "Agile and precise; strikes first."
+		},
+		"Kitsune": {
+			"lore": "Fox spirits of the Veiled Realm, where Tsukuyomi's mists hide paths that only they can walk. They grow a tail for every lesson the world teaches them.",
+			"summary": "Clever and arcane; a gift for magic."
+		},
+		"Elvarian": {
+			"lore": "Long-lived wardens of the Verdant Glades. They remember the forests before the roads, and they have not forgiven the roads.",
+			"summary": "Wise and attuned; strong spellcasters."
+		},
+		"Durgar": {
+			"lore": "Stone-hearted smiths of the Iron Hills and Forgehome, who measure a life in what it leaves behind. A Durgar's word is as good as their steel.",
+			"summary": "Sturdy and enduring; hard to wear down."
+		},
+		"Drakoan": {
+			"lore": "Scaled folk of Wrathorn's Rage and Mount Infernia, said to carry a spark of the first fire. They run hot, in temper and in blood.",
+			"summary": "Powerful and fiery; resists flame."
+		},
+		"Djinn": {
+			"lore": "Spirits of wind and wish from the Enchanted Archipelago, half-bound to the world by promises older than they are.",
+			"summary": "Arcane and elusive; rides the wind."
+		},
+		"Dhampyr": {
+			"lore": "Pale wanderers of the Gloomshroud, born between the living and the dead. Hel's shadow follows them, and most of them have made peace with it.",
+			"summary": "Resilient and dark-touched; drinks deep of life."
+		}
+	},
+	"classes": {
+		"Paladin": {
+			"category": "Warden",
+			"order": "Order of the Divine Light",
+			"patrons": "Solara, the Radiant Dawn",
+			"role": "Tank, holy damage",
+			"difficulty": 1,
+			"blurb": "Sword, shield and faith. Stands in front, takes the blows, and answers with Solara's fire.",
+			"quote": "In the light of Solara, we find our strength. In the darkness, we bring forth her dawn."
+		},
+		"Samurai": {
+			"category": "Warden",
+			"order": "Amakiri Reiken Style",
+			"patrons": "Arathorn, the God of War",
+			"role": "Duelist, counters",
+			"difficulty": 2,
+			"blurb": "A blade and a code. Calm until the moment to strike, then decisive.",
+			"quote": "In every swing of the sword, we honor our ancestors."
+		},
+		"Berserker": {
+			"category": "Warden",
+			"order": "Howl of the War Wolf",
+			"patrons": "Arathorn and Fenrisulfr",
+			"role": "Bruiser, lifesteal",
+			"difficulty": 1,
+			"blurb": "Rage made flesh. The longer the fight, the harder they hit, and they heal by hitting.",
+			"quote": "In the rage of battle, we are reborn."
+		},
+		"Monk": {
+			"category": "Martialist",
+			"order": "Circle of the Verdant Heart",
+			"patrons": "Elandria, Fenrisulfr and Nimue",
+			"role": "Fast striker, combos",
+			"difficulty": 2,
+			"blurb": "Fists and forms that mimic the beasts. Strikes often and flows between stances.",
+			"quote": "To master oneself is to master the world."
+		},
+		"Shinobi": {
+			"category": "Martialist",
+			"order": "Kagekiri Clan",
+			"patrons": "Tsukuyomi, the Veiled Shadow",
+			"role": "Assassin, evasion",
+			"difficulty": 3,
+			"blurb": "Strike unseen. Poisons, elements and a knife in the dark.",
+			"quote": "From the shadows we strike, unseen and unstoppable."
+		},
+		"Myrmidon": {
+			"category": "Martialist",
+			"order": "Iron Gauntlet",
+			"patrons": "Arathorn, the God of War",
+			"role": "Weapon master",
+			"difficulty": 2,
+			"blurb": "Every weapon, mastered. Switches arms to fit the foe.",
+			"quote": "With steel in our hands and honor in our hearts, we forge our destiny."
+		},
+		"Druid": {
+			"category": "Mender",
+			"order": "Circle of the Verdant Heart",
+			"patrons": "Elandria, Fenrisulfr and Nimue",
+			"role": "Healer, shapeshifter",
+			"difficulty": 2,
+			"blurb": "Bear for strength, Alraune for healing. Nature's caretaker and its claws.",
+			"quote": "In every leaf, in every beast, we see Elandria's touch."
+		},
+		"Cleric": {
+			"category": "Mender",
+			"order": "Order of the Divine Light",
+			"patrons": "Solara, the Radiant Dawn",
+			"role": "Battle healer",
+			"difficulty": 1,
+			"blurb": "Heals and smites in the same breath. The party's beacon in mail armour.",
+			"quote": "With every prayer, we heal. With every strike, we deliver justice."
+		},
+		"Kannagi": {
+			"category": "Mender",
+			"order": "Path of the Ancients",
+			"patrons": "The Eternal Ones",
+			"role": "Barriers, support magic",
+			"difficulty": 3,
+			"blurb": "Speaks with the Eternal Ones: barriers, blessings and old, strange power.",
+			"quote": "Through the whispers of the Eternal Ones, we find our strength."
+		},
+		"Elementalist": {
+			"category": "Sorcerer",
+			"order": "The Fifth Element",
+			"patrons": "Aetherion, the Omnielemental Spirit",
+			"role": "Elemental burst",
+			"difficulty": 2,
+			"blurb": "Fire, ice, lightning, earth, and combos between them. Fragile, brilliant, a little mad.",
+			"quote": "The elements are our allies, chaotic yet powerful."
+		},
+		"Beastmaster": {
+			"category": "Sorcerer",
+			"order": "Circle of the Verdant Heart",
+			"patrons": "Fenrisulfr, the Wild Father",
+			"role": "Summons, beast forms",
+			"difficulty": 2,
+			"blurb": "Pacts with legendary beasts; borrows their claws, wings and hide.",
+			"quote": "By Fenrisulfr's will, we are one with the wild."
+		},
+		"Necromancer": {
+			"category": "Sorcerer",
+			"order": "Cult of the Black Sun",
+			"patrons": "Hel, the Shadow Keeper",
+			"role": "Curses, drain, minions",
+			"difficulty": 3,
+			"blurb": "Spends life to take life. Curses that bloom over time and the dead at their call.",
+			"quote": "In the shadow of Hel, we find our power."
+		}
+	},
+	"lore_drops": {
+		"race": [
+			"When Nyxara shattered, each of her pieces dreamed a people. Some of those dreams are still waking up.",
+			"The peoples of Nyxarys were born where the goddess fell - and most still live close to the part of her that made them."
+		],
+		"class": [
+			"The orders are older than the Guild. The Guild only gave them a ledger to sign.",
+			"Every order serves a god born from Nyxara's body - except the Kannagi, who serve what came before the gods."
+		],
+		"origin": [
+			"Nyxarys is Nyxara's body: her heart, her lungs, her bones. Where you were born decides which god watched your cradle.",
+			"Nexus stands on the wound where the Shattering began. The Tower rises from it, and no one knows how deep it goes."
+		],
+		"world": [
+			"The Guild of Nexus has a long memory. Some names in its ledger are still spoken; some are only carved on the wall.",
+			"Every adventurer in the Guild has a past - rivals, friends, feuds - before you ever walk in the door."
+		],
+		"name": [
+			"Names matter in Nexus. The bards only sing the ones they can remember.",
+			"One life, or many? The Guild takes both kinds - but only one kind becomes a Legend."
+		]
+	}
+}

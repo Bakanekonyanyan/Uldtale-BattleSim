@@ -2,28 +2,13 @@
 class_name CharacterFactory
 extends RefCounted
 
-const RACES_PATH = "res://data/races.json"
-const CLASSES_PATH = "res://data/classes.json"
-
-static var _races_data: Dictionary = {}
-static var _classes_data: Dictionary = {}
-
-static func _load_data():
-	if _races_data.is_empty():
-		var file = FileAccess.open(RACES_PATH, FileAccess.READ)
-		if file:
-			_races_data = JSON.parse_string(file.get_as_text())
-			file.close()
-	
-	if _classes_data.is_empty():
-		var file = FileAccess.open(CLASSES_PATH, FileAccess.READ)
-		if file:
-			_classes_data = JSON.parse_string(file.get_as_text())
-			file.close()
+## Race and class tables come from DataRegistry (parsed once, shared).
+static var _races_data: Dictionary:
+	get: return DataRegistry.get_data("races")
+static var _classes_data: Dictionary:
+	get: return DataRegistry.get_data("classes")
 
 static func create_character(char_name: String, race: String, char_class: String, is_player: bool = false) -> CharacterData:
-	_load_data()
-	
 	var char = CharacterData.new(char_name, race, char_class)
 	char.is_player = is_player
 	
@@ -50,7 +35,10 @@ static func create_character(char_name: String, race: String, char_class: String
 	
 	# Initialize skills
 	if "skills" in class_data:
-		char.skill_manager.add_skills(class_data.skills)
+		if is_player:   # heroes learn their class skills as they level (progression.json)
+			char.learn_class_skills()
+		else:
+			char.skill_manager.add_skills(class_data.skills)
 	
 	# Initialize racial elementals
 	char.initialize_racial_elementals(true)
@@ -59,27 +47,3 @@ static func create_character(char_name: String, race: String, char_class: String
 	char.calculate_secondary_attributes()
 	
 	return char
-
-static func create_boss(floor: int) -> CharacterData:
-	var boss = create_character("Floor %d King" % floor, "Orc", "King", false)
-	boss.level = floor
-	
-	# Scale stats with floor
-	var scale = 1.0 + (floor - 1) * 0.15
-	boss.vitality = int(boss.vitality * scale)
-	boss.strength = int(boss.strength * scale)
-	boss.calculate_secondary_attributes()
-	
-	return boss
-
-static func create_enemy(floor: int, enemy_class: String, race: String) -> CharacterData:
-	var enemy = create_character("Enemy", race, enemy_class, false)
-	enemy.level = floor
-	
-	# Scale with floor
-	var scale = 1.0 + (floor - 1) * 0.1
-	enemy.vitality = int(enemy.vitality * scale)
-	enemy.strength = int(enemy.strength * scale)
-	enemy.calculate_secondary_attributes()
-	
-	return enemy

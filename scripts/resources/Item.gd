@@ -27,6 +27,9 @@ enum TargetType { SELF, ALLY, ENEMY, ALL_ALLIES, ALL_ENEMIES }
 @export var combat_usable: bool = false
 @export var effect_percent: float = 0.0
 @export var is_percentage_based: bool = false
+## RESTORE items: which pool they refill - "MP", "SP" or "BOTH".
+## (Percentage restores used to refill both, so Mana and Stamina potions were identical.)
+@export var restore_resource: String = "BOTH"
 
 static func create_from_dict(item_id: String, data: Dictionary) -> Item:
 	var item = Item.new()
@@ -48,6 +51,7 @@ static func create_from_dict(item_id: String, data: Dictionary) -> Item:
 			item.target_type = TargetType.SELF
 		
 		item.is_percentage_based = data.get("is_percentage_based", false)
+		item.restore_resource = String(data.get("restore_resource", "BOTH")).to_upper()
 		
 		if item.is_percentage_based:
 			item.effect_percent = data.get("effect_percent", 0.0)
@@ -114,24 +118,28 @@ func restore(user: CharacterData, targets: Array) -> String:
 	for target in targets:
 		var restore_amount = 0
 		
+		var do_mp = restore_resource in ["MP", "BOTH"]
+		var do_sp = restore_resource in ["SP", "BOTH"]
 		if is_percentage_based:
-			var mp_restore = int(target.max_mp * effect_percent)
-			var sp_restore = int(target.max_sp * effect_percent)
-			target.restore_mp(mp_restore)
-			target.restore_sp(sp_restore)
-			restore_amount = mp_restore + sp_restore
+			if do_mp:
+				restore_amount += target.restore_mp(int(target.max_mp * effect_percent))
+			if do_sp:
+				restore_amount += target.restore_sp(int(target.max_sp * effect_percent))
 		else:
-			target.restore_mp(effect_power)
-			restore_amount = effect_power
+			if do_mp:
+				restore_amount += target.restore_mp(effect_power)
+			if do_sp:
+				restore_amount += target.restore_sp(effect_power)
 		
 		total_restore += restore_amount
 	
+	var pool = "MP/SP" if restore_resource == "BOTH" else restore_resource
 	if is_percentage_based:
-		return "%s restored %.0f%% MP/SP to %d target(s)" % [
-			display_name, effect_percent * 100, targets.size()
+		return "%s restored %.0f%% %s to %d target(s)" % [
+			display_name, effect_percent * 100, pool, targets.size()
 		]
 	else:
-		return "%s restored %d MP to %d target(s)" % [display_name, total_restore, targets.size()]
+		return "%s restored %d %s to %d target(s)" % [display_name, total_restore, pool, targets.size()]
 
 func deal_damage(user: CharacterData, targets: Array) -> String:
 	var total_damage = 0
@@ -162,8 +170,17 @@ func deal_damage(user: CharacterData, targets: Array) -> String:
 	
 	return "%s dealt %d damage to %d target(s)" % [display_name, total_damage, targets.size()]
 
+## Item buff_type -> the attribute it raises.
+const BUFF_STATS := {
+	"ATTACK": Skill.AttributeTarget.STRENGTH, "DODGE": Skill.AttributeTarget.AGILITY,
+	"SPEED": Skill.AttributeTarget.AGILITY, "DEFENSE": Skill.AttributeTarget.ENDURANCE,
+	"MAGIC": Skill.AttributeTarget.INTELLIGENCE, "FAITH": Skill.AttributeTarget.FAITH,
+	"FORTITUDE": Skill.AttributeTarget.FORTITUDE, "ARCANE": Skill.AttributeTarget.ARCANE,
+	"PRECISION": Skill.AttributeTarget.DEXTERITY, "VIGOR": Skill.AttributeTarget.VITALITY,
+}
+
 func apply_buff(user: CharacterData, targets: Array) -> String:
-	print("[ITEM DEBUG] apply_buff called: %s | buff_type=%s | effect_percent=%.2f | effect_power=%d | duration=%d" % [
+	Log.debug("item", "[ITEM DEBUG] apply_buff called: %s | buff_type=%s | effect_percent=%.2f | effect_power=%d | duration=%d" % [
 		display_name, buff_type, effect_percent, effect_power, effect_duration
 	])
 	
@@ -173,17 +190,13 @@ func apply_buff(user: CharacterData, targets: Array) -> String:
 	else:
 		buff_value = effect_power
 	
+	var stat = BUFF_STATS.get(buff_type, Skill.AttributeTarget.NONE)
 	for target in targets:
-		if buff_type == "ATTACK":
-			target.apply_buff(Skill.AttributeTarget.STRENGTH, buff_value, effect_duration)
-			print("[ITEM DEBUG] Applied STRENGTH buff: +%d for %d turns" % [buff_value, effect_duration])
-		
-		elif buff_type == "DODGE":
-			target.apply_buff(Skill.AttributeTarget.AGILITY, buff_value, effect_duration)
-			print("[ITEM DEBUG] Applied AGILITY buff (dodge): +%d for %d turns" % [buff_value, effect_duration])
-		
+		if stat != Skill.AttributeTarget.NONE:
+			target.apply_buff(stat, buff_value, effect_duration)
+			Log.debug("item", "[ITEM DEBUG] Applied %s buff: +%d for %d turns" % [Skill.AttributeTarget.keys()[stat], buff_value, effect_duration])
 		else:
-			print("[ITEM DEBUG] WARNING: Unknown buff_type '%s'" % buff_type)
+			Log.debug("item", "[ITEM DEBUG] WARNING: Unknown buff_type '%s'" % buff_type)
 	
 	if is_percentage_based:
 		return "%s applied %s buff (+%.0f%%) to %d target(s) for %d turns" % [
@@ -201,7 +214,7 @@ func apply_debuff(user: CharacterData, targets: Array) -> String:
 	return "%s applied debuff to %d target(s)" % [display_name, targets.size()]
 
 func cure_status(user: CharacterData, targets: Array) -> String:
-	print("[ITEM DEBUG] cure_status called: %s | status_effect=%s | effect_power=%d | is_percentage=%s" % [
+	Log.debug("item", "[ITEM DEBUG] cure_status called: %s | status_effect=%s | effect_power=%d | is_percentage=%s" % [
 		display_name, 
 		Skill.StatusEffect.keys()[status_effect] if status_effect != Skill.StatusEffect.NONE else "ALL",
 		effect_power,
@@ -218,17 +231,17 @@ func cure_status(user: CharacterData, targets: Array) -> String:
 		if status_effect != Skill.StatusEffect.NONE:
 			if target.status_manager and target.status_manager.active_effects.has(status_effect):
 				var msg = target.status_manager.remove_effect(status_effect)
-				print("[ITEM DEBUG] Removed specific effect: %s" % msg)
+				Log.debug("item", "[ITEM DEBUG] Removed specific effect: %s" % msg)
 			else:
-				print("[ITEM DEBUG] Target does not have %s" % Skill.StatusEffect.keys()[status_effect])
+				Log.debug("item", "[ITEM DEBUG] Target does not have %s" % Skill.StatusEffect.keys()[status_effect])
 		else:
 			if target.status_manager:
 				target.status_manager.clear_all_effects()
-				print("[ITEM DEBUG] Cleared all status effects")
+				Log.debug("item", "[ITEM DEBUG] Cleared all status effects")
 		
 		if heal_amount > 0:
 			target.heal(heal_amount)
-			print("[ITEM DEBUG] Healed %d HP" % heal_amount)
+			Log.debug("item", "[ITEM DEBUG] Healed %d HP" % heal_amount)
 	
 	var result = ""
 	if status_effect != Skill.StatusEffect.NONE:

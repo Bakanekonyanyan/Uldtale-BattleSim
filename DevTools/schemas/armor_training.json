@@ -1,0 +1,50 @@
+{
+ "tab": "Armour training",
+ "file": "data/armor_training.json",
+ "order": 17,
+ "description": "Armour training (ArmorTraining.gd): each class is trained up to an armour weight (and shields or not); promotions grant a point to train heavier or in shields; untrained pieces carry penalties.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Armour training",
+   "fields": [
+    {
+     "name": "_doc",
+     "type": "text",
+     "help": "Notes for designers."
+    },
+    {
+     "name": "weights",
+     "type": "json",
+     "help": "Armour weights, lightest first."
+    },
+    {
+     "name": "start",
+     "type": "json",
+     "help": "class -> {weight: heaviest trained weight, shield: true if trained with shields}."
+    },
+    {
+     "name": "default_start",
+     "type": "json",
+     "help": "Training for classes not listed."
+    },
+    {
+     "name": "penalty_per_piece",
+     "type": "json",
+     "help": "Per untrained armour piece: accuracy, dodge (fractions), sp_cost (+fraction of SP costs)."
+    },
+    {
+     "name": "shield_penalty",
+     "type": "json",
+     "help": "For an untrained shield."
+    },
+    {
+     "name": "points_per_promotion",
+     "type": "int",
+     "min": 0,
+     "help": "Training points each promotion grants."
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,317 @@
+{
+ "tab": "Temperament",
+ "file": "data/temperament.json",
+ "order": 58,
+ "description": "How personality traits play out (TemperamentManager.gd): daily town scenes between adventurers, companion battle temperament, trait growth from experience, and voice lines by trait.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Settings",
+   "fields": [
+    {
+     "name": "_doc",
+     "type": "text",
+     "help": "Notes for designers."
+    },
+    {
+     "name": "scenes_per_day",
+     "type": "int",
+     "min": 0,
+     "help": "How many trait scenes can play each day among adventurers in town."
+    },
+    {
+     "name": "trait_voice_share",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Chance a line comes from one of their traits instead of their archetype."
+    },
+    {
+     "name": "talk_keep",
+     "type": "int",
+     "min": 1,
+     "help": "How many lines of Tavern talk are kept."
+    },
+    {
+     "name": "battle",
+     "type": "json",
+     "help": "Per trait: cowardly {freeze_below, chance}, loyal {protect_below}, kind {heal_below}, cautious {guard_below, chance}, reckless {never_guard}, cruel {finisher}, lazy {basic_chance}."
+    },
+    {
+     "name": "growth",
+     "type": "json",
+     "help": "Rules [{id, has?, lacks?, tag, count, chance, remove?, add?, news}]. Tags: rescuer, saved_by, near_death, boss_win, wronged, friend_died, passed_over, company_week, lost_spar, top_rank, taught, bullied."
+    },
+    {
+     "name": "voice",
+     "type": "json",
+     "help": "trait -> context -> [lines]. Contexts: greeting, chat, battle_start, victory, low_hp (also join, refuse, ally_down, gift_liked...)."
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Scenes",
+   "path": [
+    "scenes"
+   ],
+   "key_style": "snake",
+   "name_field": "trait",
+   "summary": "{trait}, weight {weight}",
+   "fields": [
+    {
+     "name": "trait",
+     "type": "str",
+     "help": "Trait that plays this scene (the actor)."
+    },
+    {
+     "name": "weight",
+     "type": "float",
+     "min": 0,
+     "help": "How often it's picked among the actor's scenes."
+    },
+    {
+     "name": "headline",
+     "type": "bool",
+     "min": 0,
+     "max": 1,
+     "help": "Also put it in the town news (otherwise only in Tavern talk)."
+    },
+    {
+     "name": "news",
+     "type": "text",
+     "optional": true,
+     "help": "News line; placeholders like {actor}, {target} depend on the scene."
+    },
+    {
+     "name": "affinity",
+     "type": "int",
+     "optional": true,
+     "help": "Affinity change from the scene."
+    },
+    {
+     "name": "affinity_caught",
+     "type": "int",
+     "optional": true,
+     "help": "Affinity of the mark toward the thief if caught."
+    },
+    {
+     "name": "amused",
+     "type": "json",
+     "optional": true,
+     "help": "Traits amused by it."
+    },
+    {
+     "name": "amused_affinity",
+     "type": "int",
+     "optional": true,
+     "help": "Affinity for the amused."
+    },
+    {
+     "name": "annoyed",
+     "type": "json",
+     "optional": true,
+     "help": "Traits annoyed by it."
+    },
+    {
+     "name": "annoyed_affinity",
+     "type": "int",
+     "optional": true,
+     "help": "Affinity for the annoyed."
+    },
+    {
+     "name": "attendees",
+     "type": "int",
+     "optional": true,
+     "help": "Guests besides the host."
+    },
+    {
+     "name": "caught_chance",
+     "type": "float",
+     "optional": true,
+     "help": "Chance the mark notices."
+    },
+    {
+     "name": "days_off",
+     "type": "json",
+     "optional": true,
+     "help": "Injury days taken off ([min,max])."
+    },
+    {
+     "name": "friend_affinity",
+     "type": "int",
+     "optional": true,
+     "help": "Affinity if they're friends."
+    },
+    {
+     "name": "generous",
+     "type": "json",
+     "optional": true,
+     "help": "Traits who don't mind."
+    },
+    {
+     "name": "generous_affinity",
+     "type": "int",
+     "optional": true,
+     "help": "Affinity of the generous."
+    },
+    {
+     "name": "grief_days_off",
+     "type": "int",
+     "optional": true,
+     "help": "Days taken off mourners' grief."
+    },
+    {
+     "name": "hangover_chance",
+     "type": "float",
+     "optional": true,
+     "help": "Chance the loser is out for a day."
+    },
+    {
+     "name": "honoree_affinity",
+     "type": "int",
+     "optional": true,
+     "help": "Honoree's affinity toward the host."
+    },
+    {
+     "name": "ledger_reach",
+     "type": "int",
+     "optional": true,
+     "help": "How many Ledger places above them they challenge."
+    },
+    {
+     "name": "listeners",
+     "type": "int",
+     "optional": true,
+     "help": "How many people hear it."
+    },
+    {
+     "name": "max_rapport",
+     "type": "int",
+     "optional": true,
+     "help": "Only if their rapport with you is at most this."
+    },
+    {
+     "name": "min_rapport",
+     "type": "int",
+     "optional": true,
+     "help": "Their rapport with you needed."
+    },
+    {
+     "name": "notice_chance",
+     "type": "float",
+     "optional": true,
+     "help": "Chance you notice (memory + news)."
+    },
+    {
+     "name": "partners",
+     "type": "json",
+     "optional": true,
+     "help": "Traits that join in."
+    },
+    {
+     "name": "points",
+     "type": "int",
+     "optional": true,
+     "help": "Guild points for the winner."
+    },
+    {
+     "name": "recent_days",
+     "type": "int",
+     "optional": true,
+     "help": "How recent the death / occasion must be."
+    },
+    {
+     "name": "respect_affinity",
+     "type": "int",
+     "optional": true,
+     "help": "A good loser's affinity toward the winner."
+    },
+    {
+     "name": "sore_affinity",
+     "type": "int",
+     "optional": true,
+     "help": "A sore loser's affinity toward the winner."
+    },
+    {
+     "name": "stand_up_affinity",
+     "type": "int",
+     "optional": true,
+     "help": "Defender's affinity toward the bully."
+    },
+    {
+     "name": "stand_up_chance",
+     "type": "float",
+     "optional": true,
+     "help": "Chance someone stands up."
+    },
+    {
+     "name": "stand_up_news",
+     "type": "text",
+     "optional": true,
+     "help": "News when someone stands up ({witness})."
+    },
+    {
+     "name": "stand_up_traits",
+     "type": "json",
+     "optional": true,
+     "help": "Traits that may stand up for the victim."
+    },
+    {
+     "name": "stingy",
+     "type": "json",
+     "optional": true,
+     "help": "Traits who mind."
+    },
+    {
+     "name": "stingy_affinity",
+     "type": "int",
+     "optional": true,
+     "help": "Affinity of the stingy."
+    },
+    {
+     "name": "stood_for_affinity",
+     "type": "int",
+     "optional": true,
+     "help": "Victim's affinity toward the defender."
+    },
+    {
+     "name": "stranger_affinity",
+     "type": "int",
+     "optional": true,
+     "help": "Affinity if not."
+    },
+    {
+     "name": "take_max_per_level",
+     "type": "int",
+     "optional": true,
+     "help": "Cap per your level (copper)."
+    },
+    {
+     "name": "take_pct",
+     "type": "float",
+     "optional": true,
+     "help": "Share of your copper taken."
+    },
+    {
+     "name": "targets",
+     "type": "json",
+     "optional": true,
+     "help": "Traits they fuss over."
+    },
+    {
+     "name": "xp_per_level",
+     "type": "int",
+     "optional": true,
+     "help": "XP gained x the actor's level."
+    },
+    {
+     "name": "below",
+     "type": "int",
+     "optional": true,
+     "help": "Mediate: only pairs at or below this affinity."
+    }
+   ]
+  }
+ ]
+}

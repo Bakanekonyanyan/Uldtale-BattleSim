@@ -1,0 +1,89 @@
+{
+ "tab": "Combos",
+ "file": "data/combos.json",
+ "order": 13,
+ "description": "Set-up / payoff combos: a hit that matches a combo's payoff on a target with its set-up status deals x multiplier and consumes the status. Heroes and enemies alike.",
+ "sections": [
+  {
+   "kind": "collection",
+   "label": "Combos",
+   "path": [
+    "combos"
+   ],
+   "key_style": "snake",
+   "name_field": "name",
+   "summary": "{setup} -> x{multiplier}",
+   "fields": [
+    {
+     "name": "name",
+     "type": "str"
+    },
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "setup",
+     "type": "enum",
+     "source": "gd:StatusEffect",
+     "exclude": [
+      "NONE"
+     ],
+     "help": "Status the target must have."
+    },
+    {
+     "name": "payoff",
+     "type": "object",
+     "help": "The hit matches if ANY of these matches. Basic attacks count (physical, weapon damage type, no element).",
+     "fields": [
+      {
+       "name": "damage_types",
+       "type": "enum_list",
+       "source": "gd:DamageType",
+       "optional": true,
+       "help": "Physical hits of these types (from the skill or the weapon)."
+      },
+      {
+       "name": "elements",
+       "type": "enum_list",
+       "source": "gd:SkillElement",
+       "exclude": [
+        "NONE",
+        "PHYSICAL"
+       ],
+       "optional": true
+      },
+      {
+       "name": "ability_types",
+       "type": "enum_list",
+       "source": "gd:AbilityType",
+       "optional": true,
+       "help": "PHYSICAL = any physical hit, MAGICAL = any spell hit."
+      },
+      {
+       "name": "skills",
+       "type": "ref_list",
+       "source": "skills",
+       "optional": true,
+       "help": "Specific skills."
+      }
+     ]
+    },
+    {
+     "name": "multiplier",
+     "type": "float",
+     "min": 1,
+     "max": 5,
+     "default": 1.3,
+     "help": "Damage multiplier for the payoff hit."
+    },
+    {
+     "name": "consume",
+     "type": "bool",
+     "default": true,
+     "help": "Remove the set-up status after the payoff hit."
+    }
+   ]
+  }
+ ]
+}

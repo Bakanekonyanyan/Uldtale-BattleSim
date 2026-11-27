@@ -1,0 +1,2 @@
+Permanent Marker by Font Diner - Apache License 2.0 (Google Fonts).
+Used for screen titles via the "ScreenTitle" theme variation in ui/default_theme.tres.

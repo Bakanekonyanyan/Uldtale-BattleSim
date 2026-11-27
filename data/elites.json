@@ -1,0 +1,20 @@
+{
+  "_doc": "Elite enemies (EnemyGroup, BattleRules). On regular waves from min_floor, one enemy may become an Elite with an affix: tougher, worth more gold and XP.",
+  "settings": {
+    "min_floor": 2,
+    "chance_base": 0.06,
+    "chance_per_floor": 0.01,
+    "chance_max": 0.3,
+    "hp_mult": 1.5,
+    "level_bonus": 2,
+    "gold_mult": 1.5
+  },
+  "affixes": {
+    "shielded": {"name": "Shielded", "description": "A barrier soaks the first hits. Breaking it shatters the barrier.", "weight": 3, "barrier": 0.3},
+    "vampiric": {"name": "Vampiric", "description": "Heals for part of the damage it deals.", "weight": 3, "lifesteal": 0.3},
+    "enraged": {"name": "Raging", "description": "Below half HP it flies into a rage: hits much harder.", "weight": 3, "threshold": 0.5, "damage_mult": 1.35},
+    "splitting": {"name": "Splitting", "description": "When it dies it splits into smaller copies.", "weight": 2, "count": 2, "hp_frac": 0.35},
+    "swift": {"name": "Swift", "description": "Fast: it acts early and often.", "weight": 3, "agility_mult": 1.6},
+    "thorns": {"name": "Thorned", "description": "Reflects part of the damage it takes back at the attacker.", "weight": 2, "reflect": 0.2}
+  }
+}

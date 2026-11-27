@@ -1,0 +1,43 @@
+{
+ "tab": "Bonds",
+ "file": "data/bonds.json",
+ "order": 52,
+ "description": "Companion bonds, duo techs and opinions (BondManager.gd).",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Bonds",
+   "fields": [
+    {
+     "name": "tiers",
+     "type": "json",
+     "help": "[{rapport, name}] - each tier plays a scene; the last unlocks the duo tech."
+    },
+    {
+     "name": "opinions",
+     "type": "json",
+     "help": "event -> {trait: rapport change}"
+    },
+    {
+     "name": "opinion_lines",
+     "type": "json"
+    },
+    {
+     "name": "scenes",
+     "type": "json",
+     "help": "trait -> one line per tier; {name} = companion"
+    },
+    {
+     "name": "link_cost",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "duo_techs",
+     "type": "json",
+     "help": "class -> skill fields (name, description, ability_type, type, target, element/damage_type, status_effect, power, duration)"
+    }
+   ]
+  }
+ ]
+}

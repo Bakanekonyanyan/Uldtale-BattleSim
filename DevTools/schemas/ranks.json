@@ -1,0 +1,146 @@
+{
+ "tab": "Ranks",
+ "file": "data/ranks.json",
+ "order": 45,
+ "description": "Adventurer ranks F -> S (RankManager.gd): Guild Points threshold, promotion trial and perks. Recipes unlock by rank in Recipes (unlock type adventurer_rank); bounty templates by min_rank in Bounties.",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Settings",
+   "path": [
+    "settings"
+   ],
+   "fields": [
+    {
+     "name": "demerit_block",
+     "type": "int",
+     "min": 1,
+     "help": "Promotion is blocked at this many demerits."
+    },
+    {
+     "name": "demerits_cleared_per_bounty",
+     "type": "int",
+     "min": 0
+    }
+   ]
+  },
+  {
+   "kind": "collection",
+   "label": "Ranks",
+   "path": [
+    "ranks"
+   ],
+   "key_style": "upper",
+   "name_field": "title",
+   "summary": "{points} GP, floors to {floor_cap}",
+   "fields": [
+    {
+     "name": "order",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "title",
+     "type": "str"
+    },
+    {
+     "name": "description",
+     "type": "text"
+    },
+    {
+     "name": "points",
+     "type": "int",
+     "min": 0,
+     "help": "Guild Points needed to qualify."
+    },
+    {
+     "name": "floor_cap",
+     "type": "int",
+     "min": 0,
+     "help": "Highest floor you can reach at this rank (0 = no cap)."
+    },
+    {
+     "name": "carry_limit",
+     "type": "int",
+     "min": 1,
+     "max": 20
+    },
+    {
+     "name": "board_size",
+     "type": "int",
+     "min": 1,
+     "max": 8
+    },
+    {
+     "name": "max_active",
+     "type": "int",
+     "min": 1,
+     "max": 8
+    },
+    {
+     "name": "reward_mult",
+     "type": "float",
+     "min": 0,
+     "help": "Bounty gold multiplier."
+    },
+    {
+     "name": "party_size",
+     "type": "int",
+     "min": 1,
+     "max": 3,
+     "help": "Heroes in your party, you included (hired hands and team members)."
+    },
+    {
+     "name": "team_slots",
+     "type": "int",
+     "min": 0,
+     "max": 2,
+     "help": "Permanent team members at this rank (0 = you can only hire for one expedition)."
+    },
+    {
+     "name": "trial",
+     "type": "object",
+     "optional": true,
+     "fields": [
+      {
+       "name": "title",
+       "type": "str"
+      },
+      {
+       "name": "description",
+       "type": "text"
+      },
+      {
+       "name": "type",
+       "type": "enum",
+       "options": [
+        "KILL_BOSS",
+        "CLEAR_FLOOR",
+        "KILL"
+       ]
+      },
+      {
+       "name": "location",
+       "type": "ref",
+       "source": "locations",
+       "optional": true
+      },
+      {
+       "name": "min_floor",
+       "type": "int",
+       "min": 1,
+       "optional": true
+      },
+      {
+       "name": "gold",
+       "type": "int",
+       "min": 0,
+       "optional": true
+      }
+     ],
+     "help": "Promotion trial (the lowest rank has none)."
+    }
+   ]
+  }
+ ]
+}

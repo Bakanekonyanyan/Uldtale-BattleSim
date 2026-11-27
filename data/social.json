@@ -1,0 +1,444 @@
+{
+	"_comment": "The Guild's social simulation (MemoryManager.gd; docs/design/LIVING_WORLD.md sections A, B, G). Memories are what an adventurer (or you) remembers about someone: weight > 0 good, < 0 bad. They fade daily unless core; the same kind about the same person adds up (to the kind's cap). Gossip copies strong memories to listeners at a fraction of their weight.",
+	"memory": {
+		"max_per_holder": 20,
+		"fade_per_day": 0.02,
+		"forget_below": 1.0,
+		"gossip_per_day": 2,
+		"gossip_min_weight": 15,
+		"gossip_share": 0.3,
+		"heard_rapport_factor": 0.5,
+		"full_view_rapport": 40,
+		"grudge_at": -20,
+		"debt_at": 20,
+		"nemesis_learns_after": 2,
+		"nemesis_resist": 0.3
+	},
+	"kinds": {
+		"saved_me": {
+			"weight": 30,
+			"cap": 60,
+			"text": "{about} saved them when they were dying",
+			"you_text": "You saved them when they were dying",
+			"hint": "keeps glancing at you gratefully"
+		},
+		"helped_me": {
+			"weight": 15,
+			"cap": 40,
+			"text": "{about} helped them",
+			"you_text": "You helped them",
+			"hint": "seems glad to see you"
+		},
+		"fought_beside": {
+			"weight": 8,
+			"cap": 40,
+			"text": "fought beside {about}",
+			"you_text": "You fought side by side",
+			"hint": "nods at you like an old comrade"
+		},
+		"gifted_me": {
+			"weight": 5,
+			"cap": 25,
+			"text": "{about} gave them gifts",
+			"you_text": "You gave them gifts",
+			"hint": "smiles when you come in"
+		},
+		"abandoned_me": {
+			"weight": -30,
+			"cap": -60,
+			"text": "{about} left them to die",
+			"you_text": "You left them to die",
+			"hint": "won't meet your eye",
+			"grudge": true
+		},
+		"robbed_me": {
+			"weight": -25,
+			"cap": -60,
+			"text": "{about} robbed them",
+			"you_text": "You robbed them",
+			"hint": "keeps a hand on their purse around you",
+			"grudge": true
+		},
+		"ambushed_me": {
+			"weight": -20,
+			"cap": -50,
+			"text": "{about} ambushed them",
+			"you_text": "You ambushed them",
+			"hint": "watches you like a hawk",
+			"grudge": true
+		},
+		"betrayed_me": {
+			"weight": -35,
+			"cap": -70,
+			"text": "{about} betrayed them",
+			"you_text": "You betrayed them",
+			"hint": "turns away when you approach",
+			"grudge": true
+		},
+		"beat_me": {
+			"weight": -15,
+			"cap": -45,
+			"text": "lost to {about} in a fight",
+			"you_text": "You beat them in a fight",
+			"hint": "glares at you",
+			"honorable_weight": 5
+		},
+		"took_my_bounty": {
+			"weight": -5,
+			"cap": -20,
+			"text": "{about} took a bounty they wanted",
+			"you_text": "You took a bounty they wanted",
+			"hint": "mutters about stolen work"
+		},
+		"killed_my_friend": {
+			"weight": -60,
+			"cap": -100,
+			"core": true,
+			"text": "{about} killed someone they loved",
+			"you_text": "You killed someone they loved",
+			"hint": "looks at you with pure hatred",
+			"grudge": true,
+			"mine_text": "{about} killed someone you cared about"
+		},
+		"avenged_me": {
+			"weight": 50,
+			"cap": 100,
+			"core": true,
+			"text": "{about} avenged someone they lost",
+			"you_text": "You avenged someone they lost",
+			"hint": "would follow you anywhere"
+		},
+		"lost_companion": {
+			"weight": 0,
+			"cap": 0,
+			"core": true,
+			"text": "lost {about}",
+			"you_text": "",
+			"hint": "",
+			"mine_text": "You lost {about}"
+		},
+		"shared_victory": {
+			"weight": 10,
+			"cap": 40,
+			"text": "{about} joined their company for a job and won",
+			"you_text": "You joined their company and won",
+			"mine_text": "You joined {about}'s company and won",
+			"hint": "talks about the job you did together"
+		},
+		"shared_hardship": {
+			"weight": 4,
+			"cap": 30,
+			"text": "{about} joined their company on a bad job",
+			"you_text": "You joined their company on a hard job",
+			"mine_text": "You had a hard job with {about}'s company",
+			"hint": "remembers you stuck it out with them"
+		},
+		"jealous_of": {
+			"weight": -10,
+			"cap": -80,
+			"text": "is jealous of {about}",
+			"you_text": "",
+			"hint": ""
+		},
+		"slandered": {
+			"weight": -8,
+			"cap": -30,
+			"text": "heard ugly things about {about}",
+			"you_text": "",
+			"hint": ""
+		},
+		"bullied_me": {
+			"weight": -12,
+			"cap": -40,
+			"grudge": true,
+			"text": "{about} bullied them",
+			"you_text": "",
+			"mine_text": "{about} bullied you",
+			"hint": ""
+		},
+		"taught_me": {
+			"weight": 8,
+			"cap": 30,
+			"text": "learned a great deal from {about}",
+			"you_text": "You taught them",
+			"mine_text": "{about} taught you",
+			"hint": ""
+		},
+		"stood_up_for_me": {
+			"weight": 15,
+			"cap": 40,
+			"text": "{about} stood up for them",
+			"you_text": "You stood up for them",
+			"mine_text": "{about} stood up for you",
+			"hint": "seems to think you're one of the good ones"
+		}
+	},
+	"heard_hint": "has heard things about you",
+	"relations": {
+		"_doc": "NPC-to-NPC relationships (RelationsManager.gd). Affinity -100..100 between two adventurers who've interacted; each keeps at most max_per_npc relations (the weakest is forgotten).",
+		"max_per_npc": 8,
+		"town_pairs_per_day": 6,
+		"compatible": [
+			[
+				"kind",
+				"kind"
+			],
+			[
+				"devout",
+				"devout"
+			],
+			[
+				"scholarly",
+				"scholarly"
+			],
+			[
+				"loyal",
+				"honorable"
+			],
+			[
+				"cheerful",
+				"kind"
+			],
+			[
+				"cheerful",
+				"cheerful"
+			],
+			[
+				"cautious",
+				"cautious"
+			],
+			[
+				"ambitious",
+				"ambitious"
+			],
+			[
+				"reckless",
+				"reckless"
+			],
+			[
+				"honorable",
+				"honorable"
+			],
+			[
+				"loyal",
+				"loyal"
+			]
+		],
+		"clashing": [
+			[
+				"honorable",
+				"cruel"
+			],
+			[
+				"cautious",
+				"reckless"
+			],
+			[
+				"greedy",
+				"kind"
+			],
+			[
+				"lazy",
+				"ambitious"
+			],
+			[
+				"cheerful",
+				"aloof"
+			],
+			[
+				"boastful",
+				"aloof"
+			],
+			[
+				"cowardly",
+				"reckless"
+			],
+			[
+				"kind",
+				"cruel"
+			]
+		],
+		"events": {
+			"job_success": 4,
+			"job_fail": 2,
+			"job_fail_blame": -4,
+			"rescued": 20,
+			"rescuer": 5,
+			"generous": 1,
+			"ledger_rivalry_week": -3,
+			"passed_over": -5,
+			"ledger_neighbour_week": -1
+		},
+		"blame_traits": [
+			"boastful",
+			"cruel"
+		],
+		"generous_traits": [
+			"kind",
+			"cheerful",
+			"loyal"
+		],
+		"thresholds": {
+			"friends": 40,
+			"sworn": 70,
+			"rivals": -40,
+			"feud": -70
+		},
+		"ripple": 0.25,
+		"ripple_min": 4,
+		"pair_with_friend": 0.5,
+		"pair_with_sworn": 0.9,
+		"group_bonus_per_member": 0.08,
+		"rescue_chance": 0.35,
+		"chemistry_mult": 2,
+		"familiar_share": 0.5,
+		"acquainted_at": 15,
+		"pair_with_acquaintance": 0.15,
+		"weekly_drift": 1,
+		"clash_mult": 2
+	},
+	"drama": {
+		"_doc": "Phase 3 drama (DramaManager.gd; LIVING_WORLD.md A, F): companies, invitations, romance, grief, lethal feuds, jealousy.",
+		"companies": {
+			"max_size": 3,
+			"join_min_affinity": 40,
+			"adjectives": [
+				"Ashpelt",
+				"Ember",
+				"Iron",
+				"Silver",
+				"Gloam",
+				"Thorn",
+				"Wild",
+				"Stone",
+				"Dawn",
+				"Hollow",
+				"Crimson",
+				"Oak",
+				"Storm",
+				"Lantern",
+				"Raven",
+				"Briar"
+			],
+			"nouns": [
+				"Wardens",
+				"Blades",
+				"Company",
+				"Fellowship",
+				"Lanterns",
+				"Wolves",
+				"Oath",
+				"Hands",
+				"Pact",
+				"Seekers",
+				"Watch",
+				"Banners",
+				"Few",
+				"Circle"
+			]
+		},
+		"invitations": {
+			"chance_per_day": 0.04,
+			"min_rapport": 40,
+			"valid_days": 3,
+			"max_heroes": 3,
+			"decline_limit": 3,
+			"decline_rapport": -3,
+			"victory_rapport": 5,
+			"hardship_rapport": 1,
+			"guest_days": 4
+		},
+		"romance": {
+			"weekly_chance": 0.1,
+			"compatible_mult": 2.0,
+			"aloof_trait": "aloof",
+			"pair_mult": 1.5
+		},
+		"grief": {
+			"days": [
+				14,
+				28
+			],
+			"job_chance_mult": 0.4,
+			"outcomes": {
+				"vengeance": {
+					"base": 1.0,
+					"traits": {
+						"reckless": 2.0,
+						"loyal": 2.0,
+						"honorable": 1.5
+					}
+				},
+				"withdraws": {
+					"base": 0.5,
+					"traits": {
+						"cautious": 2.0,
+						"cowardly": 2.5,
+						"kind": 1.5
+					}
+				},
+				"hardens": {
+					"base": 0.6,
+					"traits": {
+						"ambitious": 2.0,
+						"cruel": 2.5
+					}
+				},
+				"carries_on": {
+					"base": 1.2,
+					"traits": {
+						"cheerful": 2.0,
+						"devout": 2.0
+					}
+				}
+			},
+			"harden_traits": [
+				"aloof",
+				"cruel"
+			],
+			"vengeance_job_chance": 0.6,
+			"vengeance_days": 120,
+			"vengeance_feud": -80,
+			"avenged_rapport": 25,
+			"min_affinity": 30
+		},
+		"feuds": {
+			"weekly_chance": 0.08,
+			"cruel_mult": 2.0,
+			"gentle_mult": 0.5,
+			"gentle_traits": [
+				"honorable",
+				"kind"
+			],
+			"lethal_chance": 0.25,
+			"lethal_level_gap": 5,
+			"injury_days": [
+				4,
+				9
+			],
+			"killer_affinity": -50,
+			"honourable_conduct": true,
+			"killer_demerits": 3,
+			"killer_rank_drop": 1
+		},
+		"jealousy": {
+			"archetype": "yandere",
+			"stage": "jealousy",
+			"margin": 0,
+			"affinity": -8,
+			"gossip_at": -20,
+			"gossip_listeners": 2,
+			"gossip_affinity": -4,
+			"sabotage_at": -40,
+			"sabotage_chance": 0.25,
+			"caught_chance": 0.5,
+			"caught_affinity": -30,
+			"injury_days": [
+				3,
+				6
+			],
+			"break_below": 20,
+			"break_rivalry": 5
+		}
+	}
+}

@@ -5,7 +5,12 @@
 class_name ElementalResistanceManager
 extends RefCounted
 
-var character: CharacterData
+## Weak back-reference: the character owns this manager, so a strong
+## reference here would be a cycle and neither would ever be freed.
+var _character_ref: WeakRef
+var character: CharacterData:
+	get: return _character_ref.get_ref() if _character_ref else null
+	set(value): _character_ref = weakref(value) if value else null
 
 # Base values from race
 var base_resistances: Dictionary = {}  # Element -> float
@@ -133,13 +138,13 @@ func get_resistance_string(element: ElementalDamage.Element) -> String:
 
 func print_all_resistances():
 	"""Debug: Print all elemental modifiers"""
-	print("=== Elemental Resistances for %s ===" % character.name)
+	Log.debug("elements", "=== Elemental Resistances for %s ===" % character.name)
 	for element in ElementalDamage.Element.values():
 		if element == ElementalDamage.Element.NONE:
 			continue
 		var name = ElementalDamage.get_element_name(element)
 		var info = get_resistance_string(element)
-		print("  %s: %s" % [name, info])
+		Log.debug("elements", "  %s: %s" % [name, info])
 
 # === BACKWARD COMPATIBILITY ===
 # These methods provide simpler access for external code

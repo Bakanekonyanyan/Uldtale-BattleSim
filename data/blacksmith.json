@@ -1,0 +1,36 @@
+{
+	"_comment": "Blacksmith tuning. See docs/design/TOWN_SERVICES.md section 5. Upgrade step (+8% damage/armor per level) is Equipment.UPGRADE_STEP.",
+	"max_level": { "common": 3, "uncommon": 4, "magic": 5, "rare": 6, "epic": 8, "legendary": 10 },
+	"success_chance": { "4": 0.9, "5": 0.8, "6": 0.7, "7": 0.6, "8": 0.5, "9": 0.4, "10": 0.3 },
+	"gold_per_level": 0.5,
+	"min_gold": 10,
+	"ore_by_target_level": [
+		{ "max_level": 3, "ore": "iron_ore" },
+		{ "max_level": 6, "ore": "mithril_ore" },
+		{ "max_level": 99, "ore": "adamant_ore" }
+	],
+	"weapon_extra_materials": { "wood": 1 },
+	"core_from_level": 6,
+	"reinforce_step_cost": 0.25,
+	"reinforce_step_bonus": 0.10,
+	"tempered_bonus": 0.05,
+	"downgrade_from_level": 7,
+	"salvage": {
+		"common":    { "ore": [1, 2], "core_chance": 0.0 },
+		"uncommon":  { "ore": [2, 3], "core_chance": 0.0 },
+		"magic":     { "ore": [3, 4], "core_chance": 0.25 },
+		"rare":      { "ore": [3, 4], "core_chance": 0.25 },
+		"epic":      { "ore": [4, 6], "core_chance": 1.0 },
+		"legendary": { "ore": [4, 6], "core_chance": 1.0 }
+	},
+	"salvage_ore_by_item_level": [
+		{ "max_item_level": 5, "ore": "iron_ore" },
+		{ "max_item_level": 11, "ore": "mithril_ore" },
+		{ "max_item_level": 999, "ore": "adamant_ore" }
+	],
+	"_armor_material_swap": "Cloth and leather armor use cloth/hide instead of ore: every ore id in the upgrade and salvage tiers is swapped for that armor type's material. Mail, plate and weapons keep ore.",
+	"armor_material_swap": {
+		"cloth": { "iron_ore": "linen_cloth", "mithril_ore": "silk_cloth", "adamant_ore": "spellweave_cloth" },
+		"leather": { "iron_ore": "rawhide", "mithril_ore": "thick_hide", "adamant_ore": "drake_hide" }
+	}
+}

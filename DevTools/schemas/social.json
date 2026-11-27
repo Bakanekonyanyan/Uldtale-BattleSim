@@ -1,0 +1,271 @@
+{
+ "tab": "Social",
+ "file": "data/social.json",
+ "order": 57,
+ "description": "The Guild's social simulation: memories, gossip, grudges and debts (MemoryManager.gd), NPC-to-NPC relationships (RelationsManager.gd) and drama - companies, invitations, romance, grief, feuds, jealousy (DramaManager.gd).",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Memory",
+   "path": [
+    "memory"
+   ],
+   "fields": [
+    {
+     "name": "max_per_holder",
+     "type": "int",
+     "min": 5
+    },
+    {
+     "name": "fade_per_day",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Non-core memories lose this share of their weight each day."
+    },
+    {
+     "name": "forget_below",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "gossip_per_day",
+     "type": "int",
+     "min": 0
+    },
+    {
+     "name": "gossip_min_weight",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "gossip_share",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "heard_rapport_factor",
+     "type": "float",
+     "min": 0
+    },
+    {
+     "name": "full_view_rapport",
+     "type": "int",
+     "help": "Rapport at which the Tavern shows full memories instead of a hint."
+    },
+    {
+     "name": "grudge_at",
+     "type": "float"
+    },
+    {
+     "name": "debt_at",
+     "type": "float"
+    },
+    {
+     "name": "nemesis_learns_after",
+     "type": "int",
+     "min": 1
+    },
+    {
+     "name": "nemesis_resist",
+     "type": "float",
+     "min": 0,
+     "max": 1
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Memory kinds",
+   "fields": [
+    {
+     "name": "kinds",
+     "type": "json",
+     "help": "kind -> {weight, cap, core, text ({about}), you_text (their memory of you), mine_text (your memory of them), hint, grudge, honorable_weight}"
+    },
+    {
+     "name": "heard_hint",
+     "type": "str"
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Relationships",
+   "path": [
+    "relations"
+   ],
+   "fields": [
+    {
+     "name": "_doc",
+     "type": "text",
+     "help": "Notes for designers."
+    },
+    {
+     "name": "max_per_npc",
+     "type": "int",
+     "help": "Relations each adventurer keeps; the weakest is forgotten.",
+     "min": 1
+    },
+    {
+     "name": "town_pairs_per_day",
+     "type": "int",
+     "help": "Random pairs of adventurers in town who spend time together each day.",
+     "min": 0
+    },
+    {
+     "name": "compatible",
+     "type": "json",
+     "help": "Trait pairs that get along: +1 affinity per pair each time they meet in town."
+    },
+    {
+     "name": "clashing",
+     "type": "json",
+     "help": "Trait pairs that grate: -1 affinity per pair each time they meet."
+    },
+    {
+     "name": "events",
+     "type": "json",
+     "help": "Affinity changes: job_success, job_fail, job_fail_blame, rescued, rescuer, generous, ledger_rivalry_week (two Ambitious within 3 places), ledger_neighbour_week (anyone within 2 places), passed_over."
+    },
+    {
+     "name": "blame_traits",
+     "type": "json",
+     "help": "Traits that blame partners after a failed job."
+    },
+    {
+     "name": "generous_traits",
+     "type": "json",
+     "help": "Traits that buy rounds (+generous when either has one)."
+    },
+    {
+     "name": "thresholds",
+     "type": "json",
+     "help": "Affinity for friends, sworn, rivals, feud."
+    },
+    {
+     "name": "ripple",
+     "type": "float",
+     "help": "Share of a rapport change with you that spreads to their friends (and the other way to rivals).",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "ripple_min",
+     "type": "int",
+     "help": "Smallest rapport change that ripples.",
+     "min": 0
+    },
+    {
+     "name": "pair_with_friend",
+     "type": "float",
+     "help": "Chance an idle friend comes along on a job.",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "pair_with_sworn",
+     "type": "float",
+     "help": "Chance an idle sworn companion comes along.",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "group_bonus_per_member",
+     "type": "float",
+     "help": "Success chance added per extra member on a shared job.",
+     "min": 0
+    },
+    {
+     "name": "rescue_chance",
+     "type": "float",
+     "help": "Chance a partner drags a dying partner out (they're injured instead).",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "name": "chemistry_mult",
+     "type": "int",
+     "min": 0,
+     "help": "Affinity per compatible (or clashing) trait pair at each town meeting."
+    },
+    {
+     "name": "familiar_share",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Share of town meetings with someone they already know (so bonds deepen instead of spreading thin)."
+    },
+    {
+     "name": "acquainted_at",
+     "type": "int",
+     "help": "Affinity at which someone may invite the other along on a job."
+    },
+    {
+     "name": "pair_with_acquaintance",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Chance an idle acquaintance comes along on a job."
+    },
+    {
+     "name": "weekly_drift",
+     "type": "int",
+     "min": 0,
+     "help": "Each week every relation moves this much back toward 0 (bonds need tending); at 0 it's forgotten."
+    },
+    {
+     "name": "clash_mult",
+     "type": "int",
+     "min": 0,
+     "help": "Affinity lost per clashing trait pair at each town meeting."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
+   "label": "Drama",
+   "path": [
+    "drama"
+   ],
+   "fields": [
+    {
+     "name": "_doc",
+     "type": "text",
+     "help": "Notes for designers."
+    },
+    {
+     "name": "companies",
+     "type": "json",
+     "help": "max_size, join_min_affinity (with every member), adjectives/nouns for names ('The Ember Wardens')."
+    },
+    {
+     "name": "invitations",
+     "type": "json",
+     "help": "chance_per_day, min_rapport (a member's rapport with you), valid_days, max_heroes (you + allies), decline_limit, decline_rapport, victory_rapport, hardship_rapport, guest_days (guests leave if you don't set out)."
+    },
+    {
+     "name": "romance",
+     "type": "json",
+     "help": "weekly_chance for sworn pairs, compatible_mult, aloof_trait (one aloof stops it; two may), pair_mult (partners go on jobs together more)."
+    },
+    {
+     "name": "grief",
+     "type": "json",
+     "help": "min_affinity (who grieves: relations at or above it); days [min,max]; job_chance_mult while grieving; outcomes {vengeance, withdraws, hardens, carries_on: {base, traits: {trait: mult}}}; harden_traits; vengeance_job_chance, vengeance_days, vengeance_feud, avenged_rapport."
+    },
+    {
+     "name": "feuds",
+     "type": "json",
+     "help": "weekly_chance, cruel_mult, gentle_mult + gentle_traits, lethal_chance (if cruel or level gap >= lethal_level_gap), injury_days, killer_affinity (mourners vs the killer), honourable_conduct, killer_demerits, killer_rank_drop."
+    },
+    {
+     "name": "jealousy",
+     "type": "json",
+     "help": "archetype + stage that is jealous, margin, affinity per week, gossip_at / sabotage_at (opinion of the rival), gossip_listeners, gossip_affinity, sabotage_chance, caught_chance, caught_affinity, injury_days, break_below (rapport: they turn on you), break_rivalry."
+    }
+   ]
+  }
+ ]
+}

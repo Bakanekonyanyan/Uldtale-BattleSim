@@ -1,0 +1,45 @@
+{
+ "tab": "Personalities",
+ "file": "data/personalities.json",
+ "order": 56,
+ "description": "Archetypes, drives, flaws, quirks and voices for every adventurer, and your own voice (PersonalityManager.gd).",
+ "sections": [
+  {
+   "kind": "settings",
+   "label": "Personalities",
+   "fields": [
+    {
+     "name": "reveal",
+     "type": "json"
+    },
+    {
+     "name": "contexts",
+     "type": "json",
+     "help": "voice contexts every archetype should cover"
+    },
+    {
+     "name": "archetypes",
+     "type": "json",
+     "help": "id -> {name, summary, weight, trait_bias, mods, mood_offset, voice {context: [lines]}, arc [{id, name, rapport, news, voice}]}"
+    },
+    {
+     "name": "drives",
+     "type": "json"
+    },
+    {
+     "name": "flaws",
+     "type": "json"
+    },
+    {
+     "name": "quirks",
+     "type": "json"
+    },
+    {
+     "name": "player_voice",
+     "type": "json",
+     "help": "{threshold, lead, events {event: {archetype: points}}}"
+    }
+   ]
+  }
+ ]
+}

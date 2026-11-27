@@ -32,7 +32,7 @@ func create_server(port: int = DEFAULT_PORT) -> bool:
 	var error = peer.create_server(port, MAX_CLIENTS)
 	
 	if error != OK:
-		print("[ARENA NET] Failed to create server: ", error)
+		Log.debug("pvp", "[ARENA NET] Failed to create server: ", error)
 		return false
 	
 	multiplayer.multiplayer_peer = peer
@@ -44,7 +44,7 @@ func create_server(port: int = DEFAULT_PORT) -> bool:
 		"ready": false
 	}
 	
-	print("[ARENA NET] Server created on port %d (ID: %d)" % [port, local_player_id])
+	Log.debug("pvp", "[ARENA NET] Server created on port %d (ID: %d)" % [port, local_player_id])
 	return true
 
 # === CLIENT ===
@@ -54,13 +54,13 @@ func join_server(address: String, port: int = DEFAULT_PORT) -> bool:
 	var error = peer.create_client(address, port)
 	
 	if error != OK:
-		print("[ARENA NET] Failed to connect to %s:%d - Error: %d" % [address, port, error])
+		Log.debug("pvp", "[ARENA NET] Failed to connect to %s:%d - Error: %d" % [address, port, error])
 		return false
 	
 	multiplayer.multiplayer_peer = peer
 	is_host = false
 	
-	print("[ARENA NET] Connecting to %s:%d..." % [address, port])
+	Log.debug("pvp", "[ARENA NET] Connecting to %s:%d..." % [address, port])
 	return true
 
 # === DISCONNECT ===
@@ -74,29 +74,29 @@ func disconnect_from_match():
 	is_host = false
 	match_seed = 0
 	multiplayer.multiplayer_peer = null
-	print("[ARENA NET] Disconnected from match")
+	Log.debug("pvp", "[ARENA NET] Disconnected from match")
 
 # === CALLBACKS ===
 
 func _on_peer_connected(id: int):
-	print("[ARENA NET] Peer connected: %d" % id)
+	Log.debug("pvp", "[ARENA NET] Peer connected: %d" % id)
 	
 	if is_host:
 		match_seed = RandomManager.new_game_seed()
 		rpc_id(id, "_receive_match_setup", match_seed)
 
 func _on_peer_disconnected(id: int):
-	print("[ARENA NET] Peer disconnected: %d" % id)
+	Log.debug("pvp", "[ARENA NET] Peer disconnected: %d" % id)
 	
 	if players.has(id):
 		players.erase(id)
-		emit_signal("player_disconnected", id)
+		player_disconnected.emit(id)
 	
 	if not is_host:
 		disconnect_from_match()
 
 func _on_connected_to_server():
-	print("[ARENA NET] Connected to server successfully")
+	Log.debug("pvp", "[ARENA NET] Connected to server successfully")
 	local_player_id = multiplayer.get_unique_id()
 	
 	var character = CharacterManager.get_current_character()
@@ -104,25 +104,25 @@ func _on_connected_to_server():
 		"character": character,
 		"ready": false
 	}
-	print("[ARENA NET] Registered self (ID: %d) locally" % local_player_id)
+	Log.debug("pvp", "[ARENA NET] Registered self (ID: %d) locally" % local_player_id)
 	
 	rpc_id(1, "_register_player", local_player_id, _serialize_character(character))
-	emit_signal("connection_success")
+	connection_success.emit()
 
 func _on_connection_failed():
-	print("[ARENA NET] Connection failed")
-	emit_signal("connection_failed")
+	Log.debug("pvp", "[ARENA NET] Connection failed")
+	connection_failed.emit()
 	disconnect_from_match()
 
 func _on_server_disconnected():
-	print("[ARENA NET] Server disconnected")
+	Log.debug("pvp", "[ARENA NET] Server disconnected")
 	disconnect_from_match()
 
 # === RPC FUNCTIONS ===
 
 @rpc("any_peer", "reliable")
 func _register_player(peer_id: int, character_data: Dictionary):
-	print("[ARENA NET] Player registered: %d" % peer_id)
+	Log.debug("pvp", "[ARENA NET] Player registered: %d" % peer_id)
 	
 	var character = _deserialize_character(character_data)
 	
@@ -131,20 +131,20 @@ func _register_player(peer_id: int, character_data: Dictionary):
 		"ready": false
 	}
 	
-	print("[ARENA NET] Players dict now has %d players: %s" % [players.size(), players.keys()])
-	emit_signal("player_connected", peer_id, players[peer_id])
+	Log.debug("pvp", "[ARENA NET] Players dict now has %d players: %s" % [players.size(), players.keys()])
+	player_connected.emit(peer_id, players[peer_id])
 	
 	if is_host and peer_id != local_player_id:
-		print("[ARENA NET] Sending host character to client %d" % peer_id)
+		Log.debug("pvp", "[ARENA NET] Sending host character to client %d" % peer_id)
 		var host_character = players[local_player_id].character
 		rpc_id(peer_id, "_receive_host_character", local_player_id, _serialize_character(host_character))
 	
 	if players.size() == 2:
-		print("[ARENA NET] Both players connected, ready to start")
+		Log.debug("pvp", "[ARENA NET] Both players connected, ready to start")
 
 @rpc("authority", "reliable")
 func _receive_host_character(host_id: int, character_data: Dictionary):
-	print("[ARENA NET] Received host character (ID: %d)" % host_id)
+	Log.debug("pvp", "[ARENA NET] Received host character (ID: %d)" % host_id)
 	
 	var character = _deserialize_character(character_data)
 	
@@ -153,12 +153,12 @@ func _receive_host_character(host_id: int, character_data: Dictionary):
 		"ready": false
 	}
 	
-	print("[ARENA NET] Players dict now has %d players: %s" % [players.size(), players.keys()])
-	emit_signal("player_connected", host_id, players[host_id])
+	Log.debug("pvp", "[ARENA NET] Players dict now has %d players: %s" % [players.size(), players.keys()])
+	player_connected.emit(host_id, players[host_id])
 
 @rpc("authority", "reliable")
 func _receive_match_setup(seed: int):
-	print("[ARENA NET] Received match setup with seed: %d" % seed)
+	Log.debug("pvp", "[ARENA NET] Received match setup with seed: %d" % seed)
 	match_seed = seed
 	RandomManager.seed = seed
 	
@@ -167,32 +167,32 @@ func _receive_match_setup(seed: int):
 
 @rpc("any_peer", "call_local", "reliable")
 func _player_ready(peer_id: int):
-	print("[ARENA NET] Player %d ready signal received" % peer_id)
+	Log.debug("pvp", "[ARENA NET] Player %d ready signal received" % peer_id)
 	
 	if players.has(peer_id):
 		players[peer_id].ready = true
-		print("[ARENA NET] Player %d is now ready" % peer_id)
+		Log.debug("pvp", "[ARENA NET] Player %d is now ready" % peer_id)
 	
 	if _all_players_ready():
-		print("[ARENA NET] All players ready, starting match...")
+		Log.debug("pvp", "[ARENA NET] All players ready, starting match...")
 		_start_match()
 
 @rpc("any_peer", "call_remote", "reliable")
 func _start_match_signal(is_host_flag: bool):
-	print("[ARENA NET] Match starting! (is_host: %s)" % is_host_flag)
-	emit_signal("match_started", is_host_flag)
+	Log.debug("pvp", "[ARENA NET] Match starting! (is_host: %s)" % is_host_flag)
+	match_started.emit(is_host_flag)
 
 #  CRITICAL FIX: Changed to reliable to prevent duplicate/lost actions
 @rpc("any_peer", "call_remote", "reliable")
 func _send_action(action_data: Dictionary):
 	var sender_id = multiplayer.get_remote_sender_id()
-	print("[ARENA NET] Action received from %d (timestamp: %d)" % [sender_id, action_data.get("timestamp", 0)])
-	emit_signal("action_received", sender_id, action_data)
+	Log.debug("pvp", "[ARENA NET] Action received from %d (timestamp: %d)" % [sender_id, action_data.get("timestamp", 0)])
+	action_received.emit(sender_id, action_data)
 
 @rpc("any_peer", "call_local", "reliable")
 func _end_match(winner_id: int):
-	print("[ARENA NET] Match ended, winner: %d" % winner_id)
-	emit_signal("match_ended", winner_id)
+	Log.debug("pvp", "[ARENA NET] Match ended, winner: %d" % winner_id)
+	match_ended.emit(winner_id)
 
 # === PUBLIC API ===
 
@@ -203,13 +203,13 @@ func set_ready():
 func send_action(action: Dictionary):
 	"""Send combat action to opponent"""
 	if multiplayer.multiplayer_peer:
-		print("[ARENA NET] Sending action to opponent (timestamp: %d)" % action.get("timestamp", 0))
+		Log.debug("pvp", "[ARENA NET] Sending action to opponent (timestamp: %d)" % action.get("timestamp", 0))
 		rpc("_send_action", action)
 
 func send_battle_end(winner_id: int):
 	"""Send battle end notification to opponent"""
 	if multiplayer.multiplayer_peer:
-		print("[ARENA NET] Sending battle end, winner: %d" % winner_id)
+		Log.debug("pvp", "[ARENA NET] Sending battle end, winner: %d" % winner_id)
 		rpc("_end_match", winner_id)
 
 func end_match(winner_id: int):
@@ -241,15 +241,15 @@ func _all_players_ready() -> bool:
 	return true
 
 func _start_match():
-	print("[ARENA NET] Starting match with seed %d" % match_seed)
+	Log.debug("pvp", "[ARENA NET] Starting match with seed %d" % match_seed)
 	RandomManager.seed = match_seed
 	
 	# Send to opponent(s) - they will receive !is_host
 	rpc("_start_match_signal", !is_host)
 	
 	# Emit locally with correct is_host value
-	print("[ARENA NET] Match starting! (is_host: %s)" % is_host)
-	emit_signal("match_started", is_host)
+	Log.debug("pvp", "[ARENA NET] Match starting! (is_host: %s)" % is_host)
+	match_started.emit(is_host)
 
 # === CHARACTER SERIALIZATION ===
 
@@ -390,9 +390,9 @@ func _deserialize_character(data: Dictionary) -> CharacterData:
 	# Recalculate with equipment bonuses
 	character.calculate_secondary_attributes()
 	
-	print("[ARENA NET] Deserialized character: %s (Level %d)" % [character.name, character.level])
-	print("  - HP: %d/%d" % [character.current_hp, character.max_hp])
-	print("  - Equipment slots: %s" % [character.equipment.keys()])
+	Log.debug("pvp", "[ARENA NET] Deserialized character: %s (Level %d)" % [character.name, character.level])
+	Log.debug("pvp", "  - HP: %d/%d" % [character.current_hp, character.max_hp])
+	Log.debug("pvp", "  - Equipment slots: %s" % [character.equipment.keys()])
 	
 	return character
 
@@ -413,7 +413,7 @@ func _deserialize_equipment(character: CharacterData, equipment_data: Dictionary
 			if equipment.has_method("apply_stat_modifiers"):
 				equipment.apply_stat_modifiers(character)
 			
-			print("[ARENA NET] Deserialized %s: %s (dmg=%d, armor=%d, mods=%d)" % [
+			Log.debug("pvp", "[ARENA NET] Deserialized %s: %s (dmg=%d, armor=%d, mods=%d)" % [
 				slot, equipment.display_name, equipment.damage, equipment.armor_value, 
 				equipment.stat_modifiers.size()
 			])

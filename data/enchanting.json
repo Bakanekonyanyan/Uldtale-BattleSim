@@ -1,0 +1,25 @@
+{
+	"_comment": "Enchanter (scenes/town/EnchanterScene, EnchantManager). An enchant raises an item one rarity tier and adds the chosen enchantment's bonus. The material picks the effect. Failure loses the gold and materials but never harms the item; each failure adds fail_bonus to the next try on that item (Attuned).",
+	"max_rarity": "epic",
+	"fail_bonus": 0.1,
+	"gold_per_value": 1.0,
+	"min_gold": 50,
+	"_cost_by_target": "Cost and success chance by the rarity the item is raised TO.",
+	"cost_by_target": {
+		"uncommon": { "materials": 3, "cores": 0, "chance": 0.9 },
+		"magic": { "materials": 5, "cores": 0, "chance": 0.75 },
+		"rare": { "materials": 6, "cores": 1, "chance": 0.6 },
+		"epic": { "materials": 8, "cores": 1, "chance": 0.45 }
+	},
+	"_enchants": "material: what it costs. stat: attribute bonus (rolled in the item level's stat range). weapon_status: on weapons, a chance to inflict this status (only if the weapon has none yet).",
+	"enchants": {
+		"ember": { "name": "Ember", "material": "embershard_fragment", "stat": "STRENGTH", "weapon_status": "BURN", "description": "Smouldering heat: Strength, and weapons may Burn." },
+		"frost": { "name": "Frost", "material": "frostroot_chunk", "stat": "ENDURANCE", "weapon_status": "FREEZE", "description": "Deep cold: Endurance, and weapons may Freeze." },
+		"storm": { "name": "Storm", "material": "voltslate_pebble", "stat": "AGILITY", "weapon_status": "SHOCK", "description": "Crackling charge: Agility, and weapons may Shock." },
+		"blight": { "name": "Blight", "material": "bogblossom_petal", "stat": "VITALITY", "weapon_status": "POISON", "description": "Bog rot: Vitality, and weapons may Poison." },
+		"thorn": { "name": "Thorn", "material": "bloodvine_fiber", "stat": "DEXTERITY", "weapon_status": "BLEED", "description": "Barbed vines: Dexterity, and weapons may Bleed." },
+		"mind": { "name": "Mindglass", "material": "mindglass_shard", "stat": "INTELLIGENCE", "weapon_status": "CONFUSED", "description": "Clear thought: Intelligence, and weapons may Confuse." },
+		"glow": { "name": "Glowcap", "material": "glowcap_mushroom", "stat": "FAITH", "weapon_status": "BLIND", "description": "Soft light: Faith, and weapons may Blind." },
+		"rouse": { "name": "Rousing", "material": "rousepepper_seeds", "stat": "ARCANE", "weapon_status": "", "description": "Quickened spirit: Arcane." }
+	}
+}

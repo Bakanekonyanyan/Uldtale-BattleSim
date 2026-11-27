@@ -1,0 +1,207 @@
+{
+	"_doc": "The Chronicle (ChronicleManager.gd; LIVING_WORLD.md C, H): the world's history. Every news line is weighed (importance by news kind plus keyword boosts); lines at min_importance or above are kept, with the adventurers they name. Capped at max_entries (least important, oldest pruned first). Epithets are earned from deeds; epitaphs remember the fallen by their traits.",
+	"min_importance": 3,
+	"max_entries": 500,
+	"kind_importance": {
+		"death": 6,
+		"rival": 4,
+		"rank": 5,
+		"adventurer": 3,
+		"guild": 2,
+		"party": 3,
+		"tavern": 3,
+		"info": 1,
+		"event": 2,
+		"chronicle": 5
+	},
+	"boosts": [
+		{
+			"contains": "crowned",
+			"add": 5
+		},
+		{
+			"contains": "keeps the crown",
+			"add": 4
+		},
+		{
+			"contains": "Blood behind",
+			"add": 3
+		},
+		{
+			"contains": "avenged",
+			"add": 4
+		},
+		{
+			"contains": "sworn vengeance",
+			"add": 3
+		},
+		{
+			"contains": "sworn to avenge",
+			"add": 2
+		},
+		{
+			"contains": "formed a company",
+			"add": 1
+		},
+		{
+			"contains": "together now",
+			"add": 1
+		},
+		{
+			"contains": "A legend steps down",
+			"add": 3
+		},
+		{
+			"contains": "has snapped",
+			"add": 3
+		},
+		{
+			"contains": "carried a dying",
+			"add": 2
+		},
+		{
+			"contains": "retired",
+			"add": 0
+		},
+		{
+			"contains": "promoted to",
+			"add": 0
+		},
+		{
+			"contains": "stood up to",
+			"add": 0
+		},
+		{
+			"contains": "You ",
+			"add": 1
+		},
+		{
+			"contains": "slipped to",
+			"add": -3
+		},
+		{
+			"contains": "climbed to #",
+			"add": -2
+		},
+		{
+			"contains": "to E-Rank",
+			"add": -3
+		},
+		{
+			"contains": "to D-Rank",
+			"add": -2
+		}
+	],
+	"epithets": [
+		{
+			"id": "thrice_crowned",
+			"text": "the Thrice-Crowned",
+			"crowns": 3
+		},
+		{
+			"id": "twice_crowned",
+			"text": "the Twice-Crowned",
+			"crowns": 2
+		},
+		{
+			"id": "crowned",
+			"text": "the Crowned",
+			"crowns": 1
+		},
+		{
+			"id": "bloodied",
+			"text": "the Bloodied",
+			"kills": 1
+		},
+		{
+			"id": "avenger",
+			"text": "the Avenger",
+			"avenged": 1
+		},
+		{
+			"id": "carrier",
+			"text": "Who Carries the Fallen",
+			"rescues": 2
+		},
+		{
+			"id": "trailblazer",
+			"text": "the Trailblazer",
+			"firsts": 2
+		},
+		{
+			"id": "unbroken",
+			"text": "the Unbroken",
+			"near_death": 6
+		},
+		{
+			"id": "deep_walker",
+			"text": "the Deep-Walker",
+			"deepest": 20
+		},
+		{
+			"id": "bossbane",
+			"text": "Bossbane",
+			"bosses": 15
+		},
+		{
+			"id": "peerless",
+			"text": "the Peerless",
+			"top_rank": 1
+		}
+	],
+	"epitaphs": {
+		"reckless": "Charged in first, as always.",
+		"cautious": "Checked every corner but the last.",
+		"ambitious": "Reached for the top until the very end.",
+		"greedy": "Died with full pockets.",
+		"loyal": "Never left a friend behind.",
+		"honorable": "Kept every promise but one.",
+		"cowardly": "Was braver at the end than anyone knew.",
+		"kind": "Gave away their last potion.",
+		"cruel": "Few mourned; some did.",
+		"lazy": "Finally resting.",
+		"cheerful": "The Tavern is quieter now.",
+		"aloof": "Kept to themselves, to the end.",
+		"devout": "Gone to the Ancient Ones.",
+		"scholarly": "Took their notes with them.",
+		"boastful": "The story is finally true.",
+		"default": "Fell in the line of duty."
+	},
+	"legend": {
+		"_doc": "Legend writing (LegendManager.gd): when you retire, your Chronicle becomes a Legend kept across worlds (user://legends.json). Templates use {name}, {race}, {class}, {year}, {season}, {friend}, {rival}, {rank}, {epithet}, {count}, {text}.",
+		"max_beats": 8,
+		"origin": "In the {season} of Year {year}, {name} - {youth} - came to Nexus, a {race} {class}, and signed their name in the Guild's ledger.",
+		"deed": "In the {season} of Year {year}, {text}",
+		"bond": "{name} and {friend} swore an oath beneath the Guild's lamps, and kept it.",
+		"rival": "But {rival} would not be outdone, and the two measured themselves against each other for years.",
+		"crowns": "Crowned Champion of the Guild {count} time(s), {name} was {epithet_or_famous}.",
+		"end": "In Year {year}, {name}{epithet_sp} hung up their gear as a {rank} adventurer. The Guild still tells the story.",
+		"bard_intro": [
+			"The bard tunes their lute. \"Have you heard of {name}{epithet_sp}?\"",
+			"\"A song from another age,\" the bard says, \"about {name}{epithet_sp}.\"",
+			"The Tavern falls quiet as the bard begins: \"{name}{epithet_sp}...\""
+		],
+		"heir_chance": 0.05,
+		"heir_drive": "Wants to live up to {legend}.",
+		"relic_chance": 0.04,
+		"relic_rarity": 4,
+		"quote_chance": 0.2,
+		"heir_quote_chance": 0.5,
+		"quotes": [
+			"The bard sang about {legend}{epithet_sp} again last night. Gives me chills every time.",
+			"My grandmother swore she once saw {legend} walk into the Guild.",
+			"They say {legend} reached {rank} before hanging up their gear. Imagine that.",
+			"Some say {relic} is still out there somewhere, in some boss's hoard."
+		],
+		"same_class_quotes": [
+			"You fight like {legend}, you know - the {class} from the old songs.",
+			"Another {class}? The last famous one was {legend}{epithet_sp}. Big boots to fill."
+		],
+		"heir_quotes": [
+			"My family name comes from {ancestor}. I mean to earn it.",
+			"Everyone expects me to be like {ancestor}. I'll be better.",
+			"{ancestor} rode with {legend}. One day they'll sing about me too."
+		],
+		"end_death": "In Year {year}, {name}{epithet_sp} fell in {place}, a {rank} adventurer to the last. The Guild lowered its banner."
+	}
+}
