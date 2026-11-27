@@ -34,6 +34,8 @@ func _ready():
 	Engine.time_scale = 25.0
 	await get_tree().process_frame
 	WorldShare.use_dir("user://smoke_worlds/")   # never touch the player's worlds
+	RandomManager.seed = 20261127   # the same dice every run: chance-based checks don't flake
+	seed(20261127)
 	_unit_checks()
 	_phase0_checks()
 	GameEvents.enemy_killed.connect(func(_e, _loc, _f, _b): kills_seen += 1)
@@ -469,14 +471,48 @@ func _party_checks() -> void:
 	for n in [a, b, c]:
 		n.status = "idle"
 		n.rapport = 50
-	check(PartyManager.slots(p) == 0 and not PartyManager.recruit(p, int(a.id)).ok, "F-Rank: no companions yet")
+	check(PartyManager.slots(p) == 1 and PartyManager.team_slots(p) == 0 and not PartyManager.recruit(p, int(a.id)).ok, "F-Rank: no permanent team yet")
+	# F-Rank: hire one adventurer for one expedition
+	var hb: Dictionary = pool[3]
+	hb.status = "idle"
+	hb.rapport = 0
+	hb.rank = "F"
+	p.currency.copper = 0
+	check(not PartyManager.hire(p, int(hb.id)).ok, "hiring costs a fee")
+	p.currency.copper = 100000
+	var fee = PartyManager.hire_fee(p, hb)
+	var hr = PartyManager.hire(p, int(hb.id))
+	check(hr.ok and PartyManager.is_hired(hb) and hb.status == "party" and p.currency.copper == 100000 - fee, "F-Rank: hire an adventurer for one expedition (%s)" % hr.reason)
+	check(not PartyManager.hire(p, int(a.id)).ok, "F-Rank: only one hire at a time")
+	hb.rapport = 60
+	check(PartyManager.hire_fee(p, hb) < fee, "friends ask less")
+	hb.rapport = 0
+	check(PartyManager.share(hb) > float(PartyManager._c().share_by_rank.get("F", 0.1)), "hired hands take a bigger share than a team member")
+	var lv_hb = int(hb.level)
+	DungeonStateManager.start_dungeon(p, 1, "the_dungeon")
+	check(PartyManager.allies.size() == 1 and int(hb.level) == lv_hb, "the hire comes along at their own level")
+	DungeonStateManager.end_dungeon(true)
+	check(not PartyManager.is_member(p, int(hb.id)) and not PartyManager.is_hired(hb) and hb.status != "party", "the hire goes back to work after the expedition")
+	var big: Dictionary = pool[4]
+	big.status = "idle"
+	big.rank = "B"
+	check(not PartyManager.hire(p, int(big.id)).ok, "no hiring far above your rank")
+	PartyManager.hire(p, int(hb.id))
+	PartyManager.release_stale_hires(p, WorldClock.day(p) + 30)
+	check(not PartyManager.is_member(p, int(hb.id)), "a hire kept waiting goes back to work")
+	RankManager.promote(p, "E")
+	check(PartyManager.slots(p) == 2 and PartyManager.team_slots(p) == 0, "E-Rank: two hires, still no team")
+	DungeonStateManager.active_player = p
 	RankManager.promote(p, "D")
-	check(PartyManager.slots(p) == 1, "D-Rank opens one party slot")
+	check(PartyManager.team_slots(p) == 1, "D-Rank: a permanent team")
+	for n in [a, b, c]:   # the days of that expedition sent some out on jobs
+		n.status = "idle"
+		n.rapport = 50
 	b.rapport = 10
 	check(not PartyManager.recruit(p, int(b.id)).ok, "strangers won't join (rapport below Friend)")
 	var r = PartyManager.recruit(p, int(a.id))
 	check(r.ok and a.status == "party" and int(a.level) >= 6, "a Friend joins and levels with you (%s)" % r.reason)
-	check(not PartyManager.recruit(p, int(c.id)).ok, "the party is full at D-Rank")
+	check(not PartyManager.recruit(p, int(c.id)).ok, "the team is full at D-Rank")
 	RankManager.promote(p, "B")
 	check(PartyManager.recruit(p, int(c.id)).ok and PartyManager.members(p).size() == 2, "B-Rank: two companions")
 	# expedition: built as battle characters sharing your pack
@@ -2943,7 +2979,7 @@ func _battle_run(label: String, enemy_count: int, boss: bool, player_hp: int) ->
 			var skill_to_use: Skill = null
 			for sn in player.skills:
 				var sk: Skill = player.get_skill_instance(sn)
-				if sk.type == Skill.SkillType.DAMAGE and player.get_skill_cooldown(sn) == 0 and player.current_sp >= sk.sp_cost and player.current_mp >= sk.mp_cost:
+				if sk.type == Skill.SkillType.DAMAGE and player.get_skill_cooldown(sn) == 0 and sk.can_afford(player):
 					skill_to_use = sk
 			if actions % 4 == 3:
 				action = BattleAction.defend(player)

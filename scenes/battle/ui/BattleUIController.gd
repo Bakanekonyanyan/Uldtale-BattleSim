@@ -451,6 +451,8 @@ func setup_player_actions(item_used: bool, main_action_taken: bool):
 
 func _add_attack_button():
 	var btn = _create_action_button("Attack")
+	var ar = int(round(BattleFormulas.attack_restore(player) * 100))
+	btn.tooltip_text = "A basic hit. Restores %d%% of your MP and SP, and counts double on a weakness's Break meter." % ar
 	btn.pressed.connect(_on_attack_pressed)
 	action_buttons.add_child(btn)
 
@@ -459,7 +461,10 @@ func _add_defend_button():
 	var btn = _create_action_button("Defend  ⛨ Perfect Guard" if guard else "Defend")
 	if guard:
 		btn.add_theme_color_override("font_color", Color("90e0ef"))
-		btn.tooltip_text = "An enemy is about to hit you: Defend now to take far less damage, gain no Break pips, stagger the attacker and counter a charged strike."
+		btn.tooltip_text = "An enemy is about to hit you: Defend now to take far less damage, gain no Break pips, stagger the attacker, counter a charged strike - and hit back harder on your next move."
+	var dr = int(round(float(BattleFormulas.rhythm().get("defend_restore", 0.0)) * 100)) if BattleFormulas.is_hero_side(player) else 0
+	if dr > 0:
+		btn.tooltip_text += ("\n" if btn.tooltip_text != "" else "") + "Halves damage until your next turn and restores %d%% of your MP and SP." % dr
 	btn.pressed.connect(_on_defend_pressed)
 	action_buttons.add_child(btn)
 

@@ -18,6 +18,7 @@ var details: RichTextLabel
 var chat_button: Button
 var drink_button: Button
 var gift_button: Button
+var hire_button: Button
 var party_button: Button
 var invite_button: Button
 var bard_button: Button
@@ -85,10 +86,12 @@ func _build_ui() -> void:
 	_button(ui, "Rumours", Vector2(496, 644), _on_rumours, Vector2(148, 40))
 	invite_button = _button(ui, "Invitation!", Vector2(652, 644), _on_invitation, Vector2(148, 40))
 	bard_button = _button(ui, "Hear the bard", Vector2(808, 644), _on_bard, Vector2(148, 40))
-	chat_button = _button(ui, "Chat", Vector2(496, 526), _on_chat)
-	drink_button = _button(ui, "Buy a Drink", Vector2(656, 526), _on_drink, Vector2(190, 40))
-	gift_button = _button(ui, "Give a Gift...", Vector2(856, 526), _on_gift_pressed, Vector2(170, 40))
-	party_button = _button(ui, "Invite to Party", Vector2(1036, 526), _on_party_pressed, Vector2(132, 40))
+	chat_button = _button(ui, "Chat", Vector2(496, 526), _on_chat, Vector2(112, 40))
+	drink_button = _button(ui, "Buy a Drink", Vector2(616, 526), _on_drink, Vector2(176, 40))
+	gift_button = _button(ui, "Give a Gift...", Vector2(800, 526), _on_gift_pressed, Vector2(128, 40))
+	hire_button = _button(ui, "Hire", Vector2(936, 526), _on_hire_pressed, Vector2(112, 40))
+	hire_button.add_theme_font_size_override("font_size", 13)
+	party_button = _button(ui, "Invite to Team", Vector2(1056, 526), _on_party_pressed, Vector2(112, 40))
 	party_button.add_theme_font_size_override("font_size", 13)
 	gift_menu = PopupMenu.new()
 	gift_menu.id_pressed.connect(_on_gift_chosen)
@@ -236,10 +239,16 @@ func _update_details() -> void:
 	drink_button.tooltip_text = "A round costs %s." % Currency.format_copper(AdventurerManager.drink_price(p))
 	gift_button.disabled = not here or int(n.gift_day) == day
 	var member = PartyManager.is_member(p, int(n.id))
-	party_button.text = "Dismiss" if member else "Invite to Party"
+	var hired = PartyManager.is_hired(n)
+	party_button.text = ("Let Go" if hired else "Dismiss") if member else "Invite to Team"
 	var why = PartyManager.why_not_recruit(p, int(n.id))
 	party_button.disabled = tab != Tab.ROSTER or (not member and why != "")
-	party_button.tooltip_text = "" if member else why
+	party_button.tooltip_text = ("They'll go back to work (the fee is theirs)." if hired else "") if member else (why if why != "" else "A permanent place on your team.")
+	hire_button.visible = not member
+	var hwhy = PartyManager.why_not_hire(p, int(n.id))
+	hire_button.text = "Hire %s" % Currency.format_short(PartyManager.hire_fee(p, n))
+	hire_button.disabled = tab != Tab.ROSTER or hwhy != ""
+	hire_button.tooltip_text = hwhy if hwhy != "" else "Hire %s for one expedition: %s now, and %d%% of the gold." % [n.name, Currency.format_copper(PartyManager.hire_fee(p, n)), int(round(PartyManager.hire_share(n) * 100))]
 
 ## Tavern talk: tips about rumoured elites and caches (RumorManager).
 func _on_rumours() -> void:
@@ -312,9 +321,17 @@ func _after(r: Dictionary) -> void:
 	status_label.text = r.reason
 	_refresh()
 
+func _on_hire_pressed() -> void:
+	_after(PartyManager.hire(player_character, selected_id))
+
 func _on_party_pressed() -> void:
 	var p = player_character
 	if PartyManager.is_member(p, selected_id):
+		var n = AdventurerManager.get_npc(p, selected_id)
+		if PartyManager.is_hired(n):
+			PartyManager.release_hire(p, n, "Was let go by %s before setting out." % p.name)
+			_after({"ok": true, "reason": "%s goes back to work." % n.name})
+			return
 		_after(PartyManager.dismiss(p, selected_id))
 	else:
 		_after(PartyManager.recruit(p, selected_id))

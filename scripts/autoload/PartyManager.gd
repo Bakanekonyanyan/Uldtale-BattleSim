@@ -1,8 +1,13 @@
 # res://scripts/autoload/PartyManager.gd
 # Your party (data/adventurers.json "party", GAME_ROADMAP.md B2).
 #
-# - Recruit an adventurer at Friend rapport into a free slot (your rank's
-#   party_size - 1). They stop taking Guild jobs while with you.
+# - From F-Rank: HIRE an adventurer for one expedition at the Tavern (a fee
+#   by their level, half for friends; a bigger share of the gold; up to one
+#   rank above yours). They go back to work when the expedition ends, or after
+#   hire_days if you never set out.
+# - From D-Rank: RECRUIT a permanent team at Friend rapport (rank
+#   team_slots). Party size (you, team and hires) is the rank's party_size.
+#   Team members stop taking Guild jobs while with you.
 # - Recruits level with you (never below your level); gear and talents are
 #   automatic (AutoBattler.build_hero). They share your pack.
 # - Each Breather payout they take their share of the gold (by rank, traits).
@@ -45,9 +50,20 @@ func members(player: CharacterData) -> Array:
 			out.append(n)
 	return out
 
-## Party slots besides you (rank party_size - 1).
+## Party slots besides you (rank party_size - 1): team members and hires.
 func slots(player: CharacterData) -> int:
 	return max(0, int(RankManager.perk(player, "party_size", 1)) - 1)
+
+## Permanent team slots at your rank (0 below D-Rank).
+func team_slots(player: CharacterData) -> int:
+	return min(slots(player), int(RankManager.perk(player, "team_slots", 0)))
+
+## Permanent team members (not hires or guests).
+func team(player: CharacterData) -> Array:
+	return members(player).filter(func(n): return not n.has("hired") and not n.has("guest"))
+
+func is_hired(npc: Dictionary) -> bool:
+	return npc.has("hired")
 
 func is_member(player: CharacterData, id: int) -> bool:
 	return party_ids(player).has(id)
@@ -62,8 +78,10 @@ func why_not_recruit(player: CharacterData, id: int) -> String:
 	var g = MemoryManager.grudge(n)
 	if not g.is_empty():
 		return "%s won't travel with you. They remember: %s." % [n.name, String(MemoryManager.kind(g.kind).get("you_text", "something you did")).to_lower()]
-	if slots(player) == 0:
-		return "Your rank allows no companions yet (D-Rank opens a slot)."
+	if team_slots(player) == 0:
+		return "A permanent team comes at D-Rank. Until then, hire them for one expedition."
+	if team(player).size() >= team_slots(player):
+		return "Your team is full (%d at your rank)." % team_slots(player)
 	if party_ids(player).size() >= slots(player):
 		return "Your party is full (%d companion%s at your rank)." % [slots(player), "" if slots(player) == 1 else "s"]
 	if String(n.status) != "idle":
@@ -71,6 +89,68 @@ func why_not_recruit(player: CharacterData, id: int) -> String:
 	if int(n.rapport) < int(_c().get("recruit_rapport", 40)):
 		return "%s doesn't know you well enough (rapport %d / %d)." % [n.name, int(n.rapport), int(_c().get("recruit_rapport", 40))]
 	return ""
+
+## What hiring `npc` for one expedition costs you (copper).
+func hire_fee(player: CharacterData, npc: Dictionary) -> int:
+	var fee = int(_c().get("hire_copper_per_level", 20)) * max(1, int(npc.get("level", 1)))
+	if int(npc.get("rapport", 0)) >= int(_c().get("recruit_rapport", 40)):
+		fee = int(round(fee * (1.0 - float(_c().get("hire_friend_discount", 0.5)))))
+	return fee
+
+## "" if `id` can be hired for one expedition now, else why not.
+func why_not_hire(player: CharacterData, id: int) -> String:
+	var n = AdventurerManager.get_npc(player, id)
+	if n.is_empty() or not AdventurerManager.is_active(n):
+		return "They're no longer with the Guild."
+	if is_member(player, id):
+		return "Already with you."
+	var g = MemoryManager.grudge(n)
+	if not g.is_empty():
+		return "%s won't take your coin. They remember: %s." % [n.name, String(MemoryManager.kind(g.kind).get("you_text", "something you did")).to_lower()]
+	if party_ids(player).size() >= slots(player):
+		return "No room: %d companion%s at your rank." % [slots(player), "" if slots(player) == 1 else "s"]
+	if String(n.status) != "idle":
+		return "%s isn't free right now." % n.name
+	if RankManager.rank_index(String(n.rank)) > RankManager.rank_index(RankManager.get_rank(player)) + int(_c().get("hire_rank_above", 1)):
+		return "%s is %s-Rank: out of your league for now." % [n.name, n.rank]
+	if int(n.rapport) < int(_c().get("hire_rapport", -20)):
+		return "%s won't work for you." % n.name
+	if player.currency.copper < hire_fee(player, n):
+		return "Hiring %s costs %s." % [n.name, Currency.format_copper(hire_fee(player, n))]
+	return ""
+
+## Hire `id` for your next expedition.
+func hire(player: CharacterData, id: int) -> Dictionary:
+	var why = why_not_hire(player, id)
+	if why != "":
+		return {"ok": false, "reason": why}
+	var n = AdventurerManager.get_npc(player, id)
+	var fee = hire_fee(player, n)
+	player.currency.copper -= fee
+	n.status = "party"
+	n["hired"] = true
+	n["hired_since"] = WorldClock.day(player)
+	n["earned"] = int(n.get("earned", 0)) + fee
+	party_ids(player).append(id)
+	AdventurerManager._history(n, WorldClock.day(player), "Hired on by %s for an expedition." % player.name)
+	var yes = PersonalityManager.say(n, "join")
+	return {"ok": true, "reason": "%s is hired for your next expedition (%s, and %d%% of the gold).%s" % [n.name, Currency.format_copper(fee), int(round(share(n) * 100)), ("\n" + yes) if yes != "" else ""]}
+
+## A hire goes back to their own work.
+func release_hire(player: CharacterData, n: Dictionary, why: String) -> void:
+	party_ids(player).erase(int(n.id))
+	n.erase("hired")
+	n.erase("hired_since")
+	if String(n.get("status", "")) == "party":
+		n.status = "idle"
+	AdventurerManager._history(n, WorldClock.day(player), why)
+
+## Hires kept waiting too long go back to work (the fee is theirs).
+func release_stale_hires(player: CharacterData, day: int) -> void:
+	for n in members(player).filter(func(m): return is_hired(m)):
+		if day - int(n.get("hired_since", day)) > int(_c().get("hire_days", 4)):
+			release_hire(player, n, "Got tired of waiting for %s's expedition and went back to work." % player.name)
+			WorldClock.add_news(player, "%s gave up waiting and went back to work (the fee is theirs)." % n.name, "adventurer")
 
 func recruit(player: CharacterData, id: int) -> Dictionary:
 	var why = why_not_recruit(player, id)
@@ -103,7 +183,13 @@ func dismiss(player: CharacterData, id: int, reason := "") -> Dictionary:
 
 ## Gold share this recruit takes (by rank, x trait 'share').
 func share(npc: Dictionary) -> float:
-	var base = float(_c().get("share_by_rank", {}).get(String(npc.rank), 0.15))
+	var table = "hire_share_by_rank" if is_hired(npc) else "share_by_rank"
+	var base = float(_c().get(table, {}).get(String(npc.rank), 0.15))
+	return clamp(base * AdventurerManager.trait_mult(npc, "share"), 0.0, 0.5)
+
+## The share a hire would take (before hiring).
+func hire_share(npc: Dictionary) -> float:
+	var base = float(_c().get("hire_share_by_rank", {}).get(String(npc.rank), 0.2))
 	return clamp(base * AdventurerManager.trait_mult(npc, "share"), 0.0, 0.5)
 
 func total_share(player: CharacterData) -> float:
@@ -130,7 +216,8 @@ func _on_expedition_started(_location_id: String, _floor: int) -> void:
 	for n in members(player):
 		if int(n.get("injured_until", 0)) > WorldClock.day(player):
 			continue    # still hurt: stays in town this time
-		_sync_level(player, n)
+		if not is_hired(n):   # hired hands fight at their own level
+			_sync_level(player, n)
 		var hero = AutoBattler.build_hero(n)
 		hero.inventory = player.inventory          # one shared pack
 		hero.set_meta("npc_id", int(n.id))
@@ -222,6 +309,8 @@ func _on_expedition_ended(location_id: String, cleared: bool) -> void:
 		if int(n.rapport) < int(c.get("leave_below", 20)) and RandomManager.randf() < float(c.get("leave_chance", 0.35)) * AdventurerManager.trait_mult(n, "leave"):
 			dismiss(player, int(n.id), "Left %s's party, unhappy." % player.name)
 			WorldClock.add_news(player, "%s has left your party." % n.name, "guild")
+	for n in members(player).filter(func(m): return is_hired(m)):   # hired hands go home
+		release_hire(player, n, "Was paid off after an expedition with %s." % player.name)
 	DramaManager.on_expedition_end(player, cleared)   # guests go home
 	allies.clear()
 	_kos.clear()

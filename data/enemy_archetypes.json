@@ -370,7 +370,7 @@
   },
   "scaling": {
     "_doc": "Enemy tuning (EnemyFactory). Regular enemies have this fraction of a hero's HP/damage for the same stats (the hero fights groups); bosses are full-HP long fights. wave_scaling: +stats per wave within a floor. boss_minion_stat_share: share of the archetype's base stats a boss inherits.",
-    "enemy_hp_mult": 0.5,
+    "enemy_hp_mult": 0.8,
     "enemy_damage_mult": 0.72,
     "boss_hp_mult": 1.0,
     "boss_damage_mult": 0.65,

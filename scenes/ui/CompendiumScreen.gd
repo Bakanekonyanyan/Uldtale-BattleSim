@@ -282,8 +282,12 @@ static func _ranks() -> String:
 	for id in ids:
 		var cap = int(r[id].get("floor_cap", 0))
 		var party = int(r[id].get("party_size", 1))
+		var team = int(r[id].get("team_slots", 0))
+		var ptxt = ""
+		if party > 1:
+			ptxt = ", party of %d (%s)" % [party, "hired for an expedition" if team == 0 else "a team of %d + hires" % team]
 		t += "• [b]%s %s[/b] - %d Guild points; %s%s\n" % [id, r[id].get("title", ""), int(r[id].get("points", 0)),
-			("floors up to %d" % cap) if cap > 0 else "every floor", (", party of %d" % party) if party > 1 else ""]
+			("floors up to %d" % cap) if cap > 0 else "every floor", ptxt]
 	return t.strip_edges()
 
 static func _enchants() -> String:

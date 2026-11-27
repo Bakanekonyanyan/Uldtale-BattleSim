@@ -492,3 +492,21 @@ Concept sketch: a first-person illustrated view of the path ahead, with a minima
 
 Hand-drawn layered characters (`docs/ART_PIPELINE.md`): class and shopkeeper base poses per gender, race parts, 3-4 hairstyles, recolourable skin / hair / eyes / clothes. A **character compositor** will assemble them at runtime so player characters, shopkeepers and every generated NPC adventurer get a unique illustration - part of the living-world feel. Build it once the first real layers exist.
 
+## Parties: hired hands and permanent teams (built)
+
+- **F-rank: hire 1. E-rank: hire 2.** At the Tavern, "Hire" takes an
+  adventurer along for one expedition.
+  - **Fee:** 20 copper × their level; half price for friends (rapport 40+).
+  - **Share:** a bigger cut of Breather gold than a team member (20–30% by
+    their rank).
+  - **Who:** anyone up to one rank above you, unless they hold a grudge.
+  - **Level:** they fight at their own level.
+  - **Afterwards:** they go back to work when the expedition ends, or after
+    4 days if you never set out (they keep the fee).
+- **D-rank: a permanent team.** Recruit friends (rapport 40+) into team
+  slots: 1 at D and C, 2 from B. Team members level with you. Hires can
+  fill any seats left over.
+- **Party size** (you included): 2 at F, 3 from E (`ranks.json`
+  party_size / team_slots).
+- **Settings:** `adventurers.json` party, hire_* (Content Manager →
+  Adventurers).

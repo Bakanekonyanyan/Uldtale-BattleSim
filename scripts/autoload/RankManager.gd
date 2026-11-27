@@ -180,7 +180,8 @@ func describe_perks(rank_id: String) -> Array:
 	out.append("Carry limit: %d of each consumable" % int(r.get("carry_limit", 5)))
 	out.append("Bounty board: %d posted, %d active" % [int(r.get("board_size", 3)), int(r.get("max_active", 3))])
 	out.append("Bounty gold: x%.2f" % float(r.get("reward_mult", 1.0)))
-	out.append("Party: %d adventurer%s (recruiting comes later)" % [int(r.get("party_size", 1)), "" if int(r.get("party_size", 1)) == 1 else "s"])
+	var team = int(r.get("team_slots", 0))
+	out.append("Party: you + %d (%s)" % [int(r.get("party_size", 1)) - 1, "hired for an expedition" if team == 0 else "%d permanent team member%s" % [team, "" if team == 1 else "s"]])
 	var recipes: Array = []
 	for id in AlchemyManager.get_recipe_ids():
 		var unlock: Dictionary = AlchemyManager.get_recipe(id).get("unlock", {})

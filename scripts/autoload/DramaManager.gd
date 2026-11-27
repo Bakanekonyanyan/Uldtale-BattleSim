@@ -181,6 +181,7 @@ func _invitation_day(player: CharacterData, day: int) -> void:
 	if WorldGen.is_prehistory(player):
 		return
 	_send_guests_home(player, day)
+	PartyManager.release_stale_hires(player, day)
 	if not invitation(player).is_empty():
 		return
 	var ic = _c("invitations")

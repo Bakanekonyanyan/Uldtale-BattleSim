@@ -257,6 +257,50 @@
      "help": "Rapport needed to recruit (Friend)."
     },
     {
+     "name": "hire_copper_per_level",
+     "type": "int",
+     "min": 0,
+     "help": "Hiring someone for one expedition costs this x their level."
+    },
+    {
+     "name": "hire_friend_discount",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Share off the fee for friends (rapport at recruit_rapport or more)."
+    },
+    {
+     "name": "hire_rapport",
+     "type": "int",
+     "help": "Lowest rapport at which someone will take your coin."
+    },
+    {
+     "name": "hire_rank_above",
+     "type": "int",
+     "min": 0,
+     "help": "How many ranks above yours you can hire."
+    },
+    {
+     "name": "hire_days",
+     "type": "int",
+     "min": 1,
+     "help": "A hire who's kept waiting this many days goes back to work (fee kept)."
+    },
+    {
+     "name": "hire_share_by_rank",
+     "type": "map",
+     "key": {
+      "type": "ref",
+      "source": "ranks"
+     },
+     "value": {
+      "type": "float",
+      "min": 0,
+      "max": 1
+     },
+     "help": "Share of Breather gold a hired hand takes, by their rank (more than a team member)."
+    },
+    {
      "name": "share_by_rank",
      "type": "map",
      "key": {

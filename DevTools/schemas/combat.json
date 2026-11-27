@@ -158,6 +158,58 @@
   },
   {
    "kind": "settings",
+   "label": "Combat rhythm",
+   "path": [
+    "rhythm"
+   ],
+   "fields": [
+    {
+     "name": "skill_cost_mult",
+     "type": "float",
+     "min": 0,
+     "help": "Heroes pay this x a skill's listed MP/SP."
+    },
+    {
+     "name": "cost_per_level",
+     "type": "float",
+     "min": 0,
+     "help": "Skill costs rise by this share per hero level (keeps pace with MP/SP pools)."
+    },
+    {
+     "name": "attack_restore",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Share of max MP and SP a hero's basic attack restores."
+    },
+    {
+     "name": "defend_restore",
+     "type": "float",
+     "min": 0,
+     "max": 1,
+     "help": "Share of max MP and SP a hero's Defend restores."
+    },
+    {
+     "name": "riposte_bonus",
+     "type": "float",
+     "min": 0,
+     "help": "After a Perfect Guard, the hero's next action deals this much more."
+    },
+    {
+     "name": "attack_weak_break",
+     "type": "int",
+     "min": 1,
+     "help": "Break points from a basic attack on a weakness (skills give 1)."
+    },
+    {
+     "name": "_doc",
+     "type": "text",
+     "help": "Notes for designers."
+    }
+   ]
+  },
+  {
+   "kind": "settings",
    "label": "Link",
    "path": [
     "link"

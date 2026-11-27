@@ -88,7 +88,14 @@
      "type": "int",
      "min": 1,
      "max": 3,
-     "help": "Recruit slots (used once parties exist)."
+     "help": "Heroes in your party, you included (hired hands and team members)."
+    },
+    {
+     "name": "team_slots",
+     "type": "int",
+     "min": 0,
+     "max": 2,
+     "help": "Permanent team members at this rank (0 = you can only hire for one expedition)."
     },
     {
      "name": "trial",

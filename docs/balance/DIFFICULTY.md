@@ -104,3 +104,69 @@ Changes:
   chance; *Perfect Vessel* also heals 10%.
 - Elementalist *Prismatic Split* 75% per target (was 60%); *Searing Focus* and
   *Storm Caller* +8% (was 6%).
+
+## Rookie pass: the combat rhythm (this week)
+
+**Problem.** Combat was easy, and spamming skills was as good as playing
+well:
+- A normal wave on floor 1 ended in 2–3 hero actions.
+- "Always cast the strongest skill" won 98–100% of normal waves, as often as
+  careful play did.
+- Skills never ran dry, and attacking or defending was just filler.
+
+**Changes:**
+- **Combat rhythm** (`combat.json` "rhythm", Content Manager → Combat):
+  - Heroes pay 1.6× a skill's listed MP/SP, rising 10% per level, so costs
+    keep pace with growing pools. Two or three skills, then you need to
+    recover.
+  - A basic attack restores 12% of max MP and SP (was 8%). A Defend restores
+    15%.
+  - A Perfect Guard sets up a riposte: +30% on your next action.
+  - A basic attack on a weakness puts 2 points on the Break meter (skills
+    put 1).
+  - Normal enemies telegraph heavy blows more often (chance 0.4, from
+    power 20).
+- **Skills by level** (`progression.json` class_skill_levels `[1, 3, 6]`): a
+  rookie knows one class skill, learns the second at level 3 and the rest at
+  level 6. The level-up screen announces each one.
+- **Sturdier normal enemies** (`enemy_archetypes.json` scaling
+  `enemy_hp_mult` 0.5 → 0.8): a normal wave now lasts 4–6 hero actions and
+  costs real HP.
+- **Recalibrated floor multipliers** (`progression.json`
+  `enemy_floor_mult`): auto-calibrated with the career sim toward these
+  first-try targets for a smart solo hero:
+  - floors 1–10: 60%
+  - floors 11–20: 55%
+  - floors 21–25: 50%
+  The deep floors were then laid on a smooth rise (survivors skew the deep
+  numbers).
+
+**Career, smart solo, 2 potions** (10 runs × 12 classes):
+
+| Floors | First-try clear | Still climbing |
+|---|---|---|
+| 1–5 | 59–67% | 99–100% |
+| 6–11 | 54–66% | 86–98% |
+| 12–17 | 37–55% | 60–84% |
+| 18–25 | 50–73% | 40–53% |
+
+Solo is meant to be hard. Rookies hire help at the Tavern (F: 1, E: 2), and
+from D-rank they form a permanent team.
+
+**Decision value now** (duels, paired seeds, 20 runs × 12 classes, hero at
+career level):
+
+| Fight | Attack only | Skill spam | Smart |
+|---|---|---|---|
+| Floor 1 normal wave | 87% | 85% | **95%** |
+| Floor 1 boss | 15% | 19% | **31%** |
+| Floor 3 boss | 34% | 43% | **65%** |
+| Floor 5 boss | 58% | 73% | **86%** |
+| Floor 10 boss | 88% | 98% | 98% |
+
+Skills matter, but so do timing, guarding and recovering. Skill spam no
+longer matches careful play.
+
+**Still to look at:** the floor-10 boss is too easy for a level-33 hero
+(98%). Boss scaling (`boss_hp_mult`, `boss_damage_mult`) needs a pass for
+the middle floors.

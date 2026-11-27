@@ -597,8 +597,22 @@
     }
   },
   "party": {
-    "_doc": "Recruiting (PartyManager.gd): Friend rapport and a free slot (rank party_size - 1). Recruits level with you (never below your level), pick their own gear and talents, share your pack, and take a share of Breather gold. Rapport moves with each expedition; below leave_below they may walk away.",
+    "_doc": "Parties (PartyManager.gd). From F-Rank you can HIRE adventurers for one expedition (a fee by their level, half for friends; a bigger share of the gold; up to one rank above yours; they leave when it ends). From D-Rank you can RECRUIT a permanent team (Friend rapport, rank team_slots). Party size by rank: party_size. Recruits level with you (never below your level), pick their own gear and talents, share your pack, and take a share of Breather gold. Rapport moves with each expedition; below leave_below they may walk away.",
     "recruit_rapport": 40,
+    "hire_copper_per_level": 20,
+    "hire_friend_discount": 0.5,
+    "hire_rapport": -20,
+    "hire_rank_above": 1,
+    "hire_days": 4,
+    "hire_share_by_rank": {
+      "F": 0.2,
+      "E": 0.22,
+      "D": 0.24,
+      "C": 0.26,
+      "B": 0.28,
+      "A": 0.3,
+      "S": 0.3
+    },
     "share_by_rank": {
       "F": 0.1,
       "E": 0.12,
