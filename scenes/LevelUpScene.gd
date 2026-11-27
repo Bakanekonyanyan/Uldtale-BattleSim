@@ -129,6 +129,11 @@ func update_ui() -> void:
 	var g := ""
 	if leveled:
 		g = "Every attribute rose by 1, and you have points to spend. "
+		if character.has_meta("learned_skills"):
+			g += "[color=#8fd46a]New skill: %s![/color] " % ", ".join(character.get_meta("learned_skills"))
+		var nxt = character.next_class_skill()
+		if not nxt.is_empty():
+			g += "[color=#a99f90](Next skill at level %d.)[/color] " % int(nxt.level)
 		var tp = character.talents.available_points() if character.talents else 0
 		if tp > 0:
 			g += "[color=#e5c34a]%d talent point%s waiting[/color] (Character > Talents). " % [tp, "" if tp == 1 else "s"]
@@ -206,6 +211,8 @@ func _reset() -> void:
 	update_ui()
 
 func _finish() -> void:
+	if character and character.has_meta("learned_skills"):
+		character.remove_meta("learned_skills")
 	level_up_complete.emit()
 	queue_free()
 

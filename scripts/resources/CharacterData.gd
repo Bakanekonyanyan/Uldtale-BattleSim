@@ -513,6 +513,39 @@ func swap_hands() -> bool:
 	return true
 
 # === SKILL DELEGATES ===
+## Learn the class skills this level has reached (progression.json
+## class_skill_levels: a rookie knows one, the rest come at levels 3 and 6).
+## New ones go into a free loadout slot and are noted for the level-up screen.
+func learn_class_skills() -> Array:
+	var cd: Dictionary = DataRegistry.get_data("classes").get("playable", {}).get(character_class, {})
+	var prog = DataRegistry.get_data("progression")
+	var at: Array = prog.get("class_skill_levels", [1, 1, 1]) if prog is Dictionary else [1, 1, 1]
+	var learned: Array = []
+	var list: Array = cd.get("skills", [])
+	for i in range(list.size()):
+		var need = int(at[min(i, at.size() - 1)]) if not at.is_empty() else 1
+		var sn = String(list[i])
+		if level >= need and not sn in skills:
+			add_skills([sn])
+			learned.append(sn)
+			if not equipped_skills.is_empty() and equipped_skills.size() < TalentManager.loadout_size():
+				equipped_skills.append(sn)
+	if not learned.is_empty():
+		var prev: Array = get_meta("learned_skills", []) if has_meta("learned_skills") else []
+		set_meta("learned_skills", prev + learned)
+	return learned
+
+## The class skill learned next, and at what level ({} if all known).
+func next_class_skill() -> Dictionary:
+	var cd: Dictionary = DataRegistry.get_data("classes").get("playable", {}).get(character_class, {})
+	var prog = DataRegistry.get_data("progression")
+	var at: Array = prog.get("class_skill_levels", [1, 1, 1]) if prog is Dictionary else [1, 1, 1]
+	var list: Array = cd.get("skills", [])
+	for i in range(list.size()):
+		if not String(list[i]) in skills:
+			return {"skill": String(list[i]), "level": int(at[min(i, at.size() - 1)])}
+	return {}
+
 func add_skills(skill_names: Array):
 	if skill_manager:
 		skill_manager.add_skills(skill_names)
@@ -684,6 +717,7 @@ func level_up():
 	
 	if is_player:
 		attribute_points += 3
+		learn_class_skills()
 	else:
 		distribute_enemy_points()
 	

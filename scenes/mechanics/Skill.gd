@@ -200,26 +200,32 @@ static func create_from_dict(data: Dictionary) -> Skill:
 ## Costs: a skill charges every cost it lists (MP and SP, plus hp_cost).
 ## Untrained armour makes SP costs heavier (ArmorTraining).
 func sp_cost_for(user: CharacterData) -> int:
-	return int(ceil(sp_cost * user.armor_sp_mult)) if user and sp_cost > 0 else sp_cost
+	if user == null or sp_cost <= 0:
+		return sp_cost
+	return int(ceil(BattleFormulas.skill_cost(user, sp_cost) * user.armor_sp_mult))
+
+## MP cost for `user` (heroes pay the combat rhythm's price).
+func mp_cost_for(user: CharacterData) -> int:
+	return BattleFormulas.skill_cost(user, mp_cost) if user else mp_cost
 
 ## A weapon art needs a weapon of its family in hand.
 func has_weapon_for(user: CharacterData) -> bool:
 	return weapon_family == "" or user == null or weapon_family in WeaponArts.held_families(user)
 
 func can_afford(user: CharacterData) -> bool:
-	return user.current_mp >= mp_cost and user.current_sp >= sp_cost_for(user) and has_weapon_for(user)
+	return user.current_mp >= mp_cost_for(user) and user.current_sp >= sp_cost_for(user) and has_weapon_for(user)
 
 func pay_costs(user: CharacterData) -> void:
-	user.current_mp -= mp_cost
+	user.current_mp -= mp_cost_for(user)
 	user.current_sp -= sp_cost_for(user)
 	if hp_cost > 0.0:   # blood magic, never lethal
 		user.current_hp = max(1, user.current_hp - int(round(user.max_hp * hp_cost)))
 
-## "20 MP, 10 SP" style cost text for UI ("Free" if none).
-func cost_text() -> String:
+## "20 MP, 10 SP" style cost text for UI ("Free" if none); for `user` if given.
+func cost_text(user: CharacterData = null) -> String:
 	var parts: Array = []
-	if mp_cost > 0: parts.append("%d MP" % mp_cost)
-	if sp_cost > 0: parts.append("%d SP" % sp_cost)
+	if mp_cost > 0: parts.append("%d MP" % (mp_cost_for(user) if user else mp_cost))
+	if sp_cost > 0: parts.append("%d SP" % (sp_cost_for(user) if user else sp_cost))
 	if hp_cost > 0.0: parts.append("%d%% HP" % int(round(hp_cost * 100)))
 	return ", ".join(parts) if not parts.is_empty() else "Free"
 

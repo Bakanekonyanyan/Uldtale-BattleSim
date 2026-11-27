@@ -289,6 +289,11 @@ static func _hero_policy_core(p: CharacterData, ctx: BattleContext, use_setup :=
 	var rules: BattleRules = ctx.rules
 	if policy == "simple":
 		return _simple_move(p, ctx, living)
+	if policy == "attack":   # balance probe: basic attacks and Perfect Guards, no skills
+		if rules and rules.is_threatened(p) and living.any(func(e): return e.has_meta("charging") or incoming_damage(p, ctx) >= p.current_hp * 0.45):
+			return BattleAction.defend(p)
+		living.sort_custom(func(a, b): return a.current_hp < b.current_hp)
+		return BattleAction.attack(p, living[0])
 	var smart = policy != "naive"
 	if smart and policy != "hit":
 		var plan = _smart_moves(p, ctx, living, rules)

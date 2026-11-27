@@ -3,8 +3,17 @@
   "intents": {
     "boss_charge": true,
     "charge_power_mult": 2.0,
-    "regular_charge_chance": 0.3,
-    "regular_charge_min_power": 30
+    "regular_charge_chance": 0.4,
+    "regular_charge_min_power": 20
+  },
+  "rhythm": {
+    "skill_cost_mult": 1.6,
+    "cost_per_level": 0.1,
+    "attack_restore": 0.12,
+    "defend_restore": 0.15,
+    "riposte_bonus": 0.3,
+    "attack_weak_break": 2,
+    "_doc": "The combat rhythm for heroes (you and your party): skills cost skill_cost_mult x their listed MP/SP, rising cost_per_level per level so they keep pace with your pools; a basic attack restores attack_restore of max MP and SP, a Defend restores defend_restore. A Perfect Guard sets up a riposte: your next action deals +riposte_bonus. A basic attack on a weakness puts attack_weak_break points on the Break meter (skills put 1)."
   },
   "weakness_bonus": 0.3,
   "_weakness_bonus": "Extra damage for a hit on a weakness (damage type or element), on top of the affinity itself.",

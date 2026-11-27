@@ -151,8 +151,8 @@ func _execute_attack(action: BattleAction) -> ActionResult:
 					if weapon.try_apply_status_effect(target):
 						status_msg = " and applied %s" % Skill.StatusEffect.keys()[weapon.status_effect_type]
 	
-	var mp_restore = int(attacker.max_mp * BattleFormulas.ATTACK_RESOURCE_REGEN)
-	var sp_restore = int(attacker.max_sp * BattleFormulas.ATTACK_RESOURCE_REGEN)
+	var mp_restore = int(attacker.max_mp * BattleFormulas.attack_restore(attacker))
+	var sp_restore = int(attacker.max_sp * BattleFormulas.attack_restore(attacker))
 	attacker.restore_mp(mp_restore)
 	attacker.restore_sp(sp_restore)
 	
@@ -186,7 +186,15 @@ func _execute_defend(action: BattleAction) -> ActionResult:
 		return ActionResult.failure_msg("%s cannot defend while defeated" % defender.name)
 	
 	defender.defend()
-	return ActionResult.defend_result(defender)
+	var result = ActionResult.defend_result(defender)
+	# heroes catch their breath behind the guard (combat.json rhythm)
+	if BattleFormulas.is_hero_side(defender):
+		var f = float(BattleFormulas.rhythm().get("defend_restore", 0.0))
+		var mp = defender.restore_mp(int(defender.max_mp * f))
+		var sp = defender.restore_sp(int(defender.max_sp * f))
+		if mp > 0 or sp > 0:
+			result.message += " and catches their breath (+%d MP, +%d SP)" % [mp, sp]
+	return result
 
 # === SKILL ===
 
@@ -204,7 +212,7 @@ func _execute_skill(action: BattleAction) -> ActionResult:
 	
 	# Skills pay every cost they list (MP and SP, plus any HP cost)
 	if not skill.can_afford(caster):
-		return ActionResult.failure_msg("Not enough %s" % ("MP" if caster.current_mp < skill.mp_cost else "SP"))
+		return ActionResult.failure_msg("Not enough %s" % ("MP" if caster.current_mp < skill.mp_cost_for(caster) else "SP"))
 	skill.pay_costs(caster)
 	
 	#  CRITICAL FIX: Resolve empty targets for ALL_ALLIES skills
@@ -222,8 +230,8 @@ func _execute_skill(action: BattleAction) -> ActionResult:
 	result.success = true
 	result.message = skill_result.message
 	result.level_up_message = level_up_msg
-	result.sp_cost = skill.sp_cost
-	result.mp_cost = skill.mp_cost
+	result.sp_cost = skill.sp_cost_for(caster)
+	result.mp_cost = skill.mp_cost_for(caster)
 	
 	result.damage = skill_result.get("damage", 0)
 	result.healing = skill_result.get("healing", 0)

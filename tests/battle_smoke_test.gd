@@ -508,7 +508,9 @@ func _party_checks() -> void:
 func _revive_and_encounter_checks() -> void:
 	for pair in [["Cleric", "Dawn's Return"], ["Druid", "Rebirth"], ["Kannagi", "Spirit Recall"]]:
 		var m = CharacterFactory.create_character("M", "Hume", pair[0], true)
-		check(m.skills.has(pair[1]), "%s starts with %s" % pair)
+		m.level = 6
+		m.learn_class_skills()
+		check(m.skills.has(pair[1]), "%s learns %s by level 6" % pair)
 	var healer = CharacterFactory.create_character("Healer", "Hume", "Cleric", true)
 	healer.current_mp = healer.max_mp
 	var fallen = CharacterFactory.create_character("Fallen", "Hume", "Berserker", true)
@@ -707,6 +709,7 @@ func _combat_rules_checks() -> void:
 		hero.current_sp = hero.max_sp
 		lines.append_array(run.call(BattleAction.attack(hero, f1)))
 	check(f1.get_meta("broken", false) and f1.is_stunned and lines.any(func(l): return l.contains("BREAK")), "%d weakness hits Break an enemy (it loses its next turn)" % need)
+	check(int(BattleFormulas.rhythm().get("attack_weak_break", 1)) == 2, "a basic attack on a weakness counts double on the Break meter")
 	check(lines.any(func(l): return l.contains("Weakness found")) and Bestiary.shown_weaknesses(f1).has("Blunt"), "a weakness hit reveals it")
 	check(Bestiary.entry("Fairy").get("studied", false) and not Bestiary.shown_weaknesses(f1).has("???") and int(Bestiary.entry("Fairy").breaks) == 1,
 		"a Break studies the race: all of its weaknesses are known")
@@ -762,7 +765,7 @@ func _combat_rules_checks() -> void:
 	check(not hero.has_meta("perfect_guard"), "Perfect Guard ends at the hero's next turn")
 	# Wave challenges: BattleRules counts what happened
 	var st = rules.battle_stats()
-	check(st.breaks >= 1 and st.weak_hits >= 2 and st.guards >= 1 and st.setbacks >= 1, "battle stats count Breaks, weakness hits, guards and setbacks (%s)" % str(st))
+	check(st.breaks >= 1 and st.weak_hits >= 1 and st.guards >= 1 and st.setbacks >= 1, "battle stats count Breaks, weakness hits, guards and setbacks (%s)" % str(st))
 	var breaker = {"name": "Breaker", "description": "Break 2 enemies.", "stat": "breaks", "at_least": 2}
 	check(WaveChallenges.met(breaker, {"breaks": 2}) and not WaveChallenges.met(breaker, {"breaks": 1}), "at_least challenges need the count")
 	check(WaveChallenges.met({"stat": "items", "at_most": 0}, {"items": 0}) and not WaveChallenges.met({"stat": "items", "at_most": 0}, {"items": 1}), "at_most challenges fail when exceeded")
@@ -858,8 +861,9 @@ func _talent_checks() -> void:
 	var dummy0 = make_player(); dummy0.vitality += 200; dummy0.calculate_secondary_attributes(); dummy0.current_hp = dummy0.max_hp
 	var mp0 = sam0.current_mp; var sp0 = sam0.current_sp
 	CombatEngine.new().execute_action(BattleAction.skill(sam0, iaido0, [dummy0]))
-	check(sam0.current_mp == mp0 - iaido0.mp_cost and sam0.current_sp == sp0 - iaido0.sp_cost and iaido0.mp_cost > 0 and iaido0.sp_cost > 0,
-		"Iaido charges both MP (%d) and SP (%d)" % [iaido0.mp_cost, iaido0.sp_cost])
+	check(sam0.current_mp == mp0 - iaido0.mp_cost_for(sam0) and sam0.current_sp == sp0 - iaido0.sp_cost_for(sam0) and iaido0.mp_cost > 0 and iaido0.sp_cost > 0,
+		"Iaido charges both MP (%d) and SP (%d)" % [iaido0.mp_cost_for(sam0), iaido0.sp_cost_for(sam0)])
+	check(iaido0.mp_cost_for(sam0) > iaido0.mp_cost, "heroes pay the combat rhythm's price for skills (%d vs listed %d)" % [iaido0.mp_cost_for(sam0), iaido0.mp_cost])
 	sam0.current_mp = 0
 	check(not iaido0.can_afford(sam0), "a skill can't be used without its secondary resource")
 
@@ -867,7 +871,12 @@ func _talent_checks() -> void:
 	p.currency.copper = 100000
 	var t: TalentManager = p.talents
 	check(t.total_points() == 0 and not t.can_learn("bulwark/shield_discipline"), "level 1: no talent points")
+	check(p.skills.size() == 1, "a rookie knows one class skill (%s)" % ", ".join(p.skills))
+	p.level_up(); p.level_up()
+	check(p.skills.size() == 2 and p.has_meta("learned_skills"), "the second class skill comes at level 3")
 	p.level = 6
+	p.learn_class_skills()
+	check(p.skills.size() == 3, "the third at level 6")
 	check(t.total_points() == 5, "1 point per level from level 2 (L6 = 5)")
 	check(not t.can_learn("bulwark/shield_bash"), "tier 2 locked until 2 points are in the branch")
 	var tough_before = p.toughness
@@ -1071,6 +1080,8 @@ func _arts_and_armor_checks() -> void:
 ## Classes follow their philosophies (docs/lore/CLASS_PHILOSOPHIES.md)
 func _philosophy_checks() -> void:
 	var monk = CharacterFactory.create_character("M", "Hume", "Monk", true)
+	monk.level = 6
+	monk.learn_class_skills()
 	check("Tiger Claw" in monk.skills and "Crane Stance" in monk.skills and "Mantis Strike" in monk.skills, "Monk has animal-style skills")
 	
 	# weapon_bonus: Berserker Cleave x1.25 with a two-hander
@@ -1154,6 +1165,8 @@ func _element_and_class_checks() -> void:
 	# the four new classes
 	for cls in ["Berserker", "Shinobi", "Kannagi", "Beastmaster"]:
 		var c = CharacterFactory.create_character("T", "Hume", cls, true)
+		c.level = 6
+		c.learn_class_skills()
 		var ok = c != null and c.skills.size() >= 3   # Kannagi also starts with Spirit Recall
 		for sn in (c.skills if c else []):
 			ok = ok and c.get_skill_instance(sn) != null

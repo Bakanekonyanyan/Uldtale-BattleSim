@@ -123,6 +123,7 @@ func build_combatant(player: CharacterData, npc: Dictionary, as_enemy: bool) -> 
 	if as_enemy:
 		var s = _t("saboteur")
 		c.is_player = false
+		c.set_meta("hero_side", true)   # fights on your side: the combat rhythm applies
 		c.hp_multiplier = float(s.get("hp_mult", 1.0))
 		c.damage_multiplier = float(s.get("damage_mult", 0.75))
 		c.set_meta("ai_role", {"Cleric": "healer", "Druid": "healer", "Kannagi": "healer", "Elementalist": "caster", "Necromancer": "controller", "Beastmaster": "controller", "Paladin": "tank"}.get(String(npc.cls), "skirmisher"))

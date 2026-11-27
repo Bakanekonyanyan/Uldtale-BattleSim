@@ -565,7 +565,7 @@ func _create_skill_button(skill: Skill, cooldown: int, can_use: bool) -> HBoxCon
 	else:
 		var cost_parts = []
 		if skill.mp_cost > 0:
-			cost_parts.append("MP: %d" % skill.mp_cost)
+			cost_parts.append("MP: %d" % skill.mp_cost_for(player))
 		if skill.sp_cost > 0:
 			cost_parts.append("SP: %d" % skill.sp_cost_for(player))
 		
@@ -648,9 +648,9 @@ func _show_skill_info(skill: Skill):
 	if skill.mp_cost > 0 or skill.sp_cost > 0:
 		info_text += "\n[b][color=yellow]Costs:[/color][/b]\n"
 		if skill.mp_cost > 0:
-			info_text += "  • MP: %d\n" % skill.mp_cost
+			info_text += "  • MP: %d\n" % skill.mp_cost_for(player)
 		if skill.sp_cost > 0:
-			info_text += "  • SP: %d\n" % skill.sp_cost
+			info_text += "  • SP: %d\n" % skill.sp_cost_for(player)
 	
 	# Power & Effects
 	if skill.power > 0:

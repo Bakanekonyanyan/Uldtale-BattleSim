@@ -35,7 +35,10 @@ static func create_character(char_name: String, race: String, char_class: String
 	
 	# Initialize skills
 	if "skills" in class_data:
-		char.skill_manager.add_skills(class_data.skills)
+		if is_player:   # heroes learn their class skills as they level (progression.json)
+			char.learn_class_skills()
+		else:
+			char.skill_manager.add_skills(class_data.skills)
 	
 	# Initialize racial elementals
 	char.initialize_racial_elementals(true)

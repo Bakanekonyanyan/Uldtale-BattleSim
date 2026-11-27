@@ -244,8 +244,8 @@ func _skills_text() -> String:
 			level += "  [color=%s]%d / %d uses to next[/color]" % [MUTED, s.uses, s.get_uses_for_next_level()]
 		t += "[b][color=%s]%s[/color][/b]   %s\n" % [ACCENT, s.name, level]
 		var parts: Array = []
-		if s.mp_cost > 0: parts.append("%d MP" % s.mp_cost)
-		if s.sp_cost > 0: parts.append("%d SP" % s.sp_cost)
+		if s.mp_cost > 0: parts.append("%d MP" % s.mp_cost_for(c))
+		if s.sp_cost > 0: parts.append("%d SP" % s.sp_cost_for(c))
 		if s.cooldown > 0: parts.append("%d turn cooldown" % s.cooldown)
 		if s.type in [Skill.SkillType.DAMAGE, Skill.SkillType.HEAL, Skill.SkillType.RESTORE, Skill.SkillType.DRAIN]:
 			parts.append("power %d" % s.power)

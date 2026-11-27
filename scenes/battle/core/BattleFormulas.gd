@@ -62,6 +62,25 @@ const ATTACK_RESOURCE_REGEN := 0.08  # basic attacks restore 8% max MP and SP
 
 # =============================================================
 
+## You and your party (the combat rhythm applies to heroes, not enemies).
+static func is_hero_side(c: CharacterData) -> bool:
+	return c != null and (c.is_player or c.has_meta("hero_side"))
+
+static func rhythm() -> Dictionary:
+	return BattleRules.cfg().get("rhythm", {})
+
+## A skill's MP/SP cost for `c`: heavier for heroes, and rising with level so
+## skills stay a budget rather than a free rotation (combat.json rhythm).
+static func skill_cost(c: CharacterData, base: int) -> int:
+	if base <= 0 or not is_hero_side(c):
+		return base
+	var r = rhythm()
+	return int(ceil(base * float(r.get("skill_cost_mult", 1.0)) * (1.0 + float(r.get("cost_per_level", 0.0)) * max(0, c.level - 1))))
+
+## Share of max MP/SP a basic attack restores.
+static func attack_restore(c: CharacterData) -> float:
+	return float(rhythm().get("attack_restore", ATTACK_RESOURCE_REGEN)) if is_hero_side(c) else ATTACK_RESOURCE_REGEN
+
 static func physical_offense(c: CharacterData) -> float:
 	return c.attack_power + get_weapon_damage(c) * WEAPON_DAMAGE_SCALE
 
@@ -109,6 +128,9 @@ static func hit_damage(attacker: CharacterData, target: CharacterData, is_physic
 			raw *= attacker.talents.damage_mult(ctx)
 		if target.talents:
 			raw *= target.talents.defense_mult(ctx)
+	# A riposte after a Perfect Guard (combat.json rhythm)
+	if attacker.get_meta("riposte", false):
+		raw *= 1.0 + float(rhythm().get("riposte_bonus", 0.0))
 	# A charged (telegraphed) strike hits harder
 	if attacker.get_meta("charged_strike", false):
 		raw *= float(BattleRules.cfg().get("intents", {}).get("charge_power_mult", 1.5))

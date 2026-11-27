@@ -119,7 +119,7 @@ func after_action(action: BattleAction, snap: Dictionary) -> Array[String]:
 		if t.is_alive() and not t.get_meta("broken", false):
 			var pts := 0
 			if _weak_hit(action, t):
-				pts += 1
+				pts += int(BattleFormulas.rhythm().get("attack_weak_break", 1)) if action.type == BattleAction.ActionType.ATTACK else 1
 				if combo_targets.has(t):
 					pts += int(_brk().get("combo_bonus", 1))
 			if pts > 0:
@@ -139,6 +139,11 @@ func after_action(action: BattleAction, snap: Dictionary) -> Array[String]:
 		if is_threatened(actor):
 			actor.set_meta("perfect_guard", true)
 			lines.append("[color=#90e0ef]%s reads the attack and braces - Perfect Guard![/color]" % actor.name)
+			if float(BattleFormulas.rhythm().get("riposte_bonus", 0.0)) > 0.0:
+				actor.set_meta("riposte", true)
+				lines.append("[color=#90e0ef]%s's next move will strike back harder.[/color]" % actor.name)
+	elif actor.has_meta("riposte") and action.type != BattleAction.ActionType.DEFEND:
+		actor.remove_meta("riposte")   # spent on this action
 	# --- skills: link costs, LINK skills, turn order
 	if action.type == BattleAction.ActionType.SKILL and action.skill_data:
 		var s = action.skill_data
